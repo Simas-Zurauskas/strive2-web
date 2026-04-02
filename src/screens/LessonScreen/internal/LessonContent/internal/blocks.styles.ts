@@ -662,9 +662,16 @@ export const ExpectedOutput = styled.div`
     font-weight: 600;
   }
 
-  code {
+  pre {
+    margin: 0.375rem 0 0;
+    padding: 0.5rem 0.625rem;
+    border-radius: 4px;
+    background: ${(p) => p.theme.colors.background};
+    border: 1px solid ${(p) => p.theme.colors.border};
     font-family: var(--font-geist-mono, 'Geist Mono', monospace);
     font-size: 0.75rem;
+    line-height: 1.5;
     white-space: pre-wrap;
+    word-break: break-word;
   }
 `;

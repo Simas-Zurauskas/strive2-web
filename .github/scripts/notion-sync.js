@@ -4,6 +4,8 @@ const { Client } = require('@notionhq/client');
 
 const anthropic = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY });
 const notion = new Client({ auth: process.env.NOTION_API_KEY });
+const DELAY_MS = 350; // stay under Notion's 3 req/s limit
+const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
 
 // ---------------------------------------------------------------------------
 // Configuration — change these per repository
@@ -47,6 +49,54 @@ async function fetchPageTree(blockId, path = '') {
     cursor = res.next_cursor;
   } while (cursor);
   return pages;
+}
+
+function richTextToPlain(richTexts) {
+  if (!richTexts) return '';
+  return richTexts.map((rt) => rt.plain_text || '').join('');
+}
+
+function blockToText(block) {
+  const data = block[block.type];
+  if (!data) return '';
+  switch (block.type) {
+    case 'paragraph':
+    case 'bulleted_list_item':
+    case 'numbered_list_item':
+    case 'to_do':
+    case 'toggle':
+    case 'quote':
+    case 'callout':
+      return richTextToPlain(data.rich_text);
+    case 'heading_1':
+    case 'heading_2':
+    case 'heading_3':
+      return richTextToPlain(data.rich_text);
+    case 'code':
+      return richTextToPlain(data.rich_text);
+    default:
+      return '';
+  }
+}
+
+async function fetchPageSummary(pageId, maxChars = 1500) {
+  let text = '';
+  let cursor;
+  do {
+    await sleep(DELAY_MS);
+    const res = await notion.blocks.children.list({
+      block_id: pageId,
+      start_cursor: cursor,
+      page_size: 50,
+    });
+    for (const block of res.results) {
+      const line = blockToText(block);
+      if (line) text += line + '\n';
+      if (text.length >= maxChars) return text.slice(0, maxChars) + '…';
+    }
+    cursor = res.next_cursor;
+  } while (cursor);
+  return text.trim();
 }
 
 function textBlock(content) {
@@ -203,6 +253,16 @@ async function main() {
   const existingPages = await fetchPageTree(rootId);
   console.log(`Found ${existingPages.length} existing pages`);
 
+  console.log('Fetching page summaries…');
+  for (const page of existingPages) {
+    try {
+      page.summary = await fetchPageSummary(page.id);
+    } catch (err) {
+      page.summary = `(failed to fetch: ${err.message})`;
+    }
+  }
+  console.log('Page summaries fetched');
+
   const prompt = `You are a living documentation agent for ${PROJECT.name}.
 
 PROJECT
@@ -237,8 +297,8 @@ All documentation lives in Notion under two top-level sections:
 - **Product** — manually curated vision, features, and strategy docs. NEVER modify these.
 - **Technical** — architecture, conventions, and implementation docs. This is your scope.
 
-The Technical section you can update:
-${existingPages.map((p) => `- "${p.title}" (${p.path}) [${p.id}]`).join('\n') || '(empty — first sync)'}
+The Technical section you can update (with current content summaries):
+${existingPages.map((p) => `- "${p.title}" (${p.path}) [${p.id}]\n  Current content: ${p.summary || '(empty)'}`).join('\n\n') || '(empty — first sync)'}
 
 Technical root page ID: ${rootId}
 

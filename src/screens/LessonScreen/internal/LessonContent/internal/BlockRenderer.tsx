@@ -366,7 +366,9 @@ const ExerciseBlock = ({ content, metadata }: { content: string; metadata: Recor
     <S.ExerciseContainer>
       <S.ExerciseHeader>Try it yourself</S.ExerciseHeader>
       <S.ExerciseContent>
-        <ReactMarkdown remarkPlugins={[remarkGfm]}>{content}</ReactMarkdown>
+        <ReactMarkdown remarkPlugins={[remarkGfm]}>
+          {expectedOutput ? content.replace(/\n*\*?\*?Expected output\*?\*?:?[\s\S]*$/i, '').trim() : content}
+        </ReactMarkdown>
       </S.ExerciseContent>
 
       {hasEditor && (
@@ -396,9 +398,10 @@ const ExerciseBlock = ({ content, metadata }: { content: string; metadata: Recor
             </S.OutputPanel>
           )}
 
-          {expectedOutput && (
+          {expectedOutput && output && (
             <S.ExpectedOutput>
-              <strong>Expected output:</strong> <code>{expectedOutput}</code>
+              <strong>Expected output:</strong>
+              <pre>{expectedOutput}</pre>
             </S.ExpectedOutput>
           )}
         </>
