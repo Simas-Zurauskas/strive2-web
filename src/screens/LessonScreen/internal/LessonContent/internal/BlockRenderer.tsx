@@ -1,0 +1,451 @@
+'use client';
+
+import { useCallback, useEffect, useRef, useState } from 'react';
+import ReactMarkdown from 'react-markdown';
+import remarkGfm from 'remark-gfm';
+import { useMutation } from '@tanstack/react-query';
+import { executeCode } from '@/api/routes/course';
+import * as S from './blocks.styles';
+
+// ── Types ──────────────────────────────────────────────
+
+interface LessonBlock {
+  id: string;
+  type: string;
+  content: string;
+  metadata: Record<string, unknown> | null;
+  order: number;
+}
+
+// ── Individual block renderers ─────────────────────────
+
+const IntroBlock = ({ content }: { content: string }) => (
+  <S.IntroText>
+    <ReactMarkdown remarkPlugins={[remarkGfm]}>{content}</ReactMarkdown>
+  </S.IntroText>
+);
+
+const SectionBlock = ({ content }: { content: string }) => (
+  <S.SectionContent>
+    <ReactMarkdown remarkPlugins={[remarkGfm]}>{content}</ReactMarkdown>
+  </S.SectionContent>
+);
+
+const CodeBlock = ({ content, metadata }: { content: string; metadata: Record<string, unknown> | null }) => {
+  const [copied, setCopied] = useState(false);
+  const language = (metadata?.language as string) ?? '';
+
+  const handleCopy = () => {
+    navigator.clipboard.writeText(content);
+    setCopied(true);
+    setTimeout(() => setCopied(false), 2000);
+  };
+
+  return (
+    <S.CodeContainer>
+      <S.CodeHeader>
+        <S.CodeLanguage>{language || 'code'}</S.CodeLanguage>
+        <S.CopyButton onClick={handleCopy}>{copied ? 'Copied' : 'Copy'}</S.CopyButton>
+      </S.CodeHeader>
+      <S.CodePre>
+        <code>{content}</code>
+      </S.CodePre>
+    </S.CodeContainer>
+  );
+};
+
+const cleanMermaidContent = (raw: string): string => {
+  let cleaned = raw.trim();
+  // Strip markdown code fences (```mermaid ... ``` or ``` ... ```)
+  cleaned = cleaned.replace(/^```(?:mermaid)?\s*\n?/i, '').replace(/\n?```\s*$/,'');
+  // Strip trailing semicolons on each line (some LLMs add them, mermaid can choke)
+  cleaned = cleaned
+    .split('\n')
+    .map((line) => line.replace(/;\s*$/, ''))
+    .join('\n');
+  return cleaned.trim();
+};
+
+// Global init — mermaid.initialize must only be called once
+let mermaidInitialized = false;
+
+const initMermaid = async () => {
+  const mermaid = (await import('mermaid')).default;
+  if (!mermaidInitialized) {
+    mermaid.initialize({
+      startOnLoad: false,
+      theme: 'neutral',
+      securityLevel: 'loose',
+      fontFamily: 'var(--font-geist-sans, sans-serif)',
+    });
+    mermaidInitialized = true;
+  }
+  return mermaid;
+};
+
+const MermaidBlock = ({ content }: { content: string }) => {
+  const codeRef = useRef<HTMLPreElement>(null);
+  const [renderState, setRenderState] = useState<'loading' | 'success' | 'error'>('loading');
+  const [errorMsg, setErrorMsg] = useState('');
+  const [showCode, setShowCode] = useState(false);
+
+  const cleaned = cleanMermaidContent(content);
+
+  useEffect(() => {
+    let cancelled = false;
+
+    const render = async () => {
+      if (!codeRef.current) return;
+      try {
+        const mermaid = await initMermaid();
+        await mermaid.run({ nodes: [codeRef.current] });
+        if (!cancelled) setRenderState('success');
+      } catch (e) {
+        if (cancelled) return;
+        const msg = e instanceof Error ? e.message : String(e);
+        console.warn('[MermaidBlock] Render failed:', msg);
+        setErrorMsg(msg);
+        setRenderState('error');
+      }
+    };
+
+    render();
+    return () => { cancelled = true; };
+  }, [cleaned]);
+
+  if (renderState === 'error') {
+    return (
+      <S.CodeContainer>
+        <S.CodeHeader>
+          <S.CodeLanguage>diagram (render failed)</S.CodeLanguage>
+        </S.CodeHeader>
+        <S.CodePre>
+          <code>{cleaned}</code>
+        </S.CodePre>
+        {errorMsg && (
+          <div style={{ padding: '0.5rem 0.75rem', fontSize: '0.75rem', color: '#ef4444', borderTop: '1px solid var(--border)' }}>
+            {errorMsg}
+          </div>
+        )}
+      </S.CodeContainer>
+    );
+  }
+
+  return (
+    <S.MermaidContainer>
+      <S.MermaidDiagram>
+        <pre ref={codeRef} className="mermaid">{cleaned}</pre>
+      </S.MermaidDiagram>
+      {renderState === 'success' && (
+        <S.MermaidCodeToggle onClick={() => setShowCode((prev) => !prev)}>
+          {showCode ? 'Hide source' : 'Show source'}
+        </S.MermaidCodeToggle>
+      )}
+      {showCode && (
+        <S.CodePre>
+          <code>{cleaned}</code>
+        </S.CodePre>
+      )}
+    </S.MermaidContainer>
+  );
+};
+
+const CALLOUT_LABELS: Record<string, string> = {
+  info: 'Note',
+  tip: 'Tip',
+  warning: 'Warning',
+  important: 'Important',
+};
+
+const CalloutBlock = ({ content, metadata }: { content: string; metadata: Record<string, unknown> | null }) => {
+  const variant = (metadata?.variant as 'info' | 'tip' | 'warning' | 'important') ?? 'info';
+  return (
+    <S.CalloutContainer $variant={variant}>
+      <S.CalloutLabel>{CALLOUT_LABELS[variant] ?? 'Note'}</S.CalloutLabel>
+      <ReactMarkdown remarkPlugins={[remarkGfm]}>{content}</ReactMarkdown>
+    </S.CalloutContainer>
+  );
+};
+
+const SummaryBlock = ({ content }: { content: string }) => {
+  const items = content
+    .split('\n')
+    .map((line) => line.replace(/^[-*]\s*/, '').trim())
+    .filter(Boolean);
+
+  return (
+    <S.SummaryContainer>
+      <S.SummaryTitle>Key Takeaways</S.SummaryTitle>
+      <S.SummaryList>
+        {items.map((item, i) => (
+          <S.SummaryItem key={i}><ReactMarkdown remarkPlugins={[remarkGfm]}>{item}</ReactMarkdown></S.SummaryItem>
+        ))}
+      </S.SummaryList>
+    </S.SummaryContainer>
+  );
+};
+
+const OPTION_LETTERS = ['A', 'B', 'C', 'D'];
+
+const QuizBlock = ({ metadata }: { metadata: Record<string, unknown> | null }) => {
+  const [selected, setSelected] = useState<number | null>(null);
+
+  const question = (metadata?.question as string) ?? '';
+  const options = (metadata?.options as string[]) ?? [];
+  const correctIndex = (metadata?.correctIndex as number) ?? 0;
+  const explanation = (metadata?.explanation as string) ?? '';
+
+  const answered = selected !== null;
+
+  const getOptionState = (index: number): 'default' | 'correct' | 'incorrect' | 'dimmed' => {
+    if (!answered) return 'default';
+    if (index === correctIndex) return 'correct';
+    if (index === selected) return 'incorrect';
+    return 'dimmed';
+  };
+
+  return (
+    <S.QuizContainer>
+      <S.QuizHeader>Check your understanding</S.QuizHeader>
+      <S.QuizQuestion>{question}</S.QuizQuestion>
+      <S.QuizOptions>
+        {options.map((option, i) => (
+          <S.QuizOption
+            key={i}
+            $state={getOptionState(i)}
+            onClick={() => !answered && setSelected(i)}
+          >
+            <S.QuizOptionLetter $state={getOptionState(i)}>
+              {OPTION_LETTERS[i]}
+            </S.QuizOptionLetter>
+            {option}
+          </S.QuizOption>
+        ))}
+      </S.QuizOptions>
+      {answered && explanation && (
+        <S.QuizExplanation>{explanation}</S.QuizExplanation>
+      )}
+    </S.QuizContainer>
+  );
+};
+
+const LinksBlock = ({ metadata }: { metadata: Record<string, unknown> | null }) => {
+  const links = (metadata?.links as Array<{ title: string; url: string; description: string }>) ?? [];
+
+  if (links.length === 0) return null;
+
+  return (
+    <S.LinksContainer>
+      <S.LinksHeader>Further Reading</S.LinksHeader>
+      <S.LinksList>
+        {links.map((link, i) => (
+          <S.LinkItem key={i} href={link.url} target="_blank" rel="noopener noreferrer">
+            <S.LinkTitle>{link.title}</S.LinkTitle>
+            {link.description && <S.LinkDescription>{link.description}</S.LinkDescription>}
+          </S.LinkItem>
+        ))}
+      </S.LinksList>
+    </S.LinksContainer>
+  );
+};
+
+const ExerciseBlock = ({ content, metadata }: { content: string; metadata: Record<string, unknown> | null }) => {
+  const language = (metadata?.language as string) ?? '';
+  const starterCode = (metadata?.starterCode as string) ?? '';
+  const expectedOutput = (metadata?.expectedOutput as string) ?? '';
+  const hasEditor = !!language && !!starterCode;
+
+  const editorRef = useRef<HTMLDivElement>(null);
+  const viewRef = useRef<InstanceType<typeof import('@codemirror/view').EditorView> | null>(null);
+  const [output, setOutput] = useState<{ stdout: string | null; stderr: string | null; status: string } | null>(null);
+
+  const executeMutation = useMutation({
+    mutationFn: () => {
+      const code = viewRef.current?.state.doc.toString() ?? starterCode;
+      return executeCode({ code, language });
+    },
+    onSuccess: (data) => {
+      setOutput({ stdout: data.stdout, stderr: data.stderr, status: data.status });
+    },
+    onError: (err) => {
+      setOutput({ stdout: null, stderr: err instanceof Error ? err.message : 'Execution failed', status: 'Error' });
+    },
+  });
+
+  // Initialize CodeMirror
+  useEffect(() => {
+    if (!hasEditor || !editorRef.current || viewRef.current) return;
+
+    let destroyed = false;
+
+    const init = async () => {
+      const { EditorView, keymap, lineNumbers, highlightActiveLine, highlightActiveLineGutter } = await import('@codemirror/view');
+      const { EditorState } = await import('@codemirror/state');
+      const { defaultKeymap, indentWithTab } = await import('@codemirror/commands');
+      const { syntaxHighlighting, defaultHighlightStyle, indentOnInput, bracketMatching } = await import('@codemirror/language');
+      const { oneDark } = await import('@codemirror/theme-one-dark');
+
+      // Load language support
+      let langExtension;
+      try {
+        switch (language.toLowerCase()) {
+          case 'python': {
+            const { python } = await import('@codemirror/lang-python');
+            langExtension = python();
+            break;
+          }
+          case 'javascript':
+          case 'typescript': {
+            const { javascript } = await import('@codemirror/lang-javascript');
+            langExtension = javascript({ typescript: language.toLowerCase() === 'typescript' });
+            break;
+          }
+          case 'java': {
+            const { java } = await import('@codemirror/lang-java');
+            langExtension = java();
+            break;
+          }
+          case 'cpp':
+          case 'c': {
+            const { cpp } = await import('@codemirror/lang-cpp');
+            langExtension = cpp();
+            break;
+          }
+          case 'rust': {
+            const { rust } = await import('@codemirror/lang-rust');
+            langExtension = rust();
+            break;
+          }
+          case 'sql': {
+            const { sql } = await import('@codemirror/lang-sql');
+            langExtension = sql();
+            break;
+          }
+        }
+      } catch {
+        // Language extension not available — editor works without syntax highlighting
+      }
+
+      if (destroyed || !editorRef.current) return;
+
+      const extensions = [
+        lineNumbers(),
+        highlightActiveLine(),
+        highlightActiveLineGutter(),
+        indentOnInput(),
+        bracketMatching(),
+        syntaxHighlighting(defaultHighlightStyle, { fallback: true }),
+        oneDark,
+        keymap.of([...defaultKeymap, indentWithTab]),
+        EditorView.lineWrapping,
+      ];
+
+      if (langExtension) extensions.push(langExtension);
+
+      const state = EditorState.create({
+        doc: starterCode,
+        extensions,
+      });
+
+      viewRef.current = new EditorView({
+        state,
+        parent: editorRef.current,
+      });
+    };
+
+    init();
+
+    return () => {
+      destroyed = true;
+      viewRef.current?.destroy();
+      viewRef.current = null;
+    };
+  }, [hasEditor, language, starterCode]);
+
+  return (
+    <S.ExerciseContainer>
+      <S.ExerciseHeader>Try it yourself</S.ExerciseHeader>
+      <S.ExerciseContent>
+        <ReactMarkdown remarkPlugins={[remarkGfm]}>{content}</ReactMarkdown>
+      </S.ExerciseContent>
+
+      {hasEditor && (
+        <>
+          <S.ExerciseEditorWrapper ref={editorRef} />
+
+          <S.ExerciseToolbar>
+            <S.RunButton
+              onClick={() => executeMutation.mutate()}
+              $running={executeMutation.isPending}
+              disabled={executeMutation.isPending}
+            >
+              {executeMutation.isPending ? 'Running...' : 'Run'}
+            </S.RunButton>
+            <S.ToolbarInfo>{language}</S.ToolbarInfo>
+          </S.ExerciseToolbar>
+
+          {output && (
+            <S.OutputPanel>
+              <S.OutputHeader>
+                Output
+                {output.status !== 'Accepted' && <span>({output.status})</span>}
+              </S.OutputHeader>
+              <S.OutputBody $isError={!!output.stderr && !output.stdout}>
+                {output.stdout || output.stderr || 'No output'}
+              </S.OutputBody>
+            </S.OutputPanel>
+          )}
+
+          {expectedOutput && (
+            <S.ExpectedOutput>
+              <strong>Expected output:</strong> <code>{expectedOutput}</code>
+            </S.ExpectedOutput>
+          )}
+        </>
+      )}
+    </S.ExerciseContainer>
+  );
+};
+
+// ── Main renderer ──────────────────────────────────────
+
+interface BlockRendererProps {
+  blocks: LessonBlock[];
+}
+
+export const BlockRenderer = ({ blocks }: BlockRendererProps) => {
+  const sorted = [...blocks].sort((a, b) => a.order - b.order);
+
+  return (
+    <>
+      {sorted.map((block) => {
+        switch (block.type) {
+          case 'intro':
+            return <IntroBlock key={block.id} content={block.content} />;
+          case 'section':
+            return <SectionBlock key={block.id} content={block.content} />;
+          case 'code':
+            return <CodeBlock key={block.id} content={block.content} metadata={block.metadata} />;
+          case 'mermaid':
+            return <MermaidBlock key={block.id} content={block.content} />;
+          case 'callout':
+            return <CalloutBlock key={block.id} content={block.content} metadata={block.metadata} />;
+          case 'quiz':
+            return <QuizBlock key={block.id} metadata={block.metadata} />;
+          case 'exercise':
+            return <ExerciseBlock key={block.id} content={block.content} metadata={block.metadata} />;
+          case 'links':
+            return <LinksBlock key={block.id} metadata={block.metadata} />;
+          case 'summary':
+            return <SummaryBlock key={block.id} content={block.content} />;
+          default:
+            return (
+              <S.BlockWrapper key={block.id}>
+                <ReactMarkdown remarkPlugins={[remarkGfm]}>{block.content}</ReactMarkdown>
+              </S.BlockWrapper>
+            );
+        }
+      })}
+    </>
+  );
+};

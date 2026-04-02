@@ -1,0 +1,1 @@
+export { StyledRegistry } from './StyledRegistry';
