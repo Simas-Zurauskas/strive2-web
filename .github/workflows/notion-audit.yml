@@ -1,5 +1,5 @@
 # yaml-language-server: $schema=https://json.schemastore.org/github-workflow.json
-name: "Knowledge Base: Rebuild"
+name: 'Knowledge Base: Rebuild'
 
 on:
   workflow_dispatch:
@@ -11,7 +11,7 @@ permissions:
 jobs:
   audit:
     runs-on: ubuntu-latest
-    timeout-minutes: 15
+    timeout-minutes: 20
     env:
       FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
     steps:
@@ -167,4 +167,4 @@ jobs:
             Prioritized list of updates needed, most impactful first.
             For each: which Notion page, what section, what the fix is.
             ```
-          claude_args: "--max-turns 30 --model claude-sonnet-4-20250514"
+          claude_args: "--max-turns 100 --model claude-sonnet-4-20250514 --allowedTools 'Read,Glob,Grep,Bash(cat *),Bash(ls *),Bash(echo *),Bash(find *),Bash(wc *)'"

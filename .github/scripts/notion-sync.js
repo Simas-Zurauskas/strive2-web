@@ -95,7 +95,12 @@ function changeMeta() {
 async function updatePage(pageId, content) {
   await notion.blocks.children.append({
     block_id: pageId,
-    children: [divider(), heading3Block(`${prRef()}: ${process.env.PR_TITLE}`), textBlock(content), metaBlock(changeMeta())],
+    children: [
+      divider(),
+      heading3Block(`${prRef()}: ${process.env.PR_TITLE}`),
+      textBlock(content),
+      metaBlock(changeMeta()),
+    ],
   });
 }
 
@@ -330,7 +335,7 @@ Respond ONLY in valid JSON (no markdown fences):
 
   console.log('Asking Claude to assess documentation impact…');
   const response = await anthropic.messages.create({
-    model: 'claude-sonnet-4-20250514',
+    model: 'claude-sonnet-6',
     max_tokens: 4000,
     messages: [{ role: 'user', content: prompt }],
   });
@@ -363,12 +368,24 @@ Respond ONLY in valid JSON (no markdown fences):
         case 'update':
           console.log(`  Updating: "${label}"`);
           await updatePage(action.page_id, action.content);
-          log.push({ status: '✓', type: action.type, page: label, id: action.page_id, detail: action.content.slice(0, 120) });
+          log.push({
+            status: '✓',
+            type: action.type,
+            page: label,
+            id: action.page_id,
+            detail: action.content.slice(0, 120),
+          });
           break;
         case 'rewrite':
           console.log(`  Rewriting: "${label}"`);
           await rewritePage(action.page_id, action.content);
-          log.push({ status: '✓', type: action.type, page: label, id: action.page_id, detail: `${action.content.length} chars` });
+          log.push({
+            status: '✓',
+            type: action.type,
+            page: label,
+            id: action.page_id,
+            detail: `${action.content.length} chars`,
+          });
           break;
         case 'correct':
           console.log(`  Correcting: "${label}" — ${action.stale_section}`);
@@ -384,7 +401,13 @@ Respond ONLY in valid JSON (no markdown fences):
         case 'crosslink':
           console.log(`  Cross-linking: "${label}"`);
           await crosslinkPage(action.page_id, action.note);
-          log.push({ status: '✓', type: action.type, page: label, id: action.page_id, detail: action.note.slice(0, 120) });
+          log.push({
+            status: '✓',
+            type: action.type,
+            page: label,
+            id: action.page_id,
+            detail: action.note.slice(0, 120),
+          });
           break;
         default:
           console.log(`  Skipping unknown action: ${action.type}`);
@@ -393,7 +416,13 @@ Respond ONLY in valid JSON (no markdown fences):
       console.log(`  ✓ Done`);
     } catch (err) {
       console.error(`  ✗ Failed ${action.type} on "${label}": ${err.message}`);
-      log.push({ status: '✗', type: action.type, page: label, id: action.page_id || action.parent_id, detail: err.message });
+      log.push({
+        status: '✗',
+        type: action.type,
+        page: label,
+        id: action.page_id || action.parent_id,
+        detail: err.message,
+      });
     }
   }
 
