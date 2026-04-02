@@ -250,7 +250,7 @@ async function orchestrate(manifest, docsBundle, docsIndex) {
     prompt,
     options: {
       model: MODEL,
-      maxTurns: 1,
+      maxTurns: 5,
       outputFormat: { type: 'json_schema', schema: PLAN_SCHEMA },
       allowedTools: [],
       permissionMode: 'bypassPermissions',
