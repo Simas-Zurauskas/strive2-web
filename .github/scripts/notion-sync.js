@@ -6,6 +6,23 @@ const anthropic = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY });
 const notion = new Client({ auth: process.env.NOTION_API_KEY });
 
 // ---------------------------------------------------------------------------
+// Configuration — change these per repository
+// ---------------------------------------------------------------------------
+
+const PROJECT = {
+  name: 'Strive',
+  description:
+    'AI-powered personalized learning platform that generates structured, customized courses tailored to individual goals with AI-generated curricula, lessons, interactive assessments, and intelligent mentoring.',
+  repos: [
+    'API (Express 5, Node 22, MongoDB, LangGraph) — REST API, authentication, AI-powered course generation',
+    'Client (Next.js 16, React 19, styled-components, NextAuth) — web application with course creation wizard, lesson viewer, AI chat',
+  ],
+  integration:
+    'The repositories communicate via REST (OpenAPI contract, types generated via openapi-typescript codegen) and WebSocket (Socket.IO for async job lifecycle events).',
+  thisRepo: process.env.REPO_LABEL || 'Client',
+};
+
+// ---------------------------------------------------------------------------
 // Notion helpers
 // ---------------------------------------------------------------------------
 
@@ -62,27 +79,56 @@ function divider() {
   return { object: 'block', type: 'divider', divider: {} };
 }
 
-function prMeta() {
-  return `PR #${process.env.PR_NUMBER} by ${process.env.PR_AUTHOR} · ${new Date().toISOString().split('T')[0]}`;
+function prRef() {
+  const num = process.env.PR_NUMBER;
+  return num && num !== '0' ? `PR #${num}` : 'push';
+}
+
+function changeMeta() {
+  return `${prRef()} by ${process.env.PR_AUTHOR} · ${new Date().toISOString().split('T')[0]}`;
 }
 
 // ---------------------------------------------------------------------------
 // Actions
 // ---------------------------------------------------------------------------
 
-async function updatePage(pageId, _pageTitle, content) {
+async function updatePage(pageId, content) {
   await notion.blocks.children.append({
     block_id: pageId,
-    children: [
-      divider(),
-      heading3Block(`PR #${process.env.PR_NUMBER}: ${process.env.PR_TITLE}`),
-      textBlock(content),
-      metaBlock(prMeta()),
-    ],
+    children: [divider(), heading3Block(`${prRef()}: ${process.env.PR_TITLE}`), textBlock(content), metaBlock(changeMeta())],
   });
 }
 
-async function correctPage(pageId, _pageTitle, staleSection, correctedContent) {
+async function rewritePage(pageId, content) {
+  // Archive all existing blocks, then write fresh content
+  let cursor;
+  do {
+    const res = await notion.blocks.children.list({ block_id: pageId, start_cursor: cursor, page_size: 100 });
+    for (const block of res.results) {
+      try {
+        await notion.blocks.delete({ block_id: block.id });
+      } catch (_) {
+        // Some blocks (e.g. child_page) can't be deleted — skip them
+      }
+    }
+    cursor = res.next_cursor;
+  } while (cursor);
+
+  // Split content into paragraphs and write as blocks
+  const paragraphs = content.split('\n\n').filter(Boolean);
+  const children = paragraphs.map((p) => textBlock(p));
+  children.push(metaBlock(`Rewritten: ${changeMeta()}`));
+
+  // Notion limits appending to 100 blocks at a time
+  for (let i = 0; i < children.length; i += 100) {
+    await notion.blocks.children.append({
+      block_id: pageId,
+      children: children.slice(i, i + 100),
+    });
+  }
+}
+
+async function correctPage(pageId, staleSection, correctedContent) {
   await notion.blocks.children.append({
     block_id: pageId,
     children: [
@@ -94,27 +140,22 @@ async function correctPage(pageId, _pageTitle, staleSection, correctedContent) {
           rich_text: [
             {
               type: 'text',
-              text: {
-                content: `Outdated as of PR #${process.env.PR_NUMBER}: "${staleSection}"\n\nCorrected:\n${correctedContent}`,
-              },
+              text: { content: `Outdated as of ${prRef()}: "${staleSection}"\n\nCorrected:\n${correctedContent}` },
             },
           ],
           icon: { type: 'emoji', emoji: '⚠️' },
           color: 'yellow_background',
         },
       },
-      metaBlock(prMeta()),
+      metaBlock(changeMeta()),
     ],
   });
 }
 
 async function createPage(parentId, title, content, linksTo = []) {
   const children = [textBlock(content)];
-
-  if (linksTo.length > 0) {
-    children.push(metaBlock(`Related pages: ${linksTo.join(', ')}`));
-  }
-  children.push(metaBlock(`Created: ${prMeta()}`));
+  if (linksTo.length > 0) children.push(metaBlock(`Related pages: ${linksTo.join(', ')}`));
+  children.push(metaBlock(`Created: ${changeMeta()}`));
 
   const page = await notion.pages.create({
     parent: { page_id: parentId },
@@ -124,7 +165,7 @@ async function createPage(parentId, title, content, linksTo = []) {
   return page.id;
 }
 
-async function crosslinkPage(pageId, _pageTitle, note) {
+async function crosslinkPage(pageId, note) {
   await notion.blocks.children.append({
     block_id: pageId,
     children: [
@@ -133,17 +174,12 @@ async function crosslinkPage(pageId, _pageTitle, note) {
         object: 'block',
         type: 'callout',
         callout: {
-          rich_text: [
-            {
-              type: 'text',
-              text: { content: `Cross-repo update (PR #${process.env.PR_NUMBER}): ${note}` },
-            },
-          ],
+          rich_text: [{ type: 'text', text: { content: `Cross-repo update (${prRef()}): ${note}` } }],
           icon: { type: 'emoji', emoji: '🔗' },
           color: 'blue_background',
         },
       },
-      metaBlock(prMeta()),
+      metaBlock(changeMeta()),
     ],
   });
 }
@@ -162,16 +198,34 @@ async function main() {
   const existingPages = await fetchPageTree(rootId);
   console.log(`Found ${existingPages.length} existing pages`);
 
-  const prompt = `You are a documentation agent for Strive — an AI-powered personalized learning platform.
+  const prompt = `You are a living documentation agent for ${PROJECT.name}.
 
-PLATFORM ARCHITECTURE
-Strive consists of two independent repositories:
-- **API** (Express 5, Node 22, MongoDB, LangGraph) — REST API, authentication, AI-powered course generation
-- **Client** (Next.js 16, React 19, styled-components, NextAuth) — web application with course creation wizard, lesson viewer, AI chat
+PROJECT
+${PROJECT.description}
 
-They communicate via REST (OpenAPI contract) and WebSocket (Socket.IO for job events). Types are shared through Swagger → openapi-typescript codegen.
+The product is composed of independent repositories, each a standalone project:
+${PROJECT.repos.map((r) => `- ${r}`).join('\n')}
 
-YOU ARE IN THE CLIENT REPOSITORY. This PR affects the Next.js frontend only.
+${PROJECT.integration}
+
+You are operating in the **${PROJECT.thisRepo}** repository.
+
+DOCUMENTATION PHILOSOPHY
+You maintain a professional technical wiki — not a changelog or a commit log.
+Every update must earn its place. Ask yourself: would a developer joining this project
+tomorrow find this useful, or is it noise?
+
+Documentation must be precise and useful — architecture decisions, data flows,
+integration points, gotchas, and configuration. Avoid restating obvious code.
+Cross-repository concerns are first-class topics: auth flows spanning repos, shared
+data contracts, API shapes, WebSocket events, and deployment dependencies must be
+explicitly documented.
+
+Your thinking must go beyond this single change. Consider:
+- What does this change mean architecturally?
+- Does it affect how repositories integrate with each other?
+- Does it change a data contract, API shape, auth flow, or convention other repos depend on?
+- Is there an existing page that now contains outdated information?
 
 DOCUMENTATION STRUCTURE
 All documentation lives in Notion under two top-level sections:
@@ -183,9 +237,9 @@ ${existingPages.map((p) => `- "${p.title}" (${p.path}) [${p.id}]`).join('\n') ||
 
 Technical root page ID: ${rootId}
 
-PR CONTEXT
+CHANGE CONTEXT
 Repository: ${process.env.REPO_NAME}
-PR #${process.env.PR_NUMBER}: ${process.env.PR_TITLE}
+${prRef()}: ${process.env.PR_TITLE}
 Author: ${process.env.PR_AUTHOR}
 Description: ${process.env.PR_BODY || 'None provided'}
 
@@ -195,32 +249,61 @@ ${process.env.CHANGED_FILES}
 Diff (truncated):
 ${diff}
 
-DOCUMENTATION RULES
-1. You maintain a professional technical wiki — not a changelog. Every update must be useful to a developer joining the project tomorrow.
-2. Only update the **Technical** section. Never touch Product pages.
-3. Focus on changes that affect: component APIs and props, screen behavior, auth flow, API integration patterns, routing, provider hierarchy, theme system, conventions, or cross-repo contracts.
-4. Skip trivial changes: dependency bumps, formatting, minor CSS tweaks, test-only changes, internal refactors that don't change public APIs.
-5. When an existing page describes something this PR changed, use "correct" to flag the stale section — don't just append.
-6. Only "create" a new page when the PR introduces a genuinely new subsystem or pattern with no existing home.
-7. Place new pages under the correct parent in the hierarchy (e.g., client-specific docs under the Client section).
-8. Use "crosslink" when a client change affects the API contract or shared integration points (auth, WebSocket events, type generation).
+ACTIONS
+
+1. **update** — Append meaningful new content to an existing page. Write 2–6 sentences
+   that are specific and useful. Never write generic summaries — say exactly what changed
+   and why it matters. Use when the PR adds something new that the docs should reflect.
+
+2. **rewrite** — Replace the full content of an existing page with corrected, up-to-date
+   documentation. Use when a PR significantly changes the architecture or behavior that
+   a page describes, making the existing content misleading rather than just incomplete.
+   Write the complete page content — this replaces everything.
+
+3. **correct** — Flag a specific section of an existing page as stale and provide the
+   corrected version. Use for targeted fixes when most of the page is still accurate
+   but one section is now wrong.
+
+4. **create** — Create a new page only when the change introduces a concept, system,
+   or integration pattern that genuinely has no home in the existing structure.
+   Place it under the correct parent using parent_id from the tree above.
+
+5. **crosslink** — Add a cross-reference note to a page when a change in this repo
+   has implications for documentation in another section (e.g., a client auth change
+   that affects the system-wide Authentication page).
+
+6. **skip** — If the change is trivial (dependency bump, formatting, minor CSS,
+   test-only, internal refactor that doesn't change public behavior).
+
+HIERARCHY RULES
+- Changes to this repo's internals → under this repo's section in the tree
+- Changes to how repos communicate → under the system-wide section
+- Auth changes → system-wide auth page if cross-repo, repo-specific if isolated
+- New external service integration → system-wide or repo-specific depending on scope
+- Never create a page at root level unless it is a genuinely top-level concern
 
 WRITING STYLE
-- Write in present tense, third person ("The component accepts…", "Authentication uses…")
-- Be specific: name files, components, hooks, endpoints. No generic summaries.
-- 2–6 sentences per update. Dense and precise, not verbose.
-- Match the existing documentation tone: technical, direct, no fluff.
+- Present tense, third person ("The component accepts…", "Authentication uses…")
+- Name specific files, components, hooks, endpoints — no vague references
+- Dense and precise, not verbose. Every sentence must carry information.
+- Match the existing documentation tone: technical, direct, professional
 
 Respond ONLY in valid JSON (no markdown fences):
 {
   "meaningful": boolean,
-  "reasoning": "One sentence: why this PR does or does not warrant doc updates",
+  "reasoning": "One sentence: your architectural assessment of this change's documentation impact",
   "actions": [
     {
       "type": "update",
       "page_id": "id",
       "page_title": "title",
       "content": "Specific content to append"
+    },
+    {
+      "type": "rewrite",
+      "page_id": "id",
+      "page_title": "title",
+      "content": "Complete replacement content for the page"
     },
     {
       "type": "correct",
@@ -233,14 +316,14 @@ Respond ONLY in valid JSON (no markdown fences):
       "type": "create",
       "parent_id": "id",
       "title": "New Page Title",
-      "content": "Page content",
+      "content": "Page content written as living documentation",
       "links_to": ["related-page-id"]
     },
     {
       "type": "crosslink",
       "page_id": "id",
       "page_title": "title",
-      "note": "What changed and why the other section should know"
+      "note": "What changed and why this section should know"
     }
   ]
 }`;
@@ -248,7 +331,7 @@ Respond ONLY in valid JSON (no markdown fences):
   console.log('Asking Claude to assess documentation impact…');
   const response = await anthropic.messages.create({
     model: 'claude-sonnet-4-20250514',
-    max_tokens: 3000,
+    max_tokens: 4000,
     messages: [{ role: 'user', content: prompt }],
   });
 
@@ -271,38 +354,62 @@ Respond ONLY in valid JSON (no markdown fences):
 
   console.log(`Executing ${result.actions.length} action(s)…`);
 
+  const log = [];
+
   for (const action of result.actions) {
+    const label = action.page_title || action.title;
     try {
       switch (action.type) {
         case 'update':
-          console.log(`  Updating: "${action.page_title}"`);
-          await updatePage(action.page_id, action.page_title, action.content);
-          console.log(`  ✓ Updated`);
+          console.log(`  Updating: "${label}"`);
+          await updatePage(action.page_id, action.content);
+          log.push({ status: '✓', type: action.type, page: label, id: action.page_id, detail: action.content.slice(0, 120) });
+          break;
+        case 'rewrite':
+          console.log(`  Rewriting: "${label}"`);
+          await rewritePage(action.page_id, action.content);
+          log.push({ status: '✓', type: action.type, page: label, id: action.page_id, detail: `${action.content.length} chars` });
           break;
         case 'correct':
-          console.log(`  Correcting: "${action.page_title}" — ${action.stale_section}`);
-          await correctPage(action.page_id, action.page_title, action.stale_section, action.corrected_content);
-          console.log(`  ✓ Correction flagged`);
+          console.log(`  Correcting: "${label}" — ${action.stale_section}`);
+          await correctPage(action.page_id, action.stale_section, action.corrected_content);
+          log.push({ status: '✓', type: action.type, page: label, id: action.page_id, detail: action.stale_section });
           break;
-        case 'create':
-          console.log(`  Creating: "${action.title}"`);
+        case 'create': {
+          console.log(`  Creating: "${label}"`);
           const newId = await createPage(action.parent_id, action.title, action.content, action.links_to || []);
-          console.log(`  ✓ Created (${newId})`);
+          log.push({ status: '✓', type: action.type, page: label, id: newId, detail: `parent: ${action.parent_id}` });
           break;
+        }
         case 'crosslink':
-          console.log(`  Cross-linking: "${action.page_title}"`);
-          await crosslinkPage(action.page_id, action.page_title, action.note);
-          console.log(`  ✓ Cross-link added`);
+          console.log(`  Cross-linking: "${label}"`);
+          await crosslinkPage(action.page_id, action.note);
+          log.push({ status: '✓', type: action.type, page: label, id: action.page_id, detail: action.note.slice(0, 120) });
           break;
         default:
-          console.log(`  Skipping unknown action type: ${action.type}`);
+          console.log(`  Skipping unknown action: ${action.type}`);
+          continue;
       }
+      console.log(`  ✓ Done`);
     } catch (err) {
-      console.error(`  ✗ Failed ${action.type} on "${action.page_title || action.title}": ${err.message}`);
+      console.error(`  ✗ Failed ${action.type} on "${label}": ${err.message}`);
+      log.push({ status: '✗', type: action.type, page: label, id: action.page_id || action.parent_id, detail: err.message });
     }
   }
 
-  console.log('Done.');
+  // Summary
+  console.log('\n' + '='.repeat(60));
+  console.log('SYNC SUMMARY');
+  console.log('='.repeat(60));
+  console.log(`Change:    ${prRef()}: ${process.env.PR_TITLE}`);
+  console.log(`Reasoning: ${result.reasoning}`);
+  console.log(`Actions:   ${log.length}`);
+  console.log('');
+  for (const entry of log) {
+    console.log(`  ${entry.status} ${entry.type.padEnd(10)} "${entry.page}" [${entry.id}]`);
+    console.log(`    ${entry.detail}`);
+  }
+  console.log('='.repeat(60));
 }
 
 main().catch((err) => {
