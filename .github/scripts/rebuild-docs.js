@@ -23,8 +23,12 @@ const DOCS_INDEX_PATH = path.join(DOCS_DIR, '_index.json');
 const NOTION_TOOL = path.join(SCRIPTS_DIR, 'notion-tool.js');
 
 const CONCURRENCY = 5;
+// Page IDs that belong to other repos — exclude from docs bundle and index
+const EXCLUDE_PAGE_IDS = new Set([
+  '336c2628-ef95-81ce-bb28-c0060f125865', // API section root
+]);
 const WORKER_MAX_TURNS = 30;
-const MODEL = 'claude-sonnet-4-20250514';
+const MODEL = 'claude-sonnet-4-6';
 
 // ---------------------------------------------------------------------------
 // Phase A: Prepare
@@ -57,7 +61,7 @@ function generateManifest() {
   ].join('\n');
 }
 
-function buildDocsBundle() {
+function buildDocsBundle(excludeFiles = new Set()) {
   if (!fs.existsSync(DOCS_DIR)) return '';
 
   const mdFiles = [];
@@ -65,7 +69,10 @@ function buildDocsBundle() {
     for (const entry of fs.readdirSync(dir, { withFileTypes: true })) {
       const full = path.join(dir, entry.name);
       if (entry.isDirectory()) walk(full);
-      else if (entry.name.endsWith('.md')) mdFiles.push(full);
+      else if (entry.name.endsWith('.md')) {
+        const rel = path.relative(REPO_ROOT, full);
+        if (!excludeFiles.has(rel)) mdFiles.push(full);
+      }
     }
   }
   walk(DOCS_DIR);
@@ -103,17 +110,32 @@ async function prepare() {
   const manifest = generateManifest();
   console.log(`  Manifest: ${manifest.split('\n').length} lines`);
 
-  // 3. Build docs bundle
-  console.log('  Bundling documentation...');
-  const docsBundle = buildDocsBundle();
-  console.log(`  Docs bundle: ${Math.round(docsBundle.length / 1024)}KB`);
-
-  // 4. Read docs index
+  // 3. Read docs index, filtering out other-repo pages
   let docsIndex = [];
+  const excludeFiles = new Set();
   if (fs.existsSync(DOCS_INDEX_PATH)) {
-    docsIndex = JSON.parse(fs.readFileSync(DOCS_INDEX_PATH, 'utf8'));
+    const allPages = JSON.parse(fs.readFileSync(DOCS_INDEX_PATH, 'utf8'));
+    const excludedPaths = new Set();
+    for (const p of allPages) {
+      if (EXCLUDE_PAGE_IDS.has(p.id)) excludedPaths.add(p.path);
+    }
+    for (const p of allPages) {
+      const excluded = EXCLUDE_PAGE_IDS.has(p.id) || [...excludedPaths].some((prefix) => p.path.startsWith(prefix + ' > '));
+      if (excluded) {
+        if (p.file) excludeFiles.add(p.file);
+      } else {
+        docsIndex.push(p);
+      }
+    }
+    console.log(`  Docs index: ${docsIndex.length} pages (${excludeFiles.size} excluded)`);
+  } else {
+    console.log('  Docs index: 0 pages');
   }
-  console.log(`  Docs index: ${docsIndex.length} pages`);
+
+  // 4. Build docs bundle (excluding other-repo pages)
+  console.log('  Bundling documentation...');
+  const docsBundle = buildDocsBundle(excludeFiles);
+  console.log(`  Docs bundle: ${Math.round(docsBundle.length / 1024)}KB`);
 
   return { manifest, docsBundle, docsIndex };
 }
@@ -417,10 +439,10 @@ async function runWorkerAgent(task, manifest) {
       };
     }
 
-    // Carry forward Notion IDs from the plan
-    result.page_id = result.page_id || task.page_id;
-    result.parent_id = result.parent_id || task.parent_id;
-    result.title = result.title || task.title;
+    // Always use IDs from the plan — workers can't be trusted to echo them back
+    result.page_id = task.page_id || result.page_id;
+    result.parent_id = task.parent_id || result.parent_id;
+    result.title = task.title || result.title;
 
     return result;
   } catch (err) {
@@ -444,7 +466,13 @@ async function runTaskBatch(tasks, manifest) {
     for (const r of batchResults) {
       const status = r.skipped ? `skipped (${r.skip_reason})` : `${r.action} — ${r.summary}`;
       const mdLen = r.markdown ? `${Math.round(r.markdown.length / 1024)}KB` : '0KB';
-      const ids = [r.page_id && `page:${r.page_id}`, r.parent_id && `parent:${r.parent_id}`, r.title && `title:"${r.title}"`].filter(Boolean).join(', ');
+      const ids = [
+        r.page_id && `page:${r.page_id}`,
+        r.parent_id && `parent:${r.parent_id}`,
+        r.title && `title:"${r.title}"`,
+      ]
+        .filter(Boolean)
+        .join(', ');
       console.log(`    ${r.skipped ? '○' : '✓'} ${r.task_id}: ${status} [${mdLen}]${ids ? ` (${ids})` : ''}`);
     }
     results.push(...batchResults);
@@ -480,7 +508,7 @@ function resolveDependencies(dependentTasks, writeLog) {
   return dependentTasks.map((task) => {
     // Inject created page IDs into instructions
     const resolvedIds = (task.depends_on || [])
-      .map((depId) => createdIds[depId] ? `"${depId}" → page ID: ${createdIds[depId]}` : null)
+      .map((depId) => (createdIds[depId] ? `"${depId}" → page ID: ${createdIds[depId]}` : null))
       .filter(Boolean);
 
     if (resolvedIds.length > 0) {
@@ -533,7 +561,11 @@ function writeToNotion(results) {
 
         case 'create': {
           if (!result.title || !result.parent_id) {
-            writeLog.push({ task_id: result.task_id, status: 'error', error: `Missing title ("${result.title}") or parent_id ("${result.parent_id}")` });
+            writeLog.push({
+              task_id: result.task_id,
+              status: 'error',
+              error: `Missing title ("${result.title}") or parent_id ("${result.parent_id}")`,
+            });
             console.log(`    ✗ ${result.task_id}: create — missing title or parent_id`);
             continue;
           }
