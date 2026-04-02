@@ -157,6 +157,7 @@ export const LessonScreen = () => {
           onNext={nextLesson}
           onOpenSidebar={() => setSidebarOpen(true)}
           sidebarOpen={sidebarOpen}
+          isGenerationRunning={!!course.activeJobId}
         />
       </S.ContentSlot>
 

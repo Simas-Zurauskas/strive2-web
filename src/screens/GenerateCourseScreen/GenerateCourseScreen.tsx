@@ -271,6 +271,7 @@ const GenerateCourseWizard = ({ resumeCourse }: { resumeCourse: Course | null })
       {
         onSuccess: () => {
           queryClient.invalidateQueries({ queryKey: [QKeys.COURSES] });
+          queryClient.invalidateQueries({ queryKey: [QKeys.COURSE, courseId] });
           toast.success('Course is ready!');
           router.push(`/course/${courseId}`);
         },

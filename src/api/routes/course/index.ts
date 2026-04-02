@@ -111,6 +111,7 @@ export const generateLesson = (courseId: string, params: { moduleIndex: number; 
 // ── Lesson streaming ───────────────────────────────────
 
 export type LessonStreamEvent =
+  | { type: 'block'; block: LessonBlock }
   | { type: 'blocks'; blocks: LessonBlock[] }
   | { type: 'hero_image'; url: string }
   | { type: 'complete' }
@@ -118,7 +119,7 @@ export type LessonStreamEvent =
 
 export const streamLesson = async (
   courseId: string,
-  params: { moduleIndex: number; lessonIndex: number },
+  params: { moduleIndex: number; lessonIndex: number; includeImage?: boolean; includeLinks?: boolean },
   onEvent: (event: LessonStreamEvent) => void,
 ): Promise<void> => {
   const token = getAuthToken();
@@ -212,11 +213,18 @@ export interface LessonContentResponse {
   version: number;
 }
 
-export const getLessonContent = (courseId: string, moduleIndex: number, lessonIndex: number) => {
+export const getLessonContent = (courseId: string, moduleIndex: number, lessonIndex: number): Promise<LessonContentResponse | null> => {
   return client<{ data: LessonContentResponse }>({
     url: `/course/${courseId}/lesson-content/${moduleIndex}/${lessonIndex}`,
     method: 'GET',
-  }).then((res) => res.data.data);
+  })
+    .then((res) => res.data.data)
+    .catch((err) => {
+      // 404 = not generated yet — return null instead of throwing
+      // so React Query stays in success state and refetchInterval works
+      if (err?.message?.includes('not yet generated')) return null;
+      throw err;
+    });
 };
 
 // ── Chat history ────────────────────────────────────────

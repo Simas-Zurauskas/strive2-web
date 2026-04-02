@@ -151,6 +151,11 @@ export const JobManagerProvider = ({ children }: { children: React.ReactNode }) 
       );
       queryClient.invalidateQueries({ queryKey: [QKeys.COURSE, event.courseId] });
       queryClient.invalidateQueries({ queryKey: [QKeys.COURSES] });
+
+      // Invalidate lesson content when lesson generation completes (covers page-reload case)
+      if (event.type === 'generate_lesson' && event.status === 'completed') {
+        queryClient.invalidateQueries({ queryKey: [QKeys.LESSON_CONTENT] });
+      }
     };
 
     socket.on('job:started', handleStarted);

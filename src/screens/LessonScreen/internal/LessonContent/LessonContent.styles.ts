@@ -62,6 +62,36 @@ export const HeroImage = styled.img`
   border-radius: 12px;
   object-fit: cover;
   max-height: 280px;
+  aspect-ratio: 16 / 9;
+`;
+
+export const HeroImageSkeleton = styled.div`
+  width: 100%;
+  border-radius: 12px;
+  aspect-ratio: 16 / 9;
+  max-height: 280px;
+  background: ${(p) => p.theme.colors.surface};
+  border: 1px solid ${(p) => p.theme.colors.border};
+  overflow: hidden;
+  position: relative;
+
+  &::after {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background: linear-gradient(
+      90deg,
+      transparent 0%,
+      ${(p) => p.theme.colors.background}40 50%,
+      transparent 100%
+    );
+    animation: shimmer 1.5s infinite;
+  }
+
+  @keyframes shimmer {
+    0% { transform: translateX(-100%); }
+    100% { transform: translateX(100%); }
+  }
 `;
 
 export const Title = styled.h1`
@@ -104,6 +134,30 @@ export const GeneratingText = styled.p`
   color: ${(p) => p.theme.colors.accent};
   text-align: center;
   font-weight: 500;
+`;
+
+export const GenerateOptions = styled.div`
+  display: flex;
+  gap: 1rem;
+  align-items: center;
+`;
+
+export const ToggleLabel = styled.label`
+  display: flex;
+  align-items: center;
+  gap: 0.375rem;
+  font-size: 0.8125rem;
+  color: ${(p) => p.theme.colors.muted};
+  cursor: pointer;
+
+  input[type='checkbox'] {
+    accent-color: ${(p) => p.theme.colors.accent};
+    cursor: pointer;
+  }
+
+  &:hover {
+    color: ${(p) => p.theme.colors.foreground};
+  }
 `;
 
 export const StreamingIndicator = styled.div`

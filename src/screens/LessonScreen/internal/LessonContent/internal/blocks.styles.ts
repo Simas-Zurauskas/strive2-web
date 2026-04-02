@@ -106,6 +106,7 @@ export const SectionContent = styled.div`
     font-weight: 600;
   }
 
+
   tr:nth-child(even) {
     background: ${(p) => `${p.theme.colors.surface}80`};
   }

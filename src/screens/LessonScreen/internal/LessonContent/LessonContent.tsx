@@ -27,6 +27,7 @@ interface LessonContentProps {
   onNext: () => void;
   onOpenSidebar: () => void;
   sidebarOpen: boolean;
+  isGenerationRunning: boolean;
 }
 
 export const LessonContent = ({
@@ -41,10 +42,11 @@ export const LessonContent = ({
   onNext,
   onOpenSidebar,
   sidebarOpen,
+  isGenerationRunning,
 }: LessonContentProps) => {
   const queryClient = useQueryClient();
 
-  const { data: lessonContent, isLoading: isLoadingContent } = useLessonContent(courseId, moduleIndex, lessonIndex);
+  const { data: lessonContent, isLoading: isLoadingContent } = useLessonContent(courseId, moduleIndex, lessonIndex, isGenerationRunning);
   const hasContent = !!lessonContent?.blocks?.length;
 
   // Streaming state
@@ -53,6 +55,10 @@ export const LessonContent = ({
   const [streamImage, setStreamImage] = useState<string | null>(null);
   const [isStarting, setIsStarting] = useState(false);
   const abortRef = useRef<AbortController | null>(null);
+
+  // Generation options
+  const [includeImage, setIncludeImage] = useState(true);
+  const [includeLinks, setIncludeLinks] = useState(true);
 
   const handleGenerate = useCallback(async () => {
     if (isStreaming || isStarting) return;
@@ -65,8 +71,11 @@ export const LessonContent = ({
       setIsStreaming(true);
       setIsStarting(false);
 
-      await streamLesson(courseId, { moduleIndex, lessonIndex }, (event) => {
+      await streamLesson(courseId, { moduleIndex, lessonIndex, includeImage, includeLinks }, (event) => {
         switch (event.type) {
+          case 'block':
+            setStreamBlocks((prev) => [...prev, event.block]);
+            break;
           case 'blocks':
             setStreamBlocks((prev) => [...prev, ...event.blocks]);
             break;
@@ -88,11 +97,11 @@ export const LessonContent = ({
       setIsStarting(false);
       toast.error('Generation failed');
     }
-  }, [courseId, moduleIndex, lessonIndex, isStreaming, isStarting, queryClient]);
+  }, [courseId, moduleIndex, lessonIndex, isStreaming, isStarting, includeImage, includeLinks, queryClient]);
 
-  // Determine what to render
+  // Determine what to render — stream image takes priority (arrives before DB save)
   const showStreamContent = isStreaming && streamBlocks.length > 0;
-  const heroImage = hasContent ? lessonContent?.heroImageUrl : streamImage;
+  const heroImage = streamImage || lessonContent?.heroImageUrl || null;
   const blocks = hasContent ? lessonContent.blocks : showStreamContent ? streamBlocks : null;
 
   return (
@@ -111,31 +120,45 @@ export const LessonContent = ({
         </S.Breadcrumb>
       </S.TopRow>
 
-      {/* Hero image */}
-      {heroImage && <S.HeroImage src={heroImage} alt={lesson.name} />}
+      {/* Hero image / skeleton */}
+      {heroImage ? (
+        <S.HeroImage src={heroImage} alt={lesson.name} />
+      ) : (isStreaming || isStarting || isGenerationRunning) && includeImage ? (
+        <S.HeroImageSkeleton />
+      ) : null}
 
       <S.Title>{lesson.name}</S.Title>
 
-      {/* Content area */}
+      {/* Content area — priority: saved content > streaming > loading > generate button */}
       {blocks ? (
         <>
           <BlockRenderer blocks={blocks} />
-          {isStreaming && <S.StreamingIndicator>Still generating...</S.StreamingIndicator>}
+          {(isStreaming || isGenerationRunning) && <S.StreamingIndicator>Still generating...</S.StreamingIndicator>}
         </>
       ) : isStreaming || isStarting ? (
+        <S.StreamingIndicator>Still generating...</S.StreamingIndicator>
+      ) : isLoadingContent ? (
         <S.Placeholder>
-          <S.GeneratingText>Generating lesson content...</S.GeneratingText>
+          <S.GeneratingText>Loading...</S.GeneratingText>
         </S.Placeholder>
       ) : (
         <S.Placeholder>
-          {isLoadingContent ? (
-            <S.PlaceholderText>Loading...</S.PlaceholderText>
-          ) : (
-            <>
-              <S.PlaceholderText>{lesson.description}</S.PlaceholderText>
-              <Button onClick={handleGenerate}>Generate this lesson</Button>
-            </>
-          )}
+          <S.PlaceholderText>{lesson.description}</S.PlaceholderText>
+
+          <S.GenerateOptions>
+            <S.ToggleLabel>
+              <input type="checkbox" checked={includeImage} onChange={(e) => setIncludeImage(e.target.checked)} />
+              Hero image
+            </S.ToggleLabel>
+            <S.ToggleLabel>
+              <input type="checkbox" checked={includeLinks} onChange={(e) => setIncludeLinks(e.target.checked)} />
+              Further reading
+            </S.ToggleLabel>
+          </S.GenerateOptions>
+
+          <Button onClick={handleGenerate} disabled={isGenerationRunning}>
+            {isGenerationRunning ? 'Another lesson is generating...' : 'Generate this lesson'}
+          </Button>
         </S.Placeholder>
       )}
 
