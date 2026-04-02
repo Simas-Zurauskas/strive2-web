@@ -441,6 +441,12 @@ async function runTaskBatch(tasks, manifest) {
     const batch = tasks.slice(i, i + CONCURRENCY);
     console.log(`  Running workers ${i + 1}-${i + batch.length} of ${tasks.length}...`);
     const batchResults = await Promise.all(batch.map((t) => runWorkerAgent(t, manifest)));
+    for (const r of batchResults) {
+      const status = r.skipped ? `skipped (${r.skip_reason})` : `${r.action} — ${r.summary}`;
+      const mdLen = r.markdown ? `${Math.round(r.markdown.length / 1024)}KB` : '0KB';
+      const ids = [r.page_id && `page:${r.page_id}`, r.parent_id && `parent:${r.parent_id}`, r.title && `title:"${r.title}"`].filter(Boolean).join(', ');
+      console.log(`    ${r.skipped ? '○' : '✓'} ${r.task_id}: ${status} [${mdLen}]${ids ? ` (${ids})` : ''}`);
+    }
     results.push(...batchResults);
   }
   return results;
@@ -526,6 +532,11 @@ function writeToNotion(results) {
           break;
 
         case 'create': {
+          if (!result.title || !result.parent_id) {
+            writeLog.push({ task_id: result.task_id, status: 'error', error: `Missing title ("${result.title}") or parent_id ("${result.parent_id}")` });
+            console.log(`    ✗ ${result.task_id}: create — missing title or parent_id`);
+            continue;
+          }
           const title = result.title.replace(/"/g, '\\"');
           output = execSync(`${tool} create ${result.parent_id} "${title}" ${tmpFile}`, { env, encoding: 'utf8' });
           const match = output.match(/\[([a-f0-9-]+)\]/);
@@ -540,6 +551,11 @@ function writeToNotion(results) {
           break;
 
         case 'rename': {
+          if (!result.title || !result.page_id) {
+            writeLog.push({ task_id: result.task_id, status: 'error', error: `Missing title or page_id` });
+            console.log(`    ✗ ${result.task_id}: rename — missing title or page_id`);
+            continue;
+          }
           const newTitle = result.title.replace(/"/g, '\\"');
           output = execSync(`${tool} rename ${result.page_id} "${newTitle}"`, { env, encoding: 'utf8' });
           writeLog.push({ task_id: result.task_id, status: 'success', action: 'rename' });
