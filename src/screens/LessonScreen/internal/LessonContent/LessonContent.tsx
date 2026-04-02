@@ -1,11 +1,11 @@
 'use client';
 
-import { useMutation, useQueryClient } from '@tanstack/react-query';
-import { useState } from 'react';
-import { generateLesson } from '@/api/routes/course';
+import { useQueryClient } from '@tanstack/react-query';
+import { useCallback, useRef, useState } from 'react';
+import { toast } from 'sonner';
+import { streamLesson, LessonBlock } from '@/api/routes/course';
 import { Button } from '@/components';
 import { useLessonContent } from '@/hooks/useLessonContent';
-import { useJobManager } from '@/hooks/useJobManager';
 import { QKeys } from '@/types';
 import { BlockRenderer } from './internal';
 import * as S from './LessonContent.styles';
@@ -43,33 +43,57 @@ export const LessonContent = ({
   sidebarOpen,
 }: LessonContentProps) => {
   const queryClient = useQueryClient();
-  const { trackJob, isJobRunningForCourse } = useJobManager();
-  const [isGenerating, setIsGenerating] = useState(false);
 
   const { data: lessonContent, isLoading: isLoadingContent } = useLessonContent(courseId, moduleIndex, lessonIndex);
-  const isJobRunning = isJobRunningForCourse(courseId);
   const hasContent = !!lessonContent?.blocks?.length;
 
-  const generateMutation = useMutation({
-    mutationFn: () => generateLesson(courseId, { moduleIndex, lessonIndex }),
-    onSuccess: (data) => {
-      setIsGenerating(true);
-      trackJob({
-        jobId: data.jobId,
-        courseId,
-        type: 'generate_lesson',
-        onComplete: () => {
-          setIsGenerating(false);
-          queryClient.invalidateQueries({ queryKey: [QKeys.LESSON_CONTENT, courseId, moduleIndex, lessonIndex] });
-        },
-      });
-    },
-  });
+  // Streaming state
+  const [isStreaming, setIsStreaming] = useState(false);
+  const [streamBlocks, setStreamBlocks] = useState<LessonBlock[]>([]);
+  const [streamImage, setStreamImage] = useState<string | null>(null);
+  const [isStarting, setIsStarting] = useState(false);
+  const abortRef = useRef<AbortController | null>(null);
 
-  const handleGenerate = () => {
-    if (isJobRunning || generateMutation.isPending) return;
-    generateMutation.mutate();
-  };
+  const handleGenerate = useCallback(async () => {
+    if (isStreaming || isStarting) return;
+
+    setIsStarting(true);
+    setStreamBlocks([]);
+    setStreamImage(null);
+
+    try {
+      setIsStreaming(true);
+      setIsStarting(false);
+
+      await streamLesson(courseId, { moduleIndex, lessonIndex }, (event) => {
+        switch (event.type) {
+          case 'blocks':
+            setStreamBlocks((prev) => [...prev, ...event.blocks]);
+            break;
+          case 'hero_image':
+            setStreamImage(event.url);
+            break;
+          case 'complete':
+            setIsStreaming(false);
+            queryClient.invalidateQueries({ queryKey: [QKeys.LESSON_CONTENT, courseId, moduleIndex, lessonIndex] });
+            break;
+          case 'error':
+            setIsStreaming(false);
+            toast.error(event.message || 'Generation failed');
+            break;
+        }
+      });
+    } catch {
+      setIsStreaming(false);
+      setIsStarting(false);
+      toast.error('Generation failed');
+    }
+  }, [courseId, moduleIndex, lessonIndex, isStreaming, isStarting, queryClient]);
+
+  // Determine what to render
+  const showStreamContent = isStreaming && streamBlocks.length > 0;
+  const heroImage = hasContent ? lessonContent?.heroImageUrl : streamImage;
+  const blocks = hasContent ? lessonContent.blocks : showStreamContent ? streamBlocks : null;
 
   return (
     <S.Container>
@@ -88,38 +112,28 @@ export const LessonContent = ({
       </S.TopRow>
 
       {/* Hero image */}
-      {lessonContent?.heroImageUrl && (
-        <S.HeroImage src={lessonContent.heroImageUrl} alt={lesson.name} />
-      )}
+      {heroImage && <S.HeroImage src={heroImage} alt={lesson.name} />}
 
       <S.Title>{lesson.name}</S.Title>
 
-      {/* Content area — 3 states */}
-      {hasContent ? (
-        // State C: Content exists — render blocks
-        <BlockRenderer blocks={lessonContent.blocks} />
-      ) : isGenerating ? (
-        // State B: Currently generating
+      {/* Content area */}
+      {blocks ? (
+        <>
+          <BlockRenderer blocks={blocks} />
+          {isStreaming && <S.StreamingIndicator>Still generating...</S.StreamingIndicator>}
+        </>
+      ) : isStreaming || isStarting ? (
         <S.Placeholder>
           <S.GeneratingText>Generating lesson content...</S.GeneratingText>
         </S.Placeholder>
       ) : (
-        // State A: No content yet
         <S.Placeholder>
           {isLoadingContent ? (
             <S.PlaceholderText>Loading...</S.PlaceholderText>
           ) : (
             <>
-              <S.PlaceholderText>
-                {lesson.description}
-              </S.PlaceholderText>
-              <Button
-                onClick={handleGenerate}
-                loading={generateMutation.isPending}
-                disabled={isJobRunning}
-              >
-                Generate this lesson
-              </Button>
+              <S.PlaceholderText>{lesson.description}</S.PlaceholderText>
+              <Button onClick={handleGenerate}>Generate this lesson</Button>
             </>
           )}
         </S.Placeholder>

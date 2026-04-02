@@ -1,5 +1,6 @@
 import { paths } from '@/api/_generated';
-import { client } from '@/api/client';
+import { client, getAuthToken } from '@/api/client';
+import { NEXT_PUBLIC_API_URL } from '@/conf/env';
 
 // ── Course CRUD ─────────────────────────────────────────
 
@@ -105,6 +106,74 @@ export const generateLesson = (courseId: string, params: { moduleIndex: number; 
     method: 'POST',
     data: params,
   }).then((res) => res.data.data);
+};
+
+// ── Lesson streaming ───────────────────────────────────
+
+export type LessonStreamEvent =
+  | { type: 'blocks'; blocks: LessonBlock[] }
+  | { type: 'hero_image'; url: string }
+  | { type: 'complete' }
+  | { type: 'error'; message: string };
+
+export const streamLesson = async (
+  courseId: string,
+  params: { moduleIndex: number; lessonIndex: number },
+  onEvent: (event: LessonStreamEvent) => void,
+): Promise<void> => {
+  const token = getAuthToken();
+
+  const response = await fetch(`${NEXT_PUBLIC_API_URL}/api/course/${courseId}/stream-lesson`, {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      ...(token && { Authorization: `Bearer ${token}` }),
+    },
+    body: JSON.stringify(params),
+  });
+
+  if (!response.ok) {
+    const text = await response.text();
+    let message = 'Generation failed';
+    try { message = JSON.parse(text).message ?? message; } catch { /* ignore */ }
+    onEvent({ type: 'error', message });
+    return;
+  }
+
+  const reader = response.body?.getReader();
+  if (!reader) {
+    onEvent({ type: 'error', message: 'No response stream' });
+    return;
+  }
+
+  const decoder = new TextDecoder();
+  let buffer = '';
+
+  while (true) {
+    const { done, value } = await reader.read();
+    if (done) break;
+
+    buffer += decoder.decode(value, { stream: true });
+
+    // Parse SSE lines: "data: {...}\n\n"
+    const lines = buffer.split('\n');
+    buffer = lines.pop() ?? ''; // keep incomplete line in buffer
+
+    for (const line of lines) {
+      const trimmed = line.trim();
+      if (!trimmed || !trimmed.startsWith('data: ')) continue;
+
+      const json = trimmed.slice(6); // strip "data: "
+      if (json === '[DONE]') continue;
+
+      try {
+        const event = JSON.parse(json) as LessonStreamEvent;
+        onEvent(event);
+      } catch {
+        // ignore malformed events
+      }
+    }
+  }
 };
 
 // ── Code execution ─────────────────────────────────────

@@ -1,0 +1,62 @@
+# yaml-language-server: $schema=https://json.schemastore.org/github-workflow.json
+name: Sync to Notion on merge
+
+on:
+  pull_request:
+    types: [closed]
+    branches: [main]
+
+env:
+  REPO_DESCRIPTION: 'Frontend Next.js application for the Strive dashboard'
+
+jobs:
+  sync-to-notion:
+    if: github.event.pull_request.merged == true
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Get PR info and diff
+        id: pr_info
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          git diff origin/main~1..origin/main -- . \
+            ':(exclude)package-lock.json' \
+            ':(exclude)*.lock' \
+            ':(exclude)*.snap' | head -c 12000 > /tmp/pr_diff.txt
+
+          echo "pr_title=${{ github.event.pull_request.title }}" >> $GITHUB_OUTPUT
+          echo "pr_author=${{ github.event.pull_request.user.login }}" >> $GITHUB_OUTPUT
+
+          echo "changed_files<<EOF" >> $GITHUB_OUTPUT
+          gh pr view ${{ github.event.pull_request.number }} --repo ${{ github.repository }} --json files --jq '.files[].path' | head -50 >> $GITHUB_OUTPUT
+          echo "EOF" >> $GITHUB_OUTPUT
+
+          echo "pr_body<<EOF" >> $GITHUB_OUTPUT
+          echo "${{ github.event.pull_request.body }}" >> $GITHUB_OUTPUT
+          echo "EOF" >> $GITHUB_OUTPUT
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
+      - name: Install dependencies
+        run: npm install @anthropic-ai/sdk @notionhq/client
+
+      - name: Run Claude + Notion sync
+        env:
+          ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
+          NOTION_API_KEY: ${{ secrets.NOTION_API_KEY }}
+          NOTION_DOCS_ROOT_PAGE_ID: ${{ secrets.NOTION_DOCS_ROOT_PAGE_ID }}
+          REPO_DESCRIPTION: ${{ env.REPO_DESCRIPTION }}
+          PR_TITLE: ${{ steps.pr_info.outputs.pr_title }}
+          PR_AUTHOR: ${{ steps.pr_info.outputs.pr_author }}
+          PR_BODY: ${{ steps.pr_info.outputs.pr_body }}
+          CHANGED_FILES: ${{ steps.pr_info.outputs.changed_files }}
+          PR_NUMBER: ${{ github.event.pull_request.number }}
+          REPO_NAME: ${{ github.repository }}
+        run: node .github/scripts/notion-sync.js
