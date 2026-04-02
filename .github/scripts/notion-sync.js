@@ -1,6 +1,7 @@
 const fs = require('fs');
 const Anthropic = require('@anthropic-ai/sdk');
 const { Client } = require('@notionhq/client');
+const { markdownToBlocks } = require('@tryfabric/martian');
 
 const anthropic = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY });
 const notion = new Client({ auth: process.env.NOTION_API_KEY });
@@ -169,9 +170,8 @@ async function rewritePage(pageId, content) {
     cursor = res.next_cursor;
   } while (cursor);
 
-  // Split content into paragraphs and write as blocks
-  const paragraphs = content.split('\n\n').filter(Boolean);
-  const children = paragraphs.map((p) => textBlock(p));
+  // Convert markdown to Notion blocks (preserves formatting)
+  const children = markdownToBlocks(content);
   children.push(metaBlock(`Rewritten: ${changeMeta()}`));
 
   // Notion limits appending to 100 blocks at a time
@@ -417,12 +417,25 @@ Respond ONLY in valid JSON (no markdown fences):
     return;
   }
 
+  // Validate page_ids against the fetched tree to catch hallucinated IDs
+  const validIds = new Set(existingPages.map((p) => p.id));
+  validIds.add(rootId);
+
   console.log(`Executing ${result.actions.length} action(s)…`);
 
   const log = [];
 
   for (const action of result.actions) {
     const label = action.page_title || action.title;
+
+    // Validate page_id / parent_id exists in the tree
+    const targetId = action.page_id || action.parent_id;
+    if (targetId && !validIds.has(targetId)) {
+      console.warn(`  ⚠ Skipping ${action.type} on "${label}": page_id ${targetId} not found in Notion tree`);
+      log.push({ status: '⚠', type: action.type, page: label, id: targetId, detail: 'Invalid page_id — not in tree' });
+      continue;
+    }
+
     try {
       switch (action.type) {
         case 'update':

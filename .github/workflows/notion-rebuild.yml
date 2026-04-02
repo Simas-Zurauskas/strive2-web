@@ -9,9 +9,9 @@ permissions:
   id-token: write
 
 jobs:
-  audit:
+  rebuild:
     runs-on: ubuntu-latest
-    timeout-minutes: 30
+    timeout-minutes: 60
     env:
       FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
     steps:
@@ -33,172 +33,206 @@ jobs:
           NOTION_TECHNICAL_ROOT_ID: ${{ secrets.NOTION_TECHNICAL_ROOT_ID }}
         run: node fetch-notion-docs.js
 
+      - name: Generate codebase manifest
+        run: |
+          {
+            echo "# Codebase Manifest"
+            echo ""
+            echo "## All TypeScript/TSX files"
+            echo '```'
+            find src -type f \( -name "*.ts" -o -name "*.tsx" \) | grep -v '_generated' | sort
+            echo '```'
+            echo ""
+            echo "## Directory tree (depth 3)"
+            echo '```'
+            find src -type d -maxdepth 3 | sort
+            echo '```'
+            echo ""
+            echo "## Barrel files (index.ts)"
+            echo '```'
+            find src -name "index.ts" -o -name "index.tsx" | sort
+            echo '```'
+            echo ""
+            echo "## Config files"
+            echo '```'
+            ls -la next.config.* tsconfig.json package.json 2>/dev/null
+            echo '```'
+          } > _manifest.md
+          echo "Manifest generated: $(wc -l < _manifest.md) lines"
+
       - name: Rebuild documentation
         uses: anthropics/claude-code-action@v1
         with:
           anthropic_api_key: ${{ secrets.ANTHROPIC_API_KEY }}
           show_full_output: true
+          display_report: true
           claude_args: "--max-turns 200 --model claude-sonnet-4-20250514 --allowedTools 'Read,Glob,Grep,Bash(*)'"
           prompt: |
-            You are a technical documentation engine for Strive — an AI-powered personalized
-            learning platform. Your job is to make the Notion technical wiki fully accurate
-            and complete by auditing the codebase and executing all necessary documentation
-            updates.
+            You are a technical documentation engine. Your job: audit the Client codebase
+            against its Notion documentation and execute all necessary updates — rewrites,
+            creates, deletes — until the wiki is fully accurate and complete.
 
-            ## Project
+            ## Project context
 
-            Two independent repositories:
-            - **API** (Express 5, Node 22, MongoDB, LangGraph) — REST API, auth, AI generation. Separate repo, NOT here.
-            - **Client** (Next.js 16, React 19, styled-components, NextAuth) — web app. THIS repo.
+            Strive is an AI-powered learning platform with two repositories:
+            - **API** (Express 5, Node 22, MongoDB, LangGraph) — NOT available here
+            - **Client** (Next.js 16, React 19, styled-components, NextAuth) — THIS repo
 
-            They communicate via REST (OpenAPI contract, codegen types) and WebSocket (Socket.IO).
+            They communicate via REST (OpenAPI, codegen types) and WebSocket (Socket.IO).
 
-            ## Documentation Philosophy
+            ## Documentation philosophy
 
-            This is a professional technical wiki for developers and AI agents working on the codebase.
-            Every page must earn its place. Document architecture decisions, data flows, integration
-            points, gotchas, configuration, and non-obvious patterns. Do not restate obvious code.
-            Cross-repository concerns (auth, data contracts, WebSocket events) are first-class topics.
+            This wiki serves developers and AI agents. Every page must earn its place.
+            Document architecture decisions, data flows, integration points, gotchas, and
+            configuration. Do not restate obvious code. Cross-repo concerns (auth, data
+            contracts, WebSocket events) are first-class topics.
 
-            ## Tools
+            ## Available tools
 
-            ### Reading the codebase
-            Use Read, Glob, Grep to explore `src/`. Skip `src/api/_generated.ts` (auto-generated).
+            ### Reading
 
-            ### Reading current documentation
-            Documentation has been fetched from Notion to `_docs/` as markdown files.
-            Read `_docs/_index.json` for the page tree (includes Notion page IDs).
-            Read individual files in `_docs/` for page content.
+            **Codebase manifest** (pre-generated):
+            - `_manifest.md` — complete file listing, directory tree, barrel files. READ THIS FIRST.
+
+            **Current documentation** (fetched from Notion):
+            - `_docs/_index.json` — page tree with Notion page IDs
+            - `_docs/**/*.md` — page content as markdown
+
+            **Source code** — use Read, Glob, Grep:
+            - `Glob("src/**/*.ts")` or `Glob("src/hooks/**/*.tsx")` — ALWAYS use wildcards
+            - `Grep("useAuth", type="ts")` — find usage across codebase
+            - `Read` — read specific files. Batch 3-5 parallel Read calls per turn.
+            - Skip `src/api/_generated.ts` (auto-generated)
+
+            **WRONG tool usage** (wastes turns):
+            - `Glob("src")` or `Glob("src/hooks")` — matches nothing without wildcards
+            - Reading files one at a time — always batch parallel reads
+            - Using Read to list directories — use `Bash("ls src/screens/")` instead
 
             ### Writing to Notion
-            Use these commands to update Notion pages. Write markdown content to a temp file first,
-            then pass the file path. The tool converts markdown to Notion blocks (headings, lists,
-            code blocks, tables, callouts, quotes, dividers all supported).
+
+            Write markdown to a temp file, then call notion-tool.js:
 
             ```bash
-            # List all pages with IDs (if you need the current tree)
+            # List all pages with IDs
             NOTION_API_KEY="${{ secrets.NOTION_API_KEY }}" NOTION_TECHNICAL_ROOT_ID="${{ secrets.NOTION_TECHNICAL_ROOT_ID }}" node .github/scripts/notion-tool.js list
 
-            # Replace entire page content (use when page needs significant rewrite)
+            # Replace entire page content
             NOTION_API_KEY="${{ secrets.NOTION_API_KEY }}" node .github/scripts/notion-tool.js rewrite <page_id> /tmp/content.md
 
-            # Append content to bottom of page (use for additions)
+            # Append content to page
             NOTION_API_KEY="${{ secrets.NOTION_API_KEY }}" node .github/scripts/notion-tool.js append <page_id> /tmp/content.md
 
-            # Create a new child page under a parent
+            # Create new child page
             NOTION_API_KEY="${{ secrets.NOTION_API_KEY }}" NOTION_TECHNICAL_ROOT_ID="${{ secrets.NOTION_TECHNICAL_ROOT_ID }}" node .github/scripts/notion-tool.js create <parent_id> "Page Title" /tmp/content.md
 
-            # Archive (soft-delete) a page
+            # Archive (delete) a page
             NOTION_API_KEY="${{ secrets.NOTION_API_KEY }}" node .github/scripts/notion-tool.js delete <page_id>
 
             # Rename a page
             NOTION_API_KEY="${{ secrets.NOTION_API_KEY }}" node .github/scripts/notion-tool.js rename <page_id> "New Title"
             ```
 
-            ## Process — follow these phases in order
+            The tool converts markdown to Notion blocks. Supports: headings, bullet/numbered
+            lists, code blocks, tables (GFM), blockquotes, dividers, inline formatting
+            (bold, italic, code, links).
 
-            ### Phase 1: Read everything
+            ---
 
-            Read ALL documentation pages in `_docs/` and ALL relevant source files. Be exhaustive.
-            Build a complete mental map of what the docs claim vs what the code actually does.
+            ## Process — follow these phases strictly
 
-            Codebase areas to scan:
-            - `src/app/` — routes, layouts, middleware
-            - `src/screens/` — screen components
-            - `src/components/` — shared UI components
-            - `src/hooks/` — custom hooks
-            - `src/api/` — API route functions and client setup
+            ### Phase 1: Map (2-3 turns max)
+
+            1. Read `_manifest.md` and `_docs/_index.json` in parallel.
+            2. Read ALL doc files from `_docs/` in batches of 4-5 per turn.
+            3. You now have the full picture: every source file path and every doc page.
+
+            ### Phase 2: Verify (bulk of your work)
+
+            For each documentation page, verify every claim against the source code:
+
+            1. **Read the doc page** (already done in Phase 1)
+            2. **Read the corresponding source files** — batch 3-5 per turn
+            3. **Check every claim**: file paths, component names, props, hook signatures,
+               route functions, theme tokens, CSS variables, provider hierarchy, auth flow,
+               codegen pipeline. Every claim must match the code.
+            4. **Note discrepancies**: wrong paths, missing components, outdated behavior,
+               new code without docs
+
+            Areas to verify systematically:
+            - `src/app/` — routes, layouts, page files, middleware
+            - `src/screens/` — all screen components
+            - `src/components/` — shared UI components, props, variants
+            - `src/hooks/` — custom hooks, signatures, return types
+            - `src/api/` — route functions, client config, interceptors
             - `src/validation/` — Yup schemas
-            - `src/providers/` or `src/app/_registry/` — provider hierarchy
-            - `src/middleware.ts` — edge middleware
-            - `src/styles/` or theme files — design tokens, CSS variables
-            - `next.config.*` and `package.json` — build config, codegen setup
+            - `src/app/_registry/` — provider hierarchy
+            - `src/middleware.ts` — edge middleware config
+            - `src/theme/` — design tokens, CSS variables, color system
+            - `next.config.*`, `package.json` — build config, codegen
 
-            ### Phase 2: Plan
+            ### Phase 3: Plan
 
-            Before making ANY changes, create a comprehensive plan. Write it out explicitly.
-            For each documentation page, decide one of:
+            Before making ANY changes, write out your complete plan as a message.
+            For each documentation page, decide:
+            - **rewrite** — significantly wrong or outdated, needs fresh content
+            - **append** — mostly accurate but missing new content
+            - **create** — codebase has a concept with no documentation page
+            - **delete** — documents something that no longer exists
+            - **rename** — title is wrong or misleading
+            - **accurate** — checks out, no changes needed
 
-            - **rewrite** — Page content is significantly wrong or outdated. Write fresh content.
-            - **append** — Page is mostly accurate but missing new content. Add what's missing.
-            - **create** — Codebase has a concept/system with no documentation page. Write one.
-            - **delete** — Page documents something that no longer exists.
-            - **rename** — Page title is wrong or misleading.
-            - **accurate** — Page checks out, no changes needed.
+            Prioritize: critical inaccuracies > missing core docs > minor updates.
 
-            Prioritize: critical inaccuracies > missing core documentation > minor updates.
+            ### Phase 4: Execute
 
-            ### Phase 3: Execute
-
-            Work through the plan systematically. For each change:
-            1. Write the markdown content to a temp file (e.g., /tmp/page_content.md)
+            Work through the plan. For each change:
+            1. Write complete markdown content to `/tmp/<page_name>.md`
             2. Call the appropriate notion-tool.js command
-            3. Verify it succeeded (check the output)
+            3. Verify it succeeded (check output for ✓)
 
-            #### Writing standards for documentation pages
+            When rewriting, write the COMPLETE page — not just changed sections.
 
-            Each page should follow this structure where applicable:
-            - **Purpose** — one paragraph explaining what this covers and why it matters
-            - **Architecture / How it works** — the core technical content
-            - **Key files** — table of important file paths with descriptions
-            - **Integration points** — how this connects to other parts of the system
-            - **Configuration** — env vars, feature flags, settings
-            - **Gotchas** — non-obvious behavior, known limitations, common mistakes
+            ### Documentation page structure
 
-            Writing style:
-            - Present tense, third person ("The component accepts…", "Authentication uses…")
-            - Name specific files, components, hooks, endpoints — no vague references
-            - Dense and precise. Every sentence must carry information.
-            - Use code blocks for file paths, component names, env vars
+            Each page should include (where applicable):
+            - **Purpose** — one paragraph on what this covers and why
+            - **How it works** — core technical content, architecture
+            - **Key files** — table of file paths with descriptions
+            - **Integration points** — connections to other systems
+            - **Configuration** — env vars, feature flags
+            - **Gotchas** — non-obvious behavior, limitations
+
+            ### Writing standards
+
+            - Present tense, third person ("The component accepts…")
+            - Name specific files, components, hooks, endpoints
+            - Dense and precise — every sentence carries information
+            - Use code blocks for paths, component names, env vars
             - Use tables for structured data (props, routes, env vars)
             - Technical, direct, professional tone
 
-            ### Phase 4: Report
+            ### Quality criteria (every page must pass all three)
 
-            After all changes are executed, write a summary to $GITHUB_STEP_SUMMARY:
+            **COMPLETE**: All public functions, hooks, components, routes documented.
+            No significant code exists without documentation.
 
-            ```bash
-            cat <<'SUMMARY' >> "$GITHUB_STEP_SUMMARY"
-            # Documentation Rebuild Report
-            **Date**: YYYY-MM-DD
-            **Pages rewritten**: N
-            **Pages updated**: N
-            **Pages created**: N
-            **Pages deleted**: N
-            **Pages accurate (no changes)**: N
+            **HELPFUL**: Explains why, not just what. Includes gotchas, integration
+            points, and context a new developer needs.
 
-            ## Changes Made
-            - [list each change: action, page title, what changed and why]
+            **TRUTHFUL**: Every file path, function name, prop, and behavior claim
+            matches the code exactly. If you haven't verified a claim by reading the
+            source file, do not write it.
 
-            ## Still Accurate
-            - [list pages that checked out fine]
-            SUMMARY
-            ```
+            ## Rules
 
-            ## What to verify per documentation page
-
-            **Completeness**: All screens, components, hooks, routes, validation schemas,
-            providers, and middleware are documented. No significant code exists without docs.
-
-            **Accuracy**: File paths, component names, props, hook signatures, route functions,
-            theme tokens, CSS variables, provider hierarchy, auth flow, codegen pipeline —
-            everything mentioned in docs must match the code exactly.
-
-            **Currency**: No documented features have been removed. No conventions have drifted.
-            No new patterns exist without documentation.
-
-            **Cross-repo**: System-wide pages (Authentication, Type Pipeline, Conventions) that
-            reference client behavior must be accurate. WebSocket events and API endpoints must match.
-
-            ## Important rules
-
-            - Every finding must cite specific file paths from the codebase
-            - Actually read and verify every file — do not skip because it looks fine
-            - When rewriting a page, write the COMPLETE page content — not just the changed parts
-            - Do not create pages for trivial things. Each page must be genuinely useful.
-            - Maintain the existing page hierarchy. Only restructure if there's a clear problem.
-            - For pages that cover cross-repo concerns (auth, type pipeline), only update the
-              client-side claims. Do not guess about the API side.
+            - Every finding must cite specific file paths
+            - Actually read and verify every file — never assume
+            - When rewriting a page, write COMPLETE content
+            - Do not create pages for trivial things
+            - Maintain the existing page hierarchy unless there's a clear problem
+            - For cross-repo pages (auth, type pipeline), only update client-side claims
+            - Do not guess about API-side behavior
         env:
           NOTION_API_KEY: ${{ secrets.NOTION_API_KEY }}
           NOTION_TECHNICAL_ROOT_ID: ${{ secrets.NOTION_TECHNICAL_ROOT_ID }}
