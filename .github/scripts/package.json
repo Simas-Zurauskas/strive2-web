@@ -2,7 +2,7 @@
   "name": "notion-sync",
   "private": true,
   "dependencies": {
-    "@anthropic-ai/sdk": "^0.39.0",
-    "@notionhq/client": "^2.2.15"
+    "@anthropic-ai/sdk": "^0.52.0",
+    "@notionhq/client": "^2.3.0"
   }
 }
