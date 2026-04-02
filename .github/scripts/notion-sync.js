@@ -58,6 +58,8 @@ function richTextToPlain(richTexts) {
 }
 
 function blockToText(block) {
+  // Skip child_page blocks — they're navigation, not content
+  if (block.type === 'child_page' || block.type === 'child_database') return '';
   const data = block[block.type];
   if (!data) return '';
   switch (block.type) {
@@ -256,9 +258,12 @@ async function main() {
   console.log('Fetching page summaries…');
   for (const page of existingPages) {
     try {
-      page.summary = await fetchPageSummary(page.id);
+      const raw = await fetchPageSummary(page.id);
+      // Sanitize: collapse whitespace, remove non-printable chars, trim length
+      page.summary = raw.replace(/[\r\n]+/g, ' ').replace(/\s+/g, ' ').trim().slice(0, 800);
     } catch (err) {
-      page.summary = `(failed to fetch: ${err.message})`;
+      console.warn(`  ⚠ Failed to fetch summary for "${page.title}": ${err.message}`);
+      page.summary = '(summary unavailable)';
     }
   }
   console.log('Page summaries fetched');
@@ -389,10 +394,11 @@ Respond ONLY in valid JSON (no markdown fences):
       "page_id": "id",
       "page_title": "title",
       "note": "What changed and why this section should know"
-    }
+    },
   ]
 }`;
 
+  console.log(`Prompt: ${Math.round(prompt.length / 1024)}KB, ${existingPages.length} pages, diff ${Math.round(diff.length / 1024)}KB`);
   console.log('Asking Claude to assess documentation impact…');
   const response = await anthropic.messages.create({
     model: 'claude-sonnet-4-6',
@@ -400,12 +406,15 @@ Respond ONLY in valid JSON (no markdown fences):
     messages: [{ role: 'user', content: prompt }],
   });
 
+  const { usage } = response;
+  console.log(`Tokens: ${usage.input_tokens} in, ${usage.output_tokens} out`);
+
   let result;
   try {
     const raw = response.content[0].text.replace(/```json|```/g, '').trim();
     result = JSON.parse(raw);
   } catch (err) {
-    console.error('Failed to parse Claude response:', response.content[0].text);
+    console.error('Failed to parse Claude response:', response.content[0].text.slice(0, 500));
     throw new Error(`JSON parse error: ${err.message}`);
   }
 
@@ -439,63 +448,32 @@ Respond ONLY in valid JSON (no markdown fences):
     try {
       switch (action.type) {
         case 'update':
-          console.log(`  Updating: "${label}"`);
           await updatePage(action.page_id, action.content);
-          log.push({
-            status: '✓',
-            type: action.type,
-            page: label,
-            id: action.page_id,
-            detail: action.content.slice(0, 120),
-          });
+          log.push({ status: '✓', type: action.type, page: label, id: action.page_id, detail: action.content.slice(0, 120) });
           break;
         case 'rewrite':
-          console.log(`  Rewriting: "${label}"`);
           await rewritePage(action.page_id, action.content);
-          log.push({
-            status: '✓',
-            type: action.type,
-            page: label,
-            id: action.page_id,
-            detail: `${action.content.length} chars`,
-          });
+          log.push({ status: '✓', type: action.type, page: label, id: action.page_id, detail: `${action.content.length} chars` });
           break;
         case 'correct':
-          console.log(`  Correcting: "${label}" — ${action.stale_section}`);
           await correctPage(action.page_id, action.stale_section, action.corrected_content);
           log.push({ status: '✓', type: action.type, page: label, id: action.page_id, detail: action.stale_section });
           break;
         case 'create': {
-          console.log(`  Creating: "${label}"`);
           const newId = await createPage(action.parent_id, action.title, action.content, action.links_to || []);
           log.push({ status: '✓', type: action.type, page: label, id: newId, detail: `parent: ${action.parent_id}` });
           break;
         }
         case 'crosslink':
-          console.log(`  Cross-linking: "${label}"`);
           await crosslinkPage(action.page_id, action.note);
-          log.push({
-            status: '✓',
-            type: action.type,
-            page: label,
-            id: action.page_id,
-            detail: action.note.slice(0, 120),
-          });
+          log.push({ status: '✓', type: action.type, page: label, id: action.page_id, detail: action.note.slice(0, 120) });
           break;
         default:
-          console.log(`  Skipping unknown action: ${action.type}`);
+          log.push({ status: '?', type: action.type, page: label, id: '—', detail: 'Unknown action type' });
           continue;
       }
-      console.log(`  ✓ Done`);
     } catch (err) {
-      console.error(`  ✗ Failed ${action.type} on "${label}": ${err.message}`);
-      log.push({
-        status: '✗',
-        type: action.type,
-        page: label,
-        id: action.page_id || action.parent_id,
-        detail: err.message,
-      });
+      log.push({ status: '✗', type: action.type, page: label, id: action.page_id || action.parent_id, detail: err.message });
     }
   }
 

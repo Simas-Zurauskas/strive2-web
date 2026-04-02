@@ -60,17 +60,36 @@ jobs:
           } > _manifest.md
           echo "Manifest generated: $(wc -l < _manifest.md) lines"
 
+      - name: Concatenate all documentation into single file
+        run: |
+          {
+            echo "# All Documentation Pages"
+            echo ""
+            echo "This file contains every Notion documentation page concatenated."
+            echo "Use _docs/_index.json for page IDs when writing back to Notion."
+            echo ""
+            for f in $(find _docs -name "*.md" | sort); do
+              echo "---"
+              echo ""
+              echo "<!-- SOURCE: $f -->"
+              echo ""
+              cat "$f"
+              echo ""
+              echo ""
+            done
+          } > _docs_all.md
+          echo "Docs bundle: $(wc -l < _docs_all.md) lines, $(wc -c < _docs_all.md | tr -d ' ') bytes"
+
       - name: Rebuild documentation
         uses: anthropics/claude-code-action@v1
         with:
           anthropic_api_key: ${{ secrets.ANTHROPIC_API_KEY }}
-          show_full_output: true
           display_report: true
           claude_args: "--max-turns 200 --model claude-sonnet-4-20250514 --allowedTools 'Read,Glob,Grep,Bash(*)'"
           prompt: |
-            You are a technical documentation engine. Your job: audit the Client codebase
-            against its Notion documentation and execute all necessary updates — rewrites,
-            creates, deletes — until the wiki is fully accurate and complete.
+            You are a technical documentation engine. Your job: make the Notion technical
+            wiki fully match the codebase — whether that means writing documentation from
+            scratch, restructuring pages as the project grows, or auditing existing content.
 
             ## Project context
 
@@ -91,12 +110,15 @@ jobs:
 
             ### Reading
 
-            **Codebase manifest** (pre-generated):
-            - `_manifest.md` — complete file listing, directory tree, barrel files. READ THIS FIRST.
+            **Pre-generated files (read these first — they save you dozens of turns):**
+            - `_manifest.md` — complete source file listing, directory tree, barrel files
+            - `_docs_all.md` — ALL documentation pages concatenated into one file.
+              Each page is separated by `<!-- SOURCE: _docs/path/to/Page.md -->` markers.
+            - `_docs/_index.json` — page tree with Notion page IDs (needed for write operations)
 
-            **Current documentation** (fetched from Notion):
-            - `_docs/_index.json` — page tree with Notion page IDs
-            - `_docs/**/*.md` — page content as markdown
+            **IMPORTANT: Start by reading `_manifest.md`, `_docs_all.md`, and `_docs/_index.json`
+            in your first turn. This gives you the entire codebase map and all documentation
+            in 3 reads instead of 20+.**
 
             **Source code** — use Read, Glob, Grep:
             - `Glob("src/**/*.ts")` or `Glob("src/hooks/**/*.tsx")` — ALWAYS use wildcards
@@ -106,7 +128,7 @@ jobs:
 
             **WRONG tool usage** (wastes turns):
             - `Glob("src")` or `Glob("src/hooks")` — matches nothing without wildcards
-            - Reading files one at a time — always batch parallel reads
+            - Reading doc files one at a time — use `_docs_all.md` instead
             - Using Read to list directories — use `Bash("ls src/screens/")` instead
 
             ### Writing to Notion
@@ -141,25 +163,17 @@ jobs:
 
             ## Process — follow these phases strictly
 
-            ### Phase 1: Map (2-3 turns max)
+            ### Phase 1: Map (1-2 turns)
 
-            1. Read `_manifest.md` and `_docs/_index.json` in parallel.
-            2. Read ALL doc files from `_docs/` in batches of 4-5 per turn.
-            3. You now have the full picture: every source file path and every doc page.
+            1. Read `_manifest.md`, `_docs_all.md`, and `_docs/_index.json` in parallel (one turn).
+            2. You now have the full picture: every source file path, every doc page's content,
+               and every Notion page ID. Do NOT read individual `_docs/*.md` files.
 
-            ### Phase 2: Verify (bulk of your work)
+            ### Phase 2: Understand the codebase
 
-            For each documentation page, verify every claim against the source code:
+            Read the source files systematically. Batch 3-5 parallel reads per turn.
 
-            1. **Read the doc page** (already done in Phase 1)
-            2. **Read the corresponding source files** — batch 3-5 per turn
-            3. **Check every claim**: file paths, component names, props, hook signatures,
-               route functions, theme tokens, CSS variables, provider hierarchy, auth flow,
-               codegen pipeline. Every claim must match the code.
-            4. **Note discrepancies**: wrong paths, missing components, outdated behavior,
-               new code without docs
-
-            Areas to verify systematically:
+            Areas to cover:
             - `src/app/` — routes, layouts, page files, middleware
             - `src/screens/` — all screen components
             - `src/components/` — shared UI components, props, variants
@@ -168,21 +182,55 @@ jobs:
             - `src/validation/` — Yup schemas
             - `src/app/_registry/` — provider hierarchy
             - `src/middleware.ts` — edge middleware config
-            - `src/theme/` — design tokens, CSS variables, color system
+            - `src/theme/` or `src/styles/` — design tokens, CSS variables, color system
             - `next.config.*`, `package.json` — build config, codegen
+
+            For each area: understand what exists, then compare against documentation.
+            Note what's missing, wrong, outdated, or undocumented.
 
             ### Phase 3: Plan
 
             Before making ANY changes, write out your complete plan as a message.
-            For each documentation page, decide:
-            - **rewrite** — significantly wrong or outdated, needs fresh content
-            - **append** — mostly accurate but missing new content
-            - **create** — codebase has a concept with no documentation page
-            - **delete** — documents something that no longer exists
-            - **rename** — title is wrong or misleading
-            - **accurate** — checks out, no changes needed
 
-            Prioritize: critical inaccuracies > missing core docs > minor updates.
+            First, determine the documentation state:
+            - **Bootstrap** — `_docs_all.md` is empty or nearly empty. No pages exist.
+              Design the full page hierarchy from scratch based on what the codebase contains.
+            - **Growth** — Pages exist but the codebase has outgrown them. New areas need
+              new pages, large pages need splitting into subpages.
+            - **Maintenance** — Pages exist and roughly match. Audit for accuracy, fix drift.
+
+            These aren't mutually exclusive — a single run may bootstrap missing sections,
+            split overgrown pages, and fix inaccuracies on others.
+
+            For each documentation page (existing or to-be-created), decide:
+            - **rewrite** — page exists but content is significantly wrong or outdated
+            - **append** — page is mostly accurate but missing new content
+            - **create** — codebase area has no corresponding documentation page
+            - **split** — page covers too many concerns or has grown too large.
+              Create child pages under it, move content into children, rewrite the
+              parent as an index page linking to its children.
+            - **delete** — page documents something that no longer exists
+            - **rename** — title is wrong or misleading
+            - **accurate** — page checks out, no changes needed
+
+            **When to split a page:**
+            - It covers 3+ unrelated subsystems (e.g., auth + theme + middleware)
+            - It has 6+ top-level sections that could each stand alone
+            - A new feature was added that deserves its own focused page
+
+            **When to create a new page:**
+            - A `src/` directory or subsystem has no documentation at all
+            - A cross-cutting concern (auth, WebSocket, codegen) isn't documented
+            - The codebase has a pattern used everywhere but never explained
+
+            **Hierarchy rules for new pages:**
+            - Client-specific pages go under the Client section
+            - System-wide concerns (auth, type pipeline, conventions) go at root level
+            - When creating child pages, create the parent first, capture its ID from
+              the tool output, then create children under that ID
+
+            Prioritize: missing pages for major features > inaccurate content >
+            structural improvements > minor updates.
 
             ### Phase 4: Execute
 
@@ -191,7 +239,15 @@ jobs:
             2. Call the appropriate notion-tool.js command
             3. Verify it succeeded (check output for ✓)
 
-            When rewriting, write the COMPLETE page — not just changed sections.
+            **For splits:** Create child pages first (capture their IDs from output),
+            then rewrite the parent page as an index that describes the section and
+            lists its child pages.
+
+            **For bootstrap (creating hierarchy from scratch):** Create top-level section
+            pages first (e.g., "Client"), then create child pages under them. Work
+            top-down through the hierarchy.
+
+            When rewriting or creating, write the COMPLETE page — not stubs or partial content.
 
             ### Documentation page structure
 
@@ -228,9 +284,10 @@ jobs:
 
             - Every finding must cite specific file paths
             - Actually read and verify every file — never assume
-            - When rewriting a page, write COMPLETE content
-            - Do not create pages for trivial things
-            - Maintain the existing page hierarchy unless there's a clear problem
+            - When rewriting or creating a page, write COMPLETE content — not stubs
+            - Do not create pages for trivial things (one utility function, one config file)
+            - Restructure the hierarchy when the codebase demands it — don't preserve
+              a structure that no longer fits the project
             - For cross-repo pages (auth, type pipeline), only update client-side claims
             - Do not guess about API-side behavior
         env:
