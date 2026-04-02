@@ -110,14 +110,6 @@ function textBlock(content) {
   };
 }
 
-function heading3Block(content) {
-  return {
-    object: 'block',
-    type: 'heading_3',
-    heading_3: { rich_text: [{ type: 'text', text: { content } }] },
-  };
-}
-
 function metaBlock(text) {
   return {
     object: 'block',
@@ -144,18 +136,6 @@ function changeMeta() {
 // ---------------------------------------------------------------------------
 // Actions
 // ---------------------------------------------------------------------------
-
-async function updatePage(pageId, content) {
-  await notion.blocks.children.append({
-    block_id: pageId,
-    children: [
-      divider(),
-      heading3Block(`${prRef()}: ${process.env.PR_TITLE}`),
-      textBlock(content),
-      metaBlock(changeMeta()),
-    ],
-  });
-}
 
 async function rewritePage(pageId, content) {
   // Archive all existing blocks, then write fresh content
@@ -321,29 +301,30 @@ ${diff}
 
 ACTIONS
 
-1. **update** — Append meaningful new content to an existing page. Write 2–6 sentences
-   that are specific and useful. Never write generic summaries — say exactly what changed
-   and why it matters. Use when the PR adds something new that the docs should reflect.
+1. **rewrite** — PREFERRED for most changes. Replace the full content of an existing
+   page with corrected, up-to-date documentation. Use when ANY section of the page
+   is affected by this change. Write the complete page content — this replaces
+   everything. You have the page's current content in the summary above — use it
+   as the starting point and modify what changed.
 
-2. **rewrite** — Replace the full content of an existing page with corrected, up-to-date
-   documentation. Use when a PR significantly changes the architecture or behavior that
-   a page describes, making the existing content misleading rather than just incomplete.
-   Write the complete page content — this replaces everything.
+2. **correct** — Flag a specific section of an existing page as stale and provide the
+   corrected version. Use ONLY for very small, surgical fixes (e.g., a function was
+   renamed, a default value changed) where rewriting the full page would be overkill.
 
-3. **correct** — Flag a specific section of an existing page as stale and provide the
-   corrected version. Use for targeted fixes when most of the page is still accurate
-   but one section is now wrong.
-
-4. **create** — Create a new page only when the change introduces a concept, system,
+3. **create** — Create a new page only when the change introduces a concept, system,
    or integration pattern that genuinely has no home in the existing structure.
    Place it under the correct parent using parent_id from the tree above.
 
-5. **crosslink** — Add a cross-reference note to a page when a change in this repo
+4. **crosslink** — Add a cross-reference note to a page when a change in this repo
    has implications for documentation in another section (e.g., a client auth change
    that affects the system-wide Authentication page).
 
-6. **skip** — If the change is trivial (dependency bump, formatting, minor CSS,
+5. **skip** — If the change is trivial (dependency bump, formatting, minor CSS,
    test-only, internal refactor that doesn't change public behavior).
+
+CRITICAL: Do NOT use "update" (append). Appending content to pages causes duplication
+over time. Always use "rewrite" to replace the full page with a clean, consolidated
+version that incorporates the new information.
 
 HIERARCHY RULES
 - Changes to this repo's internals → under this repo's section in the tree
@@ -363,12 +344,6 @@ Respond ONLY in valid JSON (no markdown fences):
   "meaningful": boolean,
   "reasoning": "One sentence: your architectural assessment of this change's documentation impact",
   "actions": [
-    {
-      "type": "update",
-      "page_id": "id",
-      "page_title": "title",
-      "content": "Specific content to append"
-    },
     {
       "type": "rewrite",
       "page_id": "id",
@@ -447,10 +422,6 @@ Respond ONLY in valid JSON (no markdown fences):
 
     try {
       switch (action.type) {
-        case 'update':
-          await updatePage(action.page_id, action.content);
-          log.push({ status: '✓', type: action.type, page: label, id: action.page_id, detail: action.content.slice(0, 120) });
-          break;
         case 'rewrite':
           await rewritePage(action.page_id, action.content);
           log.push({ status: '✓', type: action.type, page: label, id: action.page_id, detail: `${action.content.length} chars` });

@@ -23,10 +23,6 @@ const DOCS_INDEX_PATH = path.join(DOCS_DIR, '_index.json');
 const NOTION_TOOL = path.join(SCRIPTS_DIR, 'notion-tool.js');
 
 const CONCURRENCY = 5;
-// Page IDs that belong to other repos — exclude from docs bundle and index
-const EXCLUDE_PAGE_IDS = new Set([
-  '336c2628-ef95-81ce-bb28-c0060f125865', // API section root
-]);
 const WORKER_MAX_TURNS = 30;
 const MODEL = 'claude-sonnet-4-6';
 
@@ -61,7 +57,7 @@ function generateManifest() {
   ].join('\n');
 }
 
-function buildDocsBundle(excludeFiles = new Set()) {
+function buildDocsBundle() {
   if (!fs.existsSync(DOCS_DIR)) return '';
 
   const mdFiles = [];
@@ -69,10 +65,7 @@ function buildDocsBundle(excludeFiles = new Set()) {
     for (const entry of fs.readdirSync(dir, { withFileTypes: true })) {
       const full = path.join(dir, entry.name);
       if (entry.isDirectory()) walk(full);
-      else if (entry.name.endsWith('.md')) {
-        const rel = path.relative(REPO_ROOT, full);
-        if (!excludeFiles.has(rel)) mdFiles.push(full);
-      }
+      else if (entry.name.endsWith('.md')) mdFiles.push(full);
     }
   }
   walk(DOCS_DIR);
@@ -110,31 +103,16 @@ async function prepare() {
   const manifest = generateManifest();
   console.log(`  Manifest: ${manifest.split('\n').length} lines`);
 
-  // 3. Read docs index, filtering out other-repo pages
+  // 3. Read docs index
   let docsIndex = [];
-  const excludeFiles = new Set();
   if (fs.existsSync(DOCS_INDEX_PATH)) {
-    const allPages = JSON.parse(fs.readFileSync(DOCS_INDEX_PATH, 'utf8'));
-    const excludedPaths = new Set();
-    for (const p of allPages) {
-      if (EXCLUDE_PAGE_IDS.has(p.id)) excludedPaths.add(p.path);
-    }
-    for (const p of allPages) {
-      const excluded = EXCLUDE_PAGE_IDS.has(p.id) || [...excludedPaths].some((prefix) => p.path.startsWith(prefix + ' > '));
-      if (excluded) {
-        if (p.file) excludeFiles.add(p.file);
-      } else {
-        docsIndex.push(p);
-      }
-    }
-    console.log(`  Docs index: ${docsIndex.length} pages (${excludeFiles.size} excluded)`);
-  } else {
-    console.log('  Docs index: 0 pages');
+    docsIndex = JSON.parse(fs.readFileSync(DOCS_INDEX_PATH, 'utf8'));
   }
+  console.log(`  Docs index: ${docsIndex.length} pages`);
 
-  // 4. Build docs bundle (excluding other-repo pages)
+  // 4. Build docs bundle
   console.log('  Bundling documentation...');
-  const docsBundle = buildDocsBundle(excludeFiles);
+  const docsBundle = buildDocsBundle();
   console.log(`  Docs bundle: ${Math.round(docsBundle.length / 1024)}KB`);
 
   return { manifest, docsBundle, docsIndex };
@@ -163,13 +141,12 @@ const PLAN_SCHEMA = {
           parent_id: { type: 'string' },
           title: { type: 'string' },
           section: { type: 'string' },
-          source_globs: { type: 'array', items: { type: 'string' } },
           current_doc_file: { type: 'string' },
           instructions: { type: 'string' },
           priority: { type: 'integer', minimum: 1, maximum: 3 },
           depends_on: { type: 'array', items: { type: 'string' } },
         },
-        required: ['id', 'action', 'section', 'source_globs', 'instructions', 'priority'],
+        required: ['id', 'action', 'section', 'instructions', 'priority'],
       },
     },
   },
@@ -182,8 +159,8 @@ function buildOrchestratorPrompt(manifest, docsBundle, docsIndex) {
 ## Your job
 
 Analyze the codebase file listing and existing documentation, then produce a structured
-plan. Each task in your plan will be executed by an independent worker agent that can
-ONLY read files matching the source_globs you assign.
+plan. Each task in your plan will be executed by an independent worker agent that has
+access to the full codebase via Read, Glob, and Grep tools.
 
 ## Documentation philosophy
 
@@ -208,27 +185,18 @@ gotchas, and configuration. Do not restate obvious code.
 - For 'split': create separate child tasks (action: 'create') and one parent task
   (action: 'rewrite') that depends_on the children
 
-## Source glob assignment rules
+## Instructions field
 
-- Each task's source_globs must cover ALL files relevant to that page
-- Use specific patterns: "src/screens/CourseScreen/**/*" not "src/**/*"
-- A single file can appear in multiple tasks if relevant to both
-- NEVER assign "src/**/*" — that defeats the purpose of splitting
-- Target 5-30 files per task. If a glob matches 50+ files, split into multiple tasks.
+The instructions you write for each task are the worker agent's primary guidance.
+Be specific about WHAT to document and WHAT to verify. The worker has Read, Glob,
+and Grep tools and will explore the codebase itself to find the relevant files.
+You do NOT need to specify file paths — the worker will discover them.
 
-## Source mapping guide
+Good: "Document all custom hooks in src/hooks/. For each hook, cover its signature,
+return type, dependencies, and usage patterns. Verify the useAuth hook's token
+management against the actual NextAuth config."
 
-Use this to assign source_globs:
-- Screens → src/screens/<ScreenName>/**/*
-- Components → src/components/**/*
-- Hooks → src/hooks/**/*
-- API Integration → src/api/**/*
-- Authentication → src/app/(auth)/**/* + src/hooks/useAuth* + src/middleware.ts + src/app/api/auth/**/*
-- Theme → src/theme/**/*
-- App routing/layout → src/app/**/page.tsx + src/app/**/layout.tsx
-- Validation → src/validation/**/*
-- Provider hierarchy → src/app/_registry/**/*
-- Config → next.config.* + tsconfig.json + package.json
+Bad: "Update the hooks page."
 
 ## Documentation page structure (instruct workers to follow)
 
@@ -297,7 +265,7 @@ async function orchestrate(manifest, docsBundle, docsIndex) {
   console.log(`  Reasoning: ${plan.reasoning}`);
   console.log(`  Tasks: ${plan.tasks.length}`);
   for (const t of plan.tasks) {
-    console.log(`    [${t.priority}] ${t.action.padEnd(8)} ${t.section} (${t.source_globs.length} globs)`);
+    console.log(`    [${t.priority}] ${t.action.padEnd(8)} ${t.section}`);
   }
 
   return plan;
@@ -349,22 +317,16 @@ ${task.instructions}
 
 ${currentDoc || '(No existing documentation — write from scratch)'}
 
-## Files you MUST read
-
-Use Glob and Read to find and read files matching these patterns:
-${task.source_globs.map((g) => `- ${g}`).join('\n')}
-
-Read EVERY relevant file. Batch 3-5 parallel Read calls per turn.
-
-## Codebase manifest (for reference — shows all files that exist)
+## Codebase manifest (all files that exist)
 
 ${manifest}
 
 ## Process
 
-1. Use Glob to find files matching your assigned patterns
-2. Read every relevant file
-3. Write complete documentation based on what you find in the code
+1. Use the manifest above to identify which files are relevant to your section
+2. Use Glob and Grep to find files, Read to examine them (batch 3-5 per turn)
+3. Read every relevant file — do not guess or assume
+4. Write complete documentation based on what you find in the code
 
 ## Writing standards
 
