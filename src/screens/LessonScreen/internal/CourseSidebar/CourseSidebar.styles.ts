@@ -133,13 +133,29 @@ export const LessonItem = styled.button<{ $active: boolean }>`
   }
 `;
 
-export const LessonDot = styled.span<{ $active: boolean }>`
+export type LessonDotState = 'completed' | 'in_progress' | 'not_started' | 'not_generated' | 'active';
+
+const dotStyles = (p: { $state: LessonDotState; theme: { colors: Record<string, string> } }) => {
+  switch (p.$state) {
+    case 'completed':
+      return `background: ${p.theme.colors.success}; border: 1.5px solid ${p.theme.colors.success};`;
+    case 'in_progress':
+      return `background: ${p.theme.colors.accent}40; border: 1.5px solid ${p.theme.colors.accent};`;
+    case 'active':
+      return `background: ${p.theme.colors.accent}; border: 1.5px solid ${p.theme.colors.accent};`;
+    case 'not_started':
+      return `background: transparent; border: 1.5px solid ${p.theme.colors.muted};`;
+    case 'not_generated':
+      return `background: transparent; border: 1.5px dashed ${p.theme.colors.border};`;
+  }
+};
+
+export const LessonDot = styled.span<{ $state: LessonDotState }>`
   width: 7px;
   height: 7px;
   border-radius: 50%;
   flex-shrink: 0;
-  background: ${(p) => (p.$active ? p.theme.colors.accent : 'transparent')};
-  border: 1.5px solid ${(p) => (p.$active ? p.theme.colors.accent : p.theme.colors.muted)};
+  ${dotStyles}
 `;
 
 export const LessonName = styled.span`
@@ -148,10 +164,50 @@ export const LessonName = styled.span`
   white-space: nowrap;
 `;
 
+export const ModuleProgress = styled.span`
+  margin-left: auto;
+  font-size: 0.6875rem;
+  font-weight: 400;
+  color: ${(p) => p.theme.colors.muted};
+  flex-shrink: 0;
+`;
+
+export const BookmarkIcon = styled.span`
+  margin-left: 0.25rem;
+  font-size: 0.625rem;
+  color: ${(p) => p.theme.colors.accent};
+  flex-shrink: 0;
+`;
+
 export const Footer = styled.div`
   padding: 0.75rem;
   border-top: 1px solid ${(p) => p.theme.colors.border};
   font-size: 0.75rem;
   color: ${(p) => p.theme.colors.muted};
   flex-shrink: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 0.375rem;
+`;
+
+export const FooterText = styled.span``;
+
+export const FooterAccent = styled.span`
+  color: ${(p) => p.theme.colors.accent};
+  font-weight: 500;
+`;
+
+export const ProgressBarTrack = styled.div`
+  width: 100%;
+  height: 3px;
+  border-radius: 2px;
+  background: ${(p) => p.theme.colors.border};
+`;
+
+export const ProgressBarFill = styled.div<{ $percent: number }>`
+  height: 100%;
+  border-radius: 2px;
+  background: ${(p) => p.theme.colors.success};
+  width: ${(p) => p.$percent}%;
+  transition: width 300ms ease;
 `;

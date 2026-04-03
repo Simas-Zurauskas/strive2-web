@@ -1,9 +1,11 @@
 'use client';
 
+import { useMemo } from 'react';
 import { useRouter } from 'next/navigation';
 import { CourseCard, Button } from '@/components';
-import { useAuth, useCourses } from '@/hooks';
+import { useAuth, useCourses, useContinueLearning, useProgressSummary } from '@/hooks';
 import { useJobManager } from '@/hooks/useJobManager';
+import { ContinueLearningCard } from './internal/ContinueLearningCard/ContinueLearningCard';
 import * as S from './HomeScreen.styles';
 
 export const HomeScreen: React.FC = () => {
@@ -11,6 +13,18 @@ export const HomeScreen: React.FC = () => {
   const { user } = useAuth();
   const { data: courses, isLoading } = useCourses();
   const { isJobRunningForCourse } = useJobManager();
+  const { data: continueLearning } = useContinueLearning();
+  const { data: progressSummary } = useProgressSummary();
+
+  const progressMap = useMemo(() => {
+    const map = new Map<string, number>();
+    if (progressSummary) {
+      for (const item of progressSummary) {
+        map.set(item.courseId, item.percentage);
+      }
+    }
+    return map;
+  }, [progressSummary]);
 
   return (
     <S.Layout>
@@ -45,16 +59,21 @@ export const HomeScreen: React.FC = () => {
       )}
 
       {!isLoading && courses && courses.length > 0 && (
-        <S.Grid>
-          {courses.map((course) => (
-            <CourseCard
-              key={course._id}
-              course={course}
-              isGenerating={isJobRunningForCourse(course._id)}
-              onClick={() => router.push(`/course/${course._id}`)}
-            />
-          ))}
-        </S.Grid>
+        <>
+          {continueLearning && <ContinueLearningCard data={continueLearning} />}
+
+          <S.Grid>
+            {courses.map((course) => (
+              <CourseCard
+                key={course._id}
+                course={course}
+                isGenerating={isJobRunningForCourse(course._id)}
+                progress={progressMap.get(course._id)}
+                onClick={() => router.push(`/course/${course._id}`)}
+              />
+            ))}
+          </S.Grid>
+        </>
       )}
     </S.Layout>
   );

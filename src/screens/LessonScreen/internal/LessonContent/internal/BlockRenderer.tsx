@@ -4,7 +4,7 @@ import { useCallback, useEffect, useRef, useState } from 'react';
 import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
 import { useMutation } from '@tanstack/react-query';
-import { executeCode } from '@/api/routes/course';
+import { executeCode, QuizResponseData, ExerciseAttemptData } from '@/api/routes/course';
 import * as S from './blocks.styles';
 
 // ── Types ──────────────────────────────────────────────
@@ -187,8 +187,18 @@ const SummaryBlock = ({ content }: { content: string }) => {
 
 const OPTION_LETTERS = ['A', 'B', 'C', 'D'];
 
-const QuizBlock = ({ metadata }: { metadata: Record<string, unknown> | null }) => {
-  const [selected, setSelected] = useState<number | null>(null);
+const QuizBlock = ({
+  blockId,
+  metadata,
+  savedResponse,
+  onAnswer,
+}: {
+  blockId: string;
+  metadata: Record<string, unknown> | null;
+  savedResponse?: QuizResponseData;
+  onAnswer?: (response: { blockId: string; selectedOption: number; correct: boolean }) => void;
+}) => {
+  const [selected, setSelected] = useState<number | null>(savedResponse?.selectedOption ?? null);
 
   const question = (metadata?.question as string) ?? '';
   const options = (metadata?.options as string[]) ?? [];
@@ -204,6 +214,12 @@ const QuizBlock = ({ metadata }: { metadata: Record<string, unknown> | null }) =
     return 'dimmed';
   };
 
+  const handleSelect = (index: number) => {
+    if (answered) return;
+    setSelected(index);
+    onAnswer?.({ blockId, selectedOption: index, correct: index === correctIndex });
+  };
+
   return (
     <S.QuizContainer>
       <S.QuizHeader>Check your understanding</S.QuizHeader>
@@ -213,7 +229,7 @@ const QuizBlock = ({ metadata }: { metadata: Record<string, unknown> | null }) =
           <S.QuizOption
             key={i}
             $state={getOptionState(i)}
-            onClick={() => !answered && setSelected(i)}
+            onClick={() => handleSelect(i)}
           >
             <S.QuizOptionLetter $state={getOptionState(i)}>
               {OPTION_LETTERS[i]}
@@ -249,7 +265,17 @@ const LinksBlock = ({ metadata }: { metadata: Record<string, unknown> | null }) 
   );
 };
 
-const ExerciseBlock = ({ content, metadata }: { content: string; metadata: Record<string, unknown> | null }) => {
+const ExerciseBlock = ({
+  blockId,
+  content,
+  metadata,
+  onAttempt,
+}: {
+  blockId: string;
+  content: string;
+  metadata: Record<string, unknown> | null;
+  onAttempt?: (attempt: { blockId: string; code: string; passed: boolean }) => void;
+}) => {
   const language = (metadata?.language as string) ?? '';
   const starterCode = (metadata?.starterCode as string) ?? '';
   const expectedOutput = (metadata?.expectedOutput as string) ?? '';
@@ -266,6 +292,13 @@ const ExerciseBlock = ({ content, metadata }: { content: string; metadata: Recor
     },
     onSuccess: (data) => {
       setOutput({ stdout: data.stdout, stderr: data.stderr, status: data.status });
+
+      // Persist attempt
+      const code = viewRef.current?.state.doc.toString() ?? starterCode;
+      const passed = expectedOutput
+        ? (data.stdout ?? '').trim() === expectedOutput.trim()
+        : data.status === 'Accepted' && !data.stderr;
+      onAttempt?.({ blockId, code, passed });
     },
     onError: (err) => {
       setOutput({ stdout: null, stderr: err instanceof Error ? err.message : 'Execution failed', status: 'Error' });
@@ -414,10 +447,21 @@ const ExerciseBlock = ({ content, metadata }: { content: string; metadata: Recor
 
 interface BlockRendererProps {
   blocks: LessonBlock[];
+  progressData?: {
+    quizResponses: QuizResponseData[];
+    exerciseAttempts: ExerciseAttemptData[];
+  };
+  onQuizAnswer?: (response: { blockId: string; selectedOption: number; correct: boolean }) => void;
+  onExerciseAttempt?: (attempt: { blockId: string; code: string; passed: boolean }) => void;
 }
 
-export const BlockRenderer = ({ blocks }: BlockRendererProps) => {
+export const BlockRenderer = ({ blocks, progressData, onQuizAnswer, onExerciseAttempt }: BlockRendererProps) => {
   const sorted = [...blocks].sort((a, b) => a.order - b.order);
+
+  // Build lookup for saved quiz responses by blockId
+  const quizResponseMap = new Map(
+    (progressData?.quizResponses ?? []).map((r) => [r.blockId, r]),
+  );
 
   return (
     <>
@@ -434,9 +478,25 @@ export const BlockRenderer = ({ blocks }: BlockRendererProps) => {
           case 'callout':
             return <CalloutBlock key={block.id} content={block.content} metadata={block.metadata} />;
           case 'quiz':
-            return <QuizBlock key={block.id} metadata={block.metadata} />;
+            return (
+              <QuizBlock
+                key={block.id}
+                blockId={block.id}
+                metadata={block.metadata}
+                savedResponse={quizResponseMap.get(block.id)}
+                onAnswer={onQuizAnswer}
+              />
+            );
           case 'exercise':
-            return <ExerciseBlock key={block.id} content={block.content} metadata={block.metadata} />;
+            return (
+              <ExerciseBlock
+                key={block.id}
+                blockId={block.id}
+                content={block.content}
+                metadata={block.metadata}
+                onAttempt={onExerciseAttempt}
+              />
+            );
           case 'links':
             return <LinksBlock key={block.id} metadata={block.metadata} />;
           case 'summary':

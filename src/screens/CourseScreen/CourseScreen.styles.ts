@@ -139,3 +139,54 @@ export const EmptyState = styled.p`
   text-align: center;
   padding: 2rem 0;
 `;
+
+export const ProgressBarTrack = styled.div`
+  width: 100%;
+  height: 4px;
+  border-radius: 2px;
+  background: ${(p) => p.theme.colors.border};
+`;
+
+export const ProgressBarFill = styled.div<{ $percent: number }>`
+  height: 100%;
+  border-radius: 2px;
+  background: ${(p) => p.theme.colors.success};
+  width: ${(p) => p.$percent}%;
+  transition: width 300ms ease;
+`;
+
+export const ProgressRow = styled.div`
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+`;
+
+export const ProgressText = styled.span`
+  font-size: 0.8125rem;
+  color: ${(p) => p.theme.colors.muted};
+  flex-shrink: 0;
+`;
+
+export const ModuleProgressText = styled.span`
+  font-size: 0.75rem;
+  color: ${(p) => p.theme.colors.muted};
+  margin-left: auto;
+`;
+
+export const LessonStatusDot = styled.span<{ $status: 'completed' | 'in_progress' | 'default' }>`
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  flex-shrink: 0;
+  margin-top: 7px;
+  ${(p) => {
+    switch (p.$status) {
+      case 'completed':
+        return `background: ${p.theme.colors.success}; border: none;`;
+      case 'in_progress':
+        return `background: ${p.theme.colors.accent}40; border: 1.5px solid ${p.theme.colors.accent};`;
+      default:
+        return `background: transparent; border: 1.5px solid ${p.theme.colors.border};`;
+    }
+  }}
+`;

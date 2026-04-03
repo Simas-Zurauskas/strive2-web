@@ -7,6 +7,7 @@ import * as S from './CourseCard.styles';
 interface CourseCardProps {
   course: Pick<Course, '_id' | 'name' | 'status' | 'goal' | 'depth' | 'structure' | 'updatedAt'>;
   isGenerating?: boolean;
+  progress?: number;
   onClick: () => void;
 }
 
@@ -35,7 +36,7 @@ const getRelativeTime = (dateString: string): string => {
   return `${diffDays} day${diffDays === 1 ? '' : 's'} ago`;
 };
 
-export const CourseCard = ({ course, isGenerating = false, onClick }: CourseCardProps) => {
+export const CourseCard = ({ course, isGenerating = false, progress, onClick }: CourseCardProps) => {
   const moduleCount = course.structure?.modules?.length ?? 0;
   const lessonCount =
     course.structure?.modules?.reduce((sum, mod) => sum + (mod.lessons?.length ?? 0), 0) ?? 0;
@@ -66,6 +67,15 @@ export const CourseCard = ({ course, isGenerating = false, onClick }: CourseCard
       </S.Meta>
 
       {course.goal && <S.Goal>{course.goal}</S.Goal>}
+
+      {typeof progress === 'number' && progress > 0 && (
+        <S.ProgressContainer>
+          <S.ProgressTrack>
+            <S.ProgressFill $percent={progress} />
+          </S.ProgressTrack>
+          <S.ProgressLabel>{progress}% complete</S.ProgressLabel>
+        </S.ProgressContainer>
+      )}
     </S.Container>
   );
 };

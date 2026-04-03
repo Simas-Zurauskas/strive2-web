@@ -3,12 +3,12 @@
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import Link from 'next/link';
 import { useParams, useRouter } from 'next/navigation';
-import { useEffect, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { toast } from 'sonner';
 import { updateCourse, deleteCourse } from '@/api/routes/course';
 import { CourseStatus } from '@/api/types';
 import { Badge, Button, Card } from '@/components';
-import { useCourse } from '@/hooks';
+import { useCourse, useCourseProgress } from '@/hooks';
 import { QKeys } from '@/types';
 import * as S from './CourseScreen.styles';
 
@@ -18,6 +18,7 @@ export const CourseScreen = () => {
   const queryClient = useQueryClient();
   const courseId = params.id as string;
   const { data: course, isLoading } = useCourse(courseId);
+  const { data: progressData } = useCourseProgress(courseId);
   const [isEditing, setIsEditing] = useState(false);
 
   const statusMutation = useMutation({
@@ -44,6 +45,17 @@ export const CourseScreen = () => {
       router.push(`/generate-course?courseId=${courseId}`);
     }
   }, [shouldRedirectToWizard, router, courseId]);
+
+  // Build progress lookup
+  const progressMap = useMemo(() => {
+    const map = new Map<string, string>();
+    if (progressData?.lessons) {
+      for (const lp of progressData.lessons) {
+        map.set(`${lp.moduleIndex}-${lp.lessonIndex}`, lp.status);
+      }
+    }
+    return map;
+  }, [progressData]);
 
   if (isLoading) {
     return (
@@ -74,6 +86,7 @@ export const CourseScreen = () => {
 
   const modules = course.structure?.modules ?? [];
   const totalLessons = modules.reduce((sum, m) => sum + (m.lessons?.length ?? 0), 0);
+  const stats = progressData?.stats;
 
   const handleEdit = () => {
     statusMutation.mutate('creating', {
@@ -88,6 +101,22 @@ export const CourseScreen = () => {
     if (window.confirm('Delete this course? This cannot be undone.')) {
       deleteMutation.mutate();
     }
+  };
+
+  const getModuleProgress = (mi: number) => {
+    const lessons = modules[mi]?.lessons ?? [];
+    let completed = 0;
+    for (let li = 0; li < lessons.length; li++) {
+      if (progressMap.get(`${mi}-${li}`) === 'completed') completed++;
+    }
+    return { completed, total: lessons.length };
+  };
+
+  const getLessonStatus = (mi: number, li: number): 'completed' | 'in_progress' | 'default' => {
+    const status = progressMap.get(`${mi}-${li}`);
+    if (status === 'completed') return 'completed';
+    if (status === 'in_progress') return 'in_progress';
+    return 'default';
   };
 
   return (
@@ -109,6 +138,14 @@ export const CourseScreen = () => {
               </Badge>
             )}
           </S.Meta>
+          {stats && stats.percentage > 0 && (
+            <S.ProgressRow>
+              <S.ProgressBarTrack style={{ flex: 1 }}>
+                <S.ProgressBarFill $percent={stats.percentage} />
+              </S.ProgressBarTrack>
+              <S.ProgressText>{stats.percentage}% complete</S.ProgressText>
+            </S.ProgressRow>
+          )}
           <S.Goal>{course.goal}</S.Goal>
         </S.Header>
 
@@ -122,24 +159,34 @@ export const CourseScreen = () => {
         </div>
 
         <S.Modules>
-          {modules.map((mod, i) => (
-            <Card key={`${i}-${mod.name}`} header={`Module ${i + 1}: ${mod.name}`}>
-              <S.ModuleDescription>{mod.description}</S.ModuleDescription>
-              <S.LessonList>
-                {mod.lessons?.map((lesson, j) => (
-                  <S.LessonItem
-                    key={`${i}-${j}`}
-                    onClick={() => router.push(`/course/${courseId}/lesson/${i}/${j}`)}
-                  >
-                    <S.LessonContent>
-                      <S.LessonName>{lesson.name}</S.LessonName>
-                      <S.LessonDescription>{lesson.description}</S.LessonDescription>
-                    </S.LessonContent>
-                  </S.LessonItem>
-                ))}
-              </S.LessonList>
-            </Card>
-          ))}
+          {modules.map((mod, i) => {
+            const mp = getModuleProgress(i);
+            const headerSuffix = mp.completed > 0 ? ` (${mp.completed}/${mp.total} completed)` : '';
+
+            return (
+              <Card key={`${i}-${mod.name}`} header={`Module ${i + 1}: ${mod.name}${headerSuffix}`}>
+                <S.ModuleDescription>{mod.description}</S.ModuleDescription>
+                <S.LessonList>
+                  {mod.lessons?.map((lesson, j) => {
+                    const status = getLessonStatus(i, j);
+
+                    return (
+                      <S.LessonItem
+                        key={`${i}-${j}`}
+                        onClick={() => router.push(`/course/${courseId}/lesson/${i}/${j}`)}
+                      >
+                        <S.LessonStatusDot $status={status} />
+                        <S.LessonContent>
+                          <S.LessonName>{lesson.name}</S.LessonName>
+                          <S.LessonDescription>{lesson.description}</S.LessonDescription>
+                        </S.LessonContent>
+                      </S.LessonItem>
+                    );
+                  })}
+                </S.LessonList>
+              </Card>
+            );
+          })}
         </S.Modules>
       </S.Container>
     </S.Layout>
