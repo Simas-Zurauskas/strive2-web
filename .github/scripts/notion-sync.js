@@ -2,28 +2,14 @@ const fs = require('fs');
 const Anthropic = require('@anthropic-ai/sdk');
 const { Client } = require('@notionhq/client');
 const { markdownToBlocks } = require('@tryfabric/martian');
+const DOC_STANDARDS = require('./doc-standards');
 
 const anthropic = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY });
 const notion = new Client({ auth: process.env.NOTION_API_KEY });
 const DELAY_MS = 350; // stay under Notion's 3 req/s limit
 const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
 
-// ---------------------------------------------------------------------------
-// Configuration — change these per repository
-// ---------------------------------------------------------------------------
-
-const PROJECT = {
-  name: 'Strive',
-  description:
-    'AI-powered personalized learning platform that generates structured, customized courses tailored to individual goals with AI-generated curricula, lessons, interactive assessments, and intelligent mentoring.',
-  repos: [
-    'API (Express 5, Node 22, MongoDB, LangGraph) — REST API, authentication, AI-powered course generation',
-    'Client (Next.js 16, React 19, styled-components, NextAuth) — web application with course creation wizard, lesson viewer, AI chat',
-  ],
-  integration:
-    'The repositories communicate via REST (OpenAPI contract, types generated via openapi-typescript codegen) and WebSocket (Socket.IO for async job lifecycle events).',
-  thisRepo: process.env.REPO_LABEL || 'Client',
-};
+const REPO_LABEL = process.env.REPO_LABEL || 'Client';
 
 // ---------------------------------------------------------------------------
 // Notion helpers
@@ -165,30 +151,6 @@ async function rewritePage(pageId, content) {
   }
 }
 
-async function correctPage(pageId, staleSection, correctedContent) {
-  await notion.blocks.children.append({
-    block_id: pageId,
-    children: [
-      divider(),
-      {
-        object: 'block',
-        type: 'callout',
-        callout: {
-          rich_text: [
-            {
-              type: 'text',
-              text: { content: `Outdated as of ${prRef()}: "${staleSection}"\n\nCorrected:\n${correctedContent}` },
-            },
-          ],
-          icon: { type: 'emoji', emoji: '⚠️' },
-          color: 'yellow_background',
-        },
-      },
-      metaBlock(changeMeta()),
-    ],
-  });
-}
-
 async function createPage(parentId, title, content, linksTo = []) {
   const children = [textBlock(content)];
   if (linksTo.length > 0) children.push(metaBlock(`Related pages: ${linksTo.join(', ')}`));
@@ -248,34 +210,18 @@ async function main() {
   }
   console.log('Page summaries fetched');
 
-  const prompt = `You are a living documentation agent for ${PROJECT.name}.
+  const prompt = `You are a living documentation agent for this project.
+You are operating in the **${REPO_LABEL}** repository.
 
-PROJECT
-${PROJECT.description}
+${DOC_STANDARDS.DOCUMENTATION_PHILOSOPHY}
 
-The product is composed of independent repositories, each a standalone project:
-${PROJECT.repos.map((r) => `- ${r}`).join('\n')}
+${DOC_STANDARDS.UPDATE_RULES}
 
-${PROJECT.integration}
+${DOC_STANDARDS.WRITING_STANDARDS}
 
-You are operating in the **${PROJECT.thisRepo}** repository.
+${DOC_STANDARDS.QUALITY_CRITERIA}
 
-DOCUMENTATION PHILOSOPHY
-You maintain a professional technical wiki — not a changelog or a commit log.
-Every update must earn its place. Ask yourself: would a developer joining this project
-tomorrow find this useful, or is it noise?
-
-Documentation must be precise and useful — architecture decisions, data flows,
-integration points, gotchas, and configuration. Avoid restating obvious code.
-Cross-repository concerns are first-class topics: auth flows spanning repos, shared
-data contracts, API shapes, WebSocket events, and deployment dependencies must be
-explicitly documented.
-
-Your thinking must go beyond this single change. Consider:
-- What does this change mean architecturally?
-- Does it affect how repositories integrate with each other?
-- Does it change a data contract, API shape, auth flow, or convention other repos depend on?
-- Is there an existing page that now contains outdated information?
+${DOC_STANDARDS.PAGE_STRUCTURE}
 
 DOCUMENTATION STRUCTURE
 All documentation lives in Notion under two top-level sections:
@@ -301,30 +247,22 @@ ${diff}
 
 ACTIONS
 
-1. **rewrite** — PREFERRED for most changes. Replace the full content of an existing
-   page with corrected, up-to-date documentation. Use when ANY section of the page
-   is affected by this change. Write the complete page content — this replaces
-   everything. You have the page's current content in the summary above — use it
-   as the starting point and modify what changed.
+1. **rewrite** — PREFERRED for all changes. Replace the full content of an existing
+   page with corrected, up-to-date documentation. Always rewrite the complete page —
+   never append or patch. You have the page's current content in the summary above —
+   use it as the starting point and integrate the changes into a clean, consolidated version.
 
-2. **correct** — Flag a specific section of an existing page as stale and provide the
-   corrected version. Use ONLY for very small, surgical fixes (e.g., a function was
-   renamed, a default value changed) where rewriting the full page would be overkill.
-
-3. **create** — Create a new page only when the change introduces a concept, system,
+2. **create** — Create a new page only when the change introduces a concept, system,
    or integration pattern that genuinely has no home in the existing structure.
    Place it under the correct parent using parent_id from the tree above.
 
-4. **crosslink** — Add a cross-reference note to a page when a change in this repo
+3. **crosslink** — Add a cross-reference note to a page when a change in this repo
    has implications for documentation in another section (e.g., a client auth change
    that affects the system-wide Authentication page).
 
-5. **skip** — If the change is trivial (dependency bump, formatting, minor CSS,
-   test-only, internal refactor that doesn't change public behavior).
-
-CRITICAL: Do NOT use "update" (append). Appending content to pages causes duplication
-over time. Always use "rewrite" to replace the full page with a clean, consolidated
-version that incorporates the new information.
+4. **skip** — If the change is trivial (dependency bump, formatting, minor CSS,
+   test-only, internal refactor that doesn't change public behavior or introduce
+   new patterns).
 
 HIERARCHY RULES
 - Changes to this repo's internals → under this repo's section in the tree
@@ -332,12 +270,6 @@ HIERARCHY RULES
 - Auth changes → system-wide auth page if cross-repo, repo-specific if isolated
 - New external service integration → system-wide or repo-specific depending on scope
 - Never create a page at root level unless it is a genuinely top-level concern
-
-WRITING STYLE
-- Present tense, third person ("The component accepts…", "Authentication uses…")
-- Name specific files, components, hooks, endpoints — no vague references
-- Dense and precise, not verbose. Every sentence must carry information.
-- Match the existing documentation tone: technical, direct, professional
 
 Respond ONLY in valid JSON (no markdown fences):
 {
@@ -351,13 +283,6 @@ Respond ONLY in valid JSON (no markdown fences):
       "content": "Complete replacement content for the page"
     },
     {
-      "type": "correct",
-      "page_id": "id",
-      "page_title": "title",
-      "stale_section": "Which section is now outdated",
-      "corrected_content": "What it should say instead"
-    },
-    {
       "type": "create",
       "parent_id": "id",
       "title": "New Page Title",
@@ -369,7 +294,7 @@ Respond ONLY in valid JSON (no markdown fences):
       "page_id": "id",
       "page_title": "title",
       "note": "What changed and why this section should know"
-    },
+    }
   ]
 }`;
 
@@ -425,10 +350,6 @@ Respond ONLY in valid JSON (no markdown fences):
         case 'rewrite':
           await rewritePage(action.page_id, action.content);
           log.push({ status: '✓', type: action.type, page: label, id: action.page_id, detail: `${action.content.length} chars` });
-          break;
-        case 'correct':
-          await correctPage(action.page_id, action.stale_section, action.corrected_content);
-          log.push({ status: '✓', type: action.type, page: label, id: action.page_id, detail: action.stale_section });
           break;
         case 'create': {
           const newId = await createPage(action.parent_id, action.title, action.content, action.links_to || []);

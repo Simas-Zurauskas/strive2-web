@@ -15,6 +15,7 @@ const fs = require('fs');
 const path = require('path');
 const { execSync } = require('child_process');
 const { query } = require('@anthropic-ai/claude-agent-sdk');
+const DOC_STANDARDS = require('./doc-standards');
 
 const SCRIPTS_DIR = __dirname;
 const REPO_ROOT = path.resolve(SCRIPTS_DIR, '../..');
@@ -136,7 +137,7 @@ const PLAN_SCHEMA = {
         type: 'object',
         properties: {
           id: { type: 'string' },
-          action: { type: 'string', enum: ['rewrite', 'create', 'append', 'delete', 'rename', 'split'] },
+          action: { type: 'string', enum: ['rewrite', 'create', 'delete', 'rename', 'split'] },
           page_id: { type: 'string' },
           parent_id: { type: 'string' },
           title: { type: 'string' },
@@ -162,11 +163,7 @@ Analyze the codebase file listing and existing documentation, then produce a str
 plan. Each task in your plan will be executed by an independent worker agent that has
 access to the full codebase via Read, Glob, and Grep tools.
 
-## Documentation philosophy
-
-This is a professional technical wiki for developers and AI agents. Every page must
-earn its place. Document architecture decisions, data flows, integration points,
-gotchas, and configuration. Do not restate obvious code.
+${DOC_STANDARDS.DOCUMENTATION_PHILOSOPHY}
 
 ## Determine the documentation state
 
@@ -178,8 +175,9 @@ gotchas, and configuration. Do not restate obvious code.
 ## Task planning rules
 
 - Each task maps to ONE documentation page (one Notion write operation)
+- Always use 'rewrite' for existing pages — never 'append'. Appending causes duplication
+  and drift. Produce complete page content with changes integrated.
 - For 'rewrite': include page_id from the docs index
-- For 'append': include page_id from the docs index
 - For 'create': include parent_id from the docs index (or the technical root ID)
 - For 'delete': include page_id — only for pages documenting removed features
 - For 'split': create separate child tasks (action: 'create') and one parent task
@@ -198,15 +196,7 @@ management against the actual NextAuth config."
 
 Bad: "Update the hooks page."
 
-## Documentation page structure (instruct workers to follow)
-
-Each page should include where applicable:
-- Purpose — one paragraph
-- How it works — core technical content
-- Key files — table of file paths with descriptions
-- Integration points — connections to other systems
-- Configuration — env vars, feature flags
-- Gotchas — non-obvious behavior, limitations
+${DOC_STANDARDS.PAGE_STRUCTURE}
 
 ## Inputs
 
@@ -328,30 +318,11 @@ ${manifest}
 3. Read every relevant file — do not guess or assume
 4. Write complete documentation based on what you find in the code
 
-## Writing standards
+${DOC_STANDARDS.WRITING_STANDARDS}
 
-- Present tense, third person ("The component accepts…")
-- Name specific files, components, hooks, endpoints
-- Dense and precise — every sentence carries information
-- Use code blocks for paths, component names, env vars
-- Use tables for structured data (props, routes, env vars)
-- Technical, direct, professional tone
+${DOC_STANDARDS.QUALITY_CRITERIA}
 
-## Quality criteria
-
-**COMPLETE**: All public functions, hooks, components, routes in your section documented.
-**HELPFUL**: Explains why, not just what. Includes gotchas and integration points.
-**TRUTHFUL**: Every file path, function name, prop, and behavior claim matches the code.
-If you haven't verified it by reading the source, do not write it.
-
-## Page structure (follow where applicable)
-
-- **Purpose** — one paragraph
-- **How it works** — core technical content
-- **Key files** — table of file paths with descriptions
-- **Integration points** — connections to other systems
-- **Configuration** — env vars, feature flags
-- **Gotchas** — non-obvious behavior, limitations
+${DOC_STANDARDS.PAGE_STRUCTURE}
 
 ## Output
 
