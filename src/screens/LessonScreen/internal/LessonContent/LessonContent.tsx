@@ -46,7 +46,12 @@ export const LessonContent = ({
 }: LessonContentProps) => {
   const queryClient = useQueryClient();
 
-  const { data: lessonContent, isLoading: isLoadingContent } = useLessonContent(courseId, moduleIndex, lessonIndex, isGenerationRunning);
+  const { data: lessonContent, isLoading: isLoadingContent } = useLessonContent(
+    courseId,
+    moduleIndex,
+    lessonIndex,
+    isGenerationRunning,
+  );
   const hasContent = !!lessonContent?.blocks?.length;
 
   // Streaming state
@@ -133,10 +138,10 @@ export const LessonContent = ({
       {blocks ? (
         <>
           <BlockRenderer blocks={blocks} />
-          {(isStreaming || isGenerationRunning) && <S.StreamingIndicator>Still generating...</S.StreamingIndicator>}
+          {(isStreaming || isGenerationRunning) && <S.StreamingIndicator>Generating...</S.StreamingIndicator>}
         </>
       ) : isStreaming || isStarting ? (
-        <S.StreamingIndicator>Still generating...</S.StreamingIndicator>
+        <S.StreamingIndicator>Generating...</S.StreamingIndicator>
       ) : isLoadingContent ? (
         <S.Placeholder>
           <S.GeneratingText>Loading...</S.GeneratingText>

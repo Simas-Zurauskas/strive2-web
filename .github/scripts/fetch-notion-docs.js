@@ -7,9 +7,7 @@ const DOCS_DIR = path.resolve(__dirname, '../../_docs');
 const DELAY_MS = 350; // stay under Notion's 3 req/s limit
 
 // Page IDs to skip entirely (belong to other repos)
-const SKIP_PAGE_IDS = new Set([
-  '336c2628-ef95-81ce-bb28-c0060f125865', // API section
-]);
+const SKIP_PAGE_IDS = new Set(process.env.SKIP_PAGE_IDS?.split(',') || []);
 
 const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
 

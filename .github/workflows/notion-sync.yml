@@ -78,5 +78,5 @@ jobs:
           CHANGED_FILES: ${{ steps.pr_info.outputs.changed_files }}
           PR_NUMBER: ${{ steps.pr_info.outputs.pr_number }}
           REPO_NAME: ${{ github.repository }}
-          REPO_LABEL: Client
+          REPO_LABEL: ${{ github.event.repository.name }}
         run: node notion-sync.js

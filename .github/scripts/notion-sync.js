@@ -9,7 +9,7 @@ const notion = new Client({ auth: process.env.NOTION_API_KEY });
 const DELAY_MS = 350; // stay under Notion's 3 req/s limit
 const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
 
-const REPO_LABEL = process.env.REPO_LABEL || 'Client';
+const REPO_LABEL = process.env.REPO_LABEL;
 
 // ---------------------------------------------------------------------------
 // Notion helpers
@@ -202,7 +202,11 @@ async function main() {
     try {
       const raw = await fetchPageSummary(page.id);
       // Sanitize: collapse whitespace, remove non-printable chars, trim length
-      page.summary = raw.replace(/[\r\n]+/g, ' ').replace(/\s+/g, ' ').trim().slice(0, 800);
+      page.summary = raw
+        .replace(/[\r\n]+/g, ' ')
+        .replace(/\s+/g, ' ')
+        .trim()
+        .slice(0, 800);
     } catch (err) {
       console.warn(`  ⚠ Failed to fetch summary for "${page.title}": ${err.message}`);
       page.summary = '(summary unavailable)';
@@ -298,11 +302,12 @@ Respond ONLY in valid JSON (no markdown fences):
   ]
 }`;
 
-  console.log(`Prompt: ${Math.round(prompt.length / 1024)}KB, ${existingPages.length} pages, diff ${Math.round(diff.length / 1024)}KB`);
+  console.log(
+    `Prompt: ${Math.round(prompt.length / 1024)}KB, ${existingPages.length} pages, diff ${Math.round(diff.length / 1024)}KB`,
+  );
   console.log('Asking Claude to assess documentation impact…');
   const response = await anthropic.messages.create({
     model: 'claude-sonnet-4-6',
-    max_tokens: 4000,
     messages: [{ role: 'user', content: prompt }],
   });
 
@@ -349,7 +354,13 @@ Respond ONLY in valid JSON (no markdown fences):
       switch (action.type) {
         case 'rewrite':
           await rewritePage(action.page_id, action.content);
-          log.push({ status: '✓', type: action.type, page: label, id: action.page_id, detail: `${action.content.length} chars` });
+          log.push({
+            status: '✓',
+            type: action.type,
+            page: label,
+            id: action.page_id,
+            detail: `${action.content.length} chars`,
+          });
           break;
         case 'create': {
           const newId = await createPage(action.parent_id, action.title, action.content, action.links_to || []);
@@ -358,14 +369,26 @@ Respond ONLY in valid JSON (no markdown fences):
         }
         case 'crosslink':
           await crosslinkPage(action.page_id, action.note);
-          log.push({ status: '✓', type: action.type, page: label, id: action.page_id, detail: action.note.slice(0, 120) });
+          log.push({
+            status: '✓',
+            type: action.type,
+            page: label,
+            id: action.page_id,
+            detail: action.note.slice(0, 120),
+          });
           break;
         default:
           log.push({ status: '?', type: action.type, page: label, id: '—', detail: 'Unknown action type' });
           continue;
       }
     } catch (err) {
-      log.push({ status: '✗', type: action.type, page: label, id: action.page_id || action.parent_id, detail: err.message });
+      log.push({
+        status: '✗',
+        type: action.type,
+        page: label,
+        id: action.page_id || action.parent_id,
+        detail: err.message,
+      });
     }
   }
 
