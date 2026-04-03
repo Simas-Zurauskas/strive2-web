@@ -2,8 +2,8 @@
 
 import { useRouter } from 'next/navigation';
 import { useMemo, useState } from 'react';
-import { CourseProgressResponse } from '@/api/routes/course';
-import { LessonDotState } from './CourseSidebar.styles';
+import { CourseProgressResponse, CourseQuizProgressItem } from '@/api/routes/course';
+import { LessonDotState, QuizBadgeTier } from './CourseSidebar.styles';
 import * as S from './CourseSidebar.styles';
 
 interface Module {
@@ -87,7 +87,7 @@ export const CourseSidebar = ({
     const progress = progressMap.get(key);
 
     if (progress?.status === 'completed') return 'completed';
-    if (progress?.status === 'in_progress') return 'in_progress';
+    if (progress?.status === 'in_progress' && generatedSet.has(key)) return 'in_progress';
     if (generatedSet.has(key)) return 'not_started';
     return 'not_generated';
   };
@@ -99,6 +99,21 @@ export const CourseSidebar = ({
       if (progressMap.get(`${mi}-${li}`)?.status === 'completed') completed++;
     }
     return { completed, total: lessons.length };
+  };
+
+  const quizProgressMap = useMemo(() => {
+    const map = new Map<number, CourseQuizProgressItem>();
+    if (progressData?.quizzes) {
+      for (const qp of progressData.quizzes) {
+        map.set(qp.moduleIndex, qp);
+      }
+    }
+    return map;
+  }, [progressData]);
+
+  const isModuleComplete = (mi: number) => {
+    const mp = getModuleProgress(mi);
+    return mp.completed === mp.total && mp.total > 0;
   };
 
   return (
@@ -151,6 +166,32 @@ export const CourseSidebar = ({
                       </S.LessonItem>
                     );
                   })}
+
+                  {/* Module Quiz entry */}
+                  {(() => {
+                    const locked = !isModuleComplete(mi);
+                    const qp = quizProgressMap.get(mi);
+
+                    return (
+                      <S.QuizItem
+                        $locked={locked}
+                        onClick={() => {
+                          if (!locked) {
+                            router.push(`/course/${courseId}/quiz/${mi}${qp?.reviewDue ? '?review=true' : ''}`);
+                          }
+                        }}
+                      >
+                        <S.QuizIcon>{locked ? '\u{1F512}' : '\u{1F4DD}'}</S.QuizIcon>
+                        <S.LessonName>Module Quiz</S.LessonName>
+                        {qp?.reviewDue && <S.ReviewDot />}
+                        {qp?.bestTier && (
+                          <S.QuizBadge $tier={qp.bestTier as QuizBadgeTier}>
+                            {qp.bestScore}%
+                          </S.QuizBadge>
+                        )}
+                      </S.QuizItem>
+                    );
+                  })()}
                 </S.LessonList>
               )}
             </div>

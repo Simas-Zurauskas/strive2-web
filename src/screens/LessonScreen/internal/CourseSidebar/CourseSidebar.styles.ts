@@ -211,3 +211,70 @@ export const ProgressBarFill = styled.div<{ $percent: number }>`
   width: ${(p) => p.$percent}%;
   transition: width 300ms ease;
 `;
+
+// ── Module Quiz ───────────────────────────────────────
+
+export const QuizItem = styled.button<{ $locked?: boolean }>`
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  width: 100%;
+  padding: 0.375rem 0.5rem 0.375rem 1rem;
+  font-size: 0.75rem;
+  font-weight: 500;
+  font-family: inherit;
+  text-align: left;
+  background: none;
+  border: none;
+  color: ${(p) => (p.$locked ? p.theme.colors.muted : p.theme.colors.foreground)};
+  cursor: ${(p) => (p.$locked ? 'default' : 'pointer')};
+  opacity: ${(p) => (p.$locked ? 0.5 : 1)};
+
+  ${(p) => !p.$locked && `&:hover { background: ${p.theme.colors.background}; }`}
+`;
+
+export const QuizIcon = styled.span`
+  font-size: 0.625rem;
+  flex-shrink: 0;
+`;
+
+export type QuizBadgeTier = 'needs_review' | 'passed' | 'mastered';
+
+export const QuizBadge = styled.span<{ $tier: QuizBadgeTier }>`
+  margin-left: auto;
+  padding: 0.0625rem 0.375rem;
+  border-radius: 9999px;
+  font-size: 0.5625rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.03em;
+  background: ${(p) =>
+    p.$tier === 'mastered'
+      ? `${p.theme.colors.success}20`
+      : p.$tier === 'passed'
+        ? `${p.theme.colors.accent}20`
+        : `${p.theme.colors.error}20`};
+  color: ${(p) =>
+    p.$tier === 'mastered'
+      ? p.theme.colors.success
+      : p.$tier === 'passed'
+        ? p.theme.colors.accent
+        : p.theme.colors.error};
+`;
+
+export const ReviewDot = styled.span`
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: ${(p) => p.theme.colors.warning};
+  flex-shrink: 0;
+
+  @media (prefers-reduced-motion: no-preference) {
+    animation: reviewPulse 2s ease-in-out infinite;
+  }
+
+  @keyframes reviewPulse {
+    0%, 100% { opacity: 1; }
+    50% { opacity: 0.4; }
+  }
+`;

@@ -305,8 +305,18 @@ export interface LessonProgress {
   bookmarked: boolean;
 }
 
+export interface CourseQuizProgressItem {
+  moduleIndex: number;
+  bestScore: number;
+  bestTier: 'needs_review' | 'passed' | 'mastered' | null;
+  attemptCount: number;
+  nextReviewAt: string | null;
+  reviewDue: boolean;
+}
+
 export interface CourseProgressResponse {
   lessons: LessonProgress[];
+  quizzes: CourseQuizProgressItem[];
   stats: {
     total: number;
     completed: number;
@@ -370,6 +380,121 @@ export const getGeneratedLessons = (courseId: string) => {
 export const getProgressSummary = () => {
   return client<{ data: ProgressSummaryItem[] }>({
     url: '/course/progress-summary',
+    method: 'GET',
+  }).then((res) => res.data.data);
+};
+
+// ── Module quizzes ────────────────────────────────────────
+
+export interface ModuleQuizQuestion {
+  id: string;
+  question: string;
+  options: string[];
+  sourceLessons: number[];
+  isInterleaved: boolean;
+  interleavedModuleIndex?: number;
+}
+
+export interface ModuleQuizContent {
+  courseId: string;
+  moduleIndex: number;
+  questions: ModuleQuizQuestion[];
+  version: number;
+}
+
+export interface QuizAttemptQuestionResult {
+  id: string;
+  question: string;
+  options: string[];
+  correctIndex: number;
+  explanation: string;
+  sourceLessons: number[];
+  isInterleaved: boolean;
+  interleavedModuleIndex?: number;
+  selectedOption: number | null;
+  correct: boolean;
+}
+
+export interface QuizAttemptResult {
+  attemptNumber: number;
+  score: number;
+  masteryTier: 'needs_review' | 'passed' | 'mastered';
+  completedAt: string;
+  questions: QuizAttemptQuestionResult[];
+  nextReviewAt: string;
+  reviewIntervalDays: number;
+}
+
+export interface ModuleQuizProgressResponse {
+  _id: string;
+  userId: string;
+  courseId: string;
+  moduleIndex: number;
+  attempts: {
+    attemptNumber: number;
+    score: number;
+    masteryTier: string;
+    completedAt: string;
+    quizVersion: number;
+  }[];
+  bestScore: number;
+  bestTier: 'needs_review' | 'passed' | 'mastered' | null;
+}
+
+export const generateModuleQuiz = (courseId: string, moduleIndex: number) => {
+  return client<{ data: { jobId: string } }>({
+    url: `/course/${courseId}/module-quiz/${moduleIndex}/generate`,
+    method: 'POST',
+  }).then((res) => res.data.data);
+};
+
+export const getModuleQuizContent = (courseId: string, moduleIndex: number): Promise<ModuleQuizContent | null> => {
+  return client<{ data: ModuleQuizContent }>({
+    url: `/course/${courseId}/module-quiz/${moduleIndex}`,
+    method: 'GET',
+  })
+    .then((res) => res.data.data)
+    .catch((err) => {
+      if (err?.message?.includes('not generated')) return null;
+      throw err;
+    });
+};
+
+export const submitQuizAttempt = (
+  courseId: string,
+  moduleIndex: number,
+  responses: { questionId: string; selectedOption: number }[],
+) => {
+  return client<{ data: QuizAttemptResult }>({
+    url: `/course/${courseId}/module-quiz/${moduleIndex}/submit`,
+    method: 'POST',
+    data: { responses },
+  }).then((res) => res.data.data);
+};
+
+export const getModuleQuizProgress = (courseId: string, moduleIndex: number) => {
+  return client<{ data: ModuleQuizProgressResponse | null }>({
+    url: `/course/${courseId}/module-quiz/${moduleIndex}/progress`,
+    method: 'GET',
+  }).then((res) => res.data.data);
+};
+
+// ── Reviews due ──────────────────────────────────────────
+
+export interface ReviewDueItem {
+  courseId: string;
+  courseName: string;
+  moduleIndex: number;
+  moduleName: string;
+  bestScore: number;
+  bestTier: 'needs_review' | 'passed' | 'mastered';
+  nextReviewAt: string | null;
+  reviewReason: 'time' | 'progression';
+}
+
+export const getReviewsDue = () => {
+  return client<{ data: ReviewDueItem[] }>({
+    url: '/course/reviews-due',
     method: 'GET',
   }).then((res) => res.data.data);
 };

@@ -8,5 +8,10 @@ export {
   useGeneratedLessons,
   useProgressSummary,
   useUpsertProgress,
+  useModuleQuizContent,
+  useModuleQuizProgress,
+  useGenerateModuleQuiz,
+  useSubmitQuizAttempt,
+  useReviewsDue,
 } from './useProgress';
 export { useSocket, SocketProvider } from './useSocket';

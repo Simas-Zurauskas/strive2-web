@@ -800,6 +800,48 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/course/{courseId}/module-quiz/{moduleIndex}/generate": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Generate a module quiz (or regenerate for retakes) */
+        post: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path: {
+                    courseId: string;
+                    moduleIndex: number;
+                };
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": {
+                            data: {
+                                jobId: string;
+                            };
+                        };
+                    };
+                };
+            };
+        };
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/course/{courseId}/generate-structure": {
         parameters: {
             query?: never;
@@ -875,6 +917,136 @@ export interface paths {
                                     createdAt?: string;
                                 }[];
                             };
+                        };
+                    };
+                };
+            };
+        };
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/course/continue": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Get the most recently accessed lesson across all courses */
+        get: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path?: never;
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": {
+                            data: {
+                                courseId?: string;
+                                courseName?: string;
+                                courseGoal?: string;
+                                moduleName?: string;
+                                lessonName?: string;
+                                moduleIndex?: number;
+                                lessonIndex?: number;
+                                courseProgress?: components["schemas"]["CourseProgressStats"];
+                            } | null;
+                        };
+                    };
+                };
+            };
+        };
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/course/{courseId}/progress": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Get all lesson progress for a course with aggregate stats */
+        get: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path: {
+                    courseId: string;
+                };
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": {
+                            data: {
+                                lessons: components["schemas"]["UserLessonProgress"][];
+                                stats: components["schemas"]["CourseProgressStats"];
+                            };
+                        };
+                    };
+                };
+            };
+        };
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/course/{courseId}/generated-lessons": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Get list of lessons that have generated content */
+        get: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path: {
+                    courseId: string;
+                };
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": {
+                            data: {
+                                moduleIndex: number;
+                                lessonIndex: number;
+                            }[];
                         };
                     };
                 };
@@ -975,6 +1147,128 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/course/{courseId}/module-quiz/{moduleIndex}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Get module quiz content (correctIndex and explanation stripped for anti-cheat) */
+        get: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path: {
+                    courseId: string;
+                    moduleIndex: number;
+                };
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": {
+                            data: Record<string, never>;
+                        };
+                    };
+                };
+            };
+        };
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/course/{courseId}/module-quiz/{moduleIndex}/progress": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Get quiz progress (attempts, best score, mastery tier) */
+        get: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path: {
+                    courseId: string;
+                    moduleIndex: number;
+                };
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": {
+                            data: Record<string, never> | null;
+                        };
+                    };
+                };
+            };
+        };
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/course/progress-summary": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Get progress percentage for all user courses */
+        get: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path?: never;
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": {
+                            data: {
+                                courseId: string;
+                                total: number;
+                                completed: number;
+                                percentage: number;
+                            }[];
+                        };
+                    };
+                };
+            };
+        };
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/course/{courseId}/refine-structure": {
         parameters: {
             query?: never;
@@ -1011,6 +1305,154 @@ export interface paths {
                             data: {
                                 jobId: string;
                             };
+                        };
+                    };
+                };
+            };
+        };
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/course/{courseId}/stream-lesson": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Generate and stream lesson content via SSE (block-by-block) */
+        post: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path: {
+                    courseId: string;
+                };
+                cookie?: never;
+            };
+            requestBody: {
+                content: {
+                    "application/json": {
+                        moduleIndex: number;
+                        lessonIndex: number;
+                    };
+                };
+            };
+            responses: {
+                /** @description SSE stream of lesson generation events */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "text/event-stream": string;
+                    };
+                };
+            };
+        };
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/course/{courseId}/module-quiz/{moduleIndex}/submit": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Submit quiz attempt — grades answers and returns results with explanations */
+        post: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path: {
+                    courseId: string;
+                    moduleIndex: number;
+                };
+                cookie?: never;
+            };
+            requestBody?: {
+                content: {
+                    "application/json": {
+                        responses: {
+                            questionId: string;
+                            selectedOption: number;
+                        }[];
+                    };
+                };
+            };
+            responses: {
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": {
+                            data: Record<string, never>;
+                        };
+                    };
+                };
+            };
+        };
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/course/{courseId}/progress/{moduleIndex}/{lessonIndex}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Upsert lesson progress (mark complete, update notes, track time, etc.) */
+        post: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path: {
+                    courseId: string;
+                    moduleIndex: number;
+                    lessonIndex: number;
+                };
+                cookie?: never;
+            };
+            requestBody?: {
+                content: {
+                    "application/json": {
+                        /** @enum {string} */
+                        status?: "not_started" | "in_progress" | "completed";
+                        notes?: string | null;
+                        bookmarked?: boolean;
+                        /** @description Seconds to add to cumulative time */
+                        timeSpentDelta?: number;
+                        quizResponse?: components["schemas"]["QuizResponse"];
+                        exerciseAttempt?: components["schemas"]["ExerciseAttempt"];
+                    };
+                };
+            };
+            responses: {
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": {
+                            data: components["schemas"]["UserLessonProgress"];
                         };
                     };
                 };
@@ -1099,14 +1541,14 @@ export interface components {
             /** @enum {string} */
             status: "pending" | "processing" | "completed" | "failed";
             /** @enum {string} */
-            type: "clarify" | "generate_structure" | "refine_structure" | "generate_lesson" | "generate_depth_previews";
+            type: "clarify" | "generate_structure" | "refine_structure" | "generate_lesson" | "generate_depth_previews" | "generate_module_quiz";
             courseId: string;
             error?: string;
         };
         LessonBlock: {
             id: string;
             /** @enum {string} */
-            type: "intro" | "section" | "code" | "mermaid" | "callout" | "quiz" | "exercise" | "summary" | "links" | "image" | "latex";
+            type: "intro" | "section" | "code" | "mermaid" | "callout" | "quiz" | "exercise" | "summary" | "links" | "image";
             content: string;
             metadata?: Record<string, never> | null;
             order: number;
@@ -1125,6 +1567,48 @@ export interface components {
             createdAt?: string;
             /** Format: date-time */
             updatedAt?: string;
+        };
+        QuizResponse: {
+            blockId: string;
+            selectedOption: number;
+            correct: boolean;
+            /** Format: date-time */
+            answeredAt?: string;
+        };
+        ExerciseAttempt: {
+            blockId: string;
+            code: string;
+            passed: boolean;
+            /** Format: date-time */
+            attemptedAt?: string;
+        };
+        UserLessonProgress: {
+            _id: string;
+            userId: string;
+            courseId: string;
+            moduleIndex: number;
+            lessonIndex: number;
+            /** @enum {string} */
+            status: "not_started" | "in_progress" | "completed";
+            /** Format: date-time */
+            completedAt?: string | null;
+            /** Format: date-time */
+            lastAccessedAt?: string;
+            timeSpentSeconds?: number;
+            quizResponses?: components["schemas"]["QuizResponse"][];
+            exerciseAttempts?: components["schemas"]["ExerciseAttempt"][];
+            notes?: string | null;
+            bookmarked?: boolean;
+            /** Format: date-time */
+            createdAt?: string;
+            /** Format: date-time */
+            updatedAt?: string;
+        };
+        CourseProgressStats: {
+            total: number;
+            completed: number;
+            inProgress?: number;
+            percentage: number;
         };
         Course: {
             _id: string;

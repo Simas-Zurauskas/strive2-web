@@ -423,41 +423,47 @@ export const QuizOptions = styled.div`
   gap: 0.5rem;
 `;
 
-export const QuizOption = styled.button<{ $state: 'default' | 'correct' | 'incorrect' | 'dimmed' }>`
+type QuizOptionState = 'default' | 'selected' | 'correct' | 'incorrect' | 'dimmed';
+
+export const QuizOption = styled.button<{ $state: QuizOptionState }>`
   display: flex;
   align-items: flex-start;
   gap: 0.625rem;
   padding: 0.625rem 0.75rem;
   border-radius: 8px;
   border: 1px solid ${(p) =>
-    p.$state === 'correct'
-      ? p.theme.colors.success
-      : p.$state === 'incorrect'
-        ? p.theme.colors.error
-        : p.theme.colors.border};
+    p.$state === 'selected'
+      ? p.theme.colors.accent
+      : p.$state === 'correct'
+        ? p.theme.colors.success
+        : p.$state === 'incorrect'
+          ? p.theme.colors.error
+          : p.theme.colors.border};
   background: ${(p) =>
-    p.$state === 'correct'
-      ? `${p.theme.colors.success}10`
-      : p.$state === 'incorrect'
-        ? `${p.theme.colors.error}10`
-        : p.theme.colors.background};
+    p.$state === 'selected'
+      ? `${p.theme.colors.accent}10`
+      : p.$state === 'correct'
+        ? `${p.theme.colors.success}10`
+        : p.$state === 'incorrect'
+          ? `${p.theme.colors.error}10`
+          : p.theme.colors.background};
   color: ${(p) => (p.$state === 'dimmed' ? p.theme.colors.muted : p.theme.colors.foreground)};
   font-size: 0.875rem;
   font-family: inherit;
   text-align: left;
-  cursor: ${(p) => (p.$state === 'default' ? 'pointer' : 'default')};
+  cursor: ${(p) => (p.$state === 'default' || p.$state === 'selected' ? 'pointer' : 'default')};
   line-height: 1.4;
   transition: border-color 0.15s, background 0.15s;
 
   ${(p) =>
-    p.$state === 'default' &&
+    (p.$state === 'default' || p.$state === 'selected') &&
     `&:hover {
       border-color: ${p.theme.colors.accent};
       background: ${p.theme.colors.surface};
     }`}
 `;
 
-export const QuizOptionLetter = styled.span<{ $state: 'default' | 'correct' | 'incorrect' | 'dimmed' }>`
+export const QuizOptionLetter = styled.span<{ $state: QuizOptionState }>`
   flex-shrink: 0;
   display: flex;
   align-items: center;
@@ -468,21 +474,44 @@ export const QuizOptionLetter = styled.span<{ $state: 'default' | 'correct' | 'i
   font-size: 0.6875rem;
   font-weight: 700;
   background: ${(p) =>
-    p.$state === 'correct'
-      ? p.theme.colors.success
-      : p.$state === 'incorrect'
-        ? p.theme.colors.error
-        : p.theme.colors.surface};
+    p.$state === 'selected'
+      ? p.theme.colors.accent
+      : p.$state === 'correct'
+        ? p.theme.colors.success
+        : p.$state === 'incorrect'
+          ? p.theme.colors.error
+          : p.theme.colors.surface};
   color: ${(p) =>
-    p.$state === 'correct' || p.$state === 'incorrect'
+    p.$state === 'selected' || p.$state === 'correct' || p.$state === 'incorrect'
       ? '#fff'
       : p.theme.colors.muted};
   border: 1px solid ${(p) =>
-    p.$state === 'correct'
-      ? p.theme.colors.success
-      : p.$state === 'incorrect'
-        ? p.theme.colors.error
-        : p.theme.colors.border};
+    p.$state === 'selected'
+      ? p.theme.colors.accent
+      : p.$state === 'correct'
+        ? p.theme.colors.success
+        : p.$state === 'incorrect'
+          ? p.theme.colors.error
+          : p.theme.colors.border};
+`;
+
+export const QuizConfirmButton = styled.button`
+  margin: 0.5rem 1rem 0.75rem;
+  padding: 0.5rem 1.25rem;
+  border-radius: 6px;
+  border: none;
+  background: ${(p) => p.theme.colors.accent};
+  color: #fff;
+  font-size: 0.8125rem;
+  font-weight: 600;
+  font-family: inherit;
+  cursor: pointer;
+  transition: opacity 0.15s;
+  align-self: flex-start;
+
+  &:hover {
+    opacity: 0.85;
+  }
 `;
 
 export const QuizExplanation = styled.div`

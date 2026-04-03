@@ -5,7 +5,7 @@ import Link from 'next/link';
 import { useParams, useRouter } from 'next/navigation';
 import { useEffect, useMemo, useState } from 'react';
 import { toast } from 'sonner';
-import { updateCourse, deleteCourse } from '@/api/routes/course';
+import { updateCourse, deleteCourse, CourseQuizProgressItem } from '@/api/routes/course';
 import { CourseStatus } from '@/api/types';
 import { Badge, Button, Card } from '@/components';
 import { useCourse, useCourseProgress } from '@/hooks';
@@ -119,6 +119,16 @@ export const CourseScreen = () => {
     return 'default';
   };
 
+  const quizProgressMap = useMemo(() => {
+    const map = new Map<number, CourseQuizProgressItem>();
+    if (progressData?.quizzes) {
+      for (const qp of progressData.quizzes) {
+        map.set(qp.moduleIndex, qp);
+      }
+    }
+    return map;
+  }, [progressData]);
+
   return (
     <S.Layout>
       <S.Container>
@@ -183,6 +193,29 @@ export const CourseScreen = () => {
                       </S.LessonItem>
                     );
                   })}
+
+                  {/* Module Quiz row */}
+                  {(() => {
+                    const isComplete = mp.completed === mp.total && mp.total > 0;
+                    const qp = quizProgressMap.get(i);
+
+                    return (
+                      <S.QuizRow
+                        $locked={!isComplete}
+                        onClick={() => isComplete && router.push(
+                          `/course/${courseId}/quiz/${i}${qp?.reviewDue ? '?review=true' : ''}`
+                        )}
+                      >
+                        {isComplete ? '\u{1F4DD}' : '\u{1F512}'} Module Quiz
+                        {qp?.reviewDue && <S.ReviewIndicator>Review due</S.ReviewIndicator>}
+                        {qp?.bestTier && (
+                          <S.QuizBadge $tier={qp.bestTier as S.QuizBadgeTier}>
+                            {qp.bestScore}%
+                          </S.QuizBadge>
+                        )}
+                      </S.QuizRow>
+                    );
+                  })()}
                 </S.LessonList>
               </Card>
             );
