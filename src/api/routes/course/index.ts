@@ -209,6 +209,7 @@ export interface LessonBlock {
 export interface LessonContentResponse {
   blocks: LessonBlock[];
   heroImageUrl: string | null;
+  includeHeroImage?: boolean;
   summary: string | null;
   version: number;
 }
@@ -247,6 +248,128 @@ type JobStatusResponse =
 export const getJobStatus = (jobId: string) => {
   return client<JobStatusResponse>({
     url: `/course/job/${jobId}`,
+    method: 'GET',
+  }).then((res) => res.data.data);
+};
+
+// ── Progress tracking ──────────────────────────────────
+
+export interface QuizResponseInput {
+  blockId: string;
+  selectedOption: number;
+  correct: boolean;
+}
+
+export interface ExerciseAttemptInput {
+  blockId: string;
+  code: string;
+  passed: boolean;
+}
+
+export interface UpsertProgressBody {
+  status?: 'not_started' | 'in_progress' | 'completed';
+  notes?: string | null;
+  bookmarked?: boolean;
+  timeSpentDelta?: number;
+  quizResponse?: QuizResponseInput;
+  exerciseAttempt?: ExerciseAttemptInput;
+}
+
+export interface QuizResponseData {
+  blockId: string;
+  selectedOption: number;
+  correct: boolean;
+  answeredAt: string;
+}
+
+export interface ExerciseAttemptData {
+  blockId: string;
+  code: string;
+  passed: boolean;
+  attemptedAt: string;
+}
+
+export interface LessonProgress {
+  _id: string;
+  userId: string;
+  courseId: string;
+  moduleIndex: number;
+  lessonIndex: number;
+  status: 'not_started' | 'in_progress' | 'completed';
+  completedAt: string | null;
+  lastAccessedAt: string;
+  timeSpentSeconds: number;
+  quizResponses: QuizResponseData[];
+  exerciseAttempts: ExerciseAttemptData[];
+  notes: string | null;
+  bookmarked: boolean;
+}
+
+export interface CourseProgressResponse {
+  lessons: LessonProgress[];
+  stats: {
+    total: number;
+    completed: number;
+    inProgress: number;
+    percentage: number;
+  };
+}
+
+export interface ContinueLearningResponse {
+  courseId: string;
+  courseName: string;
+  courseGoal: string;
+  moduleName: string;
+  lessonName: string;
+  moduleIndex: number;
+  lessonIndex: number;
+  courseProgress: { total: number; completed: number; percentage: number };
+}
+
+export interface ProgressSummaryItem {
+  courseId: string;
+  total: number;
+  completed: number;
+  percentage: number;
+}
+
+export const upsertLessonProgress = (
+  courseId: string,
+  moduleIndex: number,
+  lessonIndex: number,
+  data: UpsertProgressBody,
+) => {
+  return client<{ data: LessonProgress }>({
+    url: `/course/${courseId}/progress/${moduleIndex}/${lessonIndex}`,
+    method: 'POST',
+    data,
+  }).then((res) => res.data.data);
+};
+
+export const getCourseProgress = (courseId: string) => {
+  return client<{ data: CourseProgressResponse }>({
+    url: `/course/${courseId}/progress`,
+    method: 'GET',
+  }).then((res) => res.data.data);
+};
+
+export const getContinueLearning = () => {
+  return client<{ data: ContinueLearningResponse | null }>({
+    url: '/course/continue',
+    method: 'GET',
+  }).then((res) => res.data.data);
+};
+
+export const getGeneratedLessons = (courseId: string) => {
+  return client<{ data: { moduleIndex: number; lessonIndex: number }[] }>({
+    url: `/course/${courseId}/generated-lessons`,
+    method: 'GET',
+  }).then((res) => res.data.data);
+};
+
+export const getProgressSummary = () => {
+  return client<{ data: ProgressSummaryItem[] }>({
+    url: '/course/progress-summary',
     method: 'GET',
   }).then((res) => res.data.data);
 };

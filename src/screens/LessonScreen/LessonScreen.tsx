@@ -1,8 +1,11 @@
 'use client';
 
 import { useParams, useRouter } from 'next/navigation';
-import { useCallback, useEffect, useState } from 'react';
-import { useCourse } from '@/hooks';
+import { useCallback, useEffect, useRef, useState } from 'react';
+import { upsertLessonProgress } from '@/api/routes/course';
+import { NEXT_PUBLIC_API_URL } from '@/conf/env';
+import { getAuthToken } from '@/api/client';
+import { useCourse, useCourseProgress, useGeneratedLessons } from '@/hooks';
 import { CourseSidebar, ChatPanel, LessonContent } from './internal';
 import * as S from './LessonScreen.styles';
 
@@ -30,6 +33,8 @@ export const LessonScreen = () => {
   const lessonIndex = Number(params.lessonIndex);
 
   const { data: course, isLoading } = useCourse(courseId);
+  const { data: progressData } = useCourseProgress(courseId);
+  const { data: generatedLessons } = useGeneratedLessons(courseId);
 
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [chatOpen, setChatOpen] = useState(false);
@@ -86,6 +91,48 @@ export const LessonScreen = () => {
     }
   }, [isDesktop]);
 
+  // ── Auto-track progress ───────────────────────────────
+
+  const timeRef = useRef(0);
+
+  useEffect(() => {
+    // Mark lesson as in_progress on open
+    upsertLessonProgress(courseId, moduleIndex, lessonIndex, { status: 'in_progress' }).catch(() => {});
+
+    // Track time spent with 30s heartbeats
+    timeRef.current = 0;
+    const interval = setInterval(() => {
+      timeRef.current += 30;
+      upsertLessonProgress(courseId, moduleIndex, lessonIndex, { timeSpentDelta: 30 }).catch(() => {});
+    }, 30_000);
+
+    // Send remaining time on unmount via beacon
+    const sendBeacon = () => {
+      const remaining = 30 - (timeRef.current % 30 || 30);
+      if (remaining > 0 && remaining < 30) {
+        const token = getAuthToken();
+        const url = `${NEXT_PUBLIC_API_URL}/api/course/${courseId}/progress/${moduleIndex}/${lessonIndex}`;
+        const body = JSON.stringify({ timeSpentDelta: remaining });
+        const blob = new Blob([body], { type: 'application/json' });
+        // sendBeacon doesn't support auth headers — fallback to fetch keepalive
+        fetch(url, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json', ...(token && { Authorization: `Bearer ${token}` }) },
+          body,
+          keepalive: true,
+        }).catch(() => {});
+      }
+    };
+
+    window.addEventListener('beforeunload', sendBeacon);
+
+    return () => {
+      clearInterval(interval);
+      window.removeEventListener('beforeunload', sendBeacon);
+      sendBeacon();
+    };
+  }, [courseId, moduleIndex, lessonIndex]);
+
   // ── Loading / not found ───────────────────────────────
 
   if (isLoading) {
@@ -140,6 +187,8 @@ export const LessonScreen = () => {
           currentLessonIndex={lessonIndex}
           onNavigate={navigateToLesson}
           onCollapse={() => setSidebarOpen(false)}
+          progressData={progressData ?? undefined}
+          generatedLessons={generatedLessons ?? undefined}
         />
       </S.SidebarSlot>
 
@@ -151,6 +200,7 @@ export const LessonScreen = () => {
           moduleIndex={moduleIndex}
           lessonIndex={lessonIndex}
           lesson={currentLesson}
+          modules={modules}
           hasPrev={hasPrev}
           hasNext={hasNext}
           onPrev={prevLesson}
@@ -158,6 +208,7 @@ export const LessonScreen = () => {
           onOpenSidebar={() => setSidebarOpen(true)}
           sidebarOpen={sidebarOpen}
           isGenerationRunning={!!course.activeJobId}
+          progressData={progressData ?? undefined}
         />
       </S.ContentSlot>
 

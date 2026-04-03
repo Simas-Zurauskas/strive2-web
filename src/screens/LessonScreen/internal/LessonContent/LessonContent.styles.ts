@@ -185,6 +185,76 @@ export const StreamingIndicator = styled.div`
   }
 `;
 
+export const CompleteSection = styled.div`
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding-top: 1.5rem;
+`;
+
+export const CompleteButton = styled.button`
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  width: 100%;
+  max-width: 400px;
+  padding: 0.75rem 1.5rem;
+  border-radius: 10px;
+  border: 1px solid ${(p) => p.theme.colors.success};
+  background: transparent;
+  color: ${(p) => p.theme.colors.success};
+  font-size: 0.9375rem;
+  font-weight: 600;
+  font-family: inherit;
+  cursor: pointer;
+  transition: background 0.15s, color 0.15s;
+
+  &:hover {
+    background: ${(p) => p.theme.colors.success};
+    color: white;
+  }
+
+  &:disabled {
+    opacity: 0.6;
+    cursor: default;
+  }
+`;
+
+export const CompletedIndicator = styled.div`
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  padding: 0.75rem 1.5rem;
+  border-radius: 10px;
+  background: ${(p) => p.theme.colors.success}15;
+  color: ${(p) => p.theme.colors.success};
+  font-size: 0.875rem;
+  font-weight: 500;
+`;
+
+export const BookmarkButton = styled.button<{ $active: boolean }>`
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 32px;
+  height: 32px;
+  border-radius: 6px;
+  border: 1px solid ${(p) => p.theme.colors.border};
+  background: ${(p) => (p.$active ? p.theme.colors.accent + '15' : p.theme.colors.background)};
+  color: ${(p) => (p.$active ? p.theme.colors.accent : p.theme.colors.muted)};
+  cursor: pointer;
+  flex-shrink: 0;
+  font-size: 0.875rem;
+  margin-left: auto;
+
+  &:hover {
+    background: ${(p) => p.theme.colors.surface};
+    color: ${(p) => p.theme.colors.accent};
+  }
+`;
+
 export const Nav = styled.div`
   display: flex;
   align-items: center;

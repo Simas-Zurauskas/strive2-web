@@ -1,7 +1,9 @@
 'use client';
 
 import { useRouter } from 'next/navigation';
-import { useState } from 'react';
+import { useMemo, useState } from 'react';
+import { CourseProgressResponse } from '@/api/routes/course';
+import { LessonDotState } from './CourseSidebar.styles';
 import * as S from './CourseSidebar.styles';
 
 interface Module {
@@ -18,6 +20,8 @@ interface CourseSidebarProps {
   currentLessonIndex: number;
   onNavigate: (moduleIndex: number, lessonIndex: number) => void;
   onCollapse: () => void;
+  progressData?: CourseProgressResponse;
+  generatedLessons?: { moduleIndex: number; lessonIndex: number }[];
 }
 
 export const CourseSidebar = ({
@@ -28,10 +32,12 @@ export const CourseSidebar = ({
   currentLessonIndex,
   onNavigate,
   onCollapse,
+  progressData,
+  generatedLessons,
 }: CourseSidebarProps) => {
   const router = useRouter();
 
-  // All modules start expanded; current module is always expanded
+  // All modules start expanded
   const [expandedModules, setExpandedModules] = useState<Set<number>>(() => {
     return new Set(modules.map((_, i) => i));
   });
@@ -48,8 +54,52 @@ export const CourseSidebar = ({
     });
   };
 
+  // Build lookup maps
+  const progressMap = useMemo(() => {
+    const map = new Map<string, { status: string; bookmarked: boolean }>();
+    if (progressData?.lessons) {
+      for (const lp of progressData.lessons) {
+        map.set(`${lp.moduleIndex}-${lp.lessonIndex}`, { status: lp.status, bookmarked: lp.bookmarked });
+      }
+    }
+    return map;
+  }, [progressData]);
+
+  const generatedSet = useMemo(() => {
+    const set = new Set<string>();
+    if (generatedLessons) {
+      for (const gl of generatedLessons) {
+        set.add(`${gl.moduleIndex}-${gl.lessonIndex}`);
+      }
+    }
+    return set;
+  }, [generatedLessons]);
+
   const totalLessons = modules.reduce((sum, m) => sum + (m.lessons?.length ?? 0), 0);
-  let completedCount = 0; // Placeholder — will track generated lessons later
+  const completedCount = progressData?.stats?.completed ?? 0;
+  const remaining = totalLessons - completedCount;
+
+  const getDotState = (mi: number, li: number): LessonDotState => {
+    const isActive = mi === currentModuleIndex && li === currentLessonIndex;
+    if (isActive) return 'active';
+
+    const key = `${mi}-${li}`;
+    const progress = progressMap.get(key);
+
+    if (progress?.status === 'completed') return 'completed';
+    if (progress?.status === 'in_progress') return 'in_progress';
+    if (generatedSet.has(key)) return 'not_started';
+    return 'not_generated';
+  };
+
+  const getModuleProgress = (mi: number) => {
+    const lessons = modules[mi]?.lessons ?? [];
+    let completed = 0;
+    for (let li = 0; li < lessons.length; li++) {
+      if (progressMap.get(`${mi}-${li}`)?.status === 'completed') completed++;
+    }
+    return { completed, total: lessons.length };
+  };
 
   return (
     <S.Container>
@@ -66,6 +116,7 @@ export const CourseSidebar = ({
         {modules.map((mod, mi) => {
           const expanded = expandedModules.has(mi);
           const lessons = mod.lessons ?? [];
+          const mp = getModuleProgress(mi);
 
           return (
             <div key={mi}>
@@ -74,12 +125,19 @@ export const CourseSidebar = ({
                 <S.ModuleLabel>
                   {mi + 1}. {mod.name}
                 </S.ModuleLabel>
+                {mp.completed > 0 && (
+                  <S.ModuleProgress>
+                    {mp.completed}/{mp.total}
+                  </S.ModuleProgress>
+                )}
               </S.ModuleHeader>
 
               {expanded && (
                 <S.LessonList>
                   {lessons.map((lesson, li) => {
                     const isActive = mi === currentModuleIndex && li === currentLessonIndex;
+                    const dotState = getDotState(mi, li);
+                    const isBookmarked = progressMap.get(`${mi}-${li}`)?.bookmarked;
 
                     return (
                       <S.LessonItem
@@ -87,8 +145,9 @@ export const CourseSidebar = ({
                         $active={isActive}
                         onClick={() => onNavigate(mi, li)}
                       >
-                        <S.LessonDot $active={isActive} />
+                        <S.LessonDot $state={dotState} />
                         <S.LessonName>{lesson.name}</S.LessonName>
+                        {isBookmarked && <S.BookmarkIcon>&#9733;</S.BookmarkIcon>}
                       </S.LessonItem>
                     );
                   })}
@@ -100,7 +159,17 @@ export const CourseSidebar = ({
       </S.Tree>
 
       <S.Footer>
-        {totalLessons} lesson{totalLessons !== 1 ? 's' : ''}
+        <S.FooterText>
+          {completedCount} of {totalLessons} completed
+        </S.FooterText>
+        {remaining > 0 && remaining <= 2 && (
+          <S.FooterAccent>
+            {remaining} lesson{remaining !== 1 ? 's' : ''} to go!
+          </S.FooterAccent>
+        )}
+        <S.ProgressBarTrack>
+          <S.ProgressBarFill $percent={totalLessons > 0 ? Math.round((completedCount / totalLessons) * 100) : 0} />
+        </S.ProgressBarTrack>
       </S.Footer>
     </S.Container>
   );

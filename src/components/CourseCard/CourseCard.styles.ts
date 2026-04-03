@@ -89,3 +89,31 @@ export const Goal = styled.p`
   overflow: hidden;
   line-height: 1.5;
 `;
+
+export const ProgressContainer = styled.div`
+  display: flex;
+  align-items: center;
+  gap: 0.625rem;
+  margin-top: 0.75rem;
+`;
+
+export const ProgressTrack = styled.div`
+  flex: 1;
+  height: 3px;
+  border-radius: 2px;
+  background: ${(p) => p.theme.colors.border};
+`;
+
+export const ProgressFill = styled.div<{ $percent: number }>`
+  height: 100%;
+  border-radius: 2px;
+  background: ${(p) => p.theme.colors.success};
+  width: ${(p) => p.$percent}%;
+  transition: width 300ms ease;
+`;
+
+export const ProgressLabel = styled.span`
+  font-size: 0.6875rem;
+  color: ${(p) => p.theme.colors.muted};
+  flex-shrink: 0;
+`;
