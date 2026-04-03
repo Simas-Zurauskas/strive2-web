@@ -72,10 +72,19 @@ export const LessonScreen = () => {
     const lessonsInModule = currentModule?.lessons?.length ?? 0;
     if (lessonIndex < lessonsInModule - 1) {
       navigateToLesson(moduleIndex, lessonIndex + 1);
-    } else if (moduleIndex < modules.length - 1) {
-      navigateToLesson(moduleIndex + 1, 0);
+    } else {
+      // End of module — check if all lessons are completed to navigate to quiz
+      const allCompleted = progressData?.lessons?.filter(
+        (p) => p.moduleIndex === moduleIndex && p.status === 'completed',
+      ).length === lessonsInModule;
+
+      if (allCompleted) {
+        router.push(`/course/${courseId}/quiz/${moduleIndex}`);
+      } else if (moduleIndex < modules.length - 1) {
+        navigateToLesson(moduleIndex + 1, 0);
+      }
     }
-  }, [moduleIndex, lessonIndex, currentModule, modules, navigateToLesson]);
+  }, [moduleIndex, lessonIndex, currentModule, modules, navigateToLesson, progressData, courseId, router]);
 
   const hasPrev = moduleIndex > 0 || lessonIndex > 0;
   const hasNext =

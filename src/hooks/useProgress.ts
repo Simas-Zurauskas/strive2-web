@@ -8,6 +8,11 @@ import {
   getProgressSummary,
   upsertLessonProgress,
   UpsertProgressBody,
+  generateModuleQuiz,
+  getModuleQuizContent,
+  submitQuizAttempt,
+  getModuleQuizProgress,
+  getReviewsDue,
 } from '@/api/routes/course';
 import { QKeys } from '@/types';
 
@@ -66,3 +71,65 @@ export const useUpsertProgress = () => {
     },
   });
 };
+
+// ── Module quiz hooks ──────────────────────────────────
+
+export const useModuleQuizContent = (courseId: string | null, moduleIndex: number | null) =>
+  useQuery({
+    queryKey: [QKeys.MODULE_QUIZ_CONTENT, courseId, moduleIndex],
+    queryFn: () => getModuleQuizContent(courseId!, moduleIndex!),
+    enabled: !!courseId && moduleIndex !== null,
+  });
+
+export const useModuleQuizProgress = (courseId: string | null, moduleIndex: number | null) =>
+  useQuery({
+    queryKey: [QKeys.MODULE_QUIZ_PROGRESS, courseId, moduleIndex],
+    queryFn: () => getModuleQuizProgress(courseId!, moduleIndex!),
+    enabled: !!courseId && moduleIndex !== null,
+  });
+
+export const useGenerateModuleQuiz = () => {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: (params: { courseId: string; moduleIndex: number }) =>
+      generateModuleQuiz(params.courseId, params.moduleIndex),
+    onSuccess: (_data, variables) => {
+      queryClient.invalidateQueries({
+        queryKey: [QKeys.MODULE_QUIZ_CONTENT, variables.courseId, variables.moduleIndex],
+      });
+    },
+  });
+};
+
+export const useSubmitQuizAttempt = () => {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: (params: {
+      courseId: string;
+      moduleIndex: number;
+      responses: { questionId: string; selectedOption: number }[];
+    }) =>
+      submitQuizAttempt(params.courseId, params.moduleIndex, params.responses),
+    onSuccess: (_data, variables) => {
+      queryClient.invalidateQueries({
+        queryKey: [QKeys.MODULE_QUIZ_PROGRESS, variables.courseId, variables.moduleIndex],
+      });
+      queryClient.invalidateQueries({
+        queryKey: [QKeys.COURSE_PROGRESS, variables.courseId],
+      });
+      queryClient.invalidateQueries({
+        queryKey: [QKeys.REVIEWS_DUE],
+      });
+    },
+  });
+};
+
+// ── Reviews due ──────────────────────────────────────────
+
+export const useReviewsDue = () =>
+  useQuery({
+    queryKey: [QKeys.REVIEWS_DUE],
+    queryFn: getReviewsDue,
+  });

@@ -199,25 +199,31 @@ const QuizBlock = ({
   onAnswer?: (response: { blockId: string; selectedOption: number; correct: boolean }) => void;
 }) => {
   const [selected, setSelected] = useState<number | null>(savedResponse?.selectedOption ?? null);
+  const [confirmed, setConfirmed] = useState(savedResponse != null);
 
   const question = (metadata?.question as string) ?? '';
   const options = (metadata?.options as string[]) ?? [];
   const correctIndex = (metadata?.correctIndex as number) ?? 0;
   const explanation = (metadata?.explanation as string) ?? '';
 
-  const answered = selected !== null;
-
-  const getOptionState = (index: number): 'default' | 'correct' | 'incorrect' | 'dimmed' => {
-    if (!answered) return 'default';
+  const getOptionState = (index: number): 'default' | 'selected' | 'correct' | 'incorrect' | 'dimmed' => {
+    if (!confirmed) {
+      return index === selected ? 'selected' : 'default';
+    }
     if (index === correctIndex) return 'correct';
     if (index === selected) return 'incorrect';
     return 'dimmed';
   };
 
   const handleSelect = (index: number) => {
-    if (answered) return;
+    if (confirmed) return;
     setSelected(index);
-    onAnswer?.({ blockId, selectedOption: index, correct: index === correctIndex });
+  };
+
+  const handleConfirm = () => {
+    if (selected === null || confirmed) return;
+    setConfirmed(true);
+    onAnswer?.({ blockId, selectedOption: selected, correct: selected === correctIndex });
   };
 
   return (
@@ -238,7 +244,12 @@ const QuizBlock = ({
           </S.QuizOption>
         ))}
       </S.QuizOptions>
-      {answered && explanation && (
+      {selected !== null && !confirmed && (
+        <S.QuizConfirmButton onClick={handleConfirm}>
+          Confirm Answer
+        </S.QuizConfirmButton>
+      )}
+      {confirmed && explanation && (
         <S.QuizExplanation>{explanation}</S.QuizExplanation>
       )}
     </S.QuizContainer>

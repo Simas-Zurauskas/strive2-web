@@ -3,9 +3,10 @@
 import { useMemo } from 'react';
 import { useRouter } from 'next/navigation';
 import { CourseCard, Button } from '@/components';
-import { useAuth, useCourses, useContinueLearning, useProgressSummary } from '@/hooks';
+import { useAuth, useCourses, useContinueLearning, useProgressSummary, useReviewsDue } from '@/hooks';
 import { useJobManager } from '@/hooks/useJobManager';
 import { ContinueLearningCard } from './internal/ContinueLearningCard/ContinueLearningCard';
+import { ReviewDueSection } from './internal/ReviewDueSection/ReviewDueSection';
 import * as S from './HomeScreen.styles';
 
 export const HomeScreen: React.FC = () => {
@@ -15,6 +16,7 @@ export const HomeScreen: React.FC = () => {
   const { isJobRunningForCourse } = useJobManager();
   const { data: continueLearning } = useContinueLearning();
   const { data: progressSummary } = useProgressSummary();
+  const { data: reviewsDue } = useReviewsDue();
 
   const progressMap = useMemo(() => {
     const map = new Map<string, number>();
@@ -61,6 +63,7 @@ export const HomeScreen: React.FC = () => {
       {!isLoading && courses && courses.length > 0 && (
         <>
           {continueLearning && <ContinueLearningCard data={continueLearning} />}
+          {reviewsDue && reviewsDue.length > 0 && <ReviewDueSection items={reviewsDue} />}
 
           <S.Grid>
             {courses.map((course) => (

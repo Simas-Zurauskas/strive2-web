@@ -1,10 +1,10 @@
 import { Suspense } from 'react';
-import VerifyEmailScreen from '@/screens/VerifyEmailScreen';
+import ModuleQuizScreen from '@/screens/ModuleQuizScreen';
 
 export default function Page() {
   return (
     <Suspense>
-      <VerifyEmailScreen />
+      <ModuleQuizScreen />
     </Suspense>
   );
 }

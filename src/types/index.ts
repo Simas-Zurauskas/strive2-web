@@ -8,4 +8,7 @@ export enum QKeys {
   CONTINUE_LEARNING = 'continueLearning',
   GENERATED_LESSONS = 'generatedLessons',
   PROGRESS_SUMMARY = 'progressSummary',
+  MODULE_QUIZ_CONTENT = 'moduleQuizContent',
+  MODULE_QUIZ_PROGRESS = 'moduleQuizProgress',
+  REVIEWS_DUE = 'reviewsDue',
 }

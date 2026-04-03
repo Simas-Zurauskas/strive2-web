@@ -167,7 +167,7 @@ export const LessonContent = ({
             toast.success('Congratulations! Course complete!');
           } else if (isModuleComplete) {
             celebrateModuleComplete();
-            toast.success(`Module ${moduleIndex + 1} complete!`);
+            toast.success(`Module ${moduleIndex + 1} complete! Take the quiz to test your knowledge.`);
           } else {
             celebrateLessonComplete();
             // Goal-gradient: encourage when close to finishing module
