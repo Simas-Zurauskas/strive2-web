@@ -454,10 +454,42 @@ const ExerciseBlock = ({
   );
 };
 
+// ── Skeleton placeholders ─────────────────────────────
+
+const QuizSkeleton = () => (
+  <S.QuizContainer>
+    <S.QuizHeader>Check your understanding</S.QuizHeader>
+    <S.SkeletonBody>
+      <S.SkeletonLine $width="70%" />
+      <S.SkeletonOption />
+      <S.SkeletonOption />
+      <S.SkeletonOption />
+    </S.SkeletonBody>
+  </S.QuizContainer>
+);
+
+const ExerciseSkeleton = () => (
+  <S.ExerciseContainer>
+    <S.ExerciseHeader>Try it yourself</S.ExerciseHeader>
+    <S.SkeletonBody>
+      <S.SkeletonLine $width="85%" />
+      <S.SkeletonLine $width="60%" />
+      <S.SkeletonCodeBlock />
+    </S.SkeletonBody>
+  </S.ExerciseContainer>
+);
+
 // ── Main renderer ──────────────────────────────────────
+
+interface PlaceholderBlock {
+  id: string;
+  type: 'quiz' | 'exercise';
+  order: number;
+}
 
 interface BlockRendererProps {
   blocks: LessonBlock[];
+  placeholders?: PlaceholderBlock[];
   progressData?: {
     quizResponses: QuizResponseData[];
     exerciseAttempts: ExerciseAttemptData[];
@@ -466,8 +498,18 @@ interface BlockRendererProps {
   onExerciseAttempt?: (attempt: { blockId: string; code: string; passed: boolean }) => void;
 }
 
-export const BlockRenderer = ({ blocks, progressData, onQuizAnswer, onExerciseAttempt }: BlockRendererProps) => {
-  const sorted = [...blocks].sort((a, b) => a.order - b.order);
+export const BlockRenderer = ({ blocks, placeholders = [], progressData, onQuizAnswer, onExerciseAttempt }: BlockRendererProps) => {
+  // Merge real blocks with placeholders, sort by order
+  type RenderItem = { kind: 'block'; block: LessonBlock } | { kind: 'placeholder'; placeholder: PlaceholderBlock };
+  const items: RenderItem[] = [
+    ...blocks.map((block) => ({ kind: 'block' as const, block })),
+    ...placeholders.map((placeholder) => ({ kind: 'placeholder' as const, placeholder })),
+  ];
+  const sorted = items.sort((a, b) => {
+    const orderA = a.kind === 'block' ? a.block.order : a.placeholder.order;
+    const orderB = b.kind === 'block' ? b.block.order : b.placeholder.order;
+    return orderA - orderB;
+  });
 
   // Build lookup for saved quiz responses by blockId
   const quizResponseMap = new Map(
@@ -476,7 +518,14 @@ export const BlockRenderer = ({ blocks, progressData, onQuizAnswer, onExerciseAt
 
   return (
     <>
-      {sorted.map((block) => {
+      {sorted.map((item) => {
+        if (item.kind === 'placeholder') {
+          return item.placeholder.type === 'quiz'
+            ? <QuizSkeleton key={item.placeholder.id} />
+            : <ExerciseSkeleton key={item.placeholder.id} />;
+        }
+
+        const block = item.block;
         switch (block.type) {
           case 'intro':
             return <IntroBlock key={block.id} content={block.content} />;

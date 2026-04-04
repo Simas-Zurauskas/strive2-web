@@ -57,6 +57,16 @@ export const CourseScreen = () => {
     return map;
   }, [progressData]);
 
+  const quizProgressMap = useMemo(() => {
+    const map = new Map<number, CourseQuizProgressItem>();
+    if (progressData?.quizzes) {
+      for (const qp of progressData.quizzes) {
+        map.set(qp.moduleIndex, qp);
+      }
+    }
+    return map;
+  }, [progressData]);
+
   if (isLoading) {
     return (
       <S.Layout>
@@ -118,16 +128,6 @@ export const CourseScreen = () => {
     if (status === 'in_progress') return 'in_progress';
     return 'default';
   };
-
-  const quizProgressMap = useMemo(() => {
-    const map = new Map<number, CourseQuizProgressItem>();
-    if (progressData?.quizzes) {
-      for (const qp of progressData.quizzes) {
-        map.set(qp.moduleIndex, qp);
-      }
-    }
-    return map;
-  }, [progressData]);
 
   return (
     <S.Layout>

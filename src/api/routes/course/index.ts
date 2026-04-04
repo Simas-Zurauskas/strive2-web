@@ -110,10 +110,17 @@ export const generateLesson = (courseId: string, params: { moduleIndex: number; 
 
 // ── Lesson streaming ───────────────────────────────────
 
+export interface PlaceholderBlock {
+  id: string;
+  type: 'quiz' | 'exercise';
+  order: number;
+}
+
 export type LessonStreamEvent =
   | { type: 'block'; block: LessonBlock }
   | { type: 'blocks'; blocks: LessonBlock[] }
   | { type: 'hero_image'; url: string }
+  | { type: 'content_ready'; placeholders: PlaceholderBlock[] }
   | { type: 'complete' }
   | { type: 'error'; message: string };
 
