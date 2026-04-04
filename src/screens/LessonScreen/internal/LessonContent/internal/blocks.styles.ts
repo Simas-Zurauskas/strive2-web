@@ -1,4 +1,4 @@
-import styled, { css } from 'styled-components';
+import styled, { css, keyframes } from 'styled-components';
 
 // ── Shared ─────────────────────────────────────────────
 
@@ -703,4 +703,48 @@ export const ExpectedOutput = styled.div`
     white-space: pre-wrap;
     word-break: break-word;
   }
+`;
+
+// ── Skeleton placeholders ─────────────────────────────
+
+const shimmer = keyframes`
+  0% { background-position: -400px 0; }
+  100% { background-position: 400px 0; }
+`;
+
+const skeletonBg = css`
+  background: linear-gradient(
+    90deg,
+    ${(p) => p.theme.colors.surface} 25%,
+    ${(p) => p.theme.colors.border} 50%,
+    ${(p) => p.theme.colors.surface} 75%
+  );
+  background-size: 800px 100%;
+  animation: ${shimmer} 1.5s ease-in-out infinite;
+`;
+
+export const SkeletonBody = styled.div`
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+  padding: 1rem;
+`;
+
+export const SkeletonLine = styled.div<{ $width?: string }>`
+  height: 0.875rem;
+  width: ${(p) => p.$width ?? '100%'};
+  border-radius: 4px;
+  ${skeletonBg}
+`;
+
+export const SkeletonOption = styled.div`
+  height: 2.5rem;
+  border-radius: 6px;
+  ${skeletonBg}
+`;
+
+export const SkeletonCodeBlock = styled.div`
+  height: 6rem;
+  border-radius: 6px;
+  ${skeletonBg}
 `;

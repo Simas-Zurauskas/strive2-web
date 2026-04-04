@@ -3,7 +3,7 @@
 import { useQueryClient } from '@tanstack/react-query';
 import { useCallback, useRef, useState } from 'react';
 import { toast } from 'sonner';
-import { streamLesson, LessonBlock, CourseProgressResponse } from '@/api/routes/course';
+import { streamLesson, LessonBlock, PlaceholderBlock, CourseProgressResponse } from '@/api/routes/course';
 import { Button } from '@/components';
 import { useLessonContent, useUpsertProgress } from '@/hooks';
 import { celebrateLessonComplete, celebrateModuleComplete, celebrateCourseComplete } from '@/lib/celebrations';
@@ -83,11 +83,15 @@ export const LessonContent = ({
 
   const isPrevLessonGenerated = isFirstLesson || !!prevLessonContent?.blocks?.length;
 
-  // Streaming state
-  const [isStreaming, setIsStreaming] = useState(false);
+  // Streaming state — 'streaming' = content generating, 'finishing' = interactive + links pending
+  const [streamPhase, setStreamPhase] = useState<'idle' | 'streaming' | 'finishing'>('idle');
   const [streamBlocks, setStreamBlocks] = useState<LessonBlock[]>([]);
   const [streamImage, setStreamImage] = useState<string | null>(null);
   const [isStarting, setIsStarting] = useState(false);
+  const [placeholders, setPlaceholders] = useState<PlaceholderBlock[]>([]);
+
+  const isStreaming = streamPhase !== 'idle';
+  const isActivelyGenerating = streamPhase === 'streaming';
   const abortRef = useRef<AbortController | null>(null);
 
   // Generation options
@@ -107,15 +111,23 @@ export const LessonContent = ({
     setIsStarting(true);
     setStreamBlocks([]);
     setStreamImage(null);
+    setPlaceholders([]);
 
     try {
-      setIsStreaming(true);
+      setStreamPhase('streaming');
       setIsStarting(false);
 
       await streamLesson(courseId, { moduleIndex, lessonIndex, includeImage, includeLinks }, (event) => {
         switch (event.type) {
           case 'block':
             setStreamBlocks((prev) => [...prev, event.block]);
+            // Remove placeholder matching this block type
+            if (event.block.type === 'quiz' || event.block.type === 'exercise') {
+              setPlaceholders((prev) => {
+                const idx = prev.findIndex((p) => p.type === event.block.type);
+                return idx >= 0 ? prev.filter((_, i) => i !== idx) : prev;
+              });
+            }
             break;
           case 'blocks':
             setStreamBlocks((prev) => [...prev, ...event.blocks]);
@@ -123,20 +135,27 @@ export const LessonContent = ({
           case 'hero_image':
             setStreamImage(event.url);
             break;
+          case 'content_ready':
+            setStreamPhase('finishing');
+            setPlaceholders(event.placeholders);
+            break;
           case 'complete':
-            setIsStreaming(false);
+            setStreamPhase('idle');
+            setPlaceholders([]);
             queryClient.invalidateQueries({ queryKey: [QKeys.LESSON_CONTENT, courseId, moduleIndex, lessonIndex] });
             queryClient.invalidateQueries({ queryKey: [QKeys.GENERATED_LESSONS, courseId] });
             break;
           case 'error':
-            setIsStreaming(false);
+            setStreamPhase('idle');
+            setPlaceholders([]);
             toast.error(event.message || 'Generation failed');
             break;
         }
       });
     } catch {
-      setIsStreaming(false);
+      setStreamPhase('idle');
       setIsStarting(false);
+      setPlaceholders([]);
       toast.error('Generation failed');
     }
   }, [courseId, moduleIndex, lessonIndex, isStreaming, isStarting, includeImage, includeLinks, queryClient]);
@@ -211,6 +230,7 @@ export const LessonContent = ({
           <S.BreadcrumbSeparator>/</S.BreadcrumbSeparator>
           Lesson {lessonIndex + 1}
         </S.Breadcrumb>
+        {(isStreaming || isGenerationRunning) && <S.GeneratingDot />}
         {hasContent && (
           <S.BookmarkButton
             $active={isBookmarked}
@@ -238,6 +258,7 @@ export const LessonContent = ({
         <>
           <BlockRenderer
             blocks={blocks}
+            placeholders={placeholders}
             progressData={currentLessonProgress ? {
               quizResponses: currentLessonProgress.quizResponses,
               exerciseAttempts: currentLessonProgress.exerciseAttempts,
@@ -255,7 +276,9 @@ export const LessonContent = ({
               });
             }}
           />
-          {(isStreaming || isGenerationRunning) && <S.StreamingIndicator>Generating...</S.StreamingIndicator>}
+          {isActivelyGenerating && <S.StreamingIndicator>Generating...</S.StreamingIndicator>}
+          {streamPhase === 'finishing' && !placeholders.length && <S.FinishingIndicator>Finishing up...</S.FinishingIndicator>}
+          {!isStreaming && isGenerationRunning && <S.StreamingIndicator>Generating...</S.StreamingIndicator>}
         </>
       ) : isStreaming || isStarting ? (
         <S.StreamingIndicator>Generating...</S.StreamingIndicator>
