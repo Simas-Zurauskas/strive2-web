@@ -1,11 +1,15 @@
 'use client';
 
-import { useCallback, useEffect, useRef, useState } from 'react';
+import { lazy, Suspense, useCallback, useEffect, useRef, useState } from 'react';
 import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
 import { useMutation } from '@tanstack/react-query';
 import { executeCode, QuizResponseData, ExerciseAttemptData } from '@/api/routes/course';
 import * as S from './blocks.styles';
+
+const LazySandpackExercise = lazy(() =>
+  import('./SandpackExercise').then((m) => ({ default: m.SandpackExercise })),
+);
 
 // ── Types ──────────────────────────────────────────────
 
@@ -287,6 +291,33 @@ const ExerciseBlock = ({
   metadata: Record<string, unknown> | null;
   onAttempt?: (attempt: { blockId: string; code: string; passed: boolean }) => void;
 }) => {
+  const executionEnv = (metadata?.executionEnvironment as string) ?? 'judge0';
+
+  if (executionEnv === 'sandpack') {
+    const files = (metadata?.files as Array<{ path: string; content: string }>) ?? [];
+    const template = (metadata?.template as 'vanilla' | 'react' | 'vue' | 'svelte' | 'angular') ?? 'vanilla';
+    const activeFile = metadata?.activeFile as string | undefined;
+
+    return (
+      <S.ExerciseContainer>
+        <S.ExerciseHeader>Try it yourself</S.ExerciseHeader>
+        <S.ExerciseContent>
+          <ReactMarkdown remarkPlugins={[remarkGfm]}>{content}</ReactMarkdown>
+        </S.ExerciseContent>
+        <Suspense fallback={<S.SkeletonBody><S.SkeletonCodeBlock /></S.SkeletonBody>}>
+          <LazySandpackExercise
+            files={files}
+            template={template}
+            activeFile={activeFile}
+            onComplete={(filesSnapshot) => {
+              onAttempt?.({ blockId, code: filesSnapshot, passed: true });
+            }}
+          />
+        </Suspense>
+      </S.ExerciseContainer>
+    );
+  }
+
   const language = (metadata?.language as string) ?? '';
   const starterCode = (metadata?.starterCode as string) ?? '';
   const expectedOutput = (metadata?.expectedOutput as string) ?? '';
