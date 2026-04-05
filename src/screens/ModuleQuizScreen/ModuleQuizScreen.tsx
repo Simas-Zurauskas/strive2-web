@@ -175,7 +175,7 @@ export const ModuleQuizScreen = () => {
             </S.MasteryBadge>
             {results.reviewIntervalDays > 0 && (
               <S.NextReviewInfo>
-                Next review in {results.reviewIntervalDays} day{results.reviewIntervalDays !== 1 ? 's' : ''}
+                Next review in {results.reviewIntervalDays} day{results.reviewIntervalDays !== 1 ? 's' : ''} or sooner as you progress
               </S.NextReviewInfo>
             )}
           </S.ResultsHeader>
