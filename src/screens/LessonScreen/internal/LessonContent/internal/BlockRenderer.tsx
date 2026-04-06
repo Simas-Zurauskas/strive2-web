@@ -29,8 +29,8 @@ const IntroBlock = ({ content }: { content: string }) => (
   </S.IntroText>
 );
 
-const SectionBlock = ({ content }: { content: string }) => (
-  <S.SectionContent>
+const SectionBlock = ({ content, first }: { content: string; first?: boolean }) => (
+  <S.SectionContent $first={first}>
     <ReactMarkdown remarkPlugins={[remarkGfm]}>{content}</ReactMarkdown>
   </S.SectionContent>
 );
@@ -161,11 +161,33 @@ const CALLOUT_LABELS: Record<string, string> = {
   important: 'Important',
 };
 
+const CALLOUT_ICONS: Record<string, string> = {
+  info: '\u2139\uFE0F',
+  tip: '\uD83D\uDCA1',
+  warning: '\u26A0\uFE0F',
+  important: '\u2757',
+};
+
 const CalloutBlock = ({ content, metadata }: { content: string; metadata: Record<string, unknown> | null }) => {
-  const variant = (metadata?.variant as 'info' | 'tip' | 'warning' | 'important') ?? 'info';
+  const variant = (metadata?.variant as string) ?? 'info';
+
+  // Key concept variant — centered pull-quote style
+  if (variant === 'key_concept') {
+    return (
+      <S.KeyConceptContainer>
+        <S.KeyConceptLabel>Key Concept</S.KeyConceptLabel>
+        <S.KeyConceptQuote>{content}</S.KeyConceptQuote>
+      </S.KeyConceptContainer>
+    );
+  }
+
+  const calloutVariant = variant as 'info' | 'tip' | 'warning' | 'important';
   return (
-    <S.CalloutContainer $variant={variant}>
-      <S.CalloutLabel>{CALLOUT_LABELS[variant] ?? 'Note'}</S.CalloutLabel>
+    <S.CalloutContainer $variant={calloutVariant}>
+      <S.CalloutLabel>
+        <span role="img" aria-hidden="true">{CALLOUT_ICONS[calloutVariant]}</span>
+        {CALLOUT_LABELS[calloutVariant] ?? 'Note'}
+      </S.CalloutLabel>
       <ReactMarkdown remarkPlugins={[remarkGfm]}>{content}</ReactMarkdown>
     </S.CalloutContainer>
   );
@@ -530,6 +552,8 @@ interface BlockRendererProps {
 }
 
 export const BlockRenderer = ({ blocks, placeholders = [], progressData, onQuizAnswer, onExerciseAttempt }: BlockRendererProps) => {
+  let firstSectionSeen = false;
+
   // Merge real blocks with placeholders, sort by order
   type RenderItem = { kind: 'block'; block: LessonBlock } | { kind: 'placeholder'; placeholder: PlaceholderBlock };
   const items: RenderItem[] = [
@@ -549,7 +573,9 @@ export const BlockRenderer = ({ blocks, placeholders = [], progressData, onQuizA
 
   return (
     <>
-      {sorted.map((item) => {
+      {sorted.map((item, index) => {
+        const staggerStyle = { '--block-index': index } as React.CSSProperties;
+
         if (item.kind === 'placeholder') {
           return item.placeholder.type === 'quiz'
             ? <QuizSkeleton key={item.placeholder.id} />
@@ -557,48 +583,66 @@ export const BlockRenderer = ({ blocks, placeholders = [], progressData, onQuizA
         }
 
         const block = item.block;
+        let element: React.ReactNode;
+
         switch (block.type) {
           case 'intro':
-            return <IntroBlock key={block.id} content={block.content} />;
-          case 'section':
-            return <SectionBlock key={block.id} content={block.content} />;
+            element = <IntroBlock content={block.content} />;
+            break;
+          case 'section': {
+            const isFirst = !firstSectionSeen;
+            firstSectionSeen = true;
+            element = <SectionBlock content={block.content} first={isFirst} />;
+            break;
+          }
           case 'code':
-            return <CodeBlock key={block.id} content={block.content} metadata={block.metadata} />;
+            element = <CodeBlock content={block.content} metadata={block.metadata} />;
+            break;
           case 'mermaid':
-            return <MermaidBlock key={block.id} content={block.content} />;
+            element = <MermaidBlock content={block.content} />;
+            break;
           case 'callout':
-            return <CalloutBlock key={block.id} content={block.content} metadata={block.metadata} />;
+            element = <CalloutBlock content={block.content} metadata={block.metadata} />;
+            break;
           case 'quiz':
-            return (
+            element = (
               <QuizBlock
-                key={block.id}
                 blockId={block.id}
                 metadata={block.metadata}
                 savedResponse={quizResponseMap.get(block.id)}
                 onAnswer={onQuizAnswer}
               />
             );
+            break;
           case 'exercise':
-            return (
+            element = (
               <ExerciseBlock
-                key={block.id}
                 blockId={block.id}
                 content={block.content}
                 metadata={block.metadata}
                 onAttempt={onExerciseAttempt}
               />
             );
+            break;
           case 'links':
-            return <LinksBlock key={block.id} metadata={block.metadata} />;
+            element = <LinksBlock metadata={block.metadata} />;
+            break;
           case 'summary':
-            return <SummaryBlock key={block.id} content={block.content} />;
+            element = <SummaryBlock content={block.content} />;
+            break;
           default:
-            return (
-              <S.BlockWrapper key={block.id}>
+            element = (
+              <S.BlockWrapper>
                 <ReactMarkdown remarkPlugins={[remarkGfm]}>{block.content}</ReactMarkdown>
               </S.BlockWrapper>
             );
         }
+
+        return (
+          <div key={block.id} style={staggerStyle}>
+            {element}
+          </div>
+        );
       })}
     </>
   );

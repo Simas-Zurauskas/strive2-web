@@ -1,15 +1,15 @@
 'use client';
 
 import { useQueryClient } from '@tanstack/react-query';
-import { useCallback, useRef, useState } from 'react';
+import { useCallback, useMemo, useRef, useState } from 'react';
 import { toast } from 'sonner';
 import { streamLesson, LessonBlock, PlaceholderBlock, CourseProgressResponse } from '@/api/routes/course';
-import { TOASTS, toastMessage } from '@/constants/toasts';
 import { Button } from '@/components';
+import { TOASTS, toastMessage } from '@/constants/toasts';
 import { useLessonContent, useUpsertProgress } from '@/hooks';
 import { celebrateLessonComplete, celebrateModuleComplete, celebrateCourseComplete } from '@/lib/celebrations';
 import { QKeys } from '@/types';
-import { BlockRenderer, NotesPanel } from './internal';
+import { BlockRenderer, FontScaler, getSavedScale, FONT_SCALE_KEY, LessonHero, NotesPanel } from './internal';
 import * as S from './LessonContent.styles';
 
 interface Lesson {
@@ -57,6 +57,12 @@ export const LessonContent = ({
 }: LessonContentProps) => {
   const queryClient = useQueryClient();
   const upsertProgress = useUpsertProgress();
+  const [fontScale, setFontScale] = useState(getSavedScale);
+
+  const handleFontScale = (scale: number) => {
+    setFontScale(scale);
+    localStorage.setItem(FONT_SCALE_KEY, String(scale));
+  };
 
   const { data: lessonContent, isLoading: isLoadingContent } = useLessonContent(
     courseId,
@@ -217,68 +223,82 @@ export const LessonContent = ({
   const heroImage = streamImage || lessonContent?.heroImageUrl || null;
   const blocks = hasContent ? lessonContent.blocks : showStreamContent ? streamBlocks : null;
 
+  // Eyebrow text
+  const eyebrowText = `Module ${String(moduleIndex + 1).padStart(2, '0')} \u00B7 Lesson ${String(lessonIndex + 1).padStart(2, '0')}`;
+
+  // Nav helper: get adjacent lesson name
+  const getPrevLessonName = () => {
+    if (!hasPrev) return null;
+    if (lessonIndex > 0) return modules[moduleIndex]?.lessons[lessonIndex - 1]?.name;
+    const prevMod = modules[moduleIndex - 1];
+    return prevMod?.lessons[prevMod.lessons.length - 1]?.name;
+  };
+
+  const getNextLessonName = () => {
+    if (!hasNext) return null;
+    if (lessonIndex < (modules[moduleIndex]?.lessons?.length ?? 0) - 1) {
+      return modules[moduleIndex]?.lessons[lessonIndex + 1]?.name;
+    }
+    return modules[moduleIndex + 1]?.lessons[0]?.name;
+  };
+
   return (
     <S.Container>
-      {/* Desktop sidebar toggle + breadcrumb + bookmark */}
-      <S.TopRow>
-        {!sidebarOpen && (
-          <S.SidebarToggle onClick={onOpenSidebar} aria-label="Open sidebar">
-            &#9776;
-          </S.SidebarToggle>
-        )}
-        <S.Breadcrumb>
-          Module {moduleIndex + 1}: {moduleName}
-          <S.BreadcrumbSeparator>/</S.BreadcrumbSeparator>
-          Lesson {lessonIndex + 1}
-        </S.Breadcrumb>
-        {(isStreaming || isGenerationRunning) && <S.GeneratingDot />}
-        {hasContent && (
-          <S.BookmarkButton
-            $active={isBookmarked}
-            onClick={handleToggleBookmark}
-            aria-label={isBookmarked ? 'Remove bookmark' : 'Bookmark this lesson'}
-          >
-            {isBookmarked ? '★' : '☆'}
-          </S.BookmarkButton>
-        )}
-      </S.TopRow>
+      <LessonHero
+        heroImage={heroImage}
+        eyebrowText={eyebrowText}
+        lessonName={lesson.name}
+        isBookmarked={isBookmarked}
+        hasContent={hasContent}
+        isGenerating={isStreaming || isGenerationRunning}
+        showSkeleton={
+          ((isStreaming || isStarting) && includeImage) ||
+          (isGenerationRunning && (lessonContent?.includeHeroImage ?? true))
+        }
+        onToggleBookmark={handleToggleBookmark}
+      />
 
-      {/* Hero image / skeleton */}
-      {heroImage ? (
-        <S.HeroImage src={heroImage} alt={lesson.name} />
-      ) : (isStreaming || isStarting) && includeImage ? (
-        <S.HeroImageSkeleton />
-      ) : isGenerationRunning && (lessonContent?.includeHeroImage ?? true) ? (
-        <S.HeroImageSkeleton />
-      ) : null}
+      {/* Font scaler + lesson description + content blocks — all scaled together */}
+      {blocks && <FontScaler scale={fontScale} onChange={handleFontScale} />}
 
-      <S.Title>{lesson.name}</S.Title>
+      <S.ScaledContent $scale={fontScale}>
+        {lesson.description && blocks && <S.LessonDescription>{lesson.description}</S.LessonDescription>}
 
-      {/* Content area — priority: saved content > streaming > loading > generate button */}
-      {blocks ? (
-        <>
-          <BlockRenderer
+        {/* Content area — priority: saved content > streaming > loading > generate button */}
+        {blocks ? (
+          <>
+            <BlockRenderer
             blocks={blocks}
             placeholders={placeholders}
-            progressData={currentLessonProgress ? {
-              quizResponses: currentLessonProgress.quizResponses,
-              exerciseAttempts: currentLessonProgress.exerciseAttempts,
-            } : undefined}
+            progressData={
+              currentLessonProgress
+                ? {
+                    quizResponses: currentLessonProgress.quizResponses,
+                    exerciseAttempts: currentLessonProgress.exerciseAttempts,
+                  }
+                : undefined
+            }
             onQuizAnswer={(response) => {
               upsertProgress.mutate({
-                courseId, moduleIndex, lessonIndex,
+                courseId,
+                moduleIndex,
+                lessonIndex,
                 data: { quizResponse: response },
               });
             }}
             onExerciseAttempt={(attempt) => {
               upsertProgress.mutate({
-                courseId, moduleIndex, lessonIndex,
+                courseId,
+                moduleIndex,
+                lessonIndex,
                 data: { exerciseAttempt: attempt },
               });
             }}
           />
           {isActivelyGenerating && <S.StreamingIndicator>Generating...</S.StreamingIndicator>}
-          {streamPhase === 'finishing' && !placeholders.length && <S.FinishingIndicator>Finishing up...</S.FinishingIndicator>}
+          {streamPhase === 'finishing' && !placeholders.length && (
+            <S.FinishingIndicator>Finishing up...</S.FinishingIndicator>
+          )}
           {!isStreaming && isGenerationRunning && <S.StreamingIndicator>Generating...</S.StreamingIndicator>}
         </>
       ) : isStreaming || isStarting ? (
@@ -330,23 +350,24 @@ export const LessonContent = ({
           {isCompleted ? (
             <S.CompletedIndicator>&#10003; Lesson completed</S.CompletedIndicator>
           ) : (
-            <S.CompleteButton
-              onClick={handleMarkComplete}
-              disabled={upsertProgress.isPending}
-            >
+            <S.CompleteButton onClick={handleMarkComplete} disabled={upsertProgress.isPending}>
               &#10003; Mark as complete
             </S.CompleteButton>
           )}
         </S.CompleteSection>
       )}
 
+      </S.ScaledContent>
+
       {/* Prev / Next navigation */}
       <S.Nav>
-        <S.NavButton onClick={onPrev} $hidden={!hasPrev}>
-          &larr; Previous
+        <S.NavButton onClick={onPrev} $hidden={!hasPrev} $direction="prev">
+          <S.NavLabel>&larr; Previous Lesson</S.NavLabel>
+          {hasPrev && <S.NavLessonName>{getPrevLessonName()}</S.NavLessonName>}
         </S.NavButton>
-        <S.NavButton onClick={onNext} $hidden={!hasNext}>
-          Next &rarr;
+        <S.NavButton onClick={onNext} $hidden={!hasNext} $direction="next">
+          <S.NavLabel>Next Lesson &rarr;</S.NavLabel>
+          {hasNext && <S.NavLessonName>{getNextLessonName()}</S.NavLessonName>}
         </S.NavButton>
       </S.Nav>
     </S.Container>

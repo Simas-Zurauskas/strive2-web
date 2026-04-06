@@ -2,7 +2,7 @@ import styled from 'styled-components';
 
 export const Container = styled.div`
   border-top: 1px solid ${(p) => p.theme.colors.border};
-  padding-top: 1rem;
+  padding-top: 1.5rem;
 `;
 
 export const Header = styled.button`
@@ -14,11 +14,13 @@ export const Header = styled.button`
   border: none;
   background: transparent;
   color: ${(p) => p.theme.colors.foreground};
-  font-size: 0.875rem;
+  font-family: var(--font-heading-serif), Georgia, serif;
+  font-size: 0.9375rem;
   font-weight: 600;
   font-family: inherit;
   cursor: pointer;
   text-align: left;
+  transition: color 0.15s;
 
   &:hover {
     color: ${(p) => p.theme.colors.accent};
@@ -46,16 +48,17 @@ export const Body = styled.div`
 
 export const Textarea = styled.textarea`
   width: 100%;
-  min-height: 120px;
-  padding: 0.75rem;
-  border-radius: 8px;
+  min-height: 140px;
+  padding: 0.875rem;
+  border-radius: 12px;
   border: 1px solid ${(p) => p.theme.colors.border};
   background: ${(p) => p.theme.colors.surface};
   color: ${(p) => p.theme.colors.foreground};
-  font-size: 0.8125rem;
+  font-size: 0.875em;
   font-family: inherit;
   line-height: 1.6;
   resize: vertical;
+  transition: border-color 0.2s;
 
   &::placeholder {
     color: ${(p) => p.theme.colors.muted};
@@ -64,5 +67,6 @@ export const Textarea = styled.textarea`
   &:focus {
     outline: none;
     border-color: ${(p) => p.theme.colors.accent};
+    box-shadow: 0 0 0 3px ${(p) => `${p.theme.colors.accent}10`};
   }
 `;

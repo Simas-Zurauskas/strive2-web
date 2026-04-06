@@ -30,7 +30,7 @@ export const CompleteButton = styled.button<{ $completed?: boolean }>`
   align-items: center;
   gap: 0.375rem;
   padding: 0.375rem 0.875rem;
-  border-radius: 6px;
+  border-radius: 8px;
   border: none;
   background: ${(p) => (p.$completed ? p.theme.colors.success : p.theme.colors.accent)};
   color: #fff;

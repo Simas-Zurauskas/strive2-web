@@ -1,6 +1,6 @@
 import styled from 'styled-components';
 
-export const Nav = styled.nav`
+export const Nav = styled.nav<{ $hidden?: boolean }>`
   position: fixed;
   top: 0;
   left: 0;
@@ -14,6 +14,9 @@ export const Nav = styled.nav`
   border-bottom: none;
   box-shadow: 0 1px 3px rgba(0, 0, 0, 0.06);
   z-index: 50;
+  transform: translateY(${(p) => (p.$hidden ? '-100%' : '0%')});
+  transition: transform 0.3s ease;
+  will-change: transform;
 
   ${(p) => p.theme.media.tablet} {
     padding: 0 1rem;

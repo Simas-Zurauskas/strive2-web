@@ -1,12 +1,12 @@
 'use client';
 
 import { useMutation, useQueryClient } from '@tanstack/react-query';
-import Link from 'next/link';
 import { useParams, useRouter } from 'next/navigation';
 import { useEffect, useMemo, useState } from 'react';
 import { toast } from 'sonner';
+import { ArrowLeft } from 'lucide-react';
 import { deleteCourse, CourseQuizProgressItem } from '@/api/routes/course';
-import { Badge, Button, Card, AlertDialog } from '@/components';
+import { Badge, Card, AlertDialog } from '@/components';
 import { TOASTS } from '@/constants/toasts';
 import { useCourse, useCourseProgress } from '@/hooks';
 import { QKeys } from '@/types';
@@ -39,7 +39,6 @@ export const CourseScreen = () => {
     }
   }, [shouldRedirectToWizard, router, courseId]);
 
-  // Build progress lookup
   const progressMap = useMemo(() => {
     const map = new Map<string, string>();
     if (progressData?.lessons) {
@@ -74,9 +73,9 @@ export const CourseScreen = () => {
     return (
       <S.Layout>
         <S.Container>
-          <S.Nav>
-            <Link href="/">&larr; Back to courses</Link>
-          </S.Nav>
+          <S.TopBar>
+            <S.BackLink href="/"><ArrowLeft size={14} /> Back to courses</S.BackLink>
+          </S.TopBar>
           <S.EmptyState>Course not found.</S.EmptyState>
         </S.Container>
       </S.Layout>
@@ -90,10 +89,6 @@ export const CourseScreen = () => {
   const modules = course.structure?.modules ?? [];
   const totalLessons = modules.reduce((sum, m) => sum + (m.lessons?.length ?? 0), 0);
   const stats = progressData?.stats;
-
-  const handleDelete = () => {
-    setShowDeleteDialog(true);
-  };
 
   const getModuleProgress = (mi: number) => {
     const lessons = modules[mi]?.lessons ?? [];
@@ -114,46 +109,65 @@ export const CourseScreen = () => {
   return (
     <S.Layout>
       <S.Container>
-        <S.Nav>
-          <Link href="/">&larr; Back to courses</Link>
-        </S.Nav>
+        <S.TopBar>
+          <S.BackLink href="/"><ArrowLeft size={14} /> Back to courses</S.BackLink>
+          <S.DeleteLink onClick={() => setShowDeleteDialog(true)}>Delete course</S.DeleteLink>
+        </S.TopBar>
 
-        <S.Header>
+        <S.HeaderSection>
+          <S.Eyebrow>
+            {course.depth ? `${course.depth.replace('_', ' ')} course` : 'Course'}
+          </S.Eyebrow>
           <S.Title>{course.name || 'Untitled Course'}</S.Title>
+          <S.Goal>{course.goal}</S.Goal>
           <S.Meta>
-            <Badge variant="success">Ready</Badge>
-            {course.depth && <Badge variant="default">{course.depth}</Badge>}
+            {course.depth && <Badge variant="gold">{course.depth.replace('_', ' ')}</Badge>}
             {modules.length > 0 && (
               <Badge variant="default">
-                {modules.length} module{modules.length !== 1 ? 's' : ''} &middot; {totalLessons} lesson
-                {totalLessons !== 1 ? 's' : ''}
+                {modules.length} module{modules.length !== 1 ? 's' : ''} &middot; {totalLessons}{' '}
+                lesson{totalLessons !== 1 ? 's' : ''}
               </Badge>
             )}
           </S.Meta>
-          {stats && stats.percentage > 0 && (
-            <S.ProgressRow>
-              <S.ProgressBarTrack style={{ flex: 1 }}>
-                <S.ProgressBarFill $percent={stats.percentage} />
-              </S.ProgressBarTrack>
-              <S.ProgressText>{stats.percentage}% complete</S.ProgressText>
-            </S.ProgressRow>
-          )}
-          <S.Goal>{course.goal}</S.Goal>
-        </S.Header>
+        </S.HeaderSection>
 
-        <div style={{ display: 'flex', gap: '0.75rem' }}>
-          <Button variant="secondary" onClick={handleDelete}>
-            Delete
-          </Button>
-        </div>
+        {stats && stats.percentage > 0 && (
+          <S.ProgressSection>
+            <S.ProgressHeader>
+              <S.ProgressLabel>Progress</S.ProgressLabel>
+              <S.ProgressValue>{stats.percentage}% complete</S.ProgressValue>
+            </S.ProgressHeader>
+            <S.ProgressBarTrack>
+              <S.ProgressBarFill $percent={stats.percentage} />
+            </S.ProgressBarTrack>
+          </S.ProgressSection>
+        )}
+
+        <S.SectionHeader>
+          <S.SectionEyebrow>Course Structure</S.SectionEyebrow>
+        </S.SectionHeader>
 
         <S.Modules>
           {modules.map((mod, i) => {
             const mp = getModuleProgress(i);
-            const headerSuffix = mp.completed > 0 ? ` (${mp.completed}/${mp.total} completed)` : '';
 
             return (
-              <Card key={`${i}-${mod.name}`} header={`Module ${i + 1}: ${mod.name}${headerSuffix}`}>
+              <Card
+                key={`${i}-${mod.name}`}
+                header={
+                  <S.ModuleHeaderContent>
+                    <S.ModuleHeaderLeft>
+                      <S.ModuleCounter>Module {i + 1}</S.ModuleCounter>
+                      <S.ModuleTitle>{mod.name}</S.ModuleTitle>
+                    </S.ModuleHeaderLeft>
+                    {mp.completed > 0 && (
+                      <S.ModuleProgressText>
+                        {mp.completed}/{mp.total}
+                      </S.ModuleProgressText>
+                    )}
+                  </S.ModuleHeaderContent>
+                }
+              >
                 <S.ModuleDescription>{mod.description}</S.ModuleDescription>
                 <S.LessonList>
                   {mod.lessons?.map((lesson, j) => {
@@ -162,9 +176,9 @@ export const CourseScreen = () => {
                     return (
                       <S.LessonItem
                         key={`${i}-${j}`}
+                        $status={status}
                         onClick={() => router.push(`/course/${courseId}/lesson/${i}/${j}`)}
                       >
-                        <S.LessonStatusDot $status={status} />
                         <S.LessonContent>
                           <S.LessonName>{lesson.name}</S.LessonName>
                           <S.LessonDescription>{lesson.description}</S.LessonDescription>
@@ -173,7 +187,6 @@ export const CourseScreen = () => {
                     );
                   })}
 
-                  {/* Module Quiz row */}
                   {(() => {
                     const isComplete = mp.completed === mp.total && mp.total > 0;
                     const qp = quizProgressMap.get(i);
@@ -181,11 +194,15 @@ export const CourseScreen = () => {
                     return (
                       <S.QuizRow
                         $locked={!isComplete}
-                        onClick={() => isComplete && router.push(
-                          `/course/${courseId}/quiz/${i}${qp?.reviewDue ? '?review=true' : ''}`
-                        )}
+                        onClick={() =>
+                          isComplete &&
+                          router.push(
+                            `/course/${courseId}/quiz/${i}${qp?.reviewDue ? '?review=true' : ''}`
+                          )
+                        }
                       >
-                        {isComplete ? '\u{1F4DD}' : '\u{1F512}'} Module Quiz
+                        <S.QuizIcon $locked={!isComplete}>Q</S.QuizIcon>
+                        <S.QuizLabel>Module Quiz</S.QuizLabel>
                         {qp?.reviewDue && <S.ReviewIndicator>Review due</S.ReviewIndicator>}
                         {qp?.bestTier && (
                           <S.QuizBadge $tier={qp.bestTier as S.QuizBadgeTier}>
@@ -213,7 +230,6 @@ export const CourseScreen = () => {
         onConfirm={() => deleteMutation.mutate()}
         onCancel={() => setShowDeleteDialog(false)}
       />
-
     </S.Layout>
   );
 };

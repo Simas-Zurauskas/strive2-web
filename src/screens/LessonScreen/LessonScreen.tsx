@@ -1,20 +1,28 @@
 'use client';
 
+import { Menu, MessageCircle } from 'lucide-react';
 import { useParams, useRouter } from 'next/navigation';
-import { useCallback, useEffect, useRef, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { getAuthToken } from '@/api/client';
 import { upsertLessonProgress } from '@/api/routes/course';
 import { NEXT_PUBLIC_API_URL } from '@/conf/env';
-import { getAuthToken } from '@/api/client';
 import { useCourse, useCourseProgress, useGeneratedLessons } from '@/hooks';
+import { breakpoints } from '@/theme';
 import { CourseSidebar, ChatPanel, LessonContent } from './internal';
 import * as S from './LessonScreen.styles';
 
+const DESKTOP_MQ = `(min-width: ${breakpoints.desktop + 1}px)`;
+
+// Persists across remounts (route param changes remount the page component)
+let persistedExpandedModules: Set<number> | null = null;
+
 const useIsDesktop = () => {
-  const [isDesktop, setIsDesktop] = useState(true);
+  const [isDesktop, setIsDesktop] = useState(() =>
+    typeof window !== 'undefined' ? window.matchMedia(DESKTOP_MQ).matches : true,
+  );
 
   useEffect(() => {
-    const mq = window.matchMedia('(min-width: 1024px)');
-    setIsDesktop(mq.matches);
+    const mq = window.matchMedia(DESKTOP_MQ);
     const handler = (e: MediaQueryListEvent) => setIsDesktop(e.matches);
     mq.addEventListener('change', handler);
     return () => mq.removeEventListener('change', handler);
@@ -36,15 +44,23 @@ export const LessonScreen = () => {
   const { data: progressData } = useCourseProgress(courseId);
   const { data: generatedLessons } = useGeneratedLessons(courseId);
 
-  const [sidebarOpen, setSidebarOpen] = useState(false);
+  // Initialize sidebar open on desktop to avoid the open-animation flash on mount
+  const [sidebarOpen, setSidebarOpen] = useState(() =>
+    typeof window !== 'undefined' ? window.matchMedia(DESKTOP_MQ).matches : true,
+  );
   const [chatOpen, setChatOpen] = useState(false);
+  const [expandedModules, setExpandedModulesState] = useState<Set<number> | null>(() => persistedExpandedModules);
+  const setExpandedModules = useCallback((val: Set<number> | null) => {
+    persistedExpandedModules = val;
+    setExpandedModulesState(val);
+  }, []);
 
-  // On desktop, sidebar open by default
+  // Sync sidebar with desktop/mobile on resize
   useEffect(() => {
     setSidebarOpen(isDesktop);
   }, [isDesktop]);
 
-  const modules = course?.structure?.modules ?? [];
+  const modules = useMemo(() => course?.structure?.modules ?? [], [course?.structure?.modules]);
   const currentModule = modules[moduleIndex];
   const currentLesson = currentModule?.lessons?.[lessonIndex];
 
@@ -73,10 +89,9 @@ export const LessonScreen = () => {
     if (lessonIndex < lessonsInModule - 1) {
       navigateToLesson(moduleIndex, lessonIndex + 1);
     } else {
-      // End of module — check if all lessons are completed to navigate to quiz
-      const allCompleted = progressData?.lessons?.filter(
-        (p) => p.moduleIndex === moduleIndex && p.status === 'completed',
-      ).length === lessonsInModule;
+      const allCompleted =
+        progressData?.lessons?.filter((p) => p.moduleIndex === moduleIndex && p.status === 'completed').length ===
+        lessonsInModule;
 
       if (allCompleted) {
         router.push(`/course/${courseId}/quiz/${moduleIndex}`);
@@ -87,9 +102,7 @@ export const LessonScreen = () => {
   }, [moduleIndex, lessonIndex, currentModule, modules, navigateToLesson, progressData, courseId, router]);
 
   const hasPrev = moduleIndex > 0 || lessonIndex > 0;
-  const hasNext =
-    moduleIndex < modules.length - 1 ||
-    lessonIndex < (currentModule?.lessons?.length ?? 0) - 1;
+  const hasNext = moduleIndex < modules.length - 1 || lessonIndex < (currentModule?.lessons?.length ?? 0) - 1;
 
   // ── Close overlays on backdrop click ──────────────────
 
@@ -105,17 +118,14 @@ export const LessonScreen = () => {
   const timeRef = useRef(0);
 
   useEffect(() => {
-    // Mark lesson as in_progress on open
     upsertLessonProgress(courseId, moduleIndex, lessonIndex, { status: 'in_progress' }).catch(() => {});
 
-    // Track time spent with 30s heartbeats
     timeRef.current = 0;
     const interval = setInterval(() => {
       timeRef.current += 30;
       upsertLessonProgress(courseId, moduleIndex, lessonIndex, { timeSpentDelta: 30 }).catch(() => {});
     }, 30_000);
 
-    // Send remaining time on unmount via beacon
     const sendBeacon = () => {
       const remaining = 30 - (timeRef.current % 30 || 30);
       if (remaining > 0 && remaining < 30) {
@@ -123,10 +133,12 @@ export const LessonScreen = () => {
         const url = `${NEXT_PUBLIC_API_URL}/api/course/${courseId}/progress/${moduleIndex}/${lessonIndex}`;
         const body = JSON.stringify({ timeSpentDelta: remaining });
         const blob = new Blob([body], { type: 'application/json' });
-        // sendBeacon doesn't support auth headers — fallback to fetch keepalive
         fetch(url, {
           method: 'POST',
-          headers: { 'Content-Type': 'application/json', ...(token && { Authorization: `Bearer ${token}` }) },
+          headers: {
+            'Content-Type': 'application/json',
+            ...(token && { Authorization: `Bearer ${token}` }),
+          },
           body,
           keepalive: true,
         }).catch(() => {});
@@ -148,7 +160,15 @@ export const LessonScreen = () => {
     return (
       <S.Layout>
         <S.ContentSlot>
-          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', flex: 1, opacity: 0.5 }}>
+          <div
+            style={{
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              flex: 1,
+              opacity: 0.5,
+            }}
+          >
             Loading...
           </div>
         </S.ContentSlot>
@@ -160,7 +180,15 @@ export const LessonScreen = () => {
     return (
       <S.Layout>
         <S.ContentSlot>
-          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', flex: 1, opacity: 0.5 }}>
+          <div
+            style={{
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              flex: 1,
+              opacity: 0.5,
+            }}
+          >
             Lesson not found.
           </div>
         </S.ContentSlot>
@@ -175,11 +203,11 @@ export const LessonScreen = () => {
       {/* Mobile top bar */}
       <S.TopBar>
         <S.IconButton onClick={() => setSidebarOpen(true)} aria-label="Open course navigation">
-          &#9776;
+          <Menu size={18} />
         </S.IconButton>
         <S.TopBarTitle>{currentLesson.name}</S.TopBarTitle>
         <S.IconButton onClick={() => setChatOpen(true)} aria-label="Open AI chat">
-          &#128172;
+          <MessageCircle size={18} />
         </S.IconButton>
       </S.TopBar>
 
@@ -198,6 +226,8 @@ export const LessonScreen = () => {
           onCollapse={() => setSidebarOpen(false)}
           progressData={progressData ?? undefined}
           generatedLessons={generatedLessons ?? undefined}
+          expandedModules={expandedModules}
+          onExpandedChange={setExpandedModules}
         />
       </S.SidebarSlot>
 
@@ -223,16 +253,13 @@ export const LessonScreen = () => {
 
       {/* Right chat panel */}
       <S.ChatSlot $open={chatOpen}>
-        <ChatPanel
-          lessonName={currentLesson.name}
-          onClose={() => setChatOpen(false)}
-        />
+        <ChatPanel lessonName={currentLesson.name} onClose={() => setChatOpen(false)} />
       </S.ChatSlot>
 
       {/* Desktop floating chat toggle */}
       {!chatOpen && (
         <S.ChatToggle onClick={() => setChatOpen(true)} aria-label="Open AI chat">
-          &#128172;
+          <MessageCircle size={22} />
         </S.ChatToggle>
       )}
     </S.Layout>

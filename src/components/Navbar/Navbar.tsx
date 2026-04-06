@@ -3,8 +3,11 @@
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { useTheme } from 'next-themes';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import { useAuth } from '@/hooks';
 import * as S from './Navbar.styles';
+
+const SCROLL_THRESHOLD = 10;
 
 const SunIcon = () => (
   <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
@@ -19,10 +22,48 @@ const MoonIcon = () => (
   </svg>
 );
 
+const useHideOnScroll = () => {
+  const [hidden, setHidden] = useState(false);
+  const lastScrollY = useRef(typeof window !== 'undefined' ? window.scrollY : 0);
+
+  const onScroll = useCallback(() => {
+    const y = window.scrollY;
+
+    // Always show when near the top
+    if (y < 56) {
+      setHidden(false);
+      lastScrollY.current = y;
+      return;
+    }
+
+    const delta = y - lastScrollY.current;
+
+    if (delta > SCROLL_THRESHOLD) {
+      setHidden(true);
+      lastScrollY.current = y;
+    } else if (delta < -SCROLL_THRESHOLD) {
+      setHidden(false);
+      lastScrollY.current = y;
+    }
+  }, []);
+
+  useEffect(() => {
+    window.addEventListener('scroll', onScroll, { passive: true });
+    return () => window.removeEventListener('scroll', onScroll);
+  }, [onScroll]);
+
+  useEffect(() => {
+    document.documentElement.style.setProperty('--navbar-offset', hidden ? '0px' : '56px');
+  }, [hidden]);
+
+  return hidden;
+};
+
 export const Navbar = () => {
   const router = useRouter();
   const { user } = useAuth();
   const { resolvedTheme, setTheme } = useTheme();
+  const hidden = useHideOnScroll();
 
   const getInitial = () => {
     if (user?.name) return user.name.charAt(0).toUpperCase();
@@ -35,7 +76,7 @@ export const Navbar = () => {
   };
 
   return (
-    <S.Nav>
+    <S.Nav $hidden={hidden}>
       <S.Left>
         <Link href="/" passHref legacyBehavior>
           <S.Logo>Strive</S.Logo>
