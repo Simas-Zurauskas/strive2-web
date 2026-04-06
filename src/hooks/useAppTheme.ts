@@ -1,7 +1,7 @@
 import { useTheme } from 'next-themes';
 import { useLayoutEffect, useState } from 'react';
 import { DefaultTheme } from 'styled-components';
-import { colorsLib, ColorsSet, themeColors } from '@/theme';
+import { colorsLib, ColorsSet, themeColors, breakpoints, media } from '@/theme';
 
 const getComputedCSSColors = (): ColorsSet => {
   if (typeof window === 'undefined') {
@@ -19,6 +19,8 @@ const getComputedCSSColors = (): ColorsSet => {
     surfaceBorder: computedStyle.getPropertyValue('--surface-border').trim(),
     accent: computedStyle.getPropertyValue('--accent').trim(),
     accentHover: computedStyle.getPropertyValue('--accent-hover').trim(),
+    tertiary: computedStyle.getPropertyValue('--tertiary').trim(),
+    tertiaryHover: computedStyle.getPropertyValue('--tertiary-hover').trim(),
     success: computedStyle.getPropertyValue('--success').trim(),
     warning: computedStyle.getPropertyValue('--warning').trim(),
     error: computedStyle.getPropertyValue('--error').trim(),
@@ -63,12 +65,16 @@ export const useAppTheme = (): DefaultTheme & { hexColors: ColorsSet } => {
       surfaceBorder: 'var(--surface-border)',
       accent: 'var(--accent)',
       accentHover: 'var(--accent-hover)',
+      tertiary: 'var(--tertiary)',
+      tertiaryHover: 'var(--tertiary-hover)',
       success: 'var(--success)',
       warning: 'var(--warning)',
       error: 'var(--error)',
     },
     colorsLib,
     scheme: activeScheme,
+    bp: breakpoints,
+    media,
     hexColors, // For debugging/display only
   };
 };

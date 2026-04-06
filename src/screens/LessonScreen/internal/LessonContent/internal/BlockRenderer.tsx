@@ -80,7 +80,7 @@ const initMermaid = async () => {
       startOnLoad: false,
       theme: 'neutral',
       securityLevel: 'loose',
-      fontFamily: 'var(--font-geist-sans, sans-serif)',
+      fontFamily: 'var(--font-body-sans, sans-serif)',
     });
     mermaidInitialized = true;
   }

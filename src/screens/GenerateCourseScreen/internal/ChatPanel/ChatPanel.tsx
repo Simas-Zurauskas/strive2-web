@@ -7,7 +7,9 @@ import { ArrowUp, ArrowDown, Loader } from 'lucide-react';
 import { useSession } from 'next-auth/react';
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { StickToBottom, useStickToBottomContext } from 'use-stick-to-bottom';
+import { toast } from 'sonner';
 import { getChatHistory } from '@/api/routes/course';
+import { TOASTS } from '@/constants/toasts';
 import { NEXT_PUBLIC_API_URL } from '@/conf/env';
 import * as S from './ChatPanel.styles';
 import { ChatMessage, ToolStatus } from './internal';
@@ -56,6 +58,7 @@ export const ChatPanel = ({ courseId, onStructureModified, onModifying }: ChatPa
       })
       .catch((err) => {
         console.error('[ChatPanel] Failed to load chat history:', err);
+        toast.error(TOASTS.CHAT_HISTORY_ERROR);
       })
       .finally(() => {
         setHistoryLoaded(true);
@@ -119,6 +122,21 @@ const ChatPanelInner = ({
       });
       if (modified) {
         onStructureModified();
+
+        // Check if modify_structure cleared existing content/progress
+        const clearedContent = message.parts?.some((p) => {
+          if (p.type !== 'dynamic-tool' || p.toolName !== 'modify_structure') return false;
+          if (p.state !== 'output-available') return false;
+          try {
+            const output = JSON.parse(String((p as Record<string, unknown>).output ?? '{}'));
+            return output.contentCleared === true;
+          } catch {
+            return false;
+          }
+        });
+        if (clearedContent) {
+          toast.info(TOASTS.CONTENT_RESET);
+        }
       }
     },
     onError: (err) => {
@@ -197,9 +215,6 @@ const ChatPanelInner = ({
             <S.MessagesArea>
               {messages.length === 0 && (
                 <S.EmptyState>
-                  <span>
-                    Ask me about your course structure. I can explain choices, make changes, or research topics.
-                  </span>
                   <S.SuggestedPrompts>
                     {SUGGESTED_PROMPTS.map((prompt) => (
                       <S.SuggestedPrompt key={prompt} type="button" onClick={() => handleSuggestedPrompt(prompt)}>

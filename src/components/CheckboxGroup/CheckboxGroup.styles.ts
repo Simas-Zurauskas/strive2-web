@@ -9,20 +9,22 @@ export const Wrapper = styled.div`
 export const Option = styled.label<{ $selected: boolean }>`
   display: flex;
   align-items: flex-start;
-  gap: 0.75rem;
-  padding: 1rem 1.25rem;
+  gap: 0.875rem;
+  padding: 1.125rem 1.25rem;
   border: ${(p) => (p.$selected ? `2px solid ${p.theme.colors.accent}` : `1px solid ${p.theme.colors.surfaceBorder}`)};
   border-radius: 8px;
-  background: ${(p) => p.theme.colors.surface};
+  background: ${(p) => (p.$selected ? p.theme.colorsLib.primary + '06' : p.theme.colors.surface)};
   cursor: pointer;
   transition:
     border-color 0.15s,
-    background 0.15s;
+    background 0.15s,
+    box-shadow 0.15s;
 
   margin: ${(p) => (p.$selected ? '0' : '1px')};
 
   &:hover {
     border-color: ${(p) => p.theme.colors.accent};
+    background: ${(p) => (p.$selected ? p.theme.colorsLib.primary + '06' : p.theme.colorsLib.gray100)};
   }
 `;
 
@@ -38,16 +40,16 @@ export const Indicator = styled.span<{ $selected: boolean }>`
   width: 18px;
   height: 18px;
   border-radius: 4px;
-  border: 2px solid ${(p) => (p.$selected ? p.theme.colors.accent : p.theme.colors.border)};
+  border: 1.5px solid ${(p) => (p.$selected ? p.theme.colors.accent : p.theme.colors.border)};
   background: ${(p) => (p.$selected ? p.theme.colors.accent : 'transparent')};
-  margin-top: 1px;
+  margin-top: 2px;
   position: relative;
   transition:
     background 0.15s,
     border-color 0.15s;
 
   &::after {
-    content: '✓';
+    content: '\\2713';
     display: ${(p) => (p.$selected ? 'block' : 'none')};
     color: #fff;
     font-size: 0.6875rem;
@@ -66,8 +68,8 @@ export const Content = styled.div`
 `;
 
 export const OptionLabel = styled.span`
-  font-size: 0.875rem;
-  font-weight: 600;
+  font-size: 0.9375rem;
+  font-weight: 500;
   color: ${(p) => p.theme.colors.foreground};
 `;
 
@@ -79,13 +81,13 @@ export const OptionDescription = styled.span`
 
 export const OtherInput = styled.input`
   margin-top: 0.5rem;
-  padding: 0.5rem 0.75rem;
+  padding: 0.625rem 0.75rem;
   border: 1px solid ${(p) => p.theme.colors.border};
   border-radius: 6px;
   background: ${(p) => p.theme.colors.background};
   color: ${(p) => p.theme.colors.foreground};
   font-family: inherit;
-  font-size: 0.8125rem;
+  font-size: 0.875rem;
   outline: none;
   width: 100%;
   transition: border-color 0.15s;

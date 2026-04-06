@@ -13,35 +13,40 @@ export const Step = styled.div`
   gap: 0.5rem;
 `;
 
-export const Circle = styled.span<{ $state: 'completed' | 'active' | 'future'; $clickable: boolean }>`
+export const Circle = styled.span<{ $state: 'completed' | 'active' | 'navigable' | 'future'; $clickable: boolean }>`
   display: flex;
   align-items: center;
   justify-content: center;
   width: 28px;
   height: 28px;
   border-radius: 50%;
-  font-size: 0.75rem;
-  font-weight: 700;
+  font-size: 0.6875rem;
+  font-weight: 600;
   flex-shrink: 0;
   cursor: ${(p) => (p.$clickable ? 'pointer' : 'default')};
   transition:
     background 0.15s,
-    color 0.15s;
+    color 0.15s,
+    border-color 0.15s;
 
   background: ${(p) => {
-    if (p.$state === 'completed' || p.$state === 'active') return p.theme.colors.accent;
+    if (p.$state === 'active') return p.theme.colors.accent;
     return 'transparent';
   }};
 
   color: ${(p) => {
-    if (p.$state === 'completed' || p.$state === 'active') return '#fff';
+    if (p.$state === 'active') return '#fff';
+    if (p.$state === 'completed') return p.theme.colors.foreground;
+    if (p.$state === 'navigable') return p.theme.colors.accent;
     return p.theme.colors.muted;
   }};
 
-  border: 2px solid
+  border: 1.5px solid
     ${(p) => {
-      if (p.$state === 'completed' || p.$state === 'active') return p.theme.colors.accent;
-      return p.theme.colors.border;
+      if (p.$state === 'active') return p.theme.colors.accent;
+      if (p.$state === 'completed') return p.theme.colors.foreground;
+      if (p.$state === 'navigable') return p.theme.colors.accent;
+      return p.theme.colorsLib.gray400;
     }};
 
   &:hover {
@@ -49,10 +54,17 @@ export const Circle = styled.span<{ $state: 'completed' | 'active' | 'future'; $
   }
 `;
 
-export const Label = styled.span<{ $state: 'completed' | 'active' | 'future'; $clickable: boolean }>`
-  font-size: 0.8125rem;
+export const Label = styled.span<{ $state: 'completed' | 'active' | 'navigable' | 'future'; $clickable: boolean }>`
+  font-size: 0.75rem;
   font-weight: ${(p) => (p.$state === 'active' ? 600 : 400)};
-  color: ${(p) => (p.$state === 'future' ? p.theme.colors.muted : p.theme.colors.foreground)};
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: ${(p) => {
+    if (p.$state === 'active') return p.theme.colors.foreground;
+    if (p.$state === 'completed') return p.theme.colors.foreground;
+    if (p.$state === 'navigable') return p.theme.colors.foreground;
+    return p.theme.colors.muted;
+  }};
   white-space: nowrap;
   cursor: ${(p) => (p.$clickable ? 'pointer' : 'default')};
 `;
@@ -61,6 +73,7 @@ export const Connector = styled.span<{ $completed: boolean }>`
   flex: 1;
   height: 1px;
   margin: 0 0.75rem;
-  background: ${(p) => (p.$completed ? p.theme.colors.accent : p.theme.colors.border)};
-  transition: background 0.15s;
+  background: ${(p) => (p.$completed ? p.theme.colors.foreground : p.theme.colors.border)};
+  opacity: ${(p) => (p.$completed ? 0.2 : 1)};
+  transition: background 0.15s, opacity 0.15s;
 `;

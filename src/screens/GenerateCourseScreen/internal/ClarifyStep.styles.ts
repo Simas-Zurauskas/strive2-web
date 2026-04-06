@@ -3,28 +3,42 @@ import styled from 'styled-components';
 export const Container = styled.div`
   display: flex;
   flex-direction: column;
-  gap: 1.5rem;
+  gap: 2.5rem;
+  padding-bottom: 1.5rem;
 `;
 
 export const Header = styled.div`
   display: flex;
   flex-direction: column;
-  gap: 0.375rem;
+  gap: 1rem;
+`;
+
+export const Eyebrow = styled.span`
+  font-size: 0.75rem;
+  font-weight: 500;
+  text-transform: uppercase;
+  letter-spacing: 0.18em;
+  color: ${(p) => p.theme.colors.tertiary};
 `;
 
 export const Title = styled.h2`
   font-family: var(--font-heading-serif), Georgia, serif;
-  font-size: 1.75rem;
-  font-weight: 600;
+  font-style: italic;
+  font-size: 2.5rem;
+  font-weight: 400;
   color: ${(p) => p.theme.colors.foreground};
-  letter-spacing: -0.02em;
-  line-height: 1.2;
+  letter-spacing: -0.025em;
+  line-height: 1.1;
+
+  ${(p) => p.theme.media.tablet} {
+    font-size: 1.75rem;
+  }
 `;
 
 export const Subtitle = styled.p`
-  font-size: 0.875rem;
+  font-size: 1.0625rem;
   color: ${(p) => p.theme.colors.muted};
-  line-height: 1.5;
+  line-height: 1.6;
 `;
 
 export const ProgressBar = styled.div`
@@ -37,40 +51,42 @@ export const ProgressDot = styled.div<{ $active: boolean; $answered: boolean }>`
   flex: 1;
   border-radius: 2px;
   background: ${(p) =>
-    p.$active
-      ? p.theme.colors.accent
-      : p.$answered
-        ? p.theme.colors.accent + '55'
-        : p.theme.colors.border};
+    p.$active ? p.theme.colors.accent : p.$answered ? p.theme.colorsLib.gray200 : p.theme.colors.border};
   transition: background 0.2s ease;
 `;
 
 export const QuestionCard = styled.div`
   display: flex;
   flex-direction: column;
-  gap: 1.25rem;
+  gap: 1.75rem;
 `;
 
 export const QuestionLabel = styled.p`
-  font-size: 0.9375rem;
-  font-weight: 600;
+  font-family: var(--font-heading-serif), Georgia, serif;
+  font-size: 1.25rem;
+  font-weight: 500;
   color: ${(p) => p.theme.colors.foreground};
+  line-height: 1.4;
 `;
 
 export const QuestionHint = styled.span`
   display: block;
-  font-size: 0.8125rem;
+  font-family: var(--font-body-sans), system-ui, sans-serif;
+  font-size: 0.875rem;
   font-weight: 400;
   color: ${(p) => p.theme.colors.muted};
-  margin-top: 0.125rem;
+  margin-top: 0.375rem;
 `;
 
 export const QuestionCounter = styled.p`
-  font-size: 0.8125rem;
+  font-size: 0.75rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
   color: ${(p) => p.theme.colors.muted};
 `;
 
 export const Actions = styled.div`
   display: flex;
-  gap: 0.75rem;
+  gap: 1rem;
 `;

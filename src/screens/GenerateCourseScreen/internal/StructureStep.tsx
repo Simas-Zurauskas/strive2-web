@@ -12,18 +12,10 @@ interface StructureStepProps {
   modules: CourseModule[];
   onStructureModified: () => void;
   onAccept: () => void;
-  onStartFresh: () => void;
   onBack: () => void;
 }
 
-export const StructureStep = ({
-  courseId,
-  modules,
-  onStructureModified,
-  onAccept,
-  onStartFresh,
-  onBack,
-}: StructureStepProps) => {
+export const StructureStep = ({ courseId, modules, onStructureModified, onAccept, onBack }: StructureStepProps) => {
   const totalLessons = useMemo(() => modules.reduce((sum, m) => sum + m.lessons.length, 0), [modules]);
   const [isModifying, setIsModifying] = useState(false);
   const { isJobRunningForCourse } = useJobManager();
@@ -36,13 +28,16 @@ export const StructureStep = ({
   return (
     <S.Container>
       <S.Header>
+        <S.Eyebrow>Structure</S.Eyebrow>
         <S.Title>Your Course Structure</S.Title>
         <S.Subtitle>
-          <Badge variant="default">
-            {modules.length} module{modules.length !== 1 ? 's' : ''} &middot; {totalLessons} lesson
-            {totalLessons !== 1 ? 's' : ''}
-          </Badge>
+          Review the modules and lessons below. Use the chat to make changes &mdash; add or remove topics, reorder
+          modules, adjust scope, or ask why something was included. When you&apos;re happy with it, accept to start learning.
         </S.Subtitle>
+        <Badge variant="default">
+          {modules.length} module{modules.length !== 1 ? 's' : ''} &middot; {totalLessons} lesson
+          {totalLessons !== 1 ? 's' : ''}
+        </Badge>
       </S.Header>
 
       <S.TwoColumn>
@@ -78,20 +73,13 @@ export const StructureStep = ({
               Back
             </Button>
             <Button type="button" onClick={onAccept} disabled={showOverlay}>
-              Looks good
+              Accept &amp; Start Learning
             </Button>
-            <S.StartFreshLink type="button" onClick={onStartFresh}>
-              Start fresh
-            </S.StartFreshLink>
           </S.Actions>
         </S.StructureColumn>
 
         <S.ChatColumn>
-          <ChatPanel
-            courseId={courseId}
-            onStructureModified={onStructureModified}
-            onModifying={handleModifying}
-          />
+          <ChatPanel courseId={courseId} onStructureModified={onStructureModified} onModifying={handleModifying} />
         </S.ChatColumn>
       </S.TwoColumn>
     </S.Container>

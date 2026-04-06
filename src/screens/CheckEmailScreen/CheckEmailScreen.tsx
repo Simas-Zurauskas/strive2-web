@@ -4,6 +4,7 @@ import Link from 'next/link';
 import { useState } from 'react';
 import { toast } from 'sonner';
 import { resendVerificationAuthenticated } from '@/api/routes/auth';
+import { TOASTS, toastMessage } from '@/constants/toasts';
 import * as S from '../LoginScreen/LoginScreen.styles';
 
 export const CheckEmailScreen = () => {
@@ -14,13 +15,13 @@ export const CheckEmailScreen = () => {
 
     try {
       await resendVerificationAuthenticated();
-      toast.success('Verification email sent.');
+      toast.success(TOASTS.VERIFICATION_SENT_SHORT);
     } catch (err) {
       const error = err as { message?: string; status?: number };
       if (error?.status === 401 || error?.message === 'Unauthorized') {
-        toast.error('Session expired. Please sign in and resend from your profile.');
+        toast.error(TOASTS.SESSION_EXPIRED);
       } else {
-        toast.error(error?.message || 'Failed to resend. Please try again.');
+        toast.error(toastMessage(error?.message, TOASTS.RESEND_ERROR));
       }
     } finally {
       setResending(false);

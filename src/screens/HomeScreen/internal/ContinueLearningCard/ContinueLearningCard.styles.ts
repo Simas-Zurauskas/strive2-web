@@ -92,7 +92,7 @@ export const Action = styled.div`
   padding: 1.25rem 1.5rem;
   flex-shrink: 0;
 
-  @media (max-width: 640px) {
+  ${(p) => p.theme.media.tablet} {
     display: none;
   }
 `;

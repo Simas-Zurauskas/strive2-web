@@ -7,3 +7,5 @@ export { CheckboxGroup } from './CheckboxGroup';
 export { Stepper } from './Stepper';
 export { Badge } from './Badge';
 export { CourseCard } from './CourseCard';
+export { Navbar } from './Navbar';
+export { AlertDialog } from './AlertDialog';

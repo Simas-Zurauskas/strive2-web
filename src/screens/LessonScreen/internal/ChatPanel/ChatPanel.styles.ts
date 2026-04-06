@@ -10,12 +10,12 @@ export const Container = styled.div`
   background: ${(p) => p.theme.colors.surface};
   border-left: 1px solid ${(p) => p.theme.colors.border};
 
-  @media (max-width: 1023px) {
+  ${(p) => p.theme.media.desktop} {
     position: static;
     height: 100%;
   }
 
-  @media (max-width: 640px) {
+  ${(p) => p.theme.media.tablet} {
     width: 100%;
   }
 `;

@@ -1,16 +1,17 @@
-import { Geist, Playfair_Display } from 'next/font/google';
+import { Inter, Newsreader } from 'next/font/google';
 import Registry from './_registry';
 import type { Metadata } from 'next';
 
-const geistSans = Geist({
-  variable: '--font-geist-sans',
+const inter = Inter({
+  variable: '--font-body-sans',
   subsets: ['latin'],
 });
 
-const playfair = Playfair_Display({
+const newsreader = Newsreader({
   variable: '--font-heading-serif',
   subsets: ['latin'],
-  weight: ['400', '600', '700'],
+  weight: ['400', '500', '600'],
+  style: ['normal', 'italic'],
 });
 
 export const metadata: Metadata = {
@@ -20,7 +21,7 @@ export const metadata: Metadata = {
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
     <html lang="en" suppressHydrationWarning>
-      <body className={`${geistSans.variable} ${playfair.variable}`} suppressHydrationWarning>
+      <body className={`${inter.variable} ${newsreader.variable}`} suppressHydrationWarning>
         <Registry>{children}</Registry>
       </body>
     </html>
