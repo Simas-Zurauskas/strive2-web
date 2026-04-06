@@ -1,7 +1,8 @@
 'use client';
 
+import { Check, ChevronRight, Circle, Minus, Star } from 'lucide-react';
 import { useRouter } from 'next/navigation';
-import { useMemo, useState } from 'react';
+import { useEffect, useMemo, useRef } from 'react';
 import { CourseProgressResponse, CourseQuizProgressItem } from '@/api/routes/course';
 import { LessonDotState, QuizBadgeTier } from './CourseSidebar.styles';
 import * as S from './CourseSidebar.styles';
@@ -22,6 +23,8 @@ interface CourseSidebarProps {
   onCollapse: () => void;
   progressData?: CourseProgressResponse;
   generatedLessons?: { moduleIndex: number; lessonIndex: number }[];
+  expandedModules: Set<number> | null;
+  onExpandedChange: (expanded: Set<number>) => void;
 }
 
 export const CourseSidebar = ({
@@ -34,32 +37,43 @@ export const CourseSidebar = ({
   onCollapse,
   progressData,
   generatedLessons,
+  expandedModules: expandedModulesProp,
+  onExpandedChange,
 }: CourseSidebarProps) => {
   const router = useRouter();
+  const activeRef = useRef<HTMLButtonElement>(null);
 
-  // All modules start expanded
-  const [expandedModules, setExpandedModules] = useState<Set<number>>(() => {
-    return new Set(modules.map((_, i) => i));
-  });
+  // Initialize on first render if parent hasn't set it yet
+  const expandedModules = expandedModulesProp ?? new Set(modules.map((_, i) => i));
+  if (expandedModulesProp === null) {
+    onExpandedChange(expandedModules);
+  }
+
+  // Scroll active lesson into view on mount
+  useEffect(() => {
+    if (activeRef.current) {
+      activeRef.current.scrollIntoView({ block: 'nearest' });
+    }
+  }, [currentModuleIndex, currentLessonIndex]);
 
   const toggleModule = (index: number) => {
-    setExpandedModules((prev) => {
-      const next = new Set(prev);
-      if (next.has(index)) {
-        next.delete(index);
-      } else {
-        next.add(index);
-      }
-      return next;
-    });
+    const next = new Set(expandedModules);
+    if (next.has(index)) {
+      next.delete(index);
+    } else {
+      next.add(index);
+    }
+    onExpandedChange(next);
   };
 
-  // Build lookup maps
   const progressMap = useMemo(() => {
     const map = new Map<string, { status: string; bookmarked: boolean }>();
     if (progressData?.lessons) {
       for (const lp of progressData.lessons) {
-        map.set(`${lp.moduleIndex}-${lp.lessonIndex}`, { status: lp.status, bookmarked: lp.bookmarked });
+        map.set(`${lp.moduleIndex}-${lp.lessonIndex}`, {
+          status: lp.status,
+          bookmarked: lp.bookmarked,
+        });
       }
     }
     return map;
@@ -77,12 +91,8 @@ export const CourseSidebar = ({
 
   const totalLessons = modules.reduce((sum, m) => sum + (m.lessons?.length ?? 0), 0);
   const completedCount = progressData?.stats?.completed ?? 0;
-  const remaining = totalLessons - completedCount;
 
   const getDotState = (mi: number, li: number): LessonDotState => {
-    const isActive = mi === currentModuleIndex && li === currentLessonIndex;
-    if (isActive) return 'active';
-
     const key = `${mi}-${li}`;
     const progress = progressMap.get(key);
 
@@ -119,12 +129,19 @@ export const CourseSidebar = ({
   return (
     <S.Container>
       <S.Header>
-        <S.BackLink onClick={() => router.push(`/course/${courseId}`)}>
-          &larr; <S.CourseName>{courseName || 'Course'}</S.CourseName>
-        </S.BackLink>
-        <S.CollapseButton onClick={onCollapse} aria-label="Collapse sidebar">
-          &#10094;
-        </S.CollapseButton>
+        <S.CourseName>{courseName || 'Course'}</S.CourseName>
+        <S.ProgressHeader>
+          <S.ProgressPercent>
+            {totalLessons > 0 ? Math.round((completedCount / totalLessons) * 100) : 0}% Complete
+          </S.ProgressPercent>
+          <S.ProgressBarTrack>
+            <S.ProgressBarFill
+              $percent={
+                totalLessons > 0 ? Math.round((completedCount / totalLessons) * 100) : 0
+              }
+            />
+          </S.ProgressBarTrack>
+        </S.ProgressHeader>
       </S.Header>
 
       <S.Tree>
@@ -134,9 +151,11 @@ export const CourseSidebar = ({
           const mp = getModuleProgress(mi);
 
           return (
-            <div key={mi}>
+            <S.ModuleSection key={mi}>
               <S.ModuleHeader $expanded={expanded} onClick={() => toggleModule(mi)}>
-                <S.Chevron $expanded={expanded}>&#9654;</S.Chevron>
+                <S.ChevronIcon $expanded={expanded}>
+                  <ChevronRight size={12} />
+                </S.ChevronIcon>
                 <S.ModuleLabel>
                   {mi + 1}. {mod.name}
                 </S.ModuleLabel>
@@ -157,17 +176,29 @@ export const CourseSidebar = ({
                     return (
                       <S.LessonItem
                         key={li}
+                        ref={isActive ? activeRef : undefined}
                         $active={isActive}
                         onClick={() => onNavigate(mi, li)}
                       >
-                        <S.LessonDot $state={dotState} />
+                        <S.LessonIndicator $state={dotState}>
+                          {dotState === 'completed' ? (
+                            <Check size={12} strokeWidth={3} />
+                          ) : dotState === 'in_progress' ? (
+                            <Minus size={12} strokeWidth={2.5} />
+                          ) : (
+                            <Circle size={6} />
+                          )}
+                        </S.LessonIndicator>
                         <S.LessonName>{lesson.name}</S.LessonName>
-                        {isBookmarked && <S.BookmarkIcon>&#9733;</S.BookmarkIcon>}
+                        {isBookmarked && (
+                          <S.BookmarkIcon>
+                            <Star size={12} fill="currentColor" />
+                          </S.BookmarkIcon>
+                        )}
                       </S.LessonItem>
                     );
                   })}
 
-                  {/* Module Quiz entry */}
                   {(() => {
                     const locked = !isModuleComplete(mi);
                     const qp = quizProgressMap.get(mi);
@@ -177,11 +208,13 @@ export const CourseSidebar = ({
                         $locked={locked}
                         onClick={() => {
                           if (!locked) {
-                            router.push(`/course/${courseId}/quiz/${mi}${qp?.reviewDue ? '?review=true' : ''}`);
+                            router.push(
+                              `/course/${courseId}/quiz/${mi}${qp?.reviewDue ? '?review=true' : ''}`,
+                            );
                           }
                         }}
                       >
-                        <S.QuizIcon>{locked ? '\u{1F512}' : '\u{1F4DD}'}</S.QuizIcon>
+                        <S.QuizIconCircle $locked={locked}>Q</S.QuizIconCircle>
                         <S.LessonName>Module Quiz</S.LessonName>
                         {qp?.reviewDue && <S.ReviewDot />}
                         {qp?.bestTier && (
@@ -194,24 +227,10 @@ export const CourseSidebar = ({
                   })()}
                 </S.LessonList>
               )}
-            </div>
+            </S.ModuleSection>
           );
         })}
       </S.Tree>
-
-      <S.Footer>
-        <S.FooterText>
-          {completedCount} of {totalLessons} completed
-        </S.FooterText>
-        {remaining > 0 && remaining <= 2 && (
-          <S.FooterAccent>
-            {remaining} lesson{remaining !== 1 ? 's' : ''} to go!
-          </S.FooterAccent>
-        )}
-        <S.ProgressBarTrack>
-          <S.ProgressBarFill $percent={totalLessons > 0 ? Math.round((completedCount / totalLessons) * 100) : 0} />
-        </S.ProgressBarTrack>
-      </S.Footer>
     </S.Container>
   );
 };

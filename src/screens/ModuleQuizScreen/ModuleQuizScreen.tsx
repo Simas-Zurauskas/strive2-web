@@ -1,5 +1,6 @@
 'use client';
 
+import { ArrowLeft, ArrowRight } from 'lucide-react';
 import { useParams, useRouter, useSearchParams } from 'next/navigation';
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { toast } from 'sonner';
@@ -49,7 +50,6 @@ export const ModuleQuizScreen = () => {
   const totalQuestions = questions.length;
   const question = questions[currentQuestion];
 
-  // Clean up polling on unmount
   useEffect(() => {
     return () => {
       if (pollRef.current) clearInterval(pollRef.current);
@@ -64,7 +64,6 @@ export const ModuleQuizScreen = () => {
     try {
       const { jobId } = await generateQuiz.mutateAsync({ courseId, moduleIndex });
 
-      // Poll job status
       pollRef.current = setInterval(async () => {
         try {
           const job = await getJobStatus(jobId);
@@ -107,7 +106,6 @@ export const ModuleQuizScreen = () => {
       setSelectedOption(null);
       setAnswered(false);
     } else {
-      // Submit all responses
       try {
         const result = await submitAttempt.mutateAsync({
           courseId,
@@ -159,13 +157,15 @@ export const ModuleQuizScreen = () => {
     return (
       <S.Container>
         <S.Content>
-          <S.BackLink onClick={() => router.push(`/course/${courseId}`)}>
-            &larr; Back to course
-          </S.BackLink>
+          <S.TopBar>
+            <S.BackLink onClick={() => router.push(`/course/${courseId}`)}>
+              <ArrowLeft size={14} /> Back to course
+            </S.BackLink>
+          </S.TopBar>
 
           <S.ResultsHeader>
-            <S.Title>{isReviewMode ? 'Review Results' : 'Module Quiz Results'}</S.Title>
-            <S.Subtitle>{mod.name}</S.Subtitle>
+            <S.Eyebrow>{isReviewMode ? 'Review Results' : 'Quiz Results'}</S.Eyebrow>
+            <S.Title>{mod.name}</S.Title>
             <S.ScoreDisplay>{results.score}%</S.ScoreDisplay>
             <S.MasteryBadge $tier={results.masteryTier}>
               {results.masteryTier === 'mastered'
@@ -176,7 +176,8 @@ export const ModuleQuizScreen = () => {
             </S.MasteryBadge>
             {results.reviewIntervalDays > 0 && (
               <S.NextReviewInfo>
-                Next review in {results.reviewIntervalDays} day{results.reviewIntervalDays !== 1 ? 's' : ''} or sooner as you progress
+                Next review in {results.reviewIntervalDays} day
+                {results.reviewIntervalDays !== 1 ? 's' : ''} or sooner as you progress
               </S.NextReviewInfo>
             )}
           </S.ResultsHeader>
@@ -188,7 +189,9 @@ export const ModuleQuizScreen = () => {
                   <S.ResultIndicator $correct={q.correct}>
                     {q.correct ? '\u2713' : '\u2717'}
                   </S.ResultIndicator>
-                  <span>Q{i + 1}: {q.question}</span>
+                  <span>
+                    Q{i + 1}: {q.question}
+                  </span>
                 </S.ResultItemHeader>
                 <S.ResultExplanation>
                   <strong>Correct: {LETTERS[q.correctIndex]}</strong> — {q.explanation}
@@ -198,8 +201,10 @@ export const ModuleQuizScreen = () => {
                         <S.SourceTag
                           key={li}
                           as="a"
-                          onClick={() => router.push(`/course/${courseId}/lesson/${moduleIndex}/${li}`)}
-                          style={{ cursor: 'pointer', marginRight: '0.25rem' }}
+                          onClick={() =>
+                            router.push(`/course/${courseId}/lesson/${moduleIndex}/${li}`)
+                          }
+                          style={{ cursor: 'pointer', marginRight: '0.375rem' }}
                         >
                           Lesson {li + 1}: {mod.lessons?.[li]?.name}
                         </S.SourceTag>
@@ -219,7 +224,7 @@ export const ModuleQuizScreen = () => {
               <S.StartButton
                 onClick={() => router.push(`/course/${courseId}/lesson/${moduleIndex + 1}/0`)}
               >
-                Continue to Next Module &rarr;
+                Continue to Next Module <ArrowRight size={14} />
               </S.StartButton>
             )}
             {!hasNextModule && (
@@ -244,11 +249,18 @@ export const ModuleQuizScreen = () => {
     return (
       <S.Container>
         <S.Content>
-          <S.BackLink onClick={() => router.push(`/course/${courseId}`)}>
-            &larr; Back to course
-          </S.BackLink>
-          <S.Title>{isReviewMode ? `Module ${moduleIndex + 1} Review` : `Module ${moduleIndex + 1} Quiz`}</S.Title>
-          <S.Subtitle>{isReviewMode ? `Spaced review \u2014 ${mod.name}` : mod.name}</S.Subtitle>
+          <S.TopBar>
+            <S.BackLink onClick={() => router.push(`/course/${courseId}`)}>
+              <ArrowLeft size={14} /> Back to course
+            </S.BackLink>
+          </S.TopBar>
+
+          <S.HeaderSection>
+            <S.Eyebrow>
+              {isReviewMode ? 'Spaced Review' : `Module ${moduleIndex + 1} Quiz`}
+            </S.Eyebrow>
+            <S.Title>{mod.name}</S.Title>
+          </S.HeaderSection>
 
           <S.ProgressBarContainer>
             <S.ProgressBarTrack>
@@ -263,28 +275,25 @@ export const ModuleQuizScreen = () => {
             <S.QuestionText>{question.question}</S.QuestionText>
             <S.OptionsContainer>
               {question.options.map((opt, i) => (
-                <S.Option
-                  key={i}
-                  $state={getOptionState(i)}
-                  onClick={() => handleSelectOption(i)}
-                  >
-                  <S.OptionLetter $state={getOptionState(i)}>
-                    {LETTERS[i]}
-                  </S.OptionLetter>
+                <S.Option key={i} $state={getOptionState(i)} onClick={() => handleSelectOption(i)}>
+                  <S.OptionLetter $state={getOptionState(i)}>{LETTERS[i]}</S.OptionLetter>
                   {opt}
                 </S.Option>
               ))}
             </S.OptionsContainer>
             {question.isInterleaved && (
               <S.Explanation>
-                <S.SourceTag>Review question from Module {(question.interleavedModuleIndex ?? 0) + 1}</S.SourceTag>
+                <S.SourceTag>
+                  Review question from Module {(question.interleavedModuleIndex ?? 0) + 1}
+                </S.SourceTag>
               </S.Explanation>
             )}
           </S.QuestionCard>
 
           {selectedOption !== null && (
             <S.NextButton onClick={handleNext} disabled={submitAttempt.isPending}>
-              {currentQuestion < totalQuestions - 1 ? 'Next Question \u2192' : 'See Results'}
+              {currentQuestion < totalQuestions - 1 ? 'Next Question' : 'See Results'}{' '}
+              <ArrowRight size={14} />
             </S.NextButton>
           )}
         </S.Content>
@@ -297,24 +306,33 @@ export const ModuleQuizScreen = () => {
   return (
     <S.Container>
       <S.Content>
-        <S.BackLink onClick={() => router.push(`/course/${courseId}`)}>
-          &larr; Back to course
-        </S.BackLink>
-        <S.Title>{isReviewMode ? `Module ${moduleIndex + 1} Review` : `Module ${moduleIndex + 1} Quiz`}</S.Title>
-        <S.Subtitle>{isReviewMode ? `Spaced review \u2014 ${mod.name}` : mod.name}</S.Subtitle>
+        <S.TopBar>
+          <S.BackLink onClick={() => router.push(`/course/${courseId}`)}>
+            <ArrowLeft size={14} /> Back to course
+          </S.BackLink>
+        </S.TopBar>
+
+        <S.HeaderSection>
+          <S.Eyebrow>
+            {isReviewMode ? 'Spaced Review' : `Module ${moduleIndex + 1} Quiz`}
+          </S.Eyebrow>
+          <S.Title>{mod.name}</S.Title>
+        </S.HeaderSection>
 
         {quizProgress && quizProgress.bestTier && (
           <S.PreviousAttempt>
             <span>Previous best:</span>
             <S.MasteryBadge $tier={quizProgress.bestTier}>
-              {quizProgress.bestScore}% — {quizProgress.bestTier === 'mastered'
+              {quizProgress.bestScore}% —{' '}
+              {quizProgress.bestTier === 'mastered'
                 ? 'Mastered'
                 : quizProgress.bestTier === 'passed'
                   ? 'Passed'
                   : 'Needs Review'}
             </S.MasteryBadge>
             <span style={{ color: 'inherit', opacity: 0.5 }}>
-              ({quizProgress.attempts.length} attempt{quizProgress.attempts.length !== 1 ? 's' : ''})
+              ({quizProgress.attempts.length} attempt
+              {quizProgress.attempts.length !== 1 ? 's' : ''})
             </span>
           </S.PreviousAttempt>
         )}
@@ -326,18 +344,19 @@ export const ModuleQuizScreen = () => {
           </S.LoadingContainer>
         ) : quizContent && !quizStarted ? (
           <>
-            <p style={{ marginBottom: '1.5rem', fontSize: '0.875rem', opacity: 0.7 }}>
-              {totalQuestions} questions testing your understanding across all lessons in this module.
-            </p>
+            <S.DescriptionText>
+              {totalQuestions} questions testing your understanding across all lessons in this
+              module.
+            </S.DescriptionText>
             <S.StartButton onClick={() => setQuizStarted(true)}>
               {quizProgress ? 'Retake Quiz' : 'Start Quiz'}
             </S.StartButton>
           </>
         ) : (
           <>
-            <p style={{ marginBottom: '1.5rem', fontSize: '0.875rem', opacity: 0.7 }}>
+            <S.DescriptionText>
               Test your understanding across all {mod.lessons?.length ?? 0} lessons in this module.
-            </p>
+            </S.DescriptionText>
             <S.StartButton onClick={handleGenerate} disabled={isGenerating}>
               {quizProgress ? 'Generate New Quiz' : 'Start Quiz'}
             </S.StartButton>

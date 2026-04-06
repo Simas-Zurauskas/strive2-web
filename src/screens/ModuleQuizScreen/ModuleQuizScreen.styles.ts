@@ -1,20 +1,43 @@
-import styled from 'styled-components';
+import styled, { keyframes } from 'styled-components';
+
+const fadeIn = keyframes`
+  from { opacity: 0; }
+  to { opacity: 1; }
+`;
+
+const spin = keyframes`
+  to { transform: rotate(360deg); }
+`;
 
 // ── Layout ────────────────────────────────────────────
 
 export const Container = styled.div`
-  min-height: 100vh;
+  min-height: calc(100vh - 56px);
   display: flex;
   flex-direction: column;
   align-items: center;
   background: ${(p) => p.theme.colors.background};
   color: ${(p) => p.theme.colors.foreground};
-  padding: 2rem 1rem;
+  padding: 2rem 2rem 3rem;
+
+  ${(p) => p.theme.media.tablet} {
+    padding: 2rem 1.25rem 3rem;
+  }
 `;
 
 export const Content = styled.div`
   width: 100%;
   max-width: 640px;
+  display: flex;
+  flex-direction: column;
+  gap: 2rem;
+`;
+
+export const TopBar = styled.div`
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  min-height: 1.5rem;
 `;
 
 export const BackLink = styled.button`
@@ -23,28 +46,57 @@ export const BackLink = styled.button`
   gap: 0.375rem;
   background: none;
   border: none;
-  color: ${(p) => p.theme.colors.muted};
-  font-size: 0.8125rem;
+  color: ${(p) => p.theme.colors.foreground};
+  font-size: 0.875rem;
+  font-weight: 500;
   font-family: inherit;
   cursor: pointer;
   padding: 0;
-  margin-bottom: 1.5rem;
+  transition: color 0.15s;
 
   &:hover {
-    color: ${(p) => p.theme.colors.foreground};
+    color: ${(p) => p.theme.colors.muted};
   }
 `;
 
+// ── Header ────────────────────────────────────────────
+
+export const HeaderSection = styled.div`
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+`;
+
+export const Eyebrow = styled.span`
+  font-size: 0.75rem;
+  font-weight: 500;
+  text-transform: uppercase;
+  letter-spacing: 0.18em;
+  color: ${(p) => p.theme.colors.tertiary};
+`;
+
 export const Title = styled.h1`
-  font-size: 1.5rem;
-  font-weight: 700;
-  margin-bottom: 0.25rem;
+  font-family: var(--font-heading-serif), Georgia, serif;
+  font-style: italic;
+  font-size: 2.5rem;
+  font-weight: 400;
+  color: ${(p) => p.theme.colors.foreground};
+  letter-spacing: -0.025em;
+  line-height: 1.1;
+
+  ${(p) => p.theme.media.tablet} {
+    font-size: 1.75rem;
+  }
+
+  ${(p) => p.theme.media.mobile} {
+    font-size: 1.5rem;
+  }
 `;
 
 export const Subtitle = styled.p`
+  font-size: 1.0625rem;
   color: ${(p) => p.theme.colors.muted};
-  font-size: 0.875rem;
-  margin-bottom: 2rem;
+  line-height: 1.6;
 `;
 
 // ── Loading / pre-quiz ────────────────────────────────
@@ -56,8 +108,11 @@ export const LoadingContainer = styled.div`
   justify-content: center;
   gap: 1rem;
   padding: 4rem 0;
+  font-family: var(--font-heading-serif), Georgia, serif;
+  font-style: italic;
+  font-size: 1.125rem;
   color: ${(p) => p.theme.colors.muted};
-  font-size: 0.875rem;
+  animation: ${fadeIn} 0.4s ease;
 `;
 
 export const Spinner = styled.div`
@@ -66,30 +121,47 @@ export const Spinner = styled.div`
   border: 3px solid ${(p) => p.theme.colors.border};
   border-top-color: ${(p) => p.theme.colors.accent};
   border-radius: 50%;
-  animation: spin 0.8s linear infinite;
+  animation: ${spin} 0.8s linear infinite;
+`;
 
-  @keyframes spin {
-    to { transform: rotate(360deg); }
-  }
+export const DescriptionText = styled.p`
+  font-size: 0.9375rem;
+  color: ${(p) => p.theme.colors.muted};
+  line-height: 1.6;
 `;
 
 export const StartButton = styled.button`
+  align-self: flex-start;
   display: inline-flex;
   align-items: center;
   gap: 0.5rem;
-  padding: 0.75rem 1.5rem;
+  padding: 0.75rem 1.75rem;
   background: ${(p) => p.theme.colors.accent};
   color: #fff;
   border: none;
-  border-radius: 8px;
-  font-size: 0.9375rem;
+  border-radius: 6px;
+  font-size: 0.8125rem;
   font-weight: 600;
   font-family: inherit;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
   cursor: pointer;
-  transition: opacity 0.15s;
+  box-shadow:
+    0 1px 3px rgba(0, 0, 0, 0.12),
+    0 1px 2px rgba(0, 0, 0, 0.08);
+  transition:
+    background 0.15s,
+    box-shadow 0.15s;
 
   &:hover {
-    opacity: 0.9;
+    background: ${(p) => p.theme.colors.accentHover};
+    box-shadow:
+      0 2px 6px rgba(0, 0, 0, 0.15),
+      0 1px 3px rgba(0, 0, 0, 0.1);
+  }
+
+  &:active {
+    transform: scale(0.98);
   }
 
   &:disabled {
@@ -104,7 +176,6 @@ export const ProgressBarContainer = styled.div`
   display: flex;
   align-items: center;
   gap: 0.75rem;
-  margin-bottom: 1.5rem;
 `;
 
 export const ProgressBarTrack = styled.div`
@@ -124,32 +195,37 @@ export const ProgressBarFill = styled.div<{ $percent: number }>`
 `;
 
 export const ProgressText = styled.span`
-  font-size: 0.75rem;
+  font-size: 0.8125rem;
   color: ${(p) => p.theme.colors.muted};
   white-space: nowrap;
+  font-weight: 500;
 `;
 
 // ── Question ──────────────────────────────────────────
 
 export const QuestionCard = styled.div`
   border-radius: 8px;
-  border: 1px solid ${(p) => p.theme.colors.border};
+  border: 1px solid ${(p) => p.theme.colors.surfaceBorder};
+  background: ${(p) => p.theme.colors.surface};
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.04);
   overflow: hidden;
-  margin-bottom: 1.5rem;
 `;
 
 export const QuestionText = styled.p`
-  padding: 1.25rem;
-  font-size: 1rem;
+  padding: 1.5rem 1.75rem;
+  font-family: var(--font-heading-serif), Georgia, serif;
+  font-size: 1.125rem;
   font-weight: 500;
   line-height: 1.5;
+  letter-spacing: -0.01em;
+  border-bottom: 1px solid ${(p) => p.theme.colors.border};
 `;
 
 export const OptionsContainer = styled.div`
   display: flex;
   flex-direction: column;
-  padding: 0 1.25rem 1.25rem;
-  gap: 0.5rem;
+  padding: 1.25rem 1.75rem;
+  gap: 0.625rem;
 `;
 
 type OptionState = 'default' | 'selected' | 'correct' | 'incorrect' | 'dimmed';
@@ -157,32 +233,34 @@ type OptionState = 'default' | 'selected' | 'correct' | 'incorrect' | 'dimmed';
 export const Option = styled.button<{ $state: OptionState }>`
   display: flex;
   align-items: flex-start;
-  gap: 0.625rem;
-  padding: 0.75rem;
+  gap: 0.875rem;
+  padding: 1.125rem 1.25rem;
   border-radius: 8px;
-  border: 1px solid ${(p) =>
+  border: ${(p) =>
     p.$state === 'selected'
-      ? p.theme.colors.accent
+      ? `2px solid ${p.theme.colors.accent}`
       : p.$state === 'correct'
-        ? p.theme.colors.success
+        ? `2px solid ${p.theme.colors.success}`
         : p.$state === 'incorrect'
-          ? p.theme.colors.error
-          : p.theme.colors.border};
+          ? `2px solid ${p.theme.colors.error}`
+          : `1px solid ${p.theme.colors.surfaceBorder}`};
   background: ${(p) =>
     p.$state === 'selected'
-      ? `${p.theme.colors.accent}10`
+      ? `${p.theme.colors.accent}06`
       : p.$state === 'correct'
-        ? `${p.theme.colors.success}10`
+        ? `${p.theme.colors.success}08`
         : p.$state === 'incorrect'
-          ? `${p.theme.colors.error}10`
+          ? `${p.theme.colors.error}08`
           : p.theme.colors.background};
   color: ${(p) => (p.$state === 'dimmed' ? p.theme.colors.muted : p.theme.colors.foreground)};
   font-size: 0.9375rem;
   font-family: inherit;
   text-align: left;
   cursor: ${(p) => (p.$state === 'default' || p.$state === 'selected' ? 'pointer' : 'default')};
-  line-height: 1.4;
-  transition: border-color 0.15s, background 0.15s;
+  line-height: 1.5;
+  transition:
+    border-color 0.15s,
+    background 0.15s;
 
   ${(p) =>
     (p.$state === 'default' || p.$state === 'selected') &&
@@ -200,7 +278,7 @@ export const OptionLetter = styled.span<{ $state: OptionState }>`
   width: 24px;
   height: 24px;
   border-radius: 50%;
-  font-size: 0.75rem;
+  font-size: 0.6875rem;
   font-weight: 700;
   background: ${(p) =>
     p.$state === 'selected'
@@ -209,23 +287,26 @@ export const OptionLetter = styled.span<{ $state: OptionState }>`
         ? p.theme.colors.success
         : p.$state === 'incorrect'
           ? p.theme.colors.error
-          : p.theme.colors.surface};
+          : p.theme.colors.background};
   color: ${(p) =>
-    p.$state === 'selected' || p.$state === 'correct' || p.$state === 'incorrect' ? '#fff' : p.theme.colors.muted};
-  border: 1px solid ${(p) =>
-    p.$state === 'selected'
-      ? p.theme.colors.accent
-      : p.$state === 'correct'
-        ? p.theme.colors.success
-        : p.$state === 'incorrect'
-          ? p.theme.colors.error
-          : p.theme.colors.border};
+    p.$state === 'selected' || p.$state === 'correct' || p.$state === 'incorrect'
+      ? '#fff'
+      : p.theme.colors.muted};
+  border: 1px solid
+    ${(p) =>
+      p.$state === 'selected'
+        ? p.theme.colors.accent
+        : p.$state === 'correct'
+          ? p.theme.colors.success
+          : p.$state === 'incorrect'
+            ? p.theme.colors.error
+            : p.theme.colors.border};
 `;
 
 export const Explanation = styled.div`
-  padding: 1rem 1.25rem;
+  padding: 1rem 1.75rem;
   border-top: 1px solid ${(p) => p.theme.colors.border};
-  background: ${(p) => p.theme.colors.surface};
+  background: ${(p) => p.theme.colors.background};
   font-size: 0.8125rem;
   line-height: 1.5;
 `;
@@ -233,55 +314,84 @@ export const Explanation = styled.div`
 export const SourceTag = styled.span`
   display: inline-block;
   margin-top: 0.5rem;
-  padding: 0.125rem 0.5rem;
-  border-radius: 4px;
-  background: ${(p) => p.theme.colors.surface};
-  border: 1px solid ${(p) => p.theme.colors.border};
+  padding: 0.25rem 0.75rem;
+  border-radius: 9999px;
+  background: ${(p) => `${p.theme.colors.tertiary}15`};
+  border: 1px solid ${(p) => `${p.theme.colors.tertiary}30`};
   font-size: 0.6875rem;
-  color: ${(p) => p.theme.colors.muted};
+  font-weight: 600;
+  letter-spacing: 0.03em;
+  text-transform: uppercase;
+  color: ${(p) => p.theme.colors.tertiary};
 `;
 
 export const NextButton = styled.button`
+  align-self: flex-start;
   display: inline-flex;
   align-items: center;
   gap: 0.375rem;
-  padding: 0.625rem 1.25rem;
+  padding: 0.75rem 1.75rem;
   background: ${(p) => p.theme.colors.accent};
   color: #fff;
   border: none;
-  border-radius: 8px;
-  font-size: 0.875rem;
+  border-radius: 6px;
+  font-size: 0.8125rem;
   font-weight: 600;
   font-family: inherit;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
   cursor: pointer;
-  transition: opacity 0.15s;
+  box-shadow:
+    0 1px 3px rgba(0, 0, 0, 0.12),
+    0 1px 2px rgba(0, 0, 0, 0.08);
+  transition:
+    background 0.15s,
+    box-shadow 0.15s;
 
   &:hover {
-    opacity: 0.9;
+    background: ${(p) => p.theme.colors.accentHover};
+    box-shadow:
+      0 2px 6px rgba(0, 0, 0, 0.15),
+      0 1px 3px rgba(0, 0, 0, 0.1);
+  }
+
+  &:active {
+    transform: scale(0.98);
   }
 `;
 
 // ── Results ───────────────────────────────────────────
 
 export const ResultsHeader = styled.div`
+  display: flex;
+  flex-direction: column;
+  align-items: center;
   text-align: center;
-  margin-bottom: 2rem;
+  gap: 0.75rem;
 `;
 
 export const ScoreDisplay = styled.div`
-  font-size: 3rem;
-  font-weight: 700;
-  margin-bottom: 0.5rem;
+  font-family: var(--font-heading-serif), Georgia, serif;
+  font-style: italic;
+  font-size: 4rem;
+  font-weight: 400;
+  letter-spacing: -0.03em;
+  line-height: 1;
+  color: ${(p) => p.theme.colors.foreground};
+
+  ${(p) => p.theme.media.mobile} {
+    font-size: 3rem;
+  }
 `;
 
 export const MasteryBadge = styled.span<{ $tier: 'needs_review' | 'passed' | 'mastered' }>`
   display: inline-block;
   padding: 0.25rem 0.75rem;
   border-radius: 9999px;
-  font-size: 0.75rem;
-  font-weight: 700;
+  font-size: 0.6875rem;
+  font-weight: 600;
   text-transform: uppercase;
-  letter-spacing: 0.05em;
+  letter-spacing: 0.03em;
   background: ${(p) =>
     p.$tier === 'mastered'
       ? `${p.theme.colors.success}20`
@@ -297,50 +407,64 @@ export const MasteryBadge = styled.span<{ $tier: 'needs_review' | 'passed' | 'ma
 `;
 
 export const NextReviewInfo = styled.span`
-  font-size: 0.8125rem;
+  font-size: 0.875rem;
   color: ${(p) => p.theme.colors.muted};
-  margin-top: 0.25rem;
+  line-height: 1.5;
 `;
 
 export const ResultsList = styled.div`
   display: flex;
   flex-direction: column;
-  gap: 0.75rem;
-  margin-bottom: 2rem;
+  gap: 1rem;
 `;
 
 export const ResultItem = styled.div<{ $correct: boolean }>`
   border-radius: 8px;
-  border: 1px solid ${(p) => (p.$correct ? p.theme.colors.success : p.theme.colors.error)};
+  border: 1px solid
+    ${(p) => (p.$correct ? `${p.theme.colors.success}40` : `${p.theme.colors.error}40`)};
+  background: ${(p) => p.theme.colors.surface};
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.04);
   overflow: hidden;
 `;
 
 export const ResultItemHeader = styled.div<{ $correct: boolean }>`
   display: flex;
-  align-items: center;
-  gap: 0.5rem;
-  padding: 0.75rem 1rem;
+  align-items: flex-start;
+  gap: 0.75rem;
+  padding: 1.25rem 1.5rem;
   background: ${(p) =>
-    p.$correct ? `${p.theme.colors.success}08` : `${p.theme.colors.error}08`};
-  font-size: 0.875rem;
+    p.$correct ? `${p.theme.colors.success}06` : `${p.theme.colors.error}06`};
+  font-size: 0.9375rem;
   font-weight: 500;
+  line-height: 1.5;
 `;
 
 export const ResultIndicator = styled.span<{ $correct: boolean }>`
-  font-size: 0.875rem;
-  color: ${(p) => (p.$correct ? p.theme.colors.success : p.theme.colors.error)};
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 24px;
+  height: 24px;
+  border-radius: 50%;
+  font-size: 0.75rem;
+  font-weight: 700;
+  margin-top: 1px;
+  background: ${(p) => (p.$correct ? p.theme.colors.success : p.theme.colors.error)};
+  color: #fff;
 `;
 
 export const ResultExplanation = styled.div`
-  padding: 0.75rem 1rem;
-  font-size: 0.8125rem;
-  line-height: 1.5;
+  padding: 1rem 1.5rem;
+  font-size: 0.875rem;
+  line-height: 1.6;
   color: ${(p) => p.theme.colors.muted};
+  border-top: 1px solid ${(p) => p.theme.colors.border};
 `;
 
 export const ActionButtons = styled.div`
   display: flex;
-  gap: 0.75rem;
+  gap: 1rem;
   justify-content: center;
   flex-wrap: wrap;
 `;
@@ -349,19 +473,30 @@ export const SecondaryButton = styled.button`
   display: inline-flex;
   align-items: center;
   gap: 0.375rem;
-  padding: 0.625rem 1.25rem;
+  padding: 0.75rem 1.75rem;
   background: transparent;
   color: ${(p) => p.theme.colors.foreground};
   border: 1px solid ${(p) => p.theme.colors.border};
-  border-radius: 8px;
-  font-size: 0.875rem;
+  border-radius: 6px;
+  font-size: 0.8125rem;
   font-weight: 600;
   font-family: inherit;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
   cursor: pointer;
-  transition: border-color 0.15s;
+  transition:
+    border-color 0.15s,
+    color 0.15s,
+    background 0.15s;
 
   &:hover {
-    border-color: ${(p) => p.theme.colors.accent};
+    border-color: ${(p) => p.theme.colors.tertiary};
+    color: ${(p) => p.theme.colors.tertiary};
+    background: ${(p) => `${p.theme.colorsLib.secondary}08`};
+  }
+
+  &:active {
+    transform: scale(0.98);
   }
 
   &:disabled {
@@ -374,10 +509,11 @@ export const PreviousAttempt = styled.div`
   display: flex;
   align-items: center;
   gap: 0.75rem;
-  padding: 0.75rem 1rem;
+  padding: 1rem 1.25rem;
   border-radius: 8px;
-  border: 1px solid ${(p) => p.theme.colors.border};
+  border: 1px solid ${(p) => p.theme.colors.surfaceBorder};
   background: ${(p) => p.theme.colors.surface};
-  font-size: 0.8125rem;
-  margin-bottom: 1.5rem;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.04);
+  font-size: 0.875rem;
+  color: ${(p) => p.theme.colors.muted};
 `;

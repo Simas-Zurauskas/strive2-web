@@ -28,6 +28,8 @@ export type ColorsSet = {
   accentHover: string;
   tertiary: string;
   tertiaryHover: string;
+  accentMuted: string;
+  tertiaryMuted: string;
   success: string;
   warning: string;
   error: string;
@@ -45,13 +47,15 @@ export const themeColors: Record<'light' | 'dark', ColorsSet> = {
     accentHover: colorsLib.primaryHover,
     tertiary: colorsLib.secondary,
     tertiaryHover: '#7d6434',
+    accentMuted: '#2c554520',
+    tertiaryMuted: '#96793e15',
     success: colorsLib.green,
     warning: colorsLib.amber,
     error: colorsLib.red,
   },
   dark: {
     background: '#1a1816',
-    foreground: colorsLib.gray100,
+    foreground: '#d5d0cb',
     muted: colorsLib.gray400,
     border: colorsLib.gray800,
     surface: colorsLib.gray800,
@@ -60,6 +64,8 @@ export const themeColors: Record<'light' | 'dark', ColorsSet> = {
     accentHover: '#5da383',
     tertiary: '#c4a265',
     tertiaryHover: '#b39355',
+    accentMuted: '#4a8a7220',
+    tertiaryMuted: '#c4a26515',
     success: colorsLib.green,
     warning: colorsLib.amber,
     error: colorsLib.red,
@@ -87,6 +93,25 @@ export const media = {
 
 // ── CSS variable references ─────────────────────────────
 
+// ── Scrollbar mixin ───────────────────────────────────
+
+export const thinScrollbar = `
+  scrollbar-width: thin;
+  scrollbar-color: var(--scrollbar-thumb) transparent;
+
+  &::-webkit-scrollbar {
+    width: 6px;
+    height: 6px;
+  }
+  &::-webkit-scrollbar-thumb {
+    background: var(--scrollbar-thumb);
+    border-radius: 3px;
+  }
+  &::-webkit-scrollbar-thumb:hover {
+    background: var(--scrollbar-thumb-hover);
+  }
+`;
+
 export const colors: ColorsSet = {
   background: 'var(--background)',
   foreground: 'var(--foreground)',
@@ -98,6 +123,8 @@ export const colors: ColorsSet = {
   accentHover: 'var(--accent-hover)',
   tertiary: 'var(--tertiary)',
   tertiaryHover: 'var(--tertiary-hover)',
+  accentMuted: 'var(--accent-muted)',
+  tertiaryMuted: 'var(--tertiary-muted)',
   success: 'var(--success)',
   warning: 'var(--warning)',
   error: 'var(--error)',

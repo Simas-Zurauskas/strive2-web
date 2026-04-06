@@ -11,7 +11,11 @@ export const ChatPanel = ({ lessonName, onClose }: ChatPanelProps) => {
   return (
     <S.Container>
       <S.Header>
-        <S.Title>AI Mentor</S.Title>
+        <S.MentorAvatar>AI</S.MentorAvatar>
+        <S.HeaderInfo>
+          <S.Title>AI Mentor</S.Title>
+          <S.StatusBadge>Ready</S.StatusBadge>
+        </S.HeaderInfo>
         <S.CloseButton onClick={onClose} aria-label="Close chat">
           &times;
         </S.CloseButton>
@@ -20,14 +24,19 @@ export const ChatPanel = ({ lessonName, onClose }: ChatPanelProps) => {
       <S.Messages>
         <S.ContextBadge>Lesson: {lessonName}</S.ContextBadge>
         <S.PlaceholderMessage>
-          Ask me anything about this lesson. I can explain concepts, give examples, quiz you, or help you work through exercises.
+          Ask me anything about this lesson. I can explain concepts, give examples, or help you work through exercises.
         </S.PlaceholderMessage>
+        <S.SuggestedPrompts>
+          <S.PromptChip disabled>Explain the key concepts</S.PromptChip>
+          <S.PromptChip disabled>Give me an example</S.PromptChip>
+          <S.PromptChip disabled>Quiz me on this</S.PromptChip>
+        </S.SuggestedPrompts>
       </S.Messages>
 
       <S.InputArea>
         <S.Input
           type="text"
-          placeholder="Ask a question..."
+          placeholder="Ask the mentor..."
           disabled
         />
       </S.InputArea>

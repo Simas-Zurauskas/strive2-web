@@ -1,10 +1,11 @@
 'use client';
 
 import { createGlobalStyle } from 'styled-components';
-import { themeColors } from './theme';
+import { colorsLib, themeColors } from './theme';
 
 export const GlobalStyles = createGlobalStyle`
   :root {
+    --navbar-offset: 56px;
     --background: ${themeColors.light.background};
     --foreground: ${themeColors.light.foreground};
     --muted: ${themeColors.light.muted};
@@ -15,9 +16,13 @@ export const GlobalStyles = createGlobalStyle`
     --accent-hover: ${themeColors.light.accentHover};
     --tertiary: ${themeColors.light.tertiary};
     --tertiary-hover: ${themeColors.light.tertiaryHover};
+    --accent-muted: ${themeColors.light.accentMuted};
+    --tertiary-muted: ${themeColors.light.tertiaryMuted};
     --success: ${themeColors.light.success};
     --warning: ${themeColors.light.warning};
     --error: ${themeColors.light.error};
+    --scrollbar-thumb: ${colorsLib.gray200};
+    --scrollbar-thumb-hover: ${colorsLib.gray400};
   }
 
   [data-theme="dark"],
@@ -32,9 +37,13 @@ export const GlobalStyles = createGlobalStyle`
     --accent-hover: ${themeColors.dark.accentHover};
     --tertiary: ${themeColors.dark.tertiary};
     --tertiary-hover: ${themeColors.dark.tertiaryHover};
+    --accent-muted: ${themeColors.dark.accentMuted};
+    --tertiary-muted: ${themeColors.dark.tertiaryMuted};
     --success: ${themeColors.dark.success};
     --warning: ${themeColors.dark.warning};
     --error: ${themeColors.dark.error};
+    --scrollbar-thumb: ${colorsLib.gray700};
+    --scrollbar-thumb-hover: ${colorsLib.gray400};
   }
 
   html {
@@ -49,6 +58,7 @@ export const GlobalStyles = createGlobalStyle`
   body {
     max-width: 100vw;
     overflow-x: clip;
+    overscroll-behavior: none;
   }
 
   body {
@@ -78,4 +88,5 @@ export const GlobalStyles = createGlobalStyle`
     cursor: pointer;
     -webkit-tap-highlight-color: transparent;
   }
+
 `;
