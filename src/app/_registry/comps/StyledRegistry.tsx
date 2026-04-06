@@ -2,7 +2,7 @@ import { useServerInsertedHTML } from 'next/navigation';
 import { useTheme } from 'next-themes';
 import React, { useState, useEffect } from 'react';
 import { DefaultTheme, ServerStyleSheet, StyleSheetManager, ThemeProvider } from 'styled-components';
-import { colorsLib, GlobalStyles, colors } from '@/theme';
+import { colorsLib, GlobalStyles, colors, breakpoints, media } from '@/theme';
 
 interface StyledRegistryProps {
   children: React.ReactNode;
@@ -29,6 +29,8 @@ export const StyledRegistry: React.FC<StyledRegistryProps> = ({ children }) => {
     colors,
     colorsLib,
     scheme: activeScheme,
+    bp: breakpoints,
+    media,
   };
 
   if (typeof window !== 'undefined') {

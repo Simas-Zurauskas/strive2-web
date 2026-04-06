@@ -1,6 +1,6 @@
 'use client';
 
-import { useMemo, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { ClarifyQuestion } from '@/api/types';
 import { RadioGroup, CheckboxGroup, Input, Button, Card } from '@/components';
 import * as S from './ClarifyStep.styles';
@@ -10,8 +10,10 @@ type AnswerValue = string | string[];
 interface ClarifyStepProps {
   questions: ClarifyQuestion[];
   initialAnswers: Record<string, AnswerValue>;
+  hasExistingData: boolean;
   onSubmit: (answers: Record<string, AnswerValue>) => void;
   onBack: () => void;
+  onDirtyChange?: (isDirty: boolean) => void;
 }
 
 const isAnswered = (value: AnswerValue | undefined): boolean => {
@@ -23,8 +25,10 @@ const isAnswered = (value: AnswerValue | undefined): boolean => {
 export const ClarifyStep = ({
   questions,
   initialAnswers,
+  hasExistingData,
   onSubmit,
   onBack,
+  onDirtyChange,
 }: ClarifyStepProps) => {
   const [answers, setAnswers] = useState<Record<string, AnswerValue>>(initialAnswers);
   const [currentIndex, setCurrentIndex] = useState(0);
@@ -37,6 +41,12 @@ export const ClarifyStep = ({
     () => questions.every((q) => isAnswered(answers[q.id])),
     [questions, answers],
   );
+
+  const answersUnchanged = hasExistingData && JSON.stringify(answers) === JSON.stringify(initialAnswers);
+
+  useEffect(() => {
+    onDirtyChange?.(JSON.stringify(answers) !== JSON.stringify(initialAnswers));
+  }, [answers, initialAnswers, onDirtyChange]);
 
   const updateAnswer = (questionId: string, value: AnswerValue) => {
     setAnswers((prev) => ({ ...prev, [questionId]: value }));
@@ -98,8 +108,9 @@ export const ClarifyStep = ({
   return (
     <S.Container>
       <S.Header>
+        <S.Eyebrow>Questions</S.Eyebrow>
         <S.Title>A few questions to personalize your course</S.Title>
-        <S.Subtitle>Your answers help us design a curriculum tailored to your specific needs.</S.Subtitle>
+        <S.Subtitle>Your answers shape the topics, focus areas, and difficulty of your curriculum.</S.Subtitle>
       </S.Header>
 
       <S.ProgressBar>
@@ -129,10 +140,10 @@ export const ClarifyStep = ({
         </Button>
         {isLast ? (
           <Button type="button" onClick={handleSubmit} disabled={!allAnswered}>
-            Continue
+            {answersUnchanged ? 'Continue' : 'Next \u2192'}
           </Button>
         ) : (
-          <Button type="button" onClick={handleNext}>
+          <Button type="button" onClick={handleNext} disabled={!isAnswered(answers[currentQuestion.id])}>
             Next
           </Button>
         )}

@@ -4,6 +4,7 @@ import { useQueryClient } from '@tanstack/react-query';
 import { useCallback, useRef, useState } from 'react';
 import { toast } from 'sonner';
 import { streamLesson, LessonBlock, PlaceholderBlock, CourseProgressResponse } from '@/api/routes/course';
+import { TOASTS, toastMessage } from '@/constants/toasts';
 import { Button } from '@/components';
 import { useLessonContent, useUpsertProgress } from '@/hooks';
 import { celebrateLessonComplete, celebrateModuleComplete, celebrateCourseComplete } from '@/lib/celebrations';
@@ -148,7 +149,7 @@ export const LessonContent = ({
           case 'error':
             setStreamPhase('idle');
             setPlaceholders([]);
-            toast.error(event.message || 'Generation failed');
+            toast.error(toastMessage(event.message, TOASTS.GENERATION_FAILED));
             break;
         }
       });
@@ -156,7 +157,7 @@ export const LessonContent = ({
       setStreamPhase('idle');
       setIsStarting(false);
       setPlaceholders([]);
-      toast.error('Generation failed');
+      toast.error(TOASTS.GENERATION_FAILED);
     }
   }, [courseId, moduleIndex, lessonIndex, isStreaming, isStarting, includeImage, includeLinks, queryClient]);
 
@@ -183,7 +184,7 @@ export const LessonContent = ({
           // Fire celebrations (biggest first)
           if (isCourseComplete) {
             celebrateCourseComplete();
-            toast.success('Congratulations! Course complete!');
+            toast.success(TOASTS.COURSE_COMPLETE);
           } else if (isModuleComplete) {
             celebrateModuleComplete();
             toast.success(`Module ${moduleIndex + 1} complete! Take the quiz to test your knowledge.`);
@@ -194,7 +195,7 @@ export const LessonContent = ({
             if (moduleRemaining === 1) {
               toast.success('Just 1 more lesson in this module!');
             } else {
-              toast.success('Lesson complete!');
+              toast.success(TOASTS.LESSON_COMPLETE);
             }
           }
         },

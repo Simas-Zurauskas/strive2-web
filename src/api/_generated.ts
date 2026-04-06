@@ -655,6 +655,13 @@ export interface paths {
                         };
                     };
                 };
+                /** @description Cannot transition accepted course back to creating */
+                403: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content?: never;
+                };
             };
         };
         trace?: never;
@@ -1018,6 +1025,56 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/course/{courseId}/edit-impact": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Assess the impact of editing a course (content and progress that would be lost) */
+        get: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path: {
+                    courseId: string;
+                };
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": {
+                            data: {
+                                hasContent?: boolean;
+                                hasProgress?: boolean;
+                                completedLessons?: number;
+                                inProgressLessons?: number;
+                                totalNotes?: number;
+                                totalBookmarks?: number;
+                                quizAttempts?: number;
+                                modulesWithMastery?: number;
+                                scheduledReviews?: number;
+                                totalTimeSpentMinutes?: number;
+                            };
+                        };
+                    };
+                };
+            };
+        };
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/course/{courseId}/generated-lessons": {
         parameters: {
             query?: never;
@@ -1256,6 +1313,43 @@ export interface paths {
                                 completed: number;
                                 percentage: number;
                             }[];
+                        };
+                    };
+                };
+            };
+        };
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/course/reviews-due": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Get all module quizzes due for review across all courses */
+        get: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path?: never;
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": {
+                            data: unknown[];
                         };
                     };
                 };

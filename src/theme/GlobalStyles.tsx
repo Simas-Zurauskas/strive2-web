@@ -13,6 +13,8 @@ export const GlobalStyles = createGlobalStyle`
     --surface-border: ${themeColors.light.surfaceBorder};
     --accent: ${themeColors.light.accent};
     --accent-hover: ${themeColors.light.accentHover};
+    --tertiary: ${themeColors.light.tertiary};
+    --tertiary-hover: ${themeColors.light.tertiaryHover};
     --success: ${themeColors.light.success};
     --warning: ${themeColors.light.warning};
     --error: ${themeColors.light.error};
@@ -28,6 +30,8 @@ export const GlobalStyles = createGlobalStyle`
     --surface-border: ${themeColors.dark.surfaceBorder};
     --accent: ${themeColors.dark.accent};
     --accent-hover: ${themeColors.dark.accentHover};
+    --tertiary: ${themeColors.dark.tertiary};
+    --tertiary-hover: ${themeColors.dark.tertiaryHover};
     --success: ${themeColors.dark.success};
     --warning: ${themeColors.dark.warning};
     --error: ${themeColors.dark.error};
@@ -50,7 +54,7 @@ export const GlobalStyles = createGlobalStyle`
   body {
     color: var(--foreground);
     background: var(--background);
-    font-family: var(--font-geist-sans), system-ui, sans-serif;
+    font-family: var(--font-body-sans), system-ui, sans-serif;
     -webkit-font-smoothing: antialiased;
     -moz-osx-font-smoothing: grayscale;
     line-height: 1.6;

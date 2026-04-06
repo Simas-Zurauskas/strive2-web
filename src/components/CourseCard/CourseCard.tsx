@@ -56,7 +56,7 @@ export const CourseCard = ({ course, isGenerating = false, progress, onClick }: 
       )}
 
       <S.Meta>
-        {course.depth && <Badge variant="accent">{course.depth}</Badge>}
+        {course.depth && <Badge variant="default">{course.depth}</Badge>}
         {moduleCount > 0 && (
           <S.MetaText>
             {moduleCount} module{moduleCount === 1 ? '' : 's'}, {lessonCount} lesson

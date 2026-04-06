@@ -6,6 +6,7 @@ import { signIn } from 'next-auth/react';
 import { useState } from 'react';
 import { toast } from 'sonner';
 import { resendVerification } from '@/api/routes/auth';
+import { TOASTS, toastMessage } from '@/constants/toasts';
 import { signInSchema, SignInValues } from '@/validation';
 import * as S from './LoginScreen.styles';
 
@@ -48,10 +49,10 @@ export const LoginScreen = () => {
 
     try {
       await resendVerification({ email: lastCredentials.email, password: lastCredentials.password });
-      toast.success('Verification email sent. Check your inbox.');
+      toast.success(TOASTS.VERIFICATION_SENT);
     } catch (err) {
       const error = err as { message?: string };
-      toast.error(error?.message || 'Failed to resend. Please try again.');
+      toast.error(toastMessage(error?.message, TOASTS.RESEND_ERROR));
     } finally {
       setResending(false);
     }

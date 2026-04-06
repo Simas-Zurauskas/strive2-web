@@ -4,6 +4,7 @@ import { useRouter } from 'next/navigation';
 import { useState } from 'react';
 import { toast } from 'sonner';
 import { resendVerificationAuthenticated, deleteAccount } from '@/api/routes/auth';
+import { TOASTS } from '@/constants/toasts';
 import { Button } from '@/components';
 import { useAuth } from '@/hooks';
 import * as S from './ProfileScreen.styles';
@@ -29,7 +30,7 @@ export const ProfileScreen: React.FC = () => {
     setResending(true);
     try {
       await resendVerificationAuthenticated();
-      toast.success('Verification email sent. Check your inbox.');
+      toast.success(TOASTS.VERIFICATION_SENT);
     } catch (err: unknown) {
       const message = err instanceof Error ? err.message : 'Failed to send verification email';
       toast.error(message);
@@ -40,7 +41,7 @@ export const ProfileScreen: React.FC = () => {
 
   const handleDeleteAccount = async () => {
     if (hasCredentials && !deletePassword) {
-      toast.error('Please enter your password to confirm.');
+      toast.error(TOASTS.PASSWORD_REQUIRED);
       return;
     }
 

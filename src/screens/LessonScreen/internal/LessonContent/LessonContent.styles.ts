@@ -10,7 +10,7 @@ export const Container = styled.div`
   gap: 1.5rem;
   flex: 1;
 
-  @media (max-width: 640px) {
+  ${(p) => p.theme.media.tablet} {
     padding: 1.25rem 1rem;
   }
 `;
@@ -20,7 +20,7 @@ export const TopRow = styled.div`
   align-items: center;
   gap: 0.5rem;
 
-  @media (max-width: 1023px) {
+  ${(p) => p.theme.media.desktop} {
     display: none;
   }
 `;

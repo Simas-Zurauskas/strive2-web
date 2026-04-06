@@ -7,23 +7,26 @@ interface StepperProps {
   totalSteps: number;
   labels?: string[];
   completedSteps?: number[];
+  navigableSteps?: number[];
   onStepClick?: (step: number) => void;
 }
 
-export const Stepper = ({ currentStep, totalSteps, labels, completedSteps = [], onStepClick }: StepperProps) => {
+export const Stepper = ({ currentStep, totalSteps, labels, completedSteps = [], navigableSteps, onStepClick }: StepperProps) => {
   const steps = Array.from({ length: totalSteps }, (_, i) => i + 1);
+  const clickableSet = navigableSteps ?? completedSteps;
 
-  const getState = (step: number): 'completed' | 'active' | 'future' => {
+  const getState = (step: number): 'completed' | 'active' | 'navigable' | 'future' => {
     if (step === currentStep) return 'active';
     if (completedSteps.includes(step)) return 'completed';
     if (step < currentStep) return 'completed';
+    if (clickableSet.includes(step)) return 'navigable';
     return 'future';
   };
 
   const isClickable = (step: number): boolean => {
     if (!onStepClick) return false;
     if (step === currentStep) return false;
-    return completedSteps.includes(step);
+    return clickableSet.includes(step);
   };
 
   const handleClick = (step: number) => {

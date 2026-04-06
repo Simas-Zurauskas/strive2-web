@@ -11,7 +11,7 @@ export const Container = styled.nav`
   border-right: 1px solid ${(p) => p.theme.colors.border};
   overflow: hidden;
 
-  @media (max-width: 1023px) {
+  ${(p) => p.theme.media.desktop} {
     position: static;
     height: 100%;
   }

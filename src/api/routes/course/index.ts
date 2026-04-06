@@ -486,6 +486,28 @@ export const getModuleQuizProgress = (courseId: string, moduleIndex: number) => 
   }).then((res) => res.data.data);
 };
 
+// ── Edit impact assessment ──────────────────────────────
+
+export interface EditImpactResponse {
+  hasContent: boolean;
+  hasProgress: boolean;
+  completedLessons: number;
+  inProgressLessons: number;
+  totalNotes: number;
+  totalBookmarks: number;
+  quizAttempts: number;
+  modulesWithMastery: number;
+  scheduledReviews: number;
+  totalTimeSpentMinutes: number;
+}
+
+export const getEditImpact = (courseId: string) => {
+  return client<{ data: EditImpactResponse }>({
+    url: `/course/${courseId}/edit-impact`,
+    method: 'GET',
+  }).then((res) => res.data.data);
+};
+
 // ── Reviews due ──────────────────────────────────────────
 
 export interface ReviewDueItem {

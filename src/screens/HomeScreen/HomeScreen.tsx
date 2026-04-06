@@ -3,7 +3,7 @@
 import { useMemo } from 'react';
 import { useRouter } from 'next/navigation';
 import { CourseCard, Button } from '@/components';
-import { useAuth, useCourses, useContinueLearning, useProgressSummary, useReviewsDue } from '@/hooks';
+import { useCourses, useContinueLearning, useProgressSummary, useReviewsDue } from '@/hooks';
 import { useJobManager } from '@/hooks/useJobManager';
 import { ContinueLearningCard } from './internal/ContinueLearningCard/ContinueLearningCard';
 import { ReviewDueSection } from './internal/ReviewDueSection/ReviewDueSection';
@@ -11,7 +11,6 @@ import * as S from './HomeScreen.styles';
 
 export const HomeScreen: React.FC = () => {
   const router = useRouter();
-  const { user } = useAuth();
   const { data: courses, isLoading } = useCourses();
   const { isJobRunningForCourse } = useJobManager();
   const { data: continueLearning } = useContinueLearning();
@@ -30,24 +29,12 @@ export const HomeScreen: React.FC = () => {
 
   return (
     <S.Layout>
-      <S.Header>
+      <S.PageHeader>
         <S.Title>My Courses</S.Title>
-        <S.HeaderActions>
-          {user?.email && (
-            <S.UserEmailLink onClick={() => router.push('/profile')}>
-              {user.email}
-              {user.emailVerified ? (
-                <S.VerifiedBadge title="Email verified">&#10003;</S.VerifiedBadge>
-              ) : (
-                <S.UnverifiedBadge title="Email not verified">&#10007;</S.UnverifiedBadge>
-              )}
-            </S.UserEmailLink>
-          )}
-          <Button variant="primary" onClick={() => router.push('/generate-course')}>
-            New Course
-          </Button>
-        </S.HeaderActions>
-      </S.Header>
+        <Button variant="primary" onClick={() => router.push('/generate-course')}>
+          New Course
+        </Button>
+      </S.PageHeader>
 
       {isLoading && <S.LoadingText>Loading courses...</S.LoadingText>}
 

@@ -1,8 +1,8 @@
 'use client';
 
-import { useRef } from 'react';
 import { Formik } from 'formik';
-import { Textarea, Button } from '@/components';
+import { useRef } from 'react';
+import { Button } from '@/components';
 import { goalInputSchema, GoalInputValues } from '@/validation';
 import * as S from './GoalStep.styles';
 
@@ -22,9 +22,10 @@ export const GoalStep = ({ initialGoal, hasExistingData, loading, error, onSubmi
   return (
     <S.Container>
       <S.Header>
+        <S.Eyebrow>Learning Goal</S.Eyebrow>
         <S.Title>What do you want to learn?</S.Title>
         <S.Subtitle>
-          Describe your learning goal and we&apos;ll create a personalized curriculum just for you.
+          Describe your learning goal in your own words. We&apos;ll build a personalized course around it.
         </S.Subtitle>
       </S.Header>
 
@@ -34,28 +35,34 @@ export const GoalStep = ({ initialGoal, hasExistingData, loading, error, onSubmi
         onSubmit={(values) => onSubmit(values.goal)}
         enableReinitialize
       >
-        {({ handleSubmit, handleChange, handleBlur, values, errors, touched }) => {
+        {({ handleSubmit, handleChange, handleBlur, values }) => {
           const goalUnchanged = hasExistingData && values.goal === lastGeneratedGoal.current;
 
           return (
-            <form onSubmit={handleSubmit}>
-              <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
-                <Textarea
-                  name="goal"
-                  placeholder="e.g. Learn Python for data science, Understand machine learning fundamentals, Master watercolor painting..."
-                  value={values.goal}
-                  rows={4}
-                  onChange={handleChange}
-                  onBlur={handleBlur}
-                  error={touched.goal ? errors.goal : undefined}
-                />
+            <form onSubmit={handleSubmit} style={{ width: '100%' }}>
+              <S.FormWrapper>
+                <S.InputGroup>
+                  <S.StyledTextarea
+                    name="goal"
+                    placeholder="e.g. Learn Python for data science, Understand machine learning fundamentals, Master watercolor painting..."
+                    value={values.goal}
+                    rows={2}
+                    onChange={handleChange}
+                    onBlur={handleBlur}
+                    autoFocus
+                  />
+                  {error && <S.ErrorText>{error}</S.ErrorText>}
+                </S.InputGroup>
 
-                {error && <p style={{ fontSize: '0.8125rem', color: 'var(--error)' }}>{error}</p>}
-
-                <Button type="submit" loading={loading}>
-                  {loading ? 'Analyzing your goal...' : goalUnchanged ? 'Continue' : 'Generate questions'}
-                </Button>
-              </div>
+                <S.SubmitRow>
+                  <S.HelperText>
+                    Be as specific or broad as you like. The more detail, the better the course fits you.
+                  </S.HelperText>
+                  <Button type="submit" loading={loading} disabled={!values.goal.trim()}>
+                    {goalUnchanged ? 'Continue' : 'Next \u2192'}
+                  </Button>
+                </S.SubmitRow>
+              </S.FormWrapper>
             </form>
           );
         }}

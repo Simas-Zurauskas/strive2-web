@@ -17,6 +17,7 @@ export const Container = styled.div`
   display: grid;
   grid-template-rows: 1fr auto;
   min-height: 0;
+  overflow: hidden;
 `;
 
 export const ChatScrollArea = styled.div`
@@ -66,36 +67,34 @@ export const EmptyState = styled.div`
   display: flex;
   flex-direction: column;
   align-items: center;
-  justify-content: center;
+  justify-content: flex-end;
+  flex: 1;
   text-align: center;
-  padding: 2rem 1rem;
+  padding: 1rem;
   gap: 0.75rem;
-  color: ${(p) => p.theme.colors.muted};
-  font-size: 0.875rem;
-  line-height: 1.5;
   animation: ${fadeIn} 0.4s ease-out;
 `;
 
 export const SuggestedPrompts = styled.div`
   display: flex;
-  flex-wrap: wrap;
-  gap: 0.375rem;
-  justify-content: center;
+  flex-direction: column;
+  gap: 0.5rem;
+  width: 100%;
 `;
 
 export const SuggestedPrompt = styled.button`
   background: ${(p) => p.theme.colors.surface};
-  border: 1px solid ${(p) => p.theme.colors.border};
-  border-radius: 1rem;
-  padding: 0.25rem 0.75rem;
-  font-size: 0.75rem;
-  color: ${(p) => p.theme.colors.foreground};
+  border: 1px solid ${(p) => p.theme.colors.surfaceBorder};
+  border-radius: 8px;
+  padding: 0.625rem 0.875rem;
+  font-size: 0.8125rem;
+  color: ${(p) => p.theme.colors.muted};
   font-family: inherit;
+  text-align: left;
   cursor: pointer;
   transition:
-    background 0.2s ease,
-    border-color 0.2s ease,
-    transform 0.15s ease;
+    border-color 0.15s ease,
+    color 0.15s ease;
   animation: ${fadeIn} 0.4s ease-out both;
 
   &:nth-child(1) { animation-delay: 0.05s; }
@@ -103,12 +102,8 @@ export const SuggestedPrompt = styled.button`
   &:nth-child(3) { animation-delay: 0.15s; }
 
   &:hover {
-    background: ${(p) => p.theme.colors.border};
-    transform: translateY(-1px) scale(1.02);
-  }
-
-  &:active {
-    transform: scale(0.97);
+    border-color: ${(p) => p.theme.colors.muted};
+    color: ${(p) => p.theme.colors.foreground};
   }
 `;
 
@@ -121,10 +116,7 @@ export const InputArea = styled.div`
   position: relative;
   z-index: 1;
   border-radius: 0 0 1rem 1rem;
-  box-shadow:
-    0 -1px 3px 0 rgba(79, 70, 229, 0.04),
-    0 -4px 12px 0 rgba(79, 70, 229, 0.03),
-    0 -8px 24px 0 rgba(79, 70, 229, 0.02);
+  box-shadow: 0 -1px 4px 0 rgba(0, 0, 0, 0.04);
 `;
 
 export const InputRow = styled.div`
@@ -154,7 +146,7 @@ export const ChatInput = styled.textarea`
   &:focus {
     outline: none;
     border-color: ${(p) => p.theme.colors.accent};
-    box-shadow: 0 0 0 2px ${(p) => p.theme.colors.accent}20;
+    box-shadow: 0 0 0 3px ${(p) => p.theme.colorsLib.primary}15;
   }
 
   &:disabled {

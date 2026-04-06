@@ -1,13 +1,20 @@
 'use client';
 
 import { useMutation, useQueryClient } from '@tanstack/react-query';
-import Link from 'next/link';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { toast } from 'sonner';
-import { createCourse, clarifyCourse, generateStructure, generateDepthPreviews, updateCourse, deleteCourse } from '@/api/routes/course';
+import {
+  createCourse,
+  clarifyCourse,
+  generateStructure,
+  generateDepthPreviews,
+  updateCourse,
+  deleteCourse,
+} from '@/api/routes/course';
 import { Course, CourseDepth, DepthPreviewsResponse } from '@/api/types';
-import { Stepper } from '@/components';
+import { Stepper, AlertDialog } from '@/components';
+import { TOASTS } from '@/constants/toasts';
 import { useCourse } from '@/hooks/useCourses';
 import { useJobManager } from '@/hooks/useJobManager';
 import { QKeys } from '@/types';
@@ -67,9 +74,30 @@ const GenerateCourseWizard = ({ resumeCourse }: { resumeCourse: Course | null })
 
   // Step 3 state
   const [depth, setDepth] = useState<CourseDepth | null>((resumeCourse?.depth as CourseDepth) ?? null);
-  const awaitingStructureRef = useRef(false);
-
   // Step 4 — chat-based refinement (no local state needed)
+
+  // Dirty tracking — detect unsaved changes when navigating via stepper
+  const isStepDirtyRef = useRef(false);
+  const handleDirtyChange = useCallback((isDirty: boolean) => {
+    isStepDirtyRef.current = isDirty;
+  }, []);
+
+  // Overwrite confirmation — shown when a step action would regenerate downstream data
+  const [overwriteDialog, setOverwriteDialog] = useState<{
+    title: string;
+    message: string;
+    confirmLabel: string;
+    onConfirm: () => void;
+  } | null>(null);
+
+  const confirmOverwrite = (
+    message: string,
+    action: () => void,
+    title = 'Regenerate later steps?',
+    confirmLabel = 'Continue',
+  ) => {
+    setOverwriteDialog({ title, message, confirmLabel, onConfirm: action });
+  };
 
   // ── Queries ────────────────────────────────────────────
   const courseQuery = useCourse(courseId);
@@ -83,48 +111,59 @@ const GenerateCourseWizard = ({ resumeCourse }: { resumeCourse: Course | null })
 
   const isJobRunning = courseId ? isJobRunningForCourse(courseId) : false;
 
-  // Auto-advance to step 4 when structure data arrives after generation
+  // Scroll to top on step change
   useEffect(() => {
-    if (step === 3 && structureData && awaitingStructureRef.current) {
-      awaitingStructureRef.current = false;
-      setStep(4);
+    window.scrollTo({ top: 0 });
+  }, [step]);
+
+  // Update URL with courseId for resume-on-refresh
+  useEffect(() => {
+    if (courseId) {
+      router.replace(`/generate-course?courseId=${courseId}`, { scroll: false });
     }
-  }, [step, structureData]);
+  }, [courseId, router]);
+
+  // Auto-advance to step 4 when structure data arrives after generation
+  // (handled via onComplete callback in triggerStructureGeneration)
 
   // ── Mutations ──────────────────────────────────────────
+  // Delete dialog
+  const [showDeleteDialog, setShowDeleteDialog] = useState(false);
+
   const createCourseMutation = useMutation({
     mutationFn: (params: { goal: string }) => createCourse(params),
-    onError: () => toast.error('Failed to create course'),
+    onError: () => toast.error(TOASTS.COURSE_CREATE_ERROR),
   });
 
   const clarifyMutation = useMutation({
     mutationFn: (id: string) => clarifyCourse(id),
-    onError: () => toast.error('Failed to start question generation'),
+    onError: () => toast.error(TOASTS.CLARIFY_ERROR),
   });
 
   const updateCourseMutation = useMutation({
     mutationFn: ({ id, data }: { id: string; data: Parameters<typeof updateCourse>[1] }) => updateCourse(id, data),
-    onError: () => toast.error('Failed to save course data'),
+    onError: () => toast.error(TOASTS.COURSE_SAVE_ERROR),
   });
 
   const structureMutation = useMutation({
     mutationFn: (id: string) => generateStructure(id),
-    onError: () => toast.error('Failed to start structure generation'),
+    onError: () => toast.error(TOASTS.STRUCTURE_ERROR),
   });
 
   const depthPreviewsMutation = useMutation({
     mutationFn: (id: string) => generateDepthPreviews(id),
-    onError: () => toast.error('Failed to generate depth previews'),
+    onError: () => toast.error(TOASTS.DEPTH_PREVIEWS_ERROR),
   });
 
   const deleteMutation = useMutation({
     mutationFn: () => deleteCourse(courseId!),
     onSuccess: () => {
+      setShowDeleteDialog(false);
       queryClient.invalidateQueries({ queryKey: [QKeys.COURSES] });
-      toast.success('Course deleted');
+      toast.success(TOASTS.COURSE_DELETED);
       router.push('/');
     },
-    onError: () => toast.error('Failed to delete course'),
+    onError: () => toast.error(TOASTS.COURSE_DELETE_ERROR),
   });
 
   // ── Computed ───────────────────────────────────────────
@@ -140,20 +179,39 @@ const GenerateCourseWizard = ({ resumeCourse }: { resumeCourse: Course | null })
     if (depth || course?.depth) completed.push(3);
     if (structureData) completed.push(4);
     return completed;
-  }, [clarifyData, generatedForGoal, answers, depth, structureData, course?.answers, course?.depth]);
+  }, [clarifyData, generatedForGoal, answers, course, depth, structureData]);
 
+  // Steps the user can navigate to (prerequisite data exists)
+  const navigableSteps = useMemo(() => {
+    const navigable: number[] = [1];
+    if (completedSteps.includes(1)) navigable.push(2);
+    if (completedSteps.includes(2)) navigable.push(3);
+    if (completedSteps.includes(3)) navigable.push(4);
+    return navigable;
+  }, [completedSteps]);
 
   // ── Handlers ───────────────────────────────────────────
-  const handleGoalSubmit = useCallback(
+  const executeGoalSubmit = useCallback(
     (goalValue: string) => {
-      if (goalValue === generatedForGoal && clarifyData) {
-        setStep(2);
-        return;
-      }
-
       setAnswers({});
       setDepth(null);
       setGoal(goalValue);
+
+      // Clear all downstream data from cache immediately
+      if (courseId) {
+        queryClient.setQueryData<Course>([QKeys.COURSE, courseId], (old) =>
+          old
+            ? {
+                ...old,
+                clarifyData: undefined,
+                depthPreviews: undefined,
+                structure: undefined,
+                depth: undefined,
+                answers: undefined,
+              }
+            : old,
+        );
+      }
 
       const startClarify = (targetCourseId: string) => {
         clarifyMutation.mutate(targetCourseId, {
@@ -188,17 +246,39 @@ const GenerateCourseWizard = ({ resumeCourse }: { resumeCourse: Course | null })
         );
       }
     },
-    [generatedForGoal, clarifyData, createCourseMutation, clarifyMutation, trackJob, courseId, updateCourseMutation],
+    [createCourseMutation, clarifyMutation, trackJob, courseId, updateCourseMutation, queryClient],
   );
 
-  const handleClarifySubmit = useCallback(
+  const handleGoalSubmit = useCallback(
+    (goalValue: string) => {
+      if (goalValue === generatedForGoal && clarifyData) {
+        setStep(2);
+        return;
+      }
+
+      // Check if downstream data already exists that will be overwritten
+      const hasDownstream = !!(clarifyData || depthPreviews || structureData);
+      if (hasDownstream) {
+        confirmOverwrite('Changing the goal will regenerate your questions and clear all later steps.', () =>
+          executeGoalSubmit(goalValue),
+        );
+        return;
+      }
+
+      executeGoalSubmit(goalValue);
+    },
+    [generatedForGoal, clarifyData, depthPreviews, structureData, executeGoalSubmit],
+  );
+
+  const executeClarifySubmit = useCallback(
     (answersValue: Record<string, string | string[]>) => {
       if (!courseId) return;
       setAnswers(answersValue);
+      setDepth(null);
 
-      // Clear stale depth previews so DepthStep shows skeletons while regenerating
+      // Clear downstream data so UI reflects the reset immediately
       queryClient.setQueryData<Course>([QKeys.COURSE, courseId], (old) =>
-        old ? { ...old, depthPreviews: undefined } : old,
+        old ? { ...old, depthPreviews: undefined, structure: undefined } : old,
       );
 
       updateCourseMutation.mutate(
@@ -219,49 +299,80 @@ const GenerateCourseWizard = ({ resumeCourse }: { resumeCourse: Course | null })
         },
       );
     },
-    [courseId, updateCourseMutation, depthPreviewsMutation, trackJob],
+    [courseId, queryClient, updateCourseMutation, depthPreviewsMutation, trackJob],
   );
 
-  const triggerStructureGeneration = useCallback(
-    (depthValue: CourseDepth) => {
-      if (!courseId) return;
+  const handleClarifySubmit = useCallback(
+    (answersValue: Record<string, string | string[]>) => {
+      const answersUnchanged = course?.answers && JSON.stringify(answersValue) === JSON.stringify(course.answers);
 
-      awaitingStructureRef.current = true;
+      if (answersUnchanged && depthPreviews) {
+        setStep(3);
+        return;
+      }
 
-      structureMutation.mutate(courseId, {
-        onSuccess: (data) => {
-          trackJob({
-            jobId: data.jobId,
-            courseId,
-            type: 'generate_structure',
-          });
-        },
-      });
+      const hasDownstream = !!(depthPreviews || structureData);
+      if (hasDownstream) {
+        confirmOverwrite('Changing your answers will regenerate depth options and clear the course structure.', () =>
+          executeClarifySubmit(answersValue),
+        );
+        return;
+      }
+      executeClarifySubmit(answersValue);
     },
-    [courseId, structureMutation, trackJob],
+    [course, depthPreviews, structureData, executeClarifySubmit],
   );
 
-  const handleDepthConfirm = useCallback(
+  const triggerStructureGeneration = useCallback(() => {
+    if (!courseId) return;
+
+    structureMutation.mutate(courseId, {
+      onSuccess: (data) => {
+        trackJob({
+          jobId: data.jobId,
+          courseId,
+          type: 'generate_structure',
+          onComplete: () => setStep(4),
+        });
+      },
+    });
+  }, [courseId, structureMutation, trackJob]);
+
+  const executeDepthConfirm = useCallback(
     (depthValue: CourseDepth) => {
       if (!courseId) return;
       setDepth(depthValue);
 
       updateCourseMutation.mutate(
         { id: courseId, data: { depth: depthValue } },
-        { onSuccess: () => triggerStructureGeneration(depthValue) },
+        { onSuccess: () => triggerStructureGeneration() },
       );
     },
     [courseId, updateCourseMutation, triggerStructureGeneration],
+  );
+
+  const handleDepthConfirm = useCallback(
+    (depthValue: CourseDepth) => {
+      if (depthValue === course?.depth && structureData) {
+        setStep(4);
+        return;
+      }
+
+      if (structureData) {
+        confirmOverwrite('Changing the depth will regenerate the course structure.', () =>
+          executeDepthConfirm(depthValue),
+        );
+        return;
+      }
+      executeDepthConfirm(depthValue);
+    },
+    [course, structureData, executeDepthConfirm],
   );
 
   const handleStructureModified = useCallback(() => {
     if (!courseId) return;
     queryClient.invalidateQueries({ queryKey: [QKeys.COURSE, courseId] });
   }, [courseId, queryClient]);
-
-  const handleStartFresh = useCallback(() => {
-    if (depth) triggerStructureGeneration(depth);
-  }, [depth, triggerStructureGeneration]);
 
   const handleAccept = useCallback(() => {
     if (!courseId) return;
@@ -272,7 +383,7 @@ const GenerateCourseWizard = ({ resumeCourse }: { resumeCourse: Course | null })
         onSuccess: () => {
           queryClient.invalidateQueries({ queryKey: [QKeys.COURSES] });
           queryClient.invalidateQueries({ queryKey: [QKeys.COURSE, courseId] });
-          toast.success('Course is ready!');
+          toast.success(TOASTS.COURSE_READY);
           router.push(`/course/${courseId}`);
         },
       },
@@ -281,54 +392,78 @@ const GenerateCourseWizard = ({ resumeCourse }: { resumeCourse: Course | null })
 
   const handleDelete = () => {
     if (!courseId) return;
-    if (window.confirm('Delete this course? This cannot be undone.')) {
-      deleteMutation.mutate();
-    }
+    setShowDeleteDialog(true);
   };
+
+  const navigateToStep = useCallback(
+    (targetStep: number) => {
+      // Re-sync local state from server when navigating back to a step
+      if (targetStep === 2 && course?.answers && Object.keys(answers).length === 0) {
+        setAnswers(course.answers as Record<string, string | string[]>);
+      }
+      if (targetStep === 3 && course?.depth && !depth) {
+        setDepth(course.depth as CourseDepth);
+      }
+      isStepDirtyRef.current = false;
+      setStep(targetStep as Step);
+    },
+    [course, answers, depth],
+  );
 
   const handleStepClick = useCallback(
     (targetStep: number) => {
       if (isJobRunning) return;
-      if (completedSteps.includes(targetStep)) {
-        // Re-sync local state from server when navigating back to a step
-        if (targetStep === 2 && course?.answers && Object.keys(answers).length === 0) {
-          setAnswers(course.answers as Record<string, string | string[]>);
-        }
-        if (targetStep === 3 && course?.depth && !depth) {
-          setDepth(course.depth as CourseDepth);
-        }
-        setStep(targetStep as Step);
+      if (!navigableSteps.includes(targetStep)) return;
+
+      if (isStepDirtyRef.current) {
+        confirmOverwrite(
+          'You have unsaved changes that will be discarded.',
+          () => navigateToStep(targetStep),
+          'Discard changes?',
+          'Discard',
+        );
+        return;
       }
+
+      navigateToStep(targetStep);
     },
-    [completedSteps, isJobRunning, course, answers, depth],
+    [navigableSteps, isJobRunning, navigateToStep],
   );
 
   // ── Loading / error states ─────────────────────────────
   const isGoalLoading =
-    createCourseMutation.isPending || clarifyMutation.isPending || updateCourseMutation.isPending || (isJobRunning && step === 1);
+    createCourseMutation.isPending ||
+    clarifyMutation.isPending ||
+    updateCourseMutation.isPending ||
+    (isJobRunning && step === 1);
   const goalError = createCourseMutation.error || clarifyMutation.error;
-  return (
-    <S.Layout $wide={step === 4}>
-      <S.Container $wide={step === 4}>
-        <S.Nav>
-          <Link href="/">&larr; Back</Link>
-          {courseName && <S.CourseName>{courseName}</S.CourseName>}
-          {courseId && (
-            <S.DeleteLink type="button" onClick={handleDelete} disabled={deleteMutation.isPending}>
-              {deleteMutation.isPending ? 'Deleting...' : 'Delete course'}
-            </S.DeleteLink>
-          )}
-        </S.Nav>
 
-        <S.StepperWrapper>
-          <Stepper
-            currentStep={step}
-            totalSteps={4}
-            labels={['Goal', 'Questions', 'Depth', 'Structure']}
-            completedSteps={completedSteps}
-            onStepClick={handleStepClick}
-          />
-        </S.StepperWrapper>
+  return (
+    <S.Layout>
+      <S.Container $wide={step === 4} $semiWide={step === 1}>
+        {step !== 1 && (
+          <>
+            <S.TopBar>
+              {courseName && <S.CourseName>{courseName}</S.CourseName>}
+              {courseId && (
+                <S.DeleteLink type="button" onClick={handleDelete}>
+                  Discard
+                </S.DeleteLink>
+              )}
+            </S.TopBar>
+
+            <S.StepperWrapper>
+              <Stepper
+                currentStep={step}
+                totalSteps={4}
+                labels={['Goal', 'Questions', 'Depth', 'Structure']}
+                completedSteps={completedSteps}
+                navigableSteps={navigableSteps}
+                onStepClick={handleStepClick}
+              />
+            </S.StepperWrapper>
+          </>
+        )}
 
         <S.Content>
           {step === 1 && (
@@ -341,12 +476,16 @@ const GenerateCourseWizard = ({ resumeCourse }: { resumeCourse: Course | null })
             />
           )}
 
+          {step === 2 && !clarifyData && isJobRunning && <S.LoadingState>Preparing your questions...</S.LoadingState>}
+
           {step === 2 && clarifyData && (
             <ClarifyStep
               questions={clarifyData.questions}
               initialAnswers={answers}
+              hasExistingData={!!depthPreviews}
               onSubmit={handleClarifySubmit}
               onBack={() => setStep(1)}
+              onDirtyChange={handleDirtyChange}
             />
           )}
 
@@ -354,11 +493,24 @@ const GenerateCourseWizard = ({ resumeCourse }: { resumeCourse: Course | null })
             <DepthStep
               depthPreviews={depthPreviews}
               previewsLoading={depthPreviewsMutation.isPending || (isJobRunning && !depthPreviews)}
+              previewsError={!!depthPreviewsMutation.error}
               initialDepth={depth}
+              hasExistingData={!!structureData}
               loading={structureMutation.isPending || isJobRunning}
               onConfirm={handleDepthConfirm}
+              onRetryPreviews={() =>
+                courseId &&
+                depthPreviewsMutation.mutate(courseId, {
+                  onSuccess: (data) => trackJob({ jobId: data.jobId, courseId, type: 'generate_depth_previews' }),
+                })
+              }
               onBack={() => setStep(2)}
+              onDirtyChange={handleDirtyChange}
             />
+          )}
+
+          {step === 4 && !structureData && isJobRunning && (
+            <S.LoadingState>Building your course structure...</S.LoadingState>
           )}
 
           {step === 4 && structureData && courseId && (
@@ -367,12 +519,38 @@ const GenerateCourseWizard = ({ resumeCourse }: { resumeCourse: Course | null })
               modules={structureData}
               onStructureModified={handleStructureModified}
               onAccept={handleAccept}
-              onStartFresh={handleStartFresh}
               onBack={() => setStep(3)}
             />
           )}
         </S.Content>
       </S.Container>
+
+      <AlertDialog
+        open={showDeleteDialog}
+        title="Discard this course?"
+        description="This will permanently delete the course and all its data. This action cannot be undone."
+        confirmLabel="Discard"
+        cancelLabel="Cancel"
+        variant="danger"
+        loading={deleteMutation.isPending}
+        onConfirm={() => deleteMutation.mutate()}
+        onCancel={() => setShowDeleteDialog(false)}
+      />
+
+      <AlertDialog
+        open={!!overwriteDialog}
+        title={overwriteDialog?.title ?? ''}
+        description={overwriteDialog?.message ?? ''}
+        confirmLabel={overwriteDialog?.confirmLabel ?? 'Continue'}
+        cancelLabel="Cancel"
+        variant="danger"
+        onConfirm={() => {
+          const action = overwriteDialog?.onConfirm;
+          setOverwriteDialog(null);
+          action?.();
+        }}
+        onCancel={() => setOverwriteDialog(null)}
+      />
     </S.Layout>
   );
 };

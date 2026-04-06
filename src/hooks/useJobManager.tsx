@@ -4,6 +4,7 @@ import { useQueryClient } from '@tanstack/react-query';
 import { createContext, useCallback, useContext, useEffect, useRef, useState } from 'react';
 import { toast } from 'sonner';
 import { getJobStatus } from '@/api/routes/course';
+import { TOASTS, toastMessage } from '@/constants/toasts';
 import { Course } from '@/api/types';
 import { QKeys } from '@/types';
 import { useSocket } from './useSocket';
@@ -77,6 +78,7 @@ export const JobManagerProvider = ({ children }: { children: React.ReactNode }) 
     // Auto-cleanup after timeout to prevent stuck state
     const timer = setTimeout(() => {
       console.warn('[JobManager] Job timed out on client:', job.jobId);
+      toast.error(TOASTS.JOB_TIMEOUT);
       callbacksRef.current.delete(job.jobId);
       setActiveCourseIds((prev) => {
         const next = new Set(prev);
@@ -122,9 +124,9 @@ export const JobManagerProvider = ({ children }: { children: React.ReactNode }) 
       console.log('[JobManager] Job status (WS):', event.jobId, event.status);
 
       if (event.status === 'completed') {
-        toast.success('Generation complete');
+        toast.success(TOASTS.GENERATION_COMPLETE);
       } else if (event.status === 'failed') {
-        toast.error(event.error || 'Generation failed. Please try again.');
+        toast.error(toastMessage(event.error, TOASTS.GENERATION_FAILED_RETRY));
       }
 
       // Fire onComplete callback only on success (wizard flows) and clean up timer

@@ -18,7 +18,7 @@ export const SidebarSlot = styled.aside<{ $open: boolean }>`
   transition: width 200ms ease;
   flex-shrink: 0;
 
-  @media (max-width: 1023px) {
+  ${(p) => p.theme.media.desktop} {
     position: fixed;
     top: 0;
     left: 0;
@@ -36,7 +36,7 @@ export const ChatSlot = styled.aside<{ $open: boolean }>`
   transition: width 200ms ease;
   flex-shrink: 0;
 
-  @media (max-width: 1023px) {
+  ${(p) => p.theme.media.desktop} {
     position: fixed;
     top: 0;
     right: 0;
@@ -45,7 +45,7 @@ export const ChatSlot = styled.aside<{ $open: boolean }>`
     width: ${(p) => (p.$open ? '360px' : '0px')};
   }
 
-  @media (max-width: 640px) {
+  ${(p) => p.theme.media.tablet} {
     width: ${(p) => (p.$open ? '100%' : '0px')};
   }
 `;
@@ -55,7 +55,7 @@ export const ChatSlot = styled.aside<{ $open: boolean }>`
 export const Backdrop = styled.div`
   display: none;
 
-  @media (max-width: 1023px) {
+  ${(p) => p.theme.media.desktop} {
     display: block;
     position: fixed;
     inset: 0;
@@ -78,7 +78,7 @@ export const ContentSlot = styled.main`
 export const TopBar = styled.div`
   display: none;
 
-  @media (max-width: 1023px) {
+  ${(p) => p.theme.media.desktop} {
     display: flex;
     align-items: center;
     gap: 0.75rem;
@@ -138,7 +138,7 @@ export const ChatToggle = styled.button`
   border-radius: 50%;
   box-shadow: 0 2px 12px rgba(0, 0, 0, 0.12);
 
-  @media (max-width: 1023px) {
+  ${(p) => p.theme.media.desktop} {
     display: none;
   }
 `;

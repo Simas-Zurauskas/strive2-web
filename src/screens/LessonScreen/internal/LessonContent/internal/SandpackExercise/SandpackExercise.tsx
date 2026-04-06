@@ -91,7 +91,7 @@ export const SandpackExercise = ({ files, template: templateProp, activeFile, on
         errorSurface: hexColors.surface,
       },
       font: {
-        body: 'var(--font-geist-sans, sans-serif)',
+        body: 'var(--font-body-sans, sans-serif)',
         mono: "var(--font-geist-mono, 'Geist Mono', monospace)",
         size: '13px',
         lineHeight: '1.6',

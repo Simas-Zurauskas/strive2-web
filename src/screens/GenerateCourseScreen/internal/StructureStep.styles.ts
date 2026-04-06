@@ -3,16 +3,15 @@ import styled, { keyframes } from 'styled-components';
 export const Container = styled.div`
   display: flex;
   flex-direction: column;
-  gap: 1.5rem;
+  gap: 2.5rem;
 `;
 
 export const TwoColumn = styled.div`
   display: grid;
   grid-template-columns: 1fr 1fr;
-  gap: 2rem;
-  align-items: start;
+  gap: 2.5rem;
 
-  @media (max-width: 768px) {
+  ${(p) => p.theme.media.tabletLarge} {
     grid-template-columns: 1fr;
   }
 `;
@@ -26,37 +25,51 @@ export const StructureColumn = styled.div`
 
 export const ChatColumn = styled.div`
   position: sticky;
-  top: 2rem;
+  top: calc(56px + 1.5rem);
   min-width: 0;
-  max-height: calc(100vh - 4rem);
+  height: calc(100vh - 56px - 3rem);
   display: flex;
   flex-direction: column;
 
-  @media (max-width: 768px) {
+  ${(p) => p.theme.media.tabletLarge} {
     position: static;
-    max-height: none;
+    height: 500px;
   }
 `;
 
 export const Header = styled.div`
   display: flex;
   flex-direction: column;
-  gap: 0.375rem;
+  align-items: flex-start;
+  gap: 1rem;
+`;
+
+export const Eyebrow = styled.span`
+  font-size: 0.75rem;
+  font-weight: 500;
+  text-transform: uppercase;
+  letter-spacing: 0.18em;
+  color: ${(p) => p.theme.colors.tertiary};
 `;
 
 export const Title = styled.h2`
   font-family: var(--font-heading-serif), Georgia, serif;
-  font-size: 1.75rem;
-  font-weight: 600;
+  font-style: italic;
+  font-size: 2.5rem;
+  font-weight: 400;
   color: ${(p) => p.theme.colors.foreground};
-  letter-spacing: -0.02em;
-  line-height: 1.2;
+  letter-spacing: -0.025em;
+  line-height: 1.1;
+
+  ${(p) => p.theme.media.tablet} {
+    font-size: 1.75rem;
+  }
 `;
 
 export const Subtitle = styled.p`
-  font-size: 0.875rem;
+  font-size: 1.0625rem;
   color: ${(p) => p.theme.colors.muted};
-  line-height: 1.5;
+  line-height: 1.6;
 `;
 
 export const ModulesWrapper = styled.div`
@@ -66,7 +79,7 @@ export const ModulesWrapper = styled.div`
 export const Modules = styled.div<{ $dimmed?: boolean }>`
   display: flex;
   flex-direction: column;
-  gap: 1rem;
+  gap: 1.25rem;
   opacity: ${(p) => (p.$dimmed ? 0.5 : 1)};
   transition: opacity 0.3s ease;
   pointer-events: ${(p) => (p.$dimmed ? 'none' : 'auto')};
@@ -85,12 +98,12 @@ export const ModifyingOverlay = styled.div`
   display: flex;
   align-items: center;
   gap: 0.5rem;
-  padding: 0.625rem 1.25rem;
+  padding: 0.75rem 1.5rem;
   border-radius: 2rem;
-  background: ${(p) => p.theme.colors.background};
+  background: ${(p) => p.theme.colors.surface};
   border: 1px solid ${(p) => p.theme.colors.border};
-  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.08);
-  font-size: 0.8125rem;
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.06);
+  font-size: 0.875rem;
   font-weight: 500;
   color: ${(p) => p.theme.colors.foreground};
 `;
@@ -105,10 +118,10 @@ export const ModifyingSpinner = styled.span`
 `;
 
 export const ModuleDescription = styled.p`
-  font-size: 0.875rem;
+  font-size: 0.9375rem;
   color: ${(p) => p.theme.colors.muted};
-  line-height: 1.5;
-  margin-bottom: 0.75rem;
+  line-height: 1.6;
+  margin-bottom: 1rem;
 `;
 
 export const LessonList = styled.ol`
@@ -116,13 +129,13 @@ export const LessonList = styled.ol`
   counter-reset: lesson;
   display: flex;
   flex-direction: column;
-  gap: 0.5rem;
+  gap: 0.625rem;
 `;
 
 export const LessonItem = styled.li`
   counter-increment: lesson;
   display: flex;
-  gap: 0.625rem;
+  gap: 0.75rem;
   align-items: flex-start;
 
   &::before {
@@ -131,13 +144,13 @@ export const LessonItem = styled.li`
     display: flex;
     align-items: center;
     justify-content: center;
-    width: 22px;
-    height: 22px;
+    width: 24px;
+    height: 24px;
     border-radius: 50%;
-    background: ${(p) => p.theme.colors.surface};
+    background: ${(p) => p.theme.colors.background};
     border: 1px solid ${(p) => p.theme.colors.border};
     font-size: 0.6875rem;
-    font-weight: 700;
+    font-weight: 600;
     color: ${(p) => p.theme.colors.muted};
     margin-top: 1px;
   }
@@ -150,35 +163,25 @@ export const LessonContent = styled.div`
 `;
 
 export const LessonName = styled.span`
-  font-size: 0.875rem;
-  font-weight: 600;
+  font-size: 0.9375rem;
+  font-weight: 500;
   color: ${(p) => p.theme.colors.foreground};
 `;
 
 export const LessonDescription = styled.span`
-  font-size: 0.8125rem;
+  font-size: 0.875rem;
   color: ${(p) => p.theme.colors.muted};
-  line-height: 1.4;
+  line-height: 1.5;
 `;
 
 export const Actions = styled.div`
   display: flex;
-  gap: 0.75rem;
-  align-items: center;
-`;
-
-export const StartFreshLink = styled.button`
-  background: none;
-  border: none;
-  color: ${(p) => p.theme.colors.muted};
-  font-size: 0.8125rem;
-  font-family: inherit;
-  cursor: pointer;
-  text-decoration: underline;
-  padding: 0;
-  margin-left: auto;
-
-  &:hover {
-    color: ${(p) => p.theme.colors.foreground};
-  }
+  gap: 1rem;
+  position: sticky;
+  bottom: 0;
+  background: ${(p) => p.theme.colors.background};
+  padding: 0.5rem 1rem 1.25rem;
+  margin: 0 -1rem;
+  z-index: 2;
+  box-shadow: 0 -8px 16px ${(p) => p.theme.colors.background};
 `;

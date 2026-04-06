@@ -5,9 +5,9 @@ import Link from 'next/link';
 import { useParams, useRouter } from 'next/navigation';
 import { useEffect, useMemo, useState } from 'react';
 import { toast } from 'sonner';
-import { updateCourse, deleteCourse, CourseQuizProgressItem } from '@/api/routes/course';
-import { CourseStatus } from '@/api/types';
-import { Badge, Button, Card } from '@/components';
+import { deleteCourse, CourseQuizProgressItem } from '@/api/routes/course';
+import { Badge, Button, Card, AlertDialog } from '@/components';
+import { TOASTS } from '@/constants/toasts';
 import { useCourse, useCourseProgress } from '@/hooks';
 import { QKeys } from '@/types';
 import * as S from './CourseScreen.styles';
@@ -19,26 +19,19 @@ export const CourseScreen = () => {
   const courseId = params.id as string;
   const { data: course, isLoading } = useCourse(courseId);
   const { data: progressData } = useCourseProgress(courseId);
-  const [isEditing, setIsEditing] = useState(false);
-
-  const statusMutation = useMutation({
-    mutationFn: (status: CourseStatus) => updateCourse(courseId, { status }),
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: [QKeys.COURSE, courseId] });
-      queryClient.invalidateQueries({ queryKey: [QKeys.COURSES] });
-    },
-  });
+  const [showDeleteDialog, setShowDeleteDialog] = useState(false);
 
   const deleteMutation = useMutation({
     mutationFn: () => deleteCourse(courseId),
     onSuccess: () => {
+      setShowDeleteDialog(false);
       queryClient.invalidateQueries({ queryKey: [QKeys.COURSES] });
-      toast.success('Course deleted');
+      toast.success(TOASTS.COURSE_DELETED);
       router.push('/');
     },
   });
 
-  const shouldRedirectToWizard = !isLoading && course && (course.status === 'creating' || isEditing);
+  const shouldRedirectToWizard = !isLoading && course && course.status === 'creating';
 
   useEffect(() => {
     if (shouldRedirectToWizard) {
@@ -98,19 +91,8 @@ export const CourseScreen = () => {
   const totalLessons = modules.reduce((sum, m) => sum + (m.lessons?.length ?? 0), 0);
   const stats = progressData?.stats;
 
-  const handleEdit = () => {
-    statusMutation.mutate('creating', {
-      onSuccess: () => {
-        toast.info('Entering edit mode');
-        setIsEditing(true);
-      },
-    });
-  };
-
   const handleDelete = () => {
-    if (window.confirm('Delete this course? This cannot be undone.')) {
-      deleteMutation.mutate();
-    }
+    setShowDeleteDialog(true);
   };
 
   const getModuleProgress = (mi: number) => {
@@ -140,7 +122,7 @@ export const CourseScreen = () => {
           <S.Title>{course.name || 'Untitled Course'}</S.Title>
           <S.Meta>
             <Badge variant="success">Ready</Badge>
-            {course.depth && <Badge variant="accent">{course.depth}</Badge>}
+            {course.depth && <Badge variant="default">{course.depth}</Badge>}
             {modules.length > 0 && (
               <Badge variant="default">
                 {modules.length} module{modules.length !== 1 ? 's' : ''} &middot; {totalLessons} lesson
@@ -160,10 +142,7 @@ export const CourseScreen = () => {
         </S.Header>
 
         <div style={{ display: 'flex', gap: '0.75rem' }}>
-          <Button variant="secondary" onClick={handleEdit} loading={statusMutation.isPending}>
-            Edit course
-          </Button>
-          <Button variant="secondary" onClick={handleDelete} loading={deleteMutation.isPending}>
+          <Button variant="secondary" onClick={handleDelete}>
             Delete
           </Button>
         </div>
@@ -222,6 +201,19 @@ export const CourseScreen = () => {
           })}
         </S.Modules>
       </S.Container>
+
+      <AlertDialog
+        open={showDeleteDialog}
+        title="Delete this course?"
+        description="This will permanently delete the course and all its data. This action cannot be undone."
+        confirmLabel="Delete"
+        cancelLabel="Cancel"
+        variant="danger"
+        loading={deleteMutation.isPending}
+        onConfirm={() => deleteMutation.mutate()}
+        onCancel={() => setShowDeleteDialog(false)}
+      />
+
     </S.Layout>
   );
 };

@@ -3,6 +3,7 @@
 import { useParams, useRouter, useSearchParams } from 'next/navigation';
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { toast } from 'sonner';
+import { TOASTS } from '@/constants/toasts';
 import {
   useCourse,
   useModuleQuizContent,
@@ -75,7 +76,7 @@ export const ModuleQuizScreen = () => {
           } else if (job.status === 'failed') {
             if (pollRef.current) clearInterval(pollRef.current);
             setIsGenerating(false);
-            toast.error('Quiz generation failed. Please try again.');
+            toast.error(TOASTS.QUIZ_GENERATION_FAILED);
           }
         } catch {
           // ignore polling errors
@@ -83,7 +84,7 @@ export const ModuleQuizScreen = () => {
       }, 2000);
     } catch {
       setIsGenerating(false);
-      toast.error('Failed to start quiz generation');
+      toast.error(TOASTS.QUIZ_START_ERROR);
     }
   }, [courseId, moduleIndex, generateQuiz, refetchQuiz]);
 
@@ -117,10 +118,10 @@ export const ModuleQuizScreen = () => {
 
         if (result.masteryTier === 'mastered') {
           celebrateModuleComplete();
-          toast.success('Module mastered!');
+          toast.success(TOASTS.MODULE_MASTERED);
         }
       } catch {
-        toast.error('Failed to submit quiz');
+        toast.error(TOASTS.QUIZ_SUBMIT_ERROR);
       }
     }
   };
