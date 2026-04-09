@@ -1,6 +1,5 @@
 'use client';
 
-import { useState } from 'react';
 import * as S from './FontScaler.styles';
 
 const SCALES = [1, 1.075, 1.15] as const;

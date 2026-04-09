@@ -13,5 +13,7 @@ export {
   useGenerateModuleQuiz,
   useSubmitQuizAttempt,
   useReviewsDue,
+  useResetModuleQuiz,
 } from './useProgress';
+export { useJobManager } from './useJobManager';
 export { useSocket, SocketProvider } from './useSocket';

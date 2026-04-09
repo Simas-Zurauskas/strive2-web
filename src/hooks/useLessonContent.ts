@@ -7,7 +7,7 @@ import { QKeys } from '@/types';
 export const useLessonContent = (courseId: string, moduleIndex: number, lessonIndex: number, isGenerating?: boolean, enabled = true) =>
   useQuery({
     queryKey: [QKeys.LESSON_CONTENT, courseId, moduleIndex, lessonIndex],
-    queryFn: () => getLessonContent(courseId, moduleIndex, lessonIndex),
+    queryFn: () => getLessonContent({ courseId, moduleIndex, lessonIndex }),
     retry: false,
     enabled,
     // When generation is running, keep refetching so we pick up content saved mid-generation

@@ -30,7 +30,11 @@ export const LessonHero = ({
 
   // Skeleton while generating/loading
   if (!heroImage && showSkeleton) {
-    return <Skeleton height={380} borderRadius={12} />;
+    return (
+      <S.ImageContainer>
+        <Skeleton height={380} borderRadius={0} />
+      </S.ImageContainer>
+    );
   }
 
   // No image — title with inline bookmark
@@ -58,13 +62,8 @@ export const LessonHero = ({
   return (
     <S.HeroWrapper>
       <S.ImageContainer>
-        {!imageLoaded && <Skeleton height={380} borderRadius={12} />}
-        <S.Image
-          src={heroImage}
-          alt=""
-          onLoad={() => setImageLoaded(true)}
-          $loaded={imageLoaded}
-        />
+        {!imageLoaded && <Skeleton height={380} borderRadius={0} />}
+        <S.Image src={heroImage} alt="" onLoad={() => setImageLoaded(true)} $loaded={imageLoaded} />
         {isGenerating && (
           <S.ImageActions>
             <S.GeneratingDot />

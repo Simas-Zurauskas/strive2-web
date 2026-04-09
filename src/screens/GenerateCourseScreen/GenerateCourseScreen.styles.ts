@@ -10,7 +10,7 @@ export const Layout = styled.div`
   padding: 2rem 2rem 0 2rem;
 
   ${(p) => p.theme.media.tablet} {
-    padding: 2rem 1.25rem;
+    padding: 2rem 1.25rem 0;
   }
 `;
 

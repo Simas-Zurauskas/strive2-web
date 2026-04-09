@@ -6,11 +6,11 @@ import { DefaultChatTransport } from 'ai';
 import { ArrowUp, ArrowDown, Loader } from 'lucide-react';
 import { useSession } from 'next-auth/react';
 import { useEffect, useMemo, useRef, useState } from 'react';
-import { StickToBottom, useStickToBottomContext } from 'use-stick-to-bottom';
 import { toast } from 'sonner';
+import { StickToBottom, useStickToBottomContext } from 'use-stick-to-bottom';
 import { getChatHistory } from '@/api/routes/course';
-import { TOASTS } from '@/constants/toasts';
 import { NEXT_PUBLIC_API_URL } from '@/conf/env';
+import { TOASTS } from '@/constants/toasts';
 import * as S from './ChatPanel.styles';
 import { ChatMessage, ToolStatus } from './internal';
 

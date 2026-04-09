@@ -58,16 +58,16 @@ const dangerStyles = css`
 
 const variantMap = { primary: primaryStyles, secondary: secondaryStyles, danger: dangerStyles };
 
-export const StyledButton = styled.button<{ $variant: 'primary' | 'secondary' | 'danger'; $loading?: boolean }>`
+export const StyledButton = styled.button<{ $variant: 'primary' | 'secondary' | 'danger'; $size: 'default' | 'small'; $loading?: boolean }>`
   position: relative;
   display: inline-flex;
   align-items: center;
   justify-content: center;
   gap: 0.5rem;
-  padding: 0.75rem 1.75rem;
+  padding: ${(p) => (p.$size === 'small' ? '0.375rem 1rem' : '0.75rem 1.75rem')};
   border-radius: 6px;
   font-family: inherit;
-  font-size: 0.8125rem;
+  font-size: ${(p) => (p.$size === 'small' ? '0.75rem' : '0.8125rem')};
   font-weight: 600;
   white-space: nowrap;
   cursor: ${(p) => (p.$loading || p.disabled ? 'not-allowed' : 'pointer')};
@@ -95,11 +95,11 @@ export const Content = styled.span<{ $loading: boolean }>`
   visibility: ${(p) => (p.$loading ? 'hidden' : 'visible')};
 `;
 
-export const Spinner = styled.span<{ $variant: 'primary' | 'secondary' | 'danger' }>`
+export const Spinner = styled.span<{ $variant: 'primary' | 'secondary' | 'danger'; $size: 'default' | 'small' }>`
   position: absolute;
   display: inline-block;
-  width: 16px;
-  height: 16px;
+  width: ${(p) => (p.$size === 'small' ? '14px' : '16px')};
+  height: ${(p) => (p.$size === 'small' ? '14px' : '16px')};
   border: 2px solid ${(p) => (p.$variant === 'secondary' ? p.theme.colors.border : 'rgba(255,255,255,0.3)')};
   border-top-color: ${(p) => (p.$variant === 'secondary' ? p.theme.colors.accent : '#fff')};
   border-radius: 50%;

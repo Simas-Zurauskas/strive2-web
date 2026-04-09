@@ -16,7 +16,7 @@ export const StyledRegistry: React.FC<StyledRegistryProps> = ({ children }) => {
   const { resolvedTheme } = useTheme();
 
   useEffect(() => {
-    setMounted(true);
+    setMounted(true); // eslint-disable-line react-hooks/set-state-in-effect -- hydration detection
   }, []);
 
   useServerInsertedHTML(() => {

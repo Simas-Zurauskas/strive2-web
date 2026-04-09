@@ -4,8 +4,8 @@ import { useRouter } from 'next/navigation';
 import { useState } from 'react';
 import { toast } from 'sonner';
 import { resendVerificationAuthenticated, deleteAccount } from '@/api/routes/auth';
-import { TOASTS } from '@/constants/toasts';
 import { Button } from '@/components';
+import { TOASTS } from '@/constants/toasts';
 import { useAuth } from '@/hooks';
 import * as S from './ProfileScreen.styles';
 
@@ -17,7 +17,7 @@ const formatProvider = (provider: string) => {
 
 export const ProfileScreen: React.FC = () => {
   const router = useRouter();
-  const { user, signOut, refetchAuthUser } = useAuth();
+  const { user, signOut } = useAuth();
 
   const [resending, setResending] = useState(false);
   const [deleting, setDeleting] = useState(false);

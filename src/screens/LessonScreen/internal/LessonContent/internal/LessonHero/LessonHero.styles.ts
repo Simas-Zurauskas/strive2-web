@@ -20,6 +20,8 @@ export const ImageContainer = styled.div`
   margin: -2rem -2rem 0;
   overflow: hidden;
   border-radius: 0 0 12px 12px;
+  line-height: 0;
+  font-size: 0;
 
   ${(p) => p.theme.media.tablet} {
     width: calc(100% + 2.5rem);

@@ -26,14 +26,17 @@ export const StructureColumn = styled.div`
 export const ChatColumn = styled.div`
   position: sticky;
   top: calc(56px + 1.5rem);
+  align-self: start;
   min-width: 0;
-  height: calc(100vh - 56px - 3rem);
+  height: calc(100vh - 56px - 1.5rem - 7rem);
+  overflow: hidden;
   display: flex;
   flex-direction: column;
 
   ${(p) => p.theme.media.tabletLarge} {
     position: static;
     height: 500px;
+    overflow: visible;
   }
 `;
 
