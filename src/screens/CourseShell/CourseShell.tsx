@@ -86,12 +86,14 @@ export const CourseShell = ({ children }: CourseShellProps) => {
   const modules = useMemo(() => course?.structure?.modules ?? [], [course?.structure?.modules]);
 
   // ── Navigation ───────────────────────────────────────
+  const courseBasePath = `/course/${(course as Record<string, unknown>)?.slug ?? courseId}`;
+
   const navigateToLesson = useCallback(
     (mi: number, li: number) => {
-      router.push(`/course/${courseId}/lesson/${mi}/${li}`);
+      router.push(`${courseBasePath}/lesson/${mi}/${li}`);
       if (!isDesktop) setSidebarOpen(false);
     },
-    [courseId, router, isDesktop],
+    [courseBasePath, router, isDesktop],
   );
 
   const closeOverlays = useCallback(() => {
@@ -121,6 +123,7 @@ export const CourseShell = ({ children }: CourseShellProps) => {
   const contextValue: CourseContextValue = useMemo(
     () => ({
       courseId,
+      courseBasePath,
       course,
       isLoading,
       modules,
@@ -137,7 +140,7 @@ export const CourseShell = ({ children }: CourseShellProps) => {
       onDeleteCourse: () => setShowDeleteDialog(true),
     }),
     [
-      courseId, course, isLoading, modules, progressData, generatedLessons,
+      courseId, courseBasePath, course, isLoading, modules, progressData, generatedLessons,
       sidebarOpen, chatOpen, isDesktop, expandedModules, setExpandedModules,
       navigateToLesson,
     ],
@@ -178,7 +181,7 @@ export const CourseShell = ({ children }: CourseShellProps) => {
         {/* Left sidebar */}
         <S.SidebarSlot $open={sidebarOpen}>
           <CourseSidebar
-            courseId={courseId}
+            courseBasePath={courseBasePath}
             courseName={course.name}
             courseDepth={course.depth}
             modules={modules}

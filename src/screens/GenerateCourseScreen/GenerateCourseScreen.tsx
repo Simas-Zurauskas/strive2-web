@@ -2,7 +2,7 @@
 
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { useRouter, useSearchParams } from 'next/navigation';
-import { useCallback, useEffect, useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { toast } from 'sonner';
 import {
   createCourse,
@@ -124,7 +124,7 @@ const GenerateCourseWizard = ({ resumeCourse }: { resumeCourse: Course | null })
   // Update URL with courseId for resume-on-refresh
   useEffect(() => {
     if (courseId) {
-      router.replace(`/generate-course?courseId=${courseId}`, { scroll: false });
+      router.replace(`/courses/new?courseId=${courseId}`, { scroll: false });
     }
   }, [courseId, router]);
 
@@ -389,7 +389,7 @@ const GenerateCourseWizard = ({ resumeCourse }: { resumeCourse: Course | null })
           queryClient.invalidateQueries({ queryKey: [QKeys.COURSES] });
           queryClient.invalidateQueries({ queryKey: [QKeys.COURSE, courseId] });
           toast.success(TOASTS.COURSE_READY);
-          router.push(`/course/${courseId}`);
+          router.push(`/course/${(course as Record<string, unknown>)?.slug ?? courseId}`);
         },
       },
     );

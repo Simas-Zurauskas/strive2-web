@@ -96,7 +96,7 @@ export const Navbar = () => {
           <S.Logo>Strive</S.Logo>
         </Link>
 
-        <S.NavLink href="/generate-course">New Course</S.NavLink>
+        <S.NavLink href="/courses/new">New Course</S.NavLink>
       </S.Left>
 
       <S.Right>

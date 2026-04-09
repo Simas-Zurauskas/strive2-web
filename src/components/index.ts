@@ -13,3 +13,4 @@ export { AlertDialog } from './AlertDialog';
 export { DropdownMenu } from './DropdownMenu';
 export type { DropdownMenuItem } from './DropdownMenu';
 export { Footer } from './Footer';
+export { InlineLink } from './InlineLink';

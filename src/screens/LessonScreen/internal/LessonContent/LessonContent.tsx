@@ -78,7 +78,7 @@ export const LessonContent = ({
     ? null
     : lessonIndex > 0
       ? { mi: moduleIndex, li: lessonIndex - 1 }
-      : { mi: moduleIndex - 1, li: modules[moduleIndex - 1]?.lessons?.length - 1 };
+      : { mi: moduleIndex - 1, li: (modules[moduleIndex - 1]?.lessons?.length ?? 1) - 1 };
 
   const { data: prevLessonContent } = useLessonContent(
     courseId,
@@ -181,7 +181,7 @@ export const LessonContent = ({
       {
         onSuccess: () => {
           // Calculate what this completion means
-          const totalLessons = modules.reduce((sum, m) => sum + m.lessons.length, 0);
+          const totalLessons = modules.reduce((sum, m) => sum + (m.lessons?.length ?? 0), 0);
           const completedBefore = progressData?.stats?.completed ?? 0;
           const completedNow = completedBefore + 1;
 
@@ -239,17 +239,17 @@ export const LessonContent = ({
   // Nav helper: get adjacent lesson name
   const getPrevLessonName = () => {
     if (!hasPrev) return null;
-    if (lessonIndex > 0) return modules[moduleIndex]?.lessons[lessonIndex - 1]?.name;
+    if (lessonIndex > 0) return modules[moduleIndex]?.lessons?.[lessonIndex - 1]?.name;
     const prevMod = modules[moduleIndex - 1];
-    return prevMod?.lessons[prevMod.lessons.length - 1]?.name;
+    return prevMod?.lessons?.[(prevMod.lessons?.length ?? 1) - 1]?.name;
   };
 
   const getNextLessonName = () => {
     if (!hasNext) return null;
     if (lessonIndex < (modules[moduleIndex]?.lessons?.length ?? 0) - 1) {
-      return modules[moduleIndex]?.lessons[lessonIndex + 1]?.name;
+      return modules[moduleIndex]?.lessons?.[lessonIndex + 1]?.name;
     }
-    return modules[moduleIndex + 1]?.lessons[0]?.name;
+    return modules[moduleIndex + 1]?.lessons?.[0]?.name;
   };
 
   if (isLoadingContent) {

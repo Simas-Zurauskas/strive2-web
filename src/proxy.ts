@@ -3,7 +3,7 @@ import { getToken } from 'next-auth/jwt';
 import { NEXTAUTH_SECRET } from '@/conf/env.server';
 
 const PUBLIC_ROUTES = ['/login', '/signup'];
-const OPEN_ROUTES = ['/verify-email', '/check-email']; // accessible regardless of auth state
+const OPEN_ROUTES = ['/verify-email', '/signup/check-email']; // accessible regardless of auth state
 
 export async function proxy(request: NextRequest) {
   const { pathname } = request.nextUrl;

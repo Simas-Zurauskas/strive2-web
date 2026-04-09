@@ -28,8 +28,8 @@ const bodyVariants = {
 };
 
 const bodyTransition = {
-  height: { duration: 0.3, ease: [0.25, 0.1, 0.25, 1] },
-  opacity: { duration: 0.2, ease: 'easeInOut' },
+  height: { duration: 0.3, ease: [0.25, 0.1, 0.25, 1] as const },
+  opacity: { duration: 0.2, ease: 'easeInOut' as const },
 };
 
 interface NotesPanelProps {
