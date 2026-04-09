@@ -17,3 +17,5 @@ if (!_apiUrl) {
 }
 
 export const NEXT_PUBLIC_API_URL = _apiUrl;
+
+export const DEV_MODE = process.env.NEXT_PUBLIC_DEV_MODE === 'true';

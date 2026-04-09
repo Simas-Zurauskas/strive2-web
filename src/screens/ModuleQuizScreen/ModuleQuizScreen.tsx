@@ -1,18 +1,22 @@
 'use client';
 
-import { ArrowLeft, ArrowRight } from 'lucide-react';
+import { ArrowLeft, ArrowRight, Trash2 } from 'lucide-react';
 import { useParams, useRouter, useSearchParams } from 'next/navigation';
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { toast } from 'sonner';
+import { getJobStatus } from '@/api/routes/course';
+import type { ModuleQuizQuestion, QuizAttemptResult } from '@/api/types';
 import { TOASTS } from '@/constants/toasts';
+import { DEV_MODE } from '@/conf/env';
 import {
   useCourse,
+  useJobManager,
   useModuleQuizContent,
   useModuleQuizProgress,
   useGenerateModuleQuiz,
   useSubmitQuizAttempt,
+  useResetModuleQuiz,
 } from '@/hooks';
-import { getJobStatus, ModuleQuizQuestion, QuizAttemptResult } from '@/api/routes/course';
 import { celebrateModuleComplete } from '@/lib/celebrations';
 import * as S from './ModuleQuizScreen.styles';
 
@@ -34,6 +38,8 @@ export const ModuleQuizScreen = () => {
   const { data: quizProgress } = useModuleQuizProgress(courseId, moduleIndex);
   const generateQuiz = useGenerateModuleQuiz();
   const submitAttempt = useSubmitQuizAttempt();
+  const { trackJob, isJobRunningForCourse } = useJobManager();
+  const resetQuiz = useResetModuleQuiz();
 
   const [isGenerating, setIsGenerating] = useState(false);
   const [currentQuestion, setCurrentQuestion] = useState(0);
@@ -43,49 +49,83 @@ export const ModuleQuizScreen = () => {
   const [results, setResults] = useState<QuizAttemptResult | null>(null);
   const [quizStarted, setQuizStarted] = useState(false);
 
-  const pollRef = useRef<ReturnType<typeof setInterval> | null>(null);
+  const isGeneratingRef = useRef(false);
 
   const mod = course?.structure?.modules?.[moduleIndex];
   const questions: ModuleQuizQuestion[] = quizContent?.questions ?? [];
   const totalQuestions = questions.length;
   const question = questions[currentQuestion];
 
+  // ── Detect active quiz job on mount (navigate-back case) ──
+
   useEffect(() => {
-    return () => {
-      if (pollRef.current) clearInterval(pollRef.current);
+    if (!course?.activeJobId || isGeneratingRef.current) return;
+
+    const checkActiveJob = async () => {
+      try {
+        const job = await getJobStatus(course.activeJobId!);
+        if (
+          job.type === 'generate_module_quiz' &&
+          job.metadata?.moduleIndex === moduleIndex &&
+          (job.status === 'pending' || job.status === 'processing')
+        ) {
+          isGeneratingRef.current = true;
+          setIsGenerating(true);
+          trackJob({
+            jobId: course.activeJobId!,
+            courseId,
+            type: 'generate_module_quiz',
+            onComplete: () => {
+              isGeneratingRef.current = false;
+              refetchQuiz();
+              setIsGenerating(false);
+              setQuizStarted(true);
+            },
+          });
+        }
+      } catch {
+        // Job not found or already completed — ignore
+      }
     };
-  }, []);
+
+    checkActiveJob();
+  }, [course?.activeJobId]); // eslint-disable-line react-hooks/exhaustive-deps
+
+  // Reset generating state when no job is running (handles failure case via JobManager).
+  // Also guard against the brief window during mutateAsync where trackJob hasn't been called yet.
+  const isJobRunning = isJobRunningForCourse(courseId);
+  useEffect(() => {
+    if (isGenerating && !isJobRunning && !generateQuiz.isPending) {
+      isGeneratingRef.current = false;
+      setIsGenerating(false); // eslint-disable-line react-hooks/set-state-in-effect -- sync with external job state
+    }
+  }, [isGenerating, isJobRunning, generateQuiz.isPending]);
 
   // ── Generate quiz ─────────────────────────────────────
 
   const handleGenerate = useCallback(async () => {
-    if (pollRef.current) clearInterval(pollRef.current);
     setIsGenerating(true);
+    isGeneratingRef.current = true;
     try {
       const { jobId } = await generateQuiz.mutateAsync({ courseId, moduleIndex });
 
-      pollRef.current = setInterval(async () => {
-        try {
-          const job = await getJobStatus(jobId);
-          if (job.status === 'completed') {
-            if (pollRef.current) clearInterval(pollRef.current);
-            await refetchQuiz();
-            setIsGenerating(false);
-            setQuizStarted(true);
-          } else if (job.status === 'failed') {
-            if (pollRef.current) clearInterval(pollRef.current);
-            setIsGenerating(false);
-            toast.error(TOASTS.QUIZ_GENERATION_FAILED);
-          }
-        } catch {
-          // ignore polling errors
-        }
-      }, 2000);
+      trackJob({
+        jobId,
+        courseId,
+        type: 'generate_module_quiz',
+        onComplete: () => {
+          isGeneratingRef.current = false;
+          refetchQuiz();
+          setIsGenerating(false);
+          setQuizStarted(true);
+        },
+      });
     } catch {
+      isGeneratingRef.current = false;
       setIsGenerating(false);
       toast.error(TOASTS.QUIZ_START_ERROR);
     }
-  }, [courseId, moduleIndex, generateQuiz, refetchQuiz]);
+  }, [courseId, moduleIndex, generateQuiz, refetchQuiz, trackJob]);
 
   // ── Answer handling ───────────────────────────────────
 
@@ -136,6 +176,23 @@ export const ModuleQuizScreen = () => {
     handleGenerate();
   };
 
+  // ── Dev: reset quiz ───────────────────────────────────
+
+  const handleDevReset = useCallback(async () => {
+    try {
+      await resetQuiz.mutateAsync({ courseId, moduleIndex });
+      setResults(null);
+      setCurrentQuestion(0);
+      setSelectedOption(null);
+      setAnswered(false);
+      setResponses([]);
+      setQuizStarted(false);
+      toast.success('Quiz reset (dev)');
+    } catch {
+      toast.error('Failed to reset quiz');
+    }
+  }, [courseId, moduleIndex, resetQuiz]);
+
   // ── Loading ───────────────────────────────────────────
 
   if (!course || !mod) {
@@ -158,9 +215,14 @@ export const ModuleQuizScreen = () => {
       <S.Container>
         <S.Content>
           <S.TopBar>
-            <S.BackLink onClick={() => router.push(`/course/${courseId}`)}>
+            <S.BackLink onClick={() => router.push(`/course/${courseId}/lesson/${moduleIndex}/0`)}>
               <ArrowLeft size={14} /> Back to course
             </S.BackLink>
+            {DEV_MODE && (
+              <S.DevResetButton onClick={handleDevReset} disabled={resetQuiz.isPending}>
+                <Trash2 size={10} /> Reset Quiz
+              </S.DevResetButton>
+            )}
           </S.TopBar>
 
           <S.ResultsHeader>
@@ -228,8 +290,8 @@ export const ModuleQuizScreen = () => {
               </S.StartButton>
             )}
             {!hasNextModule && (
-              <S.StartButton onClick={() => router.push(`/course/${courseId}`)}>
-                Back to Course
+              <S.StartButton onClick={() => router.push('/')}>
+                Back to Courses
               </S.StartButton>
             )}
           </S.ActionButtons>
@@ -250,9 +312,14 @@ export const ModuleQuizScreen = () => {
       <S.Container>
         <S.Content>
           <S.TopBar>
-            <S.BackLink onClick={() => router.push(`/course/${courseId}`)}>
+            <S.BackLink onClick={() => router.push(`/course/${courseId}/lesson/${moduleIndex}/0`)}>
               <ArrowLeft size={14} /> Back to course
             </S.BackLink>
+            {DEV_MODE && (
+              <S.DevResetButton onClick={handleDevReset} disabled={resetQuiz.isPending}>
+                <Trash2 size={10} /> Reset Quiz
+              </S.DevResetButton>
+            )}
           </S.TopBar>
 
           <S.HeaderSection>
@@ -307,7 +374,7 @@ export const ModuleQuizScreen = () => {
     <S.Container>
       <S.Content>
         <S.TopBar>
-          <S.BackLink onClick={() => router.push(`/course/${courseId}`)}>
+          <S.BackLink onClick={() => router.push(`/course/${courseId}/lesson/${moduleIndex}/0`)}>
             <ArrowLeft size={14} /> Back to course
           </S.BackLink>
         </S.TopBar>
@@ -340,7 +407,7 @@ export const ModuleQuizScreen = () => {
         {isGenerating ? (
           <S.LoadingContainer>
             <S.Spinner />
-            <span>Generating quiz questions...</span>
+            <span>Creating quiz questions...</span>
           </S.LoadingContainer>
         ) : quizContent && !quizStarted ? (
           <>
@@ -358,7 +425,7 @@ export const ModuleQuizScreen = () => {
               Test your understanding across all {mod.lessons?.length ?? 0} lessons in this module.
             </S.DescriptionText>
             <S.StartButton onClick={handleGenerate} disabled={isGenerating}>
-              {quizProgress ? 'Generate New Quiz' : 'Start Quiz'}
+              {quizProgress ? 'Create New Quiz' : 'Start Quiz'}
             </S.StartButton>
           </>
         )}

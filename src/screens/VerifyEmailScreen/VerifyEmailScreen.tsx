@@ -2,8 +2,8 @@
 
 import Link from 'next/link';
 import { useRouter, useSearchParams } from 'next/navigation';
-import { useEffect, useRef, useState } from 'react';
 import { useSession } from 'next-auth/react';
+import { useEffect, useRef, useState } from 'react';
 import { verifyEmail } from '@/api/routes/auth';
 import * as S from '../LoginScreen/LoginScreen.styles';
 
@@ -26,7 +26,7 @@ export const VerifyEmailScreen = () => {
     const email = searchParams.get('email');
 
     if (!token || !email) {
-      setStatus('error');
+      setStatus('error'); // eslint-disable-line react-hooks/set-state-in-effect -- async verification flow
       setMessage('Invalid verification link.');
       return;
     }

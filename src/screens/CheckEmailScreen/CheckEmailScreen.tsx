@@ -33,16 +33,10 @@ export const CheckEmailScreen = () => {
       <h1 className="form__title">Check your email</h1>
 
       <p className="form__footer" style={{ opacity: 1 }}>
-        We&apos;ve sent a verification link to your email address. Click the link to verify your
-        account.
+        We&apos;ve sent a verification link to your email address. Click the link to verify your account.
       </p>
 
-      <S.SubmitBtn
-        type="button"
-        $loading={resending}
-        disabled={resending}
-        onClick={handleResend}
-      >
+      <S.SubmitBtn type="button" $loading={resending} disabled={resending} onClick={handleResend}>
         {resending ? 'Sending...' : 'Resend verification email'}
       </S.SubmitBtn>
 

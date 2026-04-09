@@ -13,6 +13,7 @@ import {
   submitQuizAttempt,
   getModuleQuizProgress,
   getReviewsDue,
+  resetModuleQuiz,
 } from '@/api/routes/course';
 import { QKeys } from '@/types';
 
@@ -52,12 +53,7 @@ export const useUpsertProgress = () => {
       lessonIndex: number;
       data: UpsertProgressBody;
     }) =>
-      upsertLessonProgress(
-        params.courseId,
-        params.moduleIndex,
-        params.lessonIndex,
-        params.data,
-      ),
+      upsertLessonProgress(params),
     onSuccess: (_data, variables) => {
       queryClient.invalidateQueries({
         queryKey: [QKeys.COURSE_PROGRESS, variables.courseId],
@@ -77,14 +73,14 @@ export const useUpsertProgress = () => {
 export const useModuleQuizContent = (courseId: string | null, moduleIndex: number | null) =>
   useQuery({
     queryKey: [QKeys.MODULE_QUIZ_CONTENT, courseId, moduleIndex],
-    queryFn: () => getModuleQuizContent(courseId!, moduleIndex!),
+    queryFn: () => getModuleQuizContent({ courseId: courseId!, moduleIndex: moduleIndex! }),
     enabled: !!courseId && moduleIndex !== null,
   });
 
 export const useModuleQuizProgress = (courseId: string | null, moduleIndex: number | null) =>
   useQuery({
     queryKey: [QKeys.MODULE_QUIZ_PROGRESS, courseId, moduleIndex],
-    queryFn: () => getModuleQuizProgress(courseId!, moduleIndex!),
+    queryFn: () => getModuleQuizProgress({ courseId: courseId!, moduleIndex: moduleIndex! }),
     enabled: !!courseId && moduleIndex !== null,
   });
 
@@ -93,7 +89,7 @@ export const useGenerateModuleQuiz = () => {
 
   return useMutation({
     mutationFn: (params: { courseId: string; moduleIndex: number }) =>
-      generateModuleQuiz(params.courseId, params.moduleIndex),
+      generateModuleQuiz(params),
     onSuccess: (_data, variables) => {
       queryClient.invalidateQueries({
         queryKey: [QKeys.MODULE_QUIZ_CONTENT, variables.courseId, variables.moduleIndex],
@@ -111,8 +107,31 @@ export const useSubmitQuizAttempt = () => {
       moduleIndex: number;
       responses: { questionId: string; selectedOption: number }[];
     }) =>
-      submitQuizAttempt(params.courseId, params.moduleIndex, params.responses),
+      submitQuizAttempt(params),
     onSuccess: (_data, variables) => {
+      queryClient.invalidateQueries({
+        queryKey: [QKeys.MODULE_QUIZ_PROGRESS, variables.courseId, variables.moduleIndex],
+      });
+      queryClient.invalidateQueries({
+        queryKey: [QKeys.COURSE_PROGRESS, variables.courseId],
+      });
+      queryClient.invalidateQueries({
+        queryKey: [QKeys.REVIEWS_DUE],
+      });
+    },
+  });
+};
+
+export const useResetModuleQuiz = () => {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: (params: { courseId: string; moduleIndex: number }) =>
+      resetModuleQuiz(params),
+    onSuccess: (_data, variables) => {
+      queryClient.invalidateQueries({
+        queryKey: [QKeys.MODULE_QUIZ_CONTENT, variables.courseId, variables.moduleIndex],
+      });
       queryClient.invalidateQueries({
         queryKey: [QKeys.MODULE_QUIZ_PROGRESS, variables.courseId, variables.moduleIndex],
       });

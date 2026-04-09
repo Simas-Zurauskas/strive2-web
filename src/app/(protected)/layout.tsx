@@ -1,7 +1,7 @@
 'use client';
 
-import { useAuth } from '@/hooks';
 import { Navbar, Footer } from '@/components';
+import { useAuth } from '@/hooks';
 
 export default function SignedInLayout({ children }: { children: React.ReactNode }) {
   const { isLoading } = useAuth();

@@ -2,7 +2,7 @@
 
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { useRouter, useSearchParams } from 'next/navigation';
-import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { useCallback, useEffect, useMemo, useState } from 'react';
 import { toast } from 'sonner';
 import {
   createCourse,
@@ -36,9 +36,14 @@ export const GenerateCourseScreen = () => {
   const searchParams = useSearchParams();
   const resumeCourseId = searchParams.get('courseId');
 
+  const [stableKey] = useState(() => resumeCourseId ?? 'new');
+
   const { data: resumeCourse, isLoading } = useCourse(resumeCourseId);
 
-  if (resumeCourseId && isLoading) {
+  // Only show loading for resume flow (user navigated with courseId in URL),
+  // not when courseId was set during new course creation (stableKey is 'new').
+  const isResumeFlow = stableKey !== 'new';
+  if (isResumeFlow && resumeCourseId && isLoading) {
     return (
       <S.Layout>
         <S.Container>
@@ -48,7 +53,7 @@ export const GenerateCourseScreen = () => {
     );
   }
 
-  return <GenerateCourseWizard key={resumeCourseId ?? 'new'} resumeCourse={resumeCourse ?? null} />;
+  return <GenerateCourseWizard key={stableKey} resumeCourse={resumeCourse ?? null} />;
 };
 
 // Inner wizard: receives initial values as props, no effects needed
@@ -141,7 +146,7 @@ const GenerateCourseWizard = ({ resumeCourse }: { resumeCourse: Course | null })
   });
 
   const updateCourseMutation = useMutation({
-    mutationFn: ({ id, data }: { id: string; data: Parameters<typeof updateCourse>[1] }) => updateCourse(id, data),
+    mutationFn: (params: Parameters<typeof updateCourse>[0]) => updateCourse(params),
     onError: () => toast.error(TOASTS.COURSE_SAVE_ERROR),
   });
 
@@ -222,9 +227,9 @@ const GenerateCourseWizard = ({ resumeCourse }: { resumeCourse: Course | null })
               type: 'clarify',
               onComplete: () => {
                 setGeneratedForGoal(goalValue);
-                setStep(2);
               },
             });
+            setStep(2);
           },
         });
       };

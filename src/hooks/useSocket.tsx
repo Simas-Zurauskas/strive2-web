@@ -1,7 +1,7 @@
 'use client';
 
-import { createContext, useContext, useEffect, useRef, useState } from 'react';
 import { useSession } from 'next-auth/react';
+import { createContext, useContext, useEffect, useRef, useState } from 'react';
 import { io, Socket } from 'socket.io-client';
 import { NEXT_PUBLIC_API_URL } from '@/conf/env';
 
@@ -41,7 +41,7 @@ export const SocketProvider = ({ children }: { children: React.ReactNode }) => {
     });
 
     socketRef.current = s;
-    setSocket(s);
+    setSocket(s); // eslint-disable-line react-hooks/set-state-in-effect -- setting state after resource creation
 
     return () => {
       s.disconnect();

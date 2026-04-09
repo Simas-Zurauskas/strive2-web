@@ -1,6 +1,7 @@
 'use client';
 
 import { useEffect, useState } from 'react';
+import Skeleton from 'react-loading-skeleton';
 import { CourseDepth, DepthPreviewsResponse } from '@/api/types';
 import { Button, Badge } from '@/components';
 import * as S from './DepthStep.styles';
@@ -85,12 +86,12 @@ export const DepthStep = ({
         ) : previewsLoading && !depthPreviews
           ? depthKeys.map((key) => (
               <S.SkeletonCard key={key}>
-                <S.SkeletonLine $width="40%" />
-                <S.SkeletonLine $width="85%" />
+                <Skeleton width="40%" height={16} borderRadius={4} />
+                <Skeleton width="85%" height={16} borderRadius={4} />
                 <S.SkeletonBullets>
-                  <S.SkeletonLine $width="75%" />
-                  <S.SkeletonLine $width="65%" />
-                  <S.SkeletonLine $width="80%" />
+                  <Skeleton width="75%" height={16} borderRadius={4} />
+                  <Skeleton width="65%" height={16} borderRadius={4} />
+                  <Skeleton width="80%" height={16} borderRadius={4} />
                 </S.SkeletonBullets>
               </S.SkeletonCard>
             ))

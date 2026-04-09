@@ -1,6 +1,7 @@
 import { paths } from '@/api/_generated';
 import { client, getAuthToken } from '@/api/client';
 import { NEXT_PUBLIC_API_URL } from '@/conf/env';
+import type { LessonBlock } from '@/api/types';
 
 // ── Course CRUD ─────────────────────────────────────────
 
@@ -36,11 +37,11 @@ export const getCourse = (id: string) => {
 type UpdateCourseBody = paths['/api/course/{id}']['patch']['requestBody']['content']['application/json'];
 type UpdateCourseResponse = paths['/api/course/{id}']['patch']['responses']['200']['content']['application/json'];
 
-export const updateCourse = (id: string, data: UpdateCourseBody) => {
+export const updateCourse = (params: { id: string; data: UpdateCourseBody }) => {
   return client<UpdateCourseResponse>({
-    url: `/course/${id}`,
+    url: `/course/${params.id}`,
     method: 'PATCH',
-    data,
+    data: params.data,
   }).then((res) => res.data.data);
 };
 
@@ -78,11 +79,11 @@ type RefineStructureBody =
 type RefineStructureResponse =
   paths['/api/course/{courseId}/refine-structure']['post']['responses']['202']['content']['application/json'];
 
-export const refineStructure = (courseId: string, params: RefineStructureBody) => {
+export const refineStructure = (params: { courseId: string; data: RefineStructureBody }) => {
   return client<RefineStructureResponse>({
-    url: `/course/${courseId}/refine-structure`,
+    url: `/course/${params.courseId}/refine-structure`,
     method: 'POST',
-    data: params,
+    data: params.data,
   }).then((res) => res.data.data);
 };
 
@@ -100,11 +101,15 @@ export const generateDepthPreviews = (courseId: string) => {
 
 // ── Lesson generation ──────────────────────────────────
 
-export const generateLesson = (courseId: string, params: { moduleIndex: number; lessonIndex: number }) => {
-  return client<{ data: { jobId: string } }>({
+type GenerateLessonResponse =
+  paths['/api/course/{courseId}/generate-lesson']['post']['responses']['202']['content']['application/json'];
+
+export const generateLesson = (params: { courseId: string; moduleIndex: number; lessonIndex: number }) => {
+  const { courseId, ...body } = params;
+  return client<GenerateLessonResponse>({
     url: `/course/${courseId}/generate-lesson`,
     method: 'POST',
-    data: params,
+    data: body,
   }).then((res) => res.data.data);
 };
 
@@ -125,10 +130,16 @@ export type LessonStreamEvent =
   | { type: 'error'; message: string };
 
 export const streamLesson = async (
-  courseId: string,
-  params: { moduleIndex: number; lessonIndex: number; includeImage?: boolean; includeLinks?: boolean },
-  onEvent: (event: LessonStreamEvent) => void,
+  params: {
+    courseId: string;
+    moduleIndex: number;
+    lessonIndex: number;
+    includeImage?: boolean;
+    includeLinks?: boolean;
+    onEvent: (event: LessonStreamEvent) => void;
+  },
 ): Promise<void> => {
+  const { courseId, onEvent, ...body } = params;
   const token = getAuthToken();
 
   const response = await fetch(`${NEXT_PUBLIC_API_URL}/api/course/${courseId}/stream-lesson`, {
@@ -137,7 +148,7 @@ export const streamLesson = async (
       'Content-Type': 'application/json',
       ...(token && { Authorization: `Bearer ${token}` }),
     },
-    body: JSON.stringify(params),
+    body: JSON.stringify(body),
   });
 
   if (!response.ok) {
@@ -186,17 +197,11 @@ export const streamLesson = async (
 
 // ── Code execution ─────────────────────────────────────
 
-export interface ExecuteCodeResponse {
-  stdout: string | null;
-  stderr: string | null;
-  compile_output: string | null;
-  status: string;
-  time: string | null;
-  memory: number | null;
-}
+type ExecuteCodeResponse =
+  paths['/api/course/execute-code']['post']['responses']['200']['content']['application/json'];
 
 export const executeCode = (params: { code: string; language: string; stdin?: string }) => {
-  return client<{ data: ExecuteCodeResponse }>({
+  return client<ExecuteCodeResponse>({
     url: '/course/execute-code',
     method: 'POST',
     data: params,
@@ -205,25 +210,14 @@ export const executeCode = (params: { code: string; language: string; stdin?: st
 
 // ── Lesson content ─────────────────────────────────────
 
-export interface LessonBlock {
-  id: string;
-  type: string;
-  content: string;
-  metadata: Record<string, unknown> | null;
-  order: number;
-}
+type LessonContentResponse =
+  paths['/api/course/{courseId}/lesson-content/{moduleIndex}/{lessonIndex}']['get']['responses']['200']['content']['application/json'];
 
-export interface LessonContentResponse {
-  blocks: LessonBlock[];
-  heroImageUrl: string | null;
-  includeHeroImage?: boolean;
-  summary: string | null;
-  version: number;
-}
+export type { LessonContentResponse };
 
-export const getLessonContent = (courseId: string, moduleIndex: number, lessonIndex: number): Promise<LessonContentResponse | null> => {
-  return client<{ data: LessonContentResponse }>({
-    url: `/course/${courseId}/lesson-content/${moduleIndex}/${lessonIndex}`,
+export const getLessonContent = (params: { courseId: string; moduleIndex: number; lessonIndex: number }): Promise<LessonContentResponse['data'] | null> => {
+  return client<LessonContentResponse>({
+    url: `/course/${params.courseId}/lesson-content/${params.moduleIndex}/${params.lessonIndex}`,
     method: 'GET',
   })
     .then((res) => res.data.data)
@@ -261,131 +255,68 @@ export const getJobStatus = (jobId: string) => {
 
 // ── Progress tracking ──────────────────────────────────
 
-export interface QuizResponseInput {
-  blockId: string;
-  selectedOption: number;
-  correct: boolean;
-}
+export type UpsertProgressBody = NonNullable<
+  paths['/api/course/{courseId}/progress/{moduleIndex}/{lessonIndex}']['post']['requestBody']
+>['content']['application/json'];
 
-export interface ExerciseAttemptInput {
-  blockId: string;
-  code: string;
-  passed: boolean;
-}
+type UpsertProgressResponse =
+  paths['/api/course/{courseId}/progress/{moduleIndex}/{lessonIndex}']['post']['responses']['200']['content']['application/json'];
 
-export interface UpsertProgressBody {
-  status?: 'not_started' | 'in_progress' | 'completed';
-  notes?: string | null;
-  bookmarked?: boolean;
-  timeSpentDelta?: number;
-  quizResponse?: QuizResponseInput;
-  exerciseAttempt?: ExerciseAttemptInput;
-}
+export type CourseProgressResponse =
+  paths['/api/course/{courseId}/progress']['get']['responses']['200']['content']['application/json']['data'];
 
-export interface QuizResponseData {
-  blockId: string;
-  selectedOption: number;
-  correct: boolean;
-  answeredAt: string;
-}
+export type ContinueLearningResponse = NonNullable<
+  paths['/api/course/continue']['get']['responses']['200']['content']['application/json']['data']
+>;
 
-export interface ExerciseAttemptData {
-  blockId: string;
-  code: string;
-  passed: boolean;
-  attemptedAt: string;
-}
-
-export interface LessonProgress {
-  _id: string;
-  userId: string;
-  courseId: string;
-  moduleIndex: number;
-  lessonIndex: number;
-  status: 'not_started' | 'in_progress' | 'completed';
-  completedAt: string | null;
-  lastAccessedAt: string;
-  timeSpentSeconds: number;
-  quizResponses: QuizResponseData[];
-  exerciseAttempts: ExerciseAttemptData[];
-  notes: string | null;
-  bookmarked: boolean;
-}
-
-export interface CourseQuizProgressItem {
-  moduleIndex: number;
-  bestScore: number;
-  bestTier: 'needs_review' | 'passed' | 'mastered' | null;
-  attemptCount: number;
-  nextReviewAt: string | null;
-  reviewDue: boolean;
-}
-
-export interface CourseProgressResponse {
-  lessons: LessonProgress[];
-  quizzes: CourseQuizProgressItem[];
-  stats: {
-    total: number;
-    completed: number;
-    inProgress: number;
-    percentage: number;
-  };
-}
-
-export interface ContinueLearningResponse {
-  courseId: string;
-  courseName: string;
-  courseGoal: string;
-  moduleName: string;
-  lessonName: string;
-  moduleIndex: number;
-  lessonIndex: number;
-  courseProgress: { total: number; completed: number; percentage: number };
-}
-
-export interface ProgressSummaryItem {
-  courseId: string;
-  total: number;
-  completed: number;
-  percentage: number;
-}
+export type ProgressSummaryItem =
+  paths['/api/course/progress-summary']['get']['responses']['200']['content']['application/json']['data'][number];
 
 export const upsertLessonProgress = (
-  courseId: string,
-  moduleIndex: number,
-  lessonIndex: number,
-  data: UpsertProgressBody,
+  params: { courseId: string; moduleIndex: number; lessonIndex: number; data: UpsertProgressBody },
 ) => {
-  return client<{ data: LessonProgress }>({
-    url: `/course/${courseId}/progress/${moduleIndex}/${lessonIndex}`,
+  return client<UpsertProgressResponse>({
+    url: `/course/${params.courseId}/progress/${params.moduleIndex}/${params.lessonIndex}`,
     method: 'POST',
-    data,
+    data: params.data,
   }).then((res) => res.data.data);
 };
 
+type CourseProgressFullResponse =
+  paths['/api/course/{courseId}/progress']['get']['responses']['200']['content']['application/json'];
+
 export const getCourseProgress = (courseId: string) => {
-  return client<{ data: CourseProgressResponse }>({
+  return client<CourseProgressFullResponse>({
     url: `/course/${courseId}/progress`,
     method: 'GET',
   }).then((res) => res.data.data);
 };
 
+type ContinueLearningFullResponse =
+  paths['/api/course/continue']['get']['responses']['200']['content']['application/json'];
+
 export const getContinueLearning = () => {
-  return client<{ data: ContinueLearningResponse | null }>({
+  return client<ContinueLearningFullResponse>({
     url: '/course/continue',
     method: 'GET',
   }).then((res) => res.data.data);
 };
 
+type GeneratedLessonsResponse =
+  paths['/api/course/{courseId}/generated-lessons']['get']['responses']['200']['content']['application/json'];
+
 export const getGeneratedLessons = (courseId: string) => {
-  return client<{ data: { moduleIndex: number; lessonIndex: number }[] }>({
+  return client<GeneratedLessonsResponse>({
     url: `/course/${courseId}/generated-lessons`,
     method: 'GET',
   }).then((res) => res.data.data);
 };
 
+type ProgressSummaryResponse =
+  paths['/api/course/progress-summary']['get']['responses']['200']['content']['application/json'];
+
 export const getProgressSummary = () => {
-  return client<{ data: ProgressSummaryItem[] }>({
+  return client<ProgressSummaryResponse>({
     url: '/course/progress-summary',
     method: 'GET',
   }).then((res) => res.data.data);
@@ -393,71 +324,22 @@ export const getProgressSummary = () => {
 
 // ── Module quizzes ────────────────────────────────────────
 
-export interface ModuleQuizQuestion {
-  id: string;
-  question: string;
-  options: string[];
-  sourceLessons: number[];
-  isInterleaved: boolean;
-  interleavedModuleIndex?: number;
-}
+type GenerateModuleQuizResponse =
+  paths['/api/course/{courseId}/module-quiz/{moduleIndex}/generate']['post']['responses']['200']['content']['application/json'];
 
-export interface ModuleQuizContent {
-  courseId: string;
-  moduleIndex: number;
-  questions: ModuleQuizQuestion[];
-  version: number;
-}
-
-export interface QuizAttemptQuestionResult {
-  id: string;
-  question: string;
-  options: string[];
-  correctIndex: number;
-  explanation: string;
-  sourceLessons: number[];
-  isInterleaved: boolean;
-  interleavedModuleIndex?: number;
-  selectedOption: number | null;
-  correct: boolean;
-}
-
-export interface QuizAttemptResult {
-  attemptNumber: number;
-  score: number;
-  masteryTier: 'needs_review' | 'passed' | 'mastered';
-  completedAt: string;
-  questions: QuizAttemptQuestionResult[];
-  nextReviewAt: string;
-  reviewIntervalDays: number;
-}
-
-export interface ModuleQuizProgressResponse {
-  _id: string;
-  userId: string;
-  courseId: string;
-  moduleIndex: number;
-  attempts: {
-    attemptNumber: number;
-    score: number;
-    masteryTier: string;
-    completedAt: string;
-    quizVersion: number;
-  }[];
-  bestScore: number;
-  bestTier: 'needs_review' | 'passed' | 'mastered' | null;
-}
-
-export const generateModuleQuiz = (courseId: string, moduleIndex: number) => {
-  return client<{ data: { jobId: string } }>({
-    url: `/course/${courseId}/module-quiz/${moduleIndex}/generate`,
+export const generateModuleQuiz = (params: { courseId: string; moduleIndex: number }) => {
+  return client<GenerateModuleQuizResponse>({
+    url: `/course/${params.courseId}/module-quiz/${params.moduleIndex}/generate`,
     method: 'POST',
   }).then((res) => res.data.data);
 };
 
-export const getModuleQuizContent = (courseId: string, moduleIndex: number): Promise<ModuleQuizContent | null> => {
-  return client<{ data: ModuleQuizContent }>({
-    url: `/course/${courseId}/module-quiz/${moduleIndex}`,
+type GetModuleQuizContentResponse =
+  paths['/api/course/{courseId}/module-quiz/{moduleIndex}']['get']['responses']['200']['content']['application/json'];
+
+export const getModuleQuizContent = (params: { courseId: string; moduleIndex: number }): Promise<GetModuleQuizContentResponse['data'] | null> => {
+  return client<GetModuleQuizContentResponse>({
+    url: `/course/${params.courseId}/module-quiz/${params.moduleIndex}`,
     method: 'GET',
   })
     .then((res) => res.data.data)
@@ -467,62 +349,59 @@ export const getModuleQuizContent = (courseId: string, moduleIndex: number): Pro
     });
 };
 
+type SubmitQuizAttemptResponse =
+  paths['/api/course/{courseId}/module-quiz/{moduleIndex}/submit']['post']['responses']['200']['content']['application/json'];
+
 export const submitQuizAttempt = (
-  courseId: string,
-  moduleIndex: number,
-  responses: { questionId: string; selectedOption: number }[],
+  params: { courseId: string; moduleIndex: number; responses: { questionId: string; selectedOption: number }[] },
 ) => {
-  return client<{ data: QuizAttemptResult }>({
-    url: `/course/${courseId}/module-quiz/${moduleIndex}/submit`,
+  return client<SubmitQuizAttemptResponse>({
+    url: `/course/${params.courseId}/module-quiz/${params.moduleIndex}/submit`,
     method: 'POST',
-    data: { responses },
+    data: { responses: params.responses },
   }).then((res) => res.data.data);
 };
 
-export const getModuleQuizProgress = (courseId: string, moduleIndex: number) => {
-  return client<{ data: ModuleQuizProgressResponse | null }>({
-    url: `/course/${courseId}/module-quiz/${moduleIndex}/progress`,
+type GetModuleQuizProgressResponse =
+  paths['/api/course/{courseId}/module-quiz/{moduleIndex}/progress']['get']['responses']['200']['content']['application/json'];
+
+export const getModuleQuizProgress = (params: { courseId: string; moduleIndex: number }) => {
+  return client<GetModuleQuizProgressResponse>({
+    url: `/course/${params.courseId}/module-quiz/${params.moduleIndex}/progress`,
     method: 'GET',
   }).then((res) => res.data.data);
 };
 
 // ── Edit impact assessment ──────────────────────────────
 
-export interface EditImpactResponse {
-  hasContent: boolean;
-  hasProgress: boolean;
-  completedLessons: number;
-  inProgressLessons: number;
-  totalNotes: number;
-  totalBookmarks: number;
-  quizAttempts: number;
-  modulesWithMastery: number;
-  scheduledReviews: number;
-  totalTimeSpentMinutes: number;
-}
+type EditImpactFullResponse =
+  paths['/api/course/{courseId}/edit-impact']['get']['responses']['200']['content']['application/json'];
+
+export type EditImpactResponse = EditImpactFullResponse['data'];
 
 export const getEditImpact = (courseId: string) => {
-  return client<{ data: EditImpactResponse }>({
+  return client<EditImpactFullResponse>({
     url: `/course/${courseId}/edit-impact`,
     method: 'GET',
   }).then((res) => res.data.data);
 };
 
+// ── Dev: reset module quiz ───────────────────────────────
+
+export const resetModuleQuiz = (params: { courseId: string; moduleIndex: number }) => {
+  return client<{ data: { deleted: { quizContent: boolean; quizProgress: boolean } } }>({
+    url: `/course/${params.courseId}/module-quiz/${params.moduleIndex}/reset`,
+    method: 'DELETE',
+  }).then((res) => res.data.data);
+};
+
 // ── Reviews due ──────────────────────────────────────────
 
-export interface ReviewDueItem {
-  courseId: string;
-  courseName: string;
-  moduleIndex: number;
-  moduleName: string;
-  bestScore: number;
-  bestTier: 'needs_review' | 'passed' | 'mastered';
-  nextReviewAt: string | null;
-  reviewReason: 'time' | 'progression';
-}
+type ReviewsDueResponse =
+  paths['/api/course/reviews-due']['get']['responses']['200']['content']['application/json'];
 
 export const getReviewsDue = () => {
-  return client<{ data: ReviewDueItem[] }>({
+  return client<ReviewsDueResponse>({
     url: '/course/reviews-due',
     method: 'GET',
   }).then((res) => res.data.data);

@@ -1,4 +1,5 @@
 import styled, { keyframes } from 'styled-components';
+import { thinScrollbar } from '@/theme';
 
 const fadeIn = keyframes`
   from { opacity: 0; transform: translateY(4px); }
@@ -24,6 +25,10 @@ export const ChatScrollArea = styled.div`
   position: relative;
   overflow: hidden;
   min-height: 0;
+
+  > div {
+    ${thinScrollbar}
+  }
 `;
 
 export const MessagesArea = styled.div`

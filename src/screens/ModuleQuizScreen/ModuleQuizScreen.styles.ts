@@ -1,4 +1,5 @@
 import styled, { keyframes } from 'styled-components';
+import type { QuizMasteryTier } from '@/api/types';
 
 const fadeIn = keyframes`
   from { opacity: 0; }
@@ -36,8 +37,39 @@ export const Content = styled.div`
 export const TopBar = styled.div`
   display: flex;
   align-items: center;
+  justify-content: space-between;
   gap: 1rem;
   min-height: 1.5rem;
+`;
+
+export const DevResetButton = styled.button`
+  display: inline-flex;
+  align-items: center;
+  gap: 0.25rem;
+  padding: 0.25rem 0.5rem;
+  background: none;
+  border: 1px dashed ${(p) => p.theme.colors.border};
+  border-radius: 4px;
+  font-size: 0.6875rem;
+  font-family: inherit;
+  color: ${(p) => p.theme.colors.muted};
+  cursor: pointer;
+  opacity: 0.5;
+  transition:
+    opacity 0.15s,
+    color 0.15s,
+    border-color 0.15s;
+
+  &:hover {
+    opacity: 1;
+    color: #e55;
+    border-color: #e55;
+  }
+
+  &:disabled {
+    opacity: 0.3;
+    cursor: not-allowed;
+  }
 `;
 
 export const BackLink = styled.button`
@@ -384,7 +416,7 @@ export const ScoreDisplay = styled.div`
   }
 `;
 
-export const MasteryBadge = styled.span<{ $tier: 'needs_review' | 'passed' | 'mastered' }>`
+export const MasteryBadge = styled.span<{ $tier: QuizMasteryTier }>`
   display: inline-block;
   padding: 0.25rem 0.75rem;
   border-radius: 9999px;

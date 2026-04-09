@@ -4,8 +4,8 @@ import { useQueryClient } from '@tanstack/react-query';
 import { createContext, useCallback, useContext, useEffect, useRef, useState } from 'react';
 import { toast } from 'sonner';
 import { getJobStatus } from '@/api/routes/course';
-import { TOASTS, toastMessage } from '@/constants/toasts';
 import { Course } from '@/api/types';
+import { TOASTS, toastMessage } from '@/constants/toasts';
 import { QKeys } from '@/types';
 import { useSocket } from './useSocket';
 
@@ -43,14 +43,16 @@ export const useJobManager = () => {
   return ctx;
 };
 
+const JOB_TIMEOUT_MS = 5 * 60 * 1000; // 5 minutes
+
 export const JobManagerProvider = ({ children }: { children: React.ReactNode }) => {
   const queryClient = useQueryClient();
   const { socket } = useSocket();
-  const callbacksRef = useRef<Map<string, { callback: () => void; courseId: string; timer: ReturnType<typeof setTimeout> }>>(new Map());
+  const callbacksRef = useRef<
+    Map<string, { callback: () => void; courseId: string; timer: ReturnType<typeof setTimeout> }>
+  >(new Map());
   // Local set for instant reactivity (before query cache updates with activeJobId)
   const [activeCourseIds, setActiveCourseIds] = useState<Set<string>>(new Set());
-
-  const JOB_TIMEOUT_MS = 5 * 60 * 1000; // 5 minutes
 
   // Clean up a tracked job entry
   const cleanupJob = useCallback((jobId: string) => {
@@ -68,32 +70,35 @@ export const JobManagerProvider = ({ children }: { children: React.ReactNode }) 
 
   // trackJob: used by wizard flows (clarify, generate_structure) that need onComplete callbacks.
   // Also provides instant local tracking before the query cache updates.
-  const trackJob = useCallback((job: TrackJobParams) => {
-    console.log('[JobManager] Tracking job:', job.jobId, 'type:', job.type, 'courseId:', job.courseId);
+  const trackJob = useCallback(
+    (job: TrackJobParams) => {
+      console.log('[JobManager] Tracking job:', job.jobId, 'type:', job.type, 'courseId:', job.courseId);
 
-    // Clear any existing entry for this job
-    const existing = callbacksRef.current.get(job.jobId);
-    if (existing) clearTimeout(existing.timer);
+      // Clear any existing entry for this job
+      const existing = callbacksRef.current.get(job.jobId);
+      if (existing) clearTimeout(existing.timer);
 
-    // Auto-cleanup after timeout to prevent stuck state
-    const timer = setTimeout(() => {
-      console.warn('[JobManager] Job timed out on client:', job.jobId);
-      toast.error(TOASTS.JOB_TIMEOUT);
-      callbacksRef.current.delete(job.jobId);
-      setActiveCourseIds((prev) => {
-        const next = new Set(prev);
-        next.delete(job.courseId);
-        return next;
-      });
-      queryClient.invalidateQueries({ queryKey: [QKeys.COURSE, job.courseId] });
-      queryClient.invalidateQueries({ queryKey: [QKeys.COURSES] });
-    }, JOB_TIMEOUT_MS);
+      // Auto-cleanup after timeout to prevent stuck state
+      const timer = setTimeout(() => {
+        console.warn('[JobManager] Job timed out on client:', job.jobId);
+        toast.error(TOASTS.JOB_TIMEOUT);
+        callbacksRef.current.delete(job.jobId);
+        setActiveCourseIds((prev) => {
+          const next = new Set(prev);
+          next.delete(job.courseId);
+          return next;
+        });
+        queryClient.invalidateQueries({ queryKey: [QKeys.COURSE, job.courseId] });
+        queryClient.invalidateQueries({ queryKey: [QKeys.COURSES] });
+      }, JOB_TIMEOUT_MS);
 
-    if (job.onComplete) {
-      callbacksRef.current.set(job.jobId, { callback: job.onComplete, courseId: job.courseId, timer });
-    }
-    setActiveCourseIds((prev) => new Set(prev).add(job.courseId));
-  }, [queryClient]);
+      if (job.onComplete) {
+        callbacksRef.current.set(job.jobId, { callback: job.onComplete, courseId: job.courseId, timer });
+      }
+      setActiveCourseIds((prev) => new Set(prev).add(job.courseId));
+    },
+    [queryClient],
+  );
 
   // Check if a job is running for a course. Uses two sources:
   // 1. Local activeCourseIds — instant, covers gap between job submit and query cache update
@@ -123,19 +128,22 @@ export const JobManagerProvider = ({ children }: { children: React.ReactNode }) 
     const handleStatus = (event: JobStatusEvent) => {
       console.log('[JobManager] Job status (WS):', event.jobId, event.status);
 
-      if (event.status === 'completed') {
-        toast.success(TOASTS.GENERATION_COMPLETE);
-      } else if (event.status === 'failed') {
-        toast.error(toastMessage(event.error, TOASTS.GENERATION_FAILED_RETRY));
-      }
-
       // Fire onComplete callback only on success (wizard flows) and clean up timer
       const entry = callbacksRef.current.get(event.jobId);
-      if (entry) {
-        clearTimeout(entry.timer);
-        if (event.status === 'completed') entry.callback();
-        callbacksRef.current.delete(event.jobId);
+
+      // Suppress generic success toast when a tracked callback exists (the caller handles its own UX)
+      if (event.status === 'completed') {
+        if (entry) {
+          clearTimeout(entry.timer);
+          entry.callback();
+        } else {
+          toast.success(TOASTS.GENERATION_COMPLETE);
+        }
+      } else if (event.status === 'failed') {
+        if (entry) clearTimeout(entry.timer);
+        toast.error(toastMessage(event.error, TOASTS.GENERATION_FAILED_RETRY));
       }
+      if (entry) callbacksRef.current.delete(event.jobId);
 
       // Always remove from active set — cleanupJob only handles jobs with onComplete entries
       setActiveCourseIds((prev) => {
@@ -154,9 +162,14 @@ export const JobManagerProvider = ({ children }: { children: React.ReactNode }) 
       queryClient.invalidateQueries({ queryKey: [QKeys.COURSE, event.courseId] });
       queryClient.invalidateQueries({ queryKey: [QKeys.COURSES] });
 
-      // Invalidate lesson content when lesson generation completes (covers page-reload case)
-      if (event.type === 'generate_lesson' && event.status === 'completed') {
-        queryClient.invalidateQueries({ queryKey: [QKeys.LESSON_CONTENT] });
+      // Invalidate content caches when specific job types complete
+      if (event.status === 'completed') {
+        if (event.type === 'generate_lesson') {
+          queryClient.invalidateQueries({ queryKey: [QKeys.LESSON_CONTENT] });
+        }
+        if (event.type === 'generate_module_quiz') {
+          queryClient.invalidateQueries({ queryKey: [QKeys.MODULE_QUIZ_CONTENT] });
+        }
       }
     };
 
@@ -170,7 +183,9 @@ export const JobManagerProvider = ({ children }: { children: React.ReactNode }) 
 
   // Stable ref for reconnect handler to avoid re-registering on every activeCourseIds change
   const activeCourseIdsRef = useRef(activeCourseIds);
-  activeCourseIdsRef.current = activeCourseIds;
+  useEffect(() => {
+    activeCourseIdsRef.current = activeCourseIds;
+  }, [activeCourseIds]);
 
   // On socket reconnect, reconcile local tracking with server state
   useEffect(() => {

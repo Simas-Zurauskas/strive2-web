@@ -1,4 +1,4 @@
-import styled, { keyframes, css } from 'styled-components';
+import styled from 'styled-components';
 
 export const Container = styled.div`
   display: flex;
@@ -146,17 +146,6 @@ export const BulletItem = styled.li`
 
 // ── Skeleton loading ────────────────────────────────────
 
-const pulse = keyframes`
-  0%, 100% { opacity: 0.4; }
-  50% { opacity: 0.7; }
-`;
-
-const skeletonBase = css`
-  background: ${(p) => p.theme.colors.border};
-  border-radius: 4px;
-  animation: ${pulse} 1.8s ease-in-out infinite;
-`;
-
 export const SkeletonCard = styled.div`
   background: ${(p) => p.theme.colors.surface};
   border: 1px solid ${(p) => p.theme.colors.surfaceBorder};
@@ -165,12 +154,6 @@ export const SkeletonCard = styled.div`
   display: flex;
   flex-direction: column;
   gap: 1rem;
-`;
-
-export const SkeletonLine = styled.div<{ $width?: string }>`
-  ${skeletonBase}
-  height: 1rem;
-  width: ${(p) => p.$width ?? '100%'};
 `;
 
 export const SkeletonBullets = styled.div`

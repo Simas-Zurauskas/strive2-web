@@ -637,10 +637,8 @@ export interface paths {
                     "application/json": {
                         goal?: string;
                         answers?: Record<string, never>;
-                        /** @enum {string} */
-                        depth?: "overview" | "comprehensive" | "deep_dive";
-                        /** @enum {string} */
-                        status?: "creating" | "ready" | "archived";
+                        depth?: components["schemas"]["CourseDepth"];
+                        status?: components["schemas"]["CourseStatus"];
                     };
                 };
             };
@@ -700,12 +698,12 @@ export interface paths {
                     content: {
                         "application/json": {
                             data: {
-                                stdout?: string | null;
-                                stderr?: string | null;
-                                compile_output?: string | null;
-                                status?: string;
-                                time?: string | null;
-                                memory?: number | null;
+                                stdout: string | null;
+                                stderr: string | null;
+                                compile_output: string | null;
+                                status: string;
+                                time: string | null;
+                                memory: number | null;
                             };
                         };
                     };
@@ -961,14 +959,14 @@ export interface paths {
                     content: {
                         "application/json": {
                             data: {
-                                courseId?: string;
-                                courseName?: string;
-                                courseGoal?: string;
-                                moduleName?: string;
-                                lessonName?: string;
-                                moduleIndex?: number;
-                                lessonIndex?: number;
-                                courseProgress?: components["schemas"]["CourseProgressStats"];
+                                courseId: string;
+                                courseName: string;
+                                courseGoal: string;
+                                moduleName: string;
+                                lessonName: string;
+                                moduleIndex: number;
+                                lessonIndex: number;
+                                courseProgress: components["schemas"]["CourseProgressStats"];
                             } | null;
                         };
                     };
@@ -1010,6 +1008,7 @@ export interface paths {
                         "application/json": {
                             data: {
                                 lessons: components["schemas"]["UserLessonProgress"][];
+                                quizzes: components["schemas"]["CourseQuizProgressItem"][];
                                 stats: components["schemas"]["CourseProgressStats"];
                             };
                         };
@@ -1230,7 +1229,7 @@ export interface paths {
                     };
                     content: {
                         "application/json": {
-                            data: Record<string, never>;
+                            data: components["schemas"]["ModuleQuizContent"];
                         };
                     };
                 };
@@ -1270,7 +1269,7 @@ export interface paths {
                     };
                     content: {
                         "application/json": {
-                            data: Record<string, never> | null;
+                            data: components["schemas"]["UserModuleQuizProgress"] | null;
                         };
                     };
                 };
@@ -1312,6 +1311,8 @@ export interface paths {
                                 total: number;
                                 completed: number;
                                 percentage: number;
+                                lastModuleIndex: number | null;
+                                lastLessonIndex: number | null;
                             }[];
                         };
                     };
@@ -1349,7 +1350,7 @@ export interface paths {
                     };
                     content: {
                         "application/json": {
-                            data: unknown[];
+                            data: components["schemas"]["ReviewDueItem"][];
                         };
                     };
                 };
@@ -1492,7 +1493,7 @@ export interface paths {
                     };
                     content: {
                         "application/json": {
-                            data: Record<string, never>;
+                            data: components["schemas"]["QuizAttemptResult"];
                         };
                     };
                 };
@@ -1528,8 +1529,7 @@ export interface paths {
             requestBody?: {
                 content: {
                     "application/json": {
-                        /** @enum {string} */
-                        status?: "not_started" | "in_progress" | "completed";
+                        status?: components["schemas"]["LessonProgressStatus"];
                         notes?: string | null;
                         bookmarked?: boolean;
                         /** @description Seconds to add to cumulative time */
@@ -1562,14 +1562,34 @@ export interface paths {
 export type webhooks = Record<string, never>;
 export interface components {
     schemas: {
+        /** @enum {string} */
+        ErrorCode: "CUSTOM_ERROR" | "EMAIL_NOT_VERIFIED" | "EMAIL_ALREADY_VERIFIED" | "EMAIL_VERIFICATION_EXPIRED" | "EMAIL_VERIFICATION_INVALID";
+        /** @enum {string} */
+        AuthProviderType: "GOOGLE" | "CREDENTIALS";
+        /** @enum {string} */
+        QuestionType: "multiple_choice" | "multiple_select" | "text";
+        /** @enum {string} */
+        CourseDepth: "overview" | "comprehensive" | "deep_dive";
+        /** @enum {string} */
+        CourseStatus: "creating" | "ready" | "archived";
+        /** @enum {string} */
+        JobStatusEnum: "pending" | "processing" | "completed" | "failed";
+        /** @enum {string} */
+        JobType: "clarify" | "generate_structure" | "refine_structure" | "generate_lesson" | "generate_depth_previews" | "generate_module_quiz";
+        /** @enum {string} */
+        LessonProgressStatus: "not_started" | "in_progress" | "completed";
+        /** @enum {string} */
+        QuizMasteryTier: "needs_review" | "passed" | "mastered";
+        /** @enum {string} */
+        BlockType: "intro" | "section" | "code" | "mermaid" | "callout" | "quiz" | "exercise" | "summary" | "links" | "image";
+        /** @enum {string} */
+        ReviewReason: "time" | "progression";
         ApiError: {
             message: string;
-            /** @enum {string} */
-            errorCode?: "CUSTOM_ERROR" | "EMAIL_NOT_VERIFIED" | "EMAIL_ALREADY_VERIFIED" | "EMAIL_VERIFICATION_EXPIRED" | "EMAIL_VERIFICATION_INVALID";
+            errorCode?: components["schemas"]["ErrorCode"];
         };
         AuthProvider: {
-            /** @enum {string} */
-            provider: "GOOGLE" | "CREDENTIALS";
+            provider: components["schemas"]["AuthProviderType"];
             providerId?: string;
         };
         AuthorisedUser: {
@@ -1587,8 +1607,7 @@ export interface components {
         ClarifyQuestion: {
             id: string;
             question: string;
-            /** @enum {string} */
-            type: "multiple_choice" | "multiple_select" | "text";
+            type: components["schemas"]["QuestionType"];
             options?: string[];
         };
         ClarifyResponse: {
@@ -1627,24 +1646,25 @@ export interface components {
             overview: components["schemas"]["DepthPreview"];
             comprehensive: components["schemas"]["DepthPreview"];
             deep_dive: components["schemas"]["DepthPreview"];
-            /** @enum {string} */
-            recommended: "overview" | "comprehensive" | "deep_dive";
+            recommended: components["schemas"]["CourseDepth"];
             recommendationReason: string;
         };
         JobStatus: {
-            /** @enum {string} */
-            status: "pending" | "processing" | "completed" | "failed";
-            /** @enum {string} */
-            type: "clarify" | "generate_structure" | "refine_structure" | "generate_lesson" | "generate_depth_previews" | "generate_module_quiz";
+            status: components["schemas"]["JobStatusEnum"];
+            type: components["schemas"]["JobType"];
             courseId: string;
             error?: string;
+            metadata?: {
+                [key: string]: unknown;
+            } | null;
         };
         LessonBlock: {
             id: string;
-            /** @enum {string} */
-            type: "intro" | "section" | "code" | "mermaid" | "callout" | "quiz" | "exercise" | "summary" | "links" | "image";
+            type: components["schemas"]["BlockType"];
             content: string;
-            metadata?: Record<string, never> | null;
+            metadata: {
+                [key: string]: unknown;
+            } | null;
             order: number;
         };
         LessonContent: {
@@ -1654,6 +1674,7 @@ export interface components {
             lessonIndex: number;
             blocks: components["schemas"]["LessonBlock"][];
             heroImageUrl?: string | null;
+            includeHeroImage?: boolean;
             audioUrl?: string | null;
             summary?: string | null;
             version: number;
@@ -1682,17 +1703,16 @@ export interface components {
             courseId: string;
             moduleIndex: number;
             lessonIndex: number;
-            /** @enum {string} */
-            status: "not_started" | "in_progress" | "completed";
+            status: components["schemas"]["LessonProgressStatus"];
             /** Format: date-time */
             completedAt?: string | null;
             /** Format: date-time */
-            lastAccessedAt?: string;
-            timeSpentSeconds?: number;
-            quizResponses?: components["schemas"]["QuizResponse"][];
-            exerciseAttempts?: components["schemas"]["ExerciseAttempt"][];
+            lastAccessedAt: string;
+            timeSpentSeconds: number;
+            quizResponses: components["schemas"]["QuizResponse"][];
+            exerciseAttempts: components["schemas"]["ExerciseAttempt"][];
             notes?: string | null;
-            bookmarked?: boolean;
+            bookmarked: boolean;
             /** Format: date-time */
             createdAt?: string;
             /** Format: date-time */
@@ -1704,17 +1724,93 @@ export interface components {
             inProgress?: number;
             percentage: number;
         };
+        ModuleQuizQuestion: {
+            id: string;
+            question: string;
+            options: string[];
+            sourceLessons: number[];
+            isInterleaved: boolean;
+            interleavedModuleIndex?: number;
+        };
+        ModuleQuizContent: {
+            courseId: string;
+            moduleIndex: number;
+            questions: components["schemas"]["ModuleQuizQuestion"][];
+            version: number;
+        };
+        QuizAttemptQuestionResult: {
+            id: string;
+            question: string;
+            options: string[];
+            correctIndex: number;
+            explanation: string;
+            sourceLessons: number[];
+            isInterleaved: boolean;
+            interleavedModuleIndex?: number;
+            selectedOption: number | null;
+            correct: boolean;
+        };
+        QuizAttemptResult: {
+            attemptNumber: number;
+            score: number;
+            masteryTier: components["schemas"]["QuizMasteryTier"];
+            /** Format: date-time */
+            completedAt: string;
+            questions: components["schemas"]["QuizAttemptQuestionResult"][];
+            /** Format: date-time */
+            nextReviewAt: string;
+            reviewIntervalDays: number;
+        };
+        QuizAttempt: {
+            attemptNumber: number;
+            score: number;
+            masteryTier: components["schemas"]["QuizMasteryTier"];
+            /** Format: date-time */
+            completedAt: string;
+            quizVersion: number;
+        };
+        UserModuleQuizProgress: {
+            _id: string;
+            userId: string;
+            courseId: string;
+            moduleIndex: number;
+            attempts: components["schemas"]["QuizAttempt"][];
+            bestScore: number;
+            bestTier: components["schemas"]["QuizMasteryTier"] | null;
+            reviewIntervalDays?: number;
+            consecutiveSuccesses?: number;
+            /** Format: date-time */
+            nextReviewAt?: string | null;
+        };
+        CourseQuizProgressItem: {
+            moduleIndex: number;
+            bestScore: number;
+            bestTier: components["schemas"]["QuizMasteryTier"] | null;
+            attemptCount: number;
+            /** Format: date-time */
+            nextReviewAt: string | null;
+            reviewDue: boolean;
+        };
+        ReviewDueItem: {
+            courseId: string;
+            courseName: string;
+            moduleIndex: number;
+            moduleName: string;
+            bestScore: number;
+            bestTier: components["schemas"]["QuizMasteryTier"];
+            /** Format: date-time */
+            nextReviewAt: string | null;
+            reviewReason: components["schemas"]["ReviewReason"];
+        };
         Course: {
             _id: string;
             userId: string;
             name: string;
-            /** @enum {string} */
-            status: "creating" | "ready" | "archived";
+            status: components["schemas"]["CourseStatus"];
             goal: string;
             clarifyData?: components["schemas"]["ClarifyResponse"];
             answers?: Record<string, never>;
-            /** @enum {string} */
-            depth?: "overview" | "comprehensive" | "deep_dive";
+            depth?: components["schemas"]["CourseDepth"];
             depthPreviews?: components["schemas"]["DepthPreviewsResponse"];
             structure?: components["schemas"]["GenerateStructureResponse"];
             feedbackHistory?: string[];

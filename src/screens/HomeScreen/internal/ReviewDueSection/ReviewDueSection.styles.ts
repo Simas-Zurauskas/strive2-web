@@ -1,4 +1,5 @@
 import styled from 'styled-components';
+import type { QuizMasteryTier } from '@/api/types';
 
 export const Container = styled.div`
   display: flex;
@@ -74,9 +75,7 @@ export const ModuleName = styled.span`
   white-space: nowrap;
 `;
 
-export type TierVariant = 'needs_review' | 'passed' | 'mastered';
-
-export const TierBadge = styled.span<{ $tier: TierVariant }>`
+export const TierBadge = styled.span<{ $tier: QuizMasteryTier }>`
   padding: 0.125rem 0.5rem;
   border-radius: 9999px;
   font-size: 0.6875rem;

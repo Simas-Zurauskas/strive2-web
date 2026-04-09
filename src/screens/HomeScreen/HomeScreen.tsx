@@ -1,13 +1,13 @@
 'use client';
 
-import { useMemo } from 'react';
 import { useRouter } from 'next/navigation';
+import { useMemo } from 'react';
 import { CourseCard, Button } from '@/components';
 import { useCourses, useContinueLearning, useProgressSummary, useReviewsDue } from '@/hooks';
 import { useJobManager } from '@/hooks/useJobManager';
+import * as S from './HomeScreen.styles';
 import { ContinueLearningCard } from './internal/ContinueLearningCard/ContinueLearningCard';
 import { ReviewDueSection } from './internal/ReviewDueSection/ReviewDueSection';
-import * as S from './HomeScreen.styles';
 
 export const HomeScreen: React.FC = () => {
   const router = useRouter();
@@ -59,7 +59,13 @@ export const HomeScreen: React.FC = () => {
                 course={course}
                 isGenerating={isJobRunningForCourse(course._id)}
                 progress={progressMap.get(course._id)}
-                onClick={() => router.push(`/course/${course._id}`)}
+                onClick={() => {
+                  if (course.status === 'creating') {
+                    router.push(`/generate-course?courseId=${course._id}`);
+                    return;
+                  }
+                  router.push(`/course/${course._id}`);
+                }}
               />
             ))}
           </S.Grid>

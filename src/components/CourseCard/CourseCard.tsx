@@ -51,7 +51,7 @@ export const CourseCard = ({ course, isGenerating = false, progress, onClick }: 
       {isGenerating && (
         <S.GeneratingBar>
           <S.Spinner />
-          <S.GeneratingText>Generating...</S.GeneratingText>
+          <S.GeneratingText>Creating lessons...</S.GeneratingText>
         </S.GeneratingBar>
       )}
 

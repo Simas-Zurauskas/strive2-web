@@ -1,3 +1,4 @@
+import Link from 'next/link';
 import styled from 'styled-components';
 
 export const Nav = styled.nav<{ $hidden?: boolean }>`
@@ -26,6 +27,7 @@ export const Nav = styled.nav<{ $hidden?: boolean }>`
 export const Left = styled.div`
   display: flex;
   align-items: center;
+  gap: 1rem;
 `;
 
 export const Logo = styled.a`
@@ -48,7 +50,7 @@ export const Center = styled.div`
   }
 `;
 
-export const NavLink = styled.a<{ $active?: boolean }>`
+export const NavLink = styled(Link)<{ $active?: boolean }>`
   font-size: 0.8125rem;
   font-weight: 500;
   text-transform: uppercase;
@@ -80,7 +82,9 @@ export const ThemeToggle = styled.button`
   align-items: center;
   justify-content: center;
   cursor: pointer;
-  transition: border-color 0.15s, color 0.15s;
+  transition:
+    border-color 0.15s,
+    color 0.15s;
 
   &:hover {
     border-color: ${(p) => p.theme.colors.accent};

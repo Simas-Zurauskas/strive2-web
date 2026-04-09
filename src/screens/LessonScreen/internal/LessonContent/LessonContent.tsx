@@ -1,10 +1,13 @@
 'use client';
 
 import { useQueryClient } from '@tanstack/react-query';
-import { useCallback, useMemo, useRef, useState } from 'react';
+import { AnimatePresence, motion } from 'framer-motion';
+import { useCallback, useState } from 'react';
 import { toast } from 'sonner';
-import { streamLesson, LessonBlock, PlaceholderBlock, CourseProgressResponse } from '@/api/routes/course';
-import { Button } from '@/components';
+import { streamLesson, PlaceholderBlock } from '@/api/routes/course';
+import type { CourseProgressResponse } from '@/api/routes/course';
+import type { LessonBlock } from '@/api/types';
+import { Button, Checkbox } from '@/components';
 import { TOASTS, toastMessage } from '@/constants/toasts';
 import { useLessonContent, useUpsertProgress } from '@/hooks';
 import { celebrateLessonComplete, celebrateModuleComplete, celebrateCourseComplete } from '@/lib/celebrations';
@@ -19,7 +22,7 @@ interface Lesson {
 
 interface Module {
   name: string;
-  lessons: Lesson[];
+  lessons?: Lesson[];
 }
 
 interface LessonContentProps {
@@ -41,7 +44,6 @@ interface LessonContentProps {
 
 export const LessonContent = ({
   courseId,
-  moduleName,
   moduleIndex,
   lessonIndex,
   lesson,
@@ -50,8 +52,6 @@ export const LessonContent = ({
   hasNext,
   onPrev,
   onNext,
-  onOpenSidebar,
-  sidebarOpen,
   isGenerationRunning,
   progressData,
 }: LessonContentProps) => {
@@ -99,11 +99,19 @@ export const LessonContent = ({
 
   const isStreaming = streamPhase !== 'idle';
   const isActivelyGenerating = streamPhase === 'streaming';
-  const abortRef = useRef<AbortController | null>(null);
+  // Generation options (persisted to localStorage)
+  const [includeImage, setIncludeImage] = useState(() => localStorage.getItem('gen_includeImage') !== 'false');
+  const [includeLinks, setIncludeLinks] = useState(() => localStorage.getItem('gen_includeLinks') !== 'false');
 
-  // Generation options
-  const [includeImage, setIncludeImage] = useState(true);
-  const [includeLinks, setIncludeLinks] = useState(true);
+  const handleIncludeImage = (v: boolean) => {
+    setIncludeImage(v);
+    localStorage.setItem('gen_includeImage', String(v));
+  };
+
+  const handleIncludeLinks = (v: boolean) => {
+    setIncludeLinks(v);
+    localStorage.setItem('gen_includeLinks', String(v));
+  };
 
   // Progress state
   const currentLessonProgress = progressData?.lessons?.find(
@@ -124,7 +132,7 @@ export const LessonContent = ({
       setStreamPhase('streaming');
       setIsStarting(false);
 
-      await streamLesson(courseId, { moduleIndex, lessonIndex, includeImage, includeLinks }, (event) => {
+      await streamLesson({ courseId, moduleIndex, lessonIndex, includeImage, includeLinks, onEvent: (event) => {
         switch (event.type) {
           case 'block':
             setStreamBlocks((prev) => [...prev, event.block]);
@@ -158,7 +166,7 @@ export const LessonContent = ({
             toast.error(toastMessage(event.message, TOASTS.GENERATION_FAILED));
             break;
         }
-      });
+      } });
     } catch {
       setStreamPhase('idle');
       setIsStarting(false);
@@ -203,11 +211,13 @@ export const LessonContent = ({
             } else {
               toast.success(TOASTS.LESSON_COMPLETE);
             }
+            // Auto-advance to next lesson after a brief pause
+            if (hasNext) setTimeout(onNext, 800);
           }
         },
       },
     );
-  }, [courseId, moduleIndex, lessonIndex, modules, progressData, upsertProgress]);
+  }, [courseId, moduleIndex, lessonIndex, modules, progressData, upsertProgress, hasNext, onNext]);
 
   const handleToggleBookmark = useCallback(() => {
     upsertProgress.mutate({
@@ -242,6 +252,16 @@ export const LessonContent = ({
     return modules[moduleIndex + 1]?.lessons[0]?.name;
   };
 
+  if (isLoadingContent) {
+    return (
+      <S.Container>
+        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', flex: 1, opacity: 0.5 }}>
+          Loading...
+        </div>
+      </S.Container>
+    );
+  }
+
   return (
     <S.Container>
       <LessonHero
@@ -262,101 +282,126 @@ export const LessonContent = ({
       {blocks && <FontScaler scale={fontScale} onChange={handleFontScale} />}
 
       <S.ScaledContent $scale={fontScale}>
-        {lesson.description && blocks && <S.LessonDescription>{lesson.description}</S.LessonDescription>}
+        {lesson.description && <S.LessonDescription>{lesson.description}</S.LessonDescription>}
 
         {/* Content area — priority: saved content > streaming > loading > generate button */}
         {blocks ? (
           <>
             <BlockRenderer
-            blocks={blocks}
-            placeholders={placeholders}
-            progressData={
-              currentLessonProgress
-                ? {
-                    quizResponses: currentLessonProgress.quizResponses,
-                    exerciseAttempts: currentLessonProgress.exerciseAttempts,
-                  }
-                : undefined
-            }
-            onQuizAnswer={(response) => {
-              upsertProgress.mutate({
-                courseId,
-                moduleIndex,
-                lessonIndex,
-                data: { quizResponse: response },
-              });
-            }}
-            onExerciseAttempt={(attempt) => {
-              upsertProgress.mutate({
-                courseId,
-                moduleIndex,
-                lessonIndex,
-                data: { exerciseAttempt: attempt },
-              });
-            }}
+              blocks={blocks}
+              placeholders={placeholders}
+              progressData={
+                currentLessonProgress
+                  ? {
+                      quizResponses: currentLessonProgress.quizResponses,
+                      exerciseAttempts: currentLessonProgress.exerciseAttempts,
+                    }
+                  : undefined
+              }
+              onQuizAnswer={(response) => {
+                upsertProgress.mutate({
+                  courseId,
+                  moduleIndex,
+                  lessonIndex,
+                  data: { quizResponse: response },
+                });
+              }}
+              onExerciseAttempt={(attempt) => {
+                upsertProgress.mutate({
+                  courseId,
+                  moduleIndex,
+                  lessonIndex,
+                  data: { exerciseAttempt: attempt },
+                });
+              }}
+            />
+            {isActivelyGenerating && <S.StreamingIndicator>Creating lesson...</S.StreamingIndicator>}
+            {streamPhase === 'finishing' && !placeholders.length && (
+              <S.FinishingIndicator>Finishing up...</S.FinishingIndicator>
+            )}
+            {!isStreaming && isGenerationRunning && <S.StreamingIndicator>Creating lesson...</S.StreamingIndicator>}
+          </>
+        ) : isStreaming || isStarting ? (
+          <S.StreamingIndicator>Creating lesson...</S.StreamingIndicator>
+        ) : (
+          <S.Placeholder>
+            {isPrevLessonGenerated ? (
+              <>
+                <S.GenerateOptions>
+                  <S.GenerateOptionsHeading>Optional extras</S.GenerateOptionsHeading>
+                  <Checkbox
+                    label="Hero image"
+                    description="Decorative cover image for the lesson"
+                    checked={includeImage}
+                    onChange={(e) => handleIncludeImage(e.target.checked)}
+                  />
+                  <Checkbox
+                    label="Further reading"
+                    description="AI-curated links to deepen your understanding"
+                    checked={includeLinks}
+                    onChange={(e) => handleIncludeLinks(e.target.checked)}
+                  />
+                </S.GenerateOptions>
+
+                <Button onClick={handleGenerate} disabled={isGenerationRunning}>
+                  {isGenerationRunning ? 'Another lesson is being created...' : 'Create lesson'}
+                </Button>
+              </>
+            ) : (
+              <S.PlaceholderText>Create the previous lesson first to unlock this one.</S.PlaceholderText>
+            )}
+          </S.Placeholder>
+        )}
+
+        {/* Notes panel */}
+        {hasContent && !isStreaming && !isGenerationRunning && (
+          <NotesPanel
+            courseId={courseId}
+            moduleIndex={moduleIndex}
+            lessonIndex={lessonIndex}
+            initialNotes={currentLessonProgress?.notes ?? null}
           />
-          {isActivelyGenerating && <S.StreamingIndicator>Generating...</S.StreamingIndicator>}
-          {streamPhase === 'finishing' && !placeholders.length && (
-            <S.FinishingIndicator>Finishing up...</S.FinishingIndicator>
-          )}
-          {!isStreaming && isGenerationRunning && <S.StreamingIndicator>Generating...</S.StreamingIndicator>}
-        </>
-      ) : isStreaming || isStarting ? (
-        <S.StreamingIndicator>Generating...</S.StreamingIndicator>
-      ) : isLoadingContent ? (
-        <S.Placeholder>
-          <S.GeneratingText>Loading...</S.GeneratingText>
-        </S.Placeholder>
-      ) : (
-        <S.Placeholder>
-          <S.PlaceholderText>{lesson.description}</S.PlaceholderText>
+        )}
 
-          {isPrevLessonGenerated ? (
-            <>
-              <S.GenerateOptions>
-                <S.ToggleLabel>
-                  <input type="checkbox" checked={includeImage} onChange={(e) => setIncludeImage(e.target.checked)} />
-                  Hero image
-                </S.ToggleLabel>
-                <S.ToggleLabel>
-                  <input type="checkbox" checked={includeLinks} onChange={(e) => setIncludeLinks(e.target.checked)} />
-                  Further reading
-                </S.ToggleLabel>
-              </S.GenerateOptions>
-
-              <Button onClick={handleGenerate} disabled={isGenerationRunning}>
-                {isGenerationRunning ? 'Another lesson is generating...' : 'Generate this lesson'}
-              </Button>
-            </>
-          ) : (
-            <S.PlaceholderText>Generate the previous lesson first to unlock this one.</S.PlaceholderText>
-          )}
-        </S.Placeholder>
-      )}
-
-      {/* Notes panel */}
-      {hasContent && !isStreaming && !isGenerationRunning && (
-        <NotesPanel
-          courseId={courseId}
-          moduleIndex={moduleIndex}
-          lessonIndex={lessonIndex}
-          initialNotes={currentLessonProgress?.notes ?? null}
-        />
-      )}
-
-      {/* Mark as Complete */}
-      {hasContent && !isStreaming && !isGenerationRunning && (
-        <S.CompleteSection>
-          {isCompleted ? (
-            <S.CompletedIndicator>&#10003; Lesson completed</S.CompletedIndicator>
-          ) : (
-            <S.CompleteButton onClick={handleMarkComplete} disabled={upsertProgress.isPending}>
-              &#10003; Mark as complete
-            </S.CompleteButton>
-          )}
-        </S.CompleteSection>
-      )}
-
+        {/* Mark as Complete */}
+        {hasContent && !isStreaming && !isGenerationRunning && (
+          <S.CompleteSection>
+            <AnimatePresence mode="wait" initial={false}>
+              {isCompleted ? (
+                <motion.div
+                  key="completed"
+                  initial={{ opacity: 0, y: 6 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ duration: 0.3, ease: 'easeOut' }}
+                >
+                  <S.CompletedBanner>
+                    <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
+                      <path d="M3.5 8.5L6.5 11.5L12.5 4.5" />
+                    </svg>
+                    Lesson completed
+                  </S.CompletedBanner>
+                </motion.div>
+              ) : (
+                <motion.div
+                  key="incomplete"
+                  exit={{ opacity: 0, scale: 0.95 }}
+                  transition={{ duration: 0.15 }}
+                >
+                  <S.CompleteButton onClick={handleMarkComplete} disabled={upsertProgress.isPending}>
+                    {upsertProgress.isPending ? (
+                      <S.Spinner />
+                    ) : (
+                      <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
+                        <path d="M3.5 8.5L6.5 11.5L12.5 4.5" />
+                      </svg>
+                    )}
+                    {upsertProgress.isPending ? 'Completing...' : hasNext ? 'Complete & continue' : 'Mark as complete'}
+                  </S.CompleteButton>
+                </motion.div>
+              )}
+            </AnimatePresence>
+          </S.CompleteSection>
+        )}
       </S.ScaledContent>
 
       {/* Prev / Next navigation */}

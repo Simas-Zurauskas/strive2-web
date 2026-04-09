@@ -79,26 +79,19 @@ export const GeneratingText = styled.p`
 
 export const GenerateOptions = styled.div`
   display: flex;
-  gap: 1rem;
-  align-items: center;
+  flex-direction: column;
+  gap: 0.75rem;
+  width: 100%;
+  max-width: 340px;
 `;
 
-export const ToggleLabel = styled.label`
-  display: flex;
-  align-items: center;
-  gap: 0.375rem;
-  font-size: 0.8125rem;
+export const GenerateOptionsHeading = styled.p`
+  font-size: 0.75rem;
+  font-weight: 500;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
   color: ${(p) => p.theme.colors.muted};
-  cursor: pointer;
-
-  input[type='checkbox'] {
-    accent-color: ${(p) => p.theme.colors.accent};
-    cursor: pointer;
-  }
-
-  &:hover {
-    color: ${(p) => p.theme.colors.foreground};
-  }
+  text-align: center;
 `;
 
 // ── Streaming indicators ──────────────────────────────
@@ -159,40 +152,33 @@ export const CompleteSection = styled.div`
   display: flex;
   align-items: center;
   justify-content: center;
-  padding-top: 2rem;
-  border-top: 1px solid ${(p) => p.theme.colors.border};
+  padding-top: 1rem;
 `;
 
 export const CompleteButton = styled.button`
-  display: flex;
+  display: inline-flex;
   align-items: center;
   justify-content: center;
   gap: 0.5rem;
-  width: 100%;
-  max-width: 400px;
-  padding: 0.75rem 1.75rem;
-  border-radius: 6px;
-  border: none;
-  background: ${(p) => p.theme.colors.accent};
-  color: white;
+  padding: 0.625rem 2rem;
+  border-radius: 8px;
+  border: 1.5px solid ${(p) => p.theme.colors.accent};
+  background: transparent;
+  color: ${(p) => p.theme.colors.accent};
   font-size: 0.8125rem;
   font-weight: 600;
   font-family: inherit;
-  text-transform: uppercase;
-  letter-spacing: 0.05em;
   cursor: pointer;
-  box-shadow:
-    0 1px 3px rgba(0, 0, 0, 0.12),
-    0 1px 2px rgba(0, 0, 0, 0.08);
-  transition:
-    background 0.15s,
-    box-shadow 0.15s;
+  transition: all 0.15s ease;
+
+  svg {
+    width: 14px;
+    height: 14px;
+  }
 
   &:hover {
-    background: ${(p) => p.theme.colors.accentHover};
-    box-shadow:
-      0 2px 6px rgba(0, 0, 0, 0.15),
-      0 1px 3px rgba(0, 0, 0, 0.1);
+    background: ${(p) => p.theme.colors.accent};
+    color: #fff;
   }
 
   &:active:not(:disabled) {
@@ -205,17 +191,40 @@ export const CompleteButton = styled.button`
   }
 `;
 
-export const CompletedIndicator = styled.div`
+export const Spinner = styled.span`
+  display: inline-block;
+  width: 14px;
+  height: 14px;
+  border: 2px solid currentColor;
+  border-right-color: transparent;
+  border-radius: 50%;
+  animation: spin 0.6s linear infinite;
+
+  @keyframes spin {
+    to {
+      transform: rotate(360deg);
+    }
+  }
+`;
+
+export const CompletedBanner = styled.div`
   display: flex;
   align-items: center;
   justify-content: center;
-  gap: 0.5rem;
-  padding: 0.875rem 2rem;
-  border-radius: 12px;
-  background: ${(p) => `${p.theme.colors.success}15`};
+  gap: 0.625rem;
+  padding: 0.75rem 2rem;
+  border-radius: 8px;
+  background: ${(p) => p.theme.colors.success}14;
+  border: 1px solid ${(p) => p.theme.colors.success}33;
   color: ${(p) => p.theme.colors.success};
-  font-size: 0.9375rem;
-  font-weight: 500;
+  font-size: 0.8125rem;
+  font-weight: 600;
+
+  svg {
+    width: 16px;
+    height: 16px;
+    flex-shrink: 0;
+  }
 `;
 
 // ── Navigation ────────────────────────────────────────

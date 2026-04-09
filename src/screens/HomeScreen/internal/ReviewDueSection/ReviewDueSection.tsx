@@ -1,7 +1,7 @@
 'use client';
 
 import { useRouter } from 'next/navigation';
-import { ReviewDueItem } from '@/api/routes/course';
+import type { ReviewDueItem } from '@/api/types';
 import * as S from './ReviewDueSection.styles';
 
 interface ReviewDueSectionProps {
