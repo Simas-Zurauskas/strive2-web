@@ -12,6 +12,7 @@ interface Module {
 
 export interface CourseContextValue {
   courseId: string;
+  courseBasePath: string;
   course: Course | undefined;
   isLoading: boolean;
   modules: Module[];

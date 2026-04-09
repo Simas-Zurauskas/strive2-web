@@ -19,19 +19,22 @@ export const ReviewDueSection = ({ items }: ReviewDueSectionProps) => {
       <S.Content>
         <S.Label>Reviews due</S.Label>
         <S.ReviewList>
-          {items.map((item) => (
-            <S.ReviewItem
-              key={`${item.courseId}-${item.moduleIndex}`}
-              onClick={() => router.push(`/course/${item.courseId}/quiz/${item.moduleIndex}?review=true`)}
-            >
-              <S.ReviewItemContent>
-                <S.CourseName>{item.courseName}</S.CourseName>
-                <S.ModuleName>Module {item.moduleIndex + 1}: {item.moduleName}</S.ModuleName>
-              </S.ReviewItemContent>
-              <S.TierBadge $tier={item.bestTier}>{item.bestScore}%</S.TierBadge>
-              <S.ReviewButton>Review &rarr;</S.ReviewButton>
-            </S.ReviewItem>
-          ))}
+          {items.map((item) => {
+            const slug = (item as Record<string, unknown>).courseSlug as string;
+            return (
+              <S.ReviewItem
+                key={`${item.courseId}-${item.moduleIndex}`}
+                onClick={() => router.push(`/course/${slug}/quiz/${item.moduleIndex}?review=true`)}
+              >
+                <S.ReviewItemContent>
+                  <S.CourseName>{item.courseName}</S.CourseName>
+                  <S.ModuleName>Module {item.moduleIndex + 1}: {item.moduleName}</S.ModuleName>
+                </S.ReviewItemContent>
+                <S.TierBadge $tier={item.bestTier}>{item.bestScore}%</S.TierBadge>
+                <S.ReviewButton>Review &rarr;</S.ReviewButton>
+              </S.ReviewItem>
+            );
+          })}
         </S.ReviewList>
       </S.Content>
     </S.Container>

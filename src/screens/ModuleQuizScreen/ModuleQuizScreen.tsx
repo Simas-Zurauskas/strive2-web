@@ -6,6 +6,7 @@ import { useCallback, useEffect, useRef, useState } from 'react';
 import { toast } from 'sonner';
 import { getJobStatus } from '@/api/routes/course';
 import type { ModuleQuizQuestion, QuizAttemptResult } from '@/api/types';
+import { InlineLink } from '@/components';
 import { TOASTS } from '@/constants/toasts';
 import { DEV_MODE } from '@/conf/env';
 import {
@@ -34,6 +35,7 @@ export const ModuleQuizScreen = () => {
   const moduleIndex = Number(params.moduleIndex);
 
   const { data: course } = useCourse(courseId);
+  const courseBasePath = `/course/${(course as Record<string, unknown>)?.slug ?? courseId}`;
   const { data: quizContent, refetch: refetchQuiz } = useModuleQuizContent(courseId, moduleIndex);
   const { data: quizProgress } = useModuleQuizProgress(courseId, moduleIndex);
   const generateQuiz = useGenerateModuleQuiz();
@@ -172,8 +174,7 @@ export const ModuleQuizScreen = () => {
     setSelectedOption(null);
     setAnswered(false);
     setResponses([]);
-    setQuizStarted(false);
-    handleGenerate();
+    setQuizStarted(true);
   };
 
   // ── Dev: reset quiz ───────────────────────────────────
@@ -215,7 +216,7 @@ export const ModuleQuizScreen = () => {
       <S.Container>
         <S.Content>
           <S.TopBar>
-            <S.BackLink onClick={() => router.push(`/course/${courseId}/lesson/${moduleIndex}/0`)}>
+            <S.BackLink onClick={() => router.push(`${courseBasePath}/lesson/${moduleIndex}/0`)}>
               <ArrowLeft size={14} /> Back to course
             </S.BackLink>
             {DEV_MODE && (
@@ -258,20 +259,17 @@ export const ModuleQuizScreen = () => {
                 <S.ResultExplanation>
                   <strong>Correct: {LETTERS[q.correctIndex]}</strong> — {q.explanation}
                   {q.sourceLessons.length > 0 && (
-                    <div style={{ marginTop: '0.5rem' }}>
+                    <S.SourceLinks>
                       {q.sourceLessons.map((li) => (
-                        <S.SourceTag
+                        <InlineLink
                           key={li}
-                          as="a"
-                          onClick={() =>
-                            router.push(`/course/${courseId}/lesson/${moduleIndex}/${li}`)
-                          }
-                          style={{ cursor: 'pointer', marginRight: '0.375rem' }}
+                          href={`${courseBasePath}/lesson/${moduleIndex}/${li}`}
+                          newTab
                         >
                           Lesson {li + 1}: {mod.lessons?.[li]?.name}
-                        </S.SourceTag>
+                        </InlineLink>
                       ))}
-                    </div>
+                    </S.SourceLinks>
                   )}
                 </S.ResultExplanation>
               </S.ResultItem>
@@ -284,7 +282,7 @@ export const ModuleQuizScreen = () => {
             </S.SecondaryButton>
             {hasNextModule && (
               <S.StartButton
-                onClick={() => router.push(`/course/${courseId}/lesson/${moduleIndex + 1}/0`)}
+                onClick={() => router.push(`${courseBasePath}/lesson/${moduleIndex + 1}/0`)}
               >
                 Continue to Next Module <ArrowRight size={14} />
               </S.StartButton>
@@ -312,7 +310,7 @@ export const ModuleQuizScreen = () => {
       <S.Container>
         <S.Content>
           <S.TopBar>
-            <S.BackLink onClick={() => router.push(`/course/${courseId}/lesson/${moduleIndex}/0`)}>
+            <S.BackLink onClick={() => router.push(`${courseBasePath}/lesson/${moduleIndex}/0`)}>
               <ArrowLeft size={14} /> Back to course
             </S.BackLink>
             {DEV_MODE && (
@@ -374,7 +372,7 @@ export const ModuleQuizScreen = () => {
     <S.Container>
       <S.Content>
         <S.TopBar>
-          <S.BackLink onClick={() => router.push(`/course/${courseId}/lesson/${moduleIndex}/0`)}>
+          <S.BackLink onClick={() => router.push(`${courseBasePath}/lesson/${moduleIndex}/0`)}>
             <ArrowLeft size={14} /> Back to course
           </S.BackLink>
         </S.TopBar>

@@ -245,10 +245,10 @@ export const QuestionCard = styled.div`
 
 export const QuestionText = styled.p`
   padding: 1.5rem 1.75rem;
-  font-family: var(--font-heading-serif), Georgia, serif;
-  font-size: 1.125rem;
+  font-family: var(--font-body-sans), system-ui, sans-serif;
+  font-size: 1.0625rem;
   font-weight: 500;
-  line-height: 1.5;
+  line-height: 1.55;
   letter-spacing: -0.01em;
   border-bottom: 1px solid ${(p) => p.theme.colors.border};
 `;
@@ -355,6 +355,14 @@ export const SourceTag = styled.span`
   letter-spacing: 0.03em;
   text-transform: uppercase;
   color: ${(p) => p.theme.colors.tertiary};
+`;
+
+export const SourceLinks = styled.div`
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.25rem 1rem;
+  margin-top: 0.625rem;
+  font-size: 0.8125rem;
 `;
 
 export const NextButton = styled.button`

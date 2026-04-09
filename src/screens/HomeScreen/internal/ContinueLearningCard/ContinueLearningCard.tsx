@@ -11,10 +11,12 @@ interface ContinueLearningCardProps {
 
 export const ContinueLearningCard = ({ data }: ContinueLearningCardProps) => {
   const router = useRouter();
-  const { courseId, courseName, moduleName, lessonName, moduleIndex, lessonIndex, courseProgress } = data;
+  const { courseName, moduleName, lessonName, moduleIndex, lessonIndex, courseProgress } = data;
+  const courseSlug = (data as Record<string, unknown>).courseSlug as string;
+  const lessonUrl = `/course/${courseSlug}/lesson/${moduleIndex}/${lessonIndex}`;
 
   return (
-    <S.Container onClick={() => router.push(`/course/${courseId}/lesson/${moduleIndex}/${lessonIndex}`)}>
+    <S.Container onClick={() => router.push(lessonUrl)}>
       <S.Accent />
       <S.Content>
         <S.Label>Continue learning</S.Label>
@@ -32,7 +34,7 @@ export const ContinueLearningCard = ({ data }: ContinueLearningCardProps) => {
         </S.ProgressRow>
       </S.Content>
       <S.Action>
-        <Button variant="primary" onClick={(e) => { e.stopPropagation(); router.push(`/course/${courseId}/lesson/${moduleIndex}/${lessonIndex}`); }}>
+        <Button variant="primary" onClick={(e) => { e.stopPropagation(); router.push(lessonUrl); }}>
           Continue
         </Button>
       </S.Action>

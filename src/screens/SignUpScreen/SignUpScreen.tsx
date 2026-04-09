@@ -27,7 +27,7 @@ export const SignUpScreen = () => {
     }
 
     sessionStorage.setItem('pendingVerificationEmail', values.email);
-    window.location.href = '/check-email';
+    window.location.href = '/signup/check-email';
   };
 
   const handleGoogle = () => signIn('google', { callbackUrl: '/' });

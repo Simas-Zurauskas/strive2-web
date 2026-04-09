@@ -10,7 +10,7 @@ import type { CourseQuizProgressItem, LessonProgressStatus } from '@/api/types';
 
 export const CourseOverview = () => {
   const router = useRouter();
-  const { courseId, course, modules, progressData, navigateToLesson, onDeleteCourse } = useCourseContext();
+  const { courseBasePath, course, modules, progressData, navigateToLesson, onDeleteCourse } = useCourseContext();
 
   const progressMap = useMemo(() => {
     const map = new Map<string, string>();
@@ -113,7 +113,7 @@ export const CourseOverview = () => {
           {reviewsDue.map((r) => (
             <S.ReviewItem
               key={r.moduleIndex}
-              onClick={() => router.push(`/course/${courseId}/quiz/${r.moduleIndex}?review=true`)}
+              onClick={() => router.push(`${courseBasePath}/quiz/${r.moduleIndex}?review=true`)}
             >
               <S.ReviewModuleName>
                 Module {r.moduleIndex + 1}: {r.moduleName}
@@ -170,7 +170,7 @@ export const CourseOverview = () => {
                 $locked={!isModuleComplete}
                 onClick={() =>
                   isModuleComplete &&
-                  router.push(`/course/${courseId}/quiz/${mi}${qp?.reviewDue ? '?review=true' : ''}`)
+                  router.push(`${courseBasePath}/quiz/${mi}${qp?.reviewDue ? '?review=true' : ''}`)
                 }
               >
                 <S.QuizIcon $locked={!isModuleComplete}>Q</S.QuizIcon>

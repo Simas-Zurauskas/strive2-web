@@ -45,10 +45,10 @@ export const QuizBody = styled.div`
 `;
 
 export const QuizQuestion = styled.p`
-  font-family: var(--font-heading-serif), Georgia, serif;
-  font-size: 1.25em;
+  font-family: var(--font-body-sans), system-ui, sans-serif;
+  font-size: 1.0625em;
   font-weight: 500;
-  line-height: 1.45;
+  line-height: 1.55;
   color: ${(p) => p.theme.colors.foreground};
   margin-bottom: 1.5rem;
 `;

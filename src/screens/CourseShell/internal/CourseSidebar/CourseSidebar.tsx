@@ -3,11 +3,11 @@
 import { Check, ChevronRight, Circle, Minus, Star } from 'lucide-react';
 import { useRouter } from 'next/navigation';
 import { useEffect, useMemo, useRef } from 'react';
-import type { CourseQuizProgressItem, QuizMasteryTier } from '@/api/types';
-import type { CourseProgressResponse } from '@/api/routes/course';
 import { Badge } from '@/components';
 import { LessonDotState } from './CourseSidebar.styles';
 import * as S from './CourseSidebar.styles';
+import type { CourseProgressResponse } from '@/api/routes/course';
+import type { CourseQuizProgressItem, QuizMasteryTier } from '@/api/types';
 
 interface Module {
   name: string;
@@ -16,7 +16,7 @@ interface Module {
 }
 
 interface CourseSidebarProps {
-  courseId: string;
+  courseBasePath: string;
   courseName: string;
   courseDepth?: string;
   modules: Module[];
@@ -31,7 +31,7 @@ interface CourseSidebarProps {
 }
 
 export const CourseSidebar = ({
-  courseId,
+  courseBasePath,
   courseName,
   courseDepth,
   modules,
@@ -140,13 +140,12 @@ export const CourseSidebar = ({
   return (
     <S.Container>
       <S.Header>
-        <S.CourseNameLink onClick={() => router.push(`/course/${courseId}`)}>
-          {courseName || 'Course'}
-        </S.CourseNameLink>
+        <S.CourseNameLink onClick={() => router.push(courseBasePath)}>{courseName || 'Course'}</S.CourseNameLink>
         <S.MetaRow>
           {depthLabel && <Badge variant="gold">{depthLabel}</Badge>}
           <S.MetaText>
-            {modules.length} module{modules.length !== 1 ? 's' : ''} &middot; {totalLessons} lesson{totalLessons !== 1 ? 's' : ''}
+            {modules.length} module{modules.length !== 1 ? 's' : ''} &middot; {totalLessons} lesson
+            {totalLessons !== 1 ? 's' : ''}
           </S.MetaText>
         </S.MetaRow>
         <S.ProgressHeader>
@@ -154,11 +153,7 @@ export const CourseSidebar = ({
             {totalLessons > 0 ? Math.round((completedCount / totalLessons) * 100) : 0}% Complete
           </S.ProgressPercent>
           <S.ProgressBarTrack>
-            <S.ProgressBarFill
-              $percent={
-                totalLessons > 0 ? Math.round((completedCount / totalLessons) * 100) : 0
-              }
-            />
+            <S.ProgressBarFill $percent={totalLessons > 0 ? Math.round((completedCount / totalLessons) * 100) : 0} />
           </S.ProgressBarTrack>
         </S.ProgressHeader>
         {reviewsDueCount > 0 && (
@@ -237,9 +232,7 @@ export const CourseSidebar = ({
                         $locked={locked}
                         onClick={() => {
                           if (!locked) {
-                            router.push(
-                              `/course/${courseId}/quiz/${mi}${qp?.reviewDue ? '?review=true' : ''}`,
-                            );
+                            router.push(`${courseBasePath}/quiz/${mi}${qp?.reviewDue ? '?review=true' : ''}`);
                           }
                         }}
                       >
@@ -247,9 +240,7 @@ export const CourseSidebar = ({
                         <S.LessonName>Module Quiz</S.LessonName>
                         {qp?.reviewDue && <S.ReviewDueBadge>Review due</S.ReviewDueBadge>}
                         {qp?.bestTier && (
-                          <S.QuizBadge $tier={qp.bestTier as QuizMasteryTier}>
-                            {qp.bestScore}%
-                          </S.QuizBadge>
+                          <S.QuizBadge $tier={qp.bestTier as QuizMasteryTier}>{qp.bestScore}%</S.QuizBadge>
                         )}
                       </S.QuizItem>
                     );

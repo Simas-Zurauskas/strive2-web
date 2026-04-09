@@ -31,7 +31,7 @@ export const HomeScreen: React.FC = () => {
     <S.Layout>
       <S.PageHeader>
         <S.Title>My Courses</S.Title>
-        <Button variant="primary" onClick={() => router.push('/generate-course')}>
+        <Button variant="primary" onClick={() => router.push('/courses/new')}>
           New Course
         </Button>
       </S.PageHeader>
@@ -41,7 +41,7 @@ export const HomeScreen: React.FC = () => {
       {!isLoading && (!courses || courses.length === 0) && (
         <S.EmptyState>
           <S.EmptyText>No courses yet. Create your first course to get started.</S.EmptyText>
-          <Button variant="primary" onClick={() => router.push('/generate-course')}>
+          <Button variant="primary" onClick={() => router.push('/courses/new')}>
             Create Course
           </Button>
         </S.EmptyState>
@@ -61,10 +61,10 @@ export const HomeScreen: React.FC = () => {
                 progress={progressMap.get(course._id)}
                 onClick={() => {
                   if (course.status === 'creating') {
-                    router.push(`/generate-course?courseId=${course._id}`);
+                    router.push(`/courses/new?courseId=${course._id}`);
                     return;
                   }
-                  router.push(`/course/${course._id}`);
+                  router.push(`/course/${(course as Record<string, unknown>).slug}`);
                 }}
               />
             ))}

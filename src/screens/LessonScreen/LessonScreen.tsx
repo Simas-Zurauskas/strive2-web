@@ -15,7 +15,7 @@ export const LessonScreen = () => {
   const router = useRouter();
   const queryClient = useQueryClient();
 
-  const { courseId, course, modules, progressData, sidebarOpen, setSidebarOpen, navigateToLesson } =
+  const { courseId, courseBasePath, course, modules, progressData, sidebarOpen, setSidebarOpen, navigateToLesson } =
     useCourseContext();
 
   const moduleIndex = Number(params.moduleIndex);
@@ -46,7 +46,7 @@ export const LessonScreen = () => {
         lessonsInModule;
 
       if (allCompleted) {
-        router.push(`/course/${courseId}/quiz/${moduleIndex}`);
+        router.push(`${courseBasePath}/quiz/${moduleIndex}`);
       } else if (moduleIndex < modules.length - 1) {
         navigateToLesson(moduleIndex + 1, 0);
       }
