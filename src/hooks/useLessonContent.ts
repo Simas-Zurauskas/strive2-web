@@ -10,6 +10,6 @@ export const useLessonContent = (courseId: string, moduleIndex: number, lessonIn
     queryFn: () => getLessonContent({ courseId, moduleIndex, lessonIndex }),
     retry: false,
     enabled,
-    // When generation is running, keep refetching so we pick up content saved mid-generation
+    // Poll during generation so blocks appear progressively on reload/navigate-back
     refetchInterval: isGenerating ? 3000 : false,
   });

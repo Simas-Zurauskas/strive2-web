@@ -25,7 +25,7 @@ export default function SignedInLayout({ children }: { children: React.ReactNode
   return (
     <>
       <Navbar />
-      <main style={{ paddingTop: '56px' }}>
+      <main style={{ paddingTop: '56px', minHeight: 'calc(100vh - 56px)' }}>
         {children}
         <Footer />
       </main>

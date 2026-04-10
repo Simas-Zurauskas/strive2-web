@@ -16,15 +16,25 @@ interface TrackJobParams {
   onComplete?: () => void;
 }
 
+export interface GeneratingLesson {
+  courseId: string;
+  moduleIndex: number;
+  lessonIndex: number;
+}
+
 interface JobManagerContextValue {
   trackJob: (job: TrackJobParams) => void;
   isJobRunningForCourse: (courseId: string) => boolean;
+  generatingLesson: GeneratingLesson | null;
+  setGeneratingLesson: (lesson: GeneratingLesson | null) => void;
 }
 
 interface JobStartedEvent {
   jobId: string;
   courseId: string;
   type: string;
+  moduleIndex?: number;
+  lessonIndex?: number;
 }
 
 interface JobStatusEvent {
@@ -33,6 +43,8 @@ interface JobStatusEvent {
   error?: string | null;
   courseId: string;
   type: string;
+  moduleIndex?: number;
+  lessonIndex?: number;
 }
 
 const JobManagerContext = createContext<JobManagerContextValue | null>(null);
@@ -53,6 +65,8 @@ export const JobManagerProvider = ({ children }: { children: React.ReactNode }) 
   >(new Map());
   // Local set for instant reactivity (before query cache updates with activeJobId)
   const [activeCourseIds, setActiveCourseIds] = useState<Set<string>>(new Set());
+  // Which specific lesson is currently generating (set via WS or optimistically)
+  const [generatingLesson, setGeneratingLesson] = useState<GeneratingLesson | null>(null);
 
   // Clean up a tracked job entry
   const cleanupJob = useCallback((jobId: string) => {
@@ -120,8 +134,11 @@ export const JobManagerProvider = ({ children }: { children: React.ReactNode }) 
 
     // Best-effort instant tracking for chat-initiated jobs
     const handleStarted = (event: JobStartedEvent) => {
-      console.log('[JobManager] Job started (WS):', event.jobId, event.type);
+      console.log('[JobManager] Job started (WS):', event.jobId, event.type, event.moduleIndex, event.lessonIndex);
       setActiveCourseIds((prev) => new Set(prev).add(event.courseId));
+      if (event.type === 'generate_lesson' && event.moduleIndex != null && event.lessonIndex != null) {
+        setGeneratingLesson({ courseId: event.courseId, moduleIndex: event.moduleIndex, lessonIndex: event.lessonIndex });
+      }
     };
 
     // Job completion/failure
@@ -145,6 +162,11 @@ export const JobManagerProvider = ({ children }: { children: React.ReactNode }) 
       }
       if (entry) callbacksRef.current.delete(event.jobId);
 
+      // Clear generating lesson tracking
+      if (event.type === 'generate_lesson') {
+        setGeneratingLesson(null);
+      }
+
       // Always remove from active set — cleanupJob only handles jobs with onComplete entries
       setActiveCourseIds((prev) => {
         const next = new Set(prev);
@@ -152,20 +174,24 @@ export const JobManagerProvider = ({ children }: { children: React.ReactNode }) 
         return next;
       });
 
-      // Optimistically clear activeJobId in cache, then refetch
-      queryClient.setQueryData<Course>([QKeys.COURSE, event.courseId], (old) =>
-        old ? { ...old, activeJobId: undefined } : old,
+      // Optimistically clear activeJobId in cache, then refetch.
+      // Course cache is keyed by slug (from URL), but WS events use ObjectId.
+      // Use setQueriesData with predicate to match by _id inside the cached data.
+      queryClient.setQueriesData<Course>(
+        { queryKey: [QKeys.COURSE], predicate: (q) => (q.state.data as Course | undefined)?._id === event.courseId },
+        (old) => old ? { ...old, activeJobId: undefined } : old!,
       );
       queryClient.setQueryData<Course[]>([QKeys.COURSES], (old) =>
         old?.map((c) => (c._id === event.courseId ? { ...c, activeJobId: undefined } : c)),
       );
-      queryClient.invalidateQueries({ queryKey: [QKeys.COURSE, event.courseId] });
+      queryClient.invalidateQueries({ queryKey: [QKeys.COURSE] });
       queryClient.invalidateQueries({ queryKey: [QKeys.COURSES] });
 
-      // Invalidate content caches when specific job types complete
-      if (event.status === 'completed') {
+      // Invalidate content caches when lesson generation completes or fails
+      if (event.status === 'completed' || event.status === 'failed') {
         if (event.type === 'generate_lesson') {
           queryClient.invalidateQueries({ queryKey: [QKeys.LESSON_CONTENT] });
+          queryClient.invalidateQueries({ queryKey: [QKeys.GENERATED_LESSONS] });
         }
         if (event.type === 'generate_module_quiz') {
           queryClient.invalidateQueries({ queryKey: [QKeys.MODULE_QUIZ_CONTENT] });
@@ -225,6 +251,6 @@ export const JobManagerProvider = ({ children }: { children: React.ReactNode }) 
   }, [socket, queryClient, cleanupJob]);
 
   return (
-    <JobManagerContext.Provider value={{ trackJob, isJobRunningForCourse }}>{children}</JobManagerContext.Provider>
+    <JobManagerContext.Provider value={{ trackJob, isJobRunningForCourse, generatingLesson, setGeneratingLesson }}>{children}</JobManagerContext.Provider>
   );
 };
