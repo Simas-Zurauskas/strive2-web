@@ -12,7 +12,7 @@ interface ContinueLearningCardProps {
 export const ContinueLearningCard = ({ data }: ContinueLearningCardProps) => {
   const router = useRouter();
   const { courseName, moduleName, lessonName, moduleIndex, lessonIndex, courseProgress } = data;
-  const courseSlug = (data as Record<string, unknown>).courseSlug as string;
+  const courseSlug = data.courseSlug;
   const lessonUrl = `/course/${courseSlug}/lesson/${moduleIndex}/${lessonIndex}`;
 
   return (

@@ -1,11 +1,12 @@
 'use client';
 
+import { User } from 'lucide-react';
 import Link from 'next/link';
 import { usePathname, useRouter } from 'next/navigation';
 import { useTheme } from 'next-themes';
-import { User } from 'lucide-react';
 import { useCallback, useEffect, useRef, useState } from 'react';
-import { useAuth } from '@/hooks';
+import { DEV_MODE } from '@/conf/env';
+import { useAuth, useReviewsDue } from '@/hooks';
 import * as S from './Navbar.styles';
 
 const SCROLL_THRESHOLD = 10;
@@ -80,6 +81,7 @@ export const Navbar = () => {
   const { user } = useAuth();
   const { resolvedTheme, setTheme } = useTheme();
   const hidden = useHideOnScroll();
+  const { data: reviewsDue } = useReviewsDue();
 
   const toggleTheme = () => {
     setTheme(resolvedTheme === 'dark' ? 'light' : 'dark');
@@ -94,8 +96,21 @@ export const Navbar = () => {
       </S.Left>
 
       <S.Center>
-        <S.NavLink href="/courses/new" $active={pathname === '/courses/new'}>New Course</S.NavLink>
-        <S.NavLink href="/" $active={pathname === '/'}>Placeholder</S.NavLink>
+        <S.NavLink href="/" $active={pathname === '/'}>
+          Home
+        </S.NavLink>
+        <S.NavLink href="/courses/new" $active={pathname === '/courses/new'}>
+          Create
+        </S.NavLink>
+        <S.NavLink href="/review" $active={pathname === '/review'}>
+          Review
+          {reviewsDue && reviewsDue.length > 0 && <S.Badge>{reviewsDue.length}</S.Badge>}
+        </S.NavLink>
+        {DEV_MODE && (
+          <S.NavLink href="/dev" $active={pathname === '/dev'}>
+            _dev
+          </S.NavLink>
+        )}
       </S.Center>
 
       <S.Right>

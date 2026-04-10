@@ -408,3 +408,59 @@ export const getReviewsDue = () => {
     method: 'GET',
   }).then((res) => res.data.data);
 };
+
+// ── Favorites ──────────────────────────────────────────
+
+export const getFavoriteCourseIds = () => {
+  return client<{ data: string[] }>({
+    url: '/course/favorites',
+    method: 'GET',
+  }).then((res) => res.data.data);
+};
+
+export const toggleFavoriteCourse = (courseId: string) => {
+  return client<{ data: { favorited: boolean } }>({
+    url: `/course/favorite/${courseId}`,
+    method: 'POST',
+  }).then((res) => res.data.data);
+};
+
+// ── Bookmarked lessons ─────────────────────────────────
+
+export interface BookmarkedLessonItem {
+  courseId: string;
+  courseName: string;
+  courseSlug: string | null;
+  moduleIndex: number;
+  lessonIndex: number;
+  moduleName: string;
+  lessonName: string;
+  bookmarkedAt: string;
+}
+
+export const getBookmarkedLessons = () => {
+  return client<{ data: BookmarkedLessonItem[] }>({
+    url: '/course/bookmarked-lessons',
+    method: 'GET',
+  }).then((res) => res.data.data);
+};
+
+// ── Recent activity ────────────────────────────────
+
+export interface RecentActivityItem {
+  courseId: string;
+  courseSlug: string | null;
+  courseName: string;
+  moduleIndex: number;
+  lessonIndex: number;
+  moduleName: string;
+  lessonName: string;
+  lastAccessedAt: string;
+}
+
+export const getRecentActivity = () => {
+  return client<{ data: RecentActivityItem[] }>({
+    url: '/course/recent-activity',
+    method: 'GET',
+  }).then((res) => res.data.data);
+};

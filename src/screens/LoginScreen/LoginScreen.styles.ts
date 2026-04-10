@@ -84,7 +84,7 @@ export const Divider = styled.div`
     content: '';
     flex: 1;
     height: 1px;
-    background: ${(p) => p.theme.colors.border};
+    background: ${(p) => p.theme.colors.surfaceBorder};
   }
 `;
 

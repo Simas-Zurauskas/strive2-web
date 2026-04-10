@@ -1,9 +1,4 @@
-import styled, { keyframes } from 'styled-components';
-
-const fadeIn = keyframes`
-  from { opacity: 0; transform: translateY(4px); }
-  to { opacity: 1; transform: translateY(0); }
-`;
+import styled from 'styled-components';
 
 // ── Container ─────────────────────────────────────────
 
@@ -45,7 +40,6 @@ export const LessonDescription = styled.p`
   color: ${(p) => p.theme.colors.muted};
   line-height: 1.6;
   max-width: 620px;
-  animation: ${fadeIn} 0.4s ease-out 0.1s both;
 `;
 
 // ── Placeholder (no content yet) ──────────────────────

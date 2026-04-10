@@ -2,12 +2,10 @@
 
 import { Minus, Plus, RotateCcw } from 'lucide-react';
 import { useTheme } from 'next-themes';
-import { useCallback, useEffect, useRef, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
+import { getMermaidThemeVars } from './mermaidTheme';
+import { useMermaidZoomPan } from './useMermaidZoomPan';
 import * as S from '../styles';
-
-const MIN_ZOOM = 0.25;
-const MAX_ZOOM = 3;
-const ZOOM_STEP = 0.25;
 
 const cleanMermaidContent = (raw: string): string => {
   let cleaned = raw.trim();
@@ -19,205 +17,33 @@ const cleanMermaidContent = (raw: string): string => {
   return cleaned.trim();
 };
 
-const getMermaidThemeVars = (isDark: boolean) =>
-  isDark
-    ? {
-        primaryColor: '#2a3833',
-        primaryTextColor: '#d5d0cb',
-        primaryBorderColor: '#4a8a72',
-        secondaryColor: '#332d24',
-        secondaryTextColor: '#d5d0cb',
-        secondaryBorderColor: '#8a7245',
-        tertiaryColor: '#302d2a',
-        tertiaryTextColor: '#d5d0cb',
-        tertiaryBorderColor: '#4a4543',
-        lineColor: '#4a4543',
-        textColor: '#d5d0cb',
-        mainBkg: '#2a3833',
-        nodeBorder: '#4a8a72',
-        clusterBkg: '#232120',
-        clusterBorder: '#3a3735',
-        titleColor: '#d5d0cb',
-        edgeLabelBackground: '#1a1816',
-        noteBkgColor: '#302d2a',
-        noteTextColor: '#d5d0cb',
-        noteBorderColor: '#4a4543',
-        // Mindmap / pie branch colors
-        cScale0: '#2a3833',
-        cScale1: '#332d24',
-        cScale2: '#302d2a',
-        cScale3: '#2a2f38',
-        cScale4: '#33292a',
-        cScale5: '#2d332a',
-        cScale6: '#302a33',
-        cScale7: '#2a3330',
-        cScaleLabel0: '#d5d0cb',
-        cScaleLabel1: '#d5d0cb',
-        cScaleLabel2: '#d5d0cb',
-        cScaleLabel3: '#d5d0cb',
-        cScaleLabel4: '#d5d0cb',
-        cScaleLabel5: '#d5d0cb',
-        cScaleLabel6: '#d5d0cb',
-        cScaleLabel7: '#d5d0cb',
-        cScalePeer0: '#4a8a72',
-        cScalePeer1: '#8a7245',
-        cScalePeer2: '#4a4543',
-        cScalePeer3: '#5a7088',
-        cScalePeer4: '#88555a',
-        cScalePeer5: '#5a8855',
-        cScalePeer6: '#7a5a88',
-        cScalePeer7: '#558878',
-      }
-    : {
-        primaryColor: '#e2ede7',
-        primaryTextColor: '#0f172a',
-        primaryBorderColor: '#2c5545',
-        secondaryColor: '#f0e8d8',
-        secondaryTextColor: '#0f172a',
-        secondaryBorderColor: '#96793e',
-        tertiaryColor: '#f0eeec',
-        tertiaryTextColor: '#0f172a',
-        tertiaryBorderColor: '#dfd9d3',
-        lineColor: '#c4bdb5',
-        textColor: '#0f172a',
-        mainBkg: '#e2ede7',
-        nodeBorder: '#2c5545',
-        clusterBkg: '#ffffff',
-        clusterBorder: '#dfd9d3',
-        titleColor: '#0f172a',
-        edgeLabelBackground: '#faf9f7',
-        noteBkgColor: '#ffffff',
-        noteTextColor: '#0f172a',
-        noteBorderColor: '#dfd9d3',
-        // Mindmap / pie branch colors
-        cScale0: '#e2ede7',
-        cScale1: '#f0e8d8',
-        cScale2: '#f0eeec',
-        cScale3: '#dde7f0',
-        cScale4: '#f0e2e4',
-        cScale5: '#e4f0e2',
-        cScale6: '#eae2f0',
-        cScale7: '#e2f0ec',
-        cScaleLabel0: '#0f172a',
-        cScaleLabel1: '#0f172a',
-        cScaleLabel2: '#0f172a',
-        cScaleLabel3: '#0f172a',
-        cScaleLabel4: '#0f172a',
-        cScaleLabel5: '#0f172a',
-        cScaleLabel6: '#0f172a',
-        cScaleLabel7: '#0f172a',
-      };
-
 export const MermaidBlock = ({ content }: { content: string }) => {
   const codeRef = useRef<HTMLPreElement>(null);
-  const viewportRef = useRef<HTMLDivElement>(null);
   const [renderState, setRenderState] = useState<'loading' | 'success' | 'error'>('loading');
   const [errorMsg, setErrorMsg] = useState('');
   const { resolvedTheme } = useTheme();
 
-  // Zoom & pan state
-  const [zoom, setZoom] = useState(1);
-  const [pan, setPan] = useState({ x: 0, y: 0 });
-  const zoomRef = useRef(1);
-  const panRef = useRef({ x: 0, y: 0 });
-  const baseZoom = useRef(1);
-  const basePan = useRef({ x: 0, y: 0 });
-  const userInteracted = useRef(false);
-  const isDragging = useRef(false);
-  const dragStart = useRef({ x: 0, y: 0 });
-  const panStart = useRef({ x: 0, y: 0 });
-
-  // Keep refs in sync with state (for event handlers that can't use state directly)
-  zoomRef.current = zoom;
-  panRef.current = pan;
+  const {
+    viewportRef,
+    zoom,
+    pan,
+    baseZoom,
+    basePan,
+    userInteracted,
+    zoomRef,
+    panRef,
+    isDragging,
+    handleZoomIn,
+    handleZoomOut,
+    handleReset,
+    handlePointerDown,
+    handlePointerMove,
+    handlePointerUp,
+    MIN_ZOOM,
+    MAX_ZOOM,
+  } = useMermaidZoomPan();
 
   const cleaned = cleanMermaidContent(content);
-
-  // Zoom toward the center of the viewport
-  const zoomToCenter = useCallback((newZoom: number) => {
-    const viewport = viewportRef.current;
-    const curZoom = zoomRef.current;
-    const curPan = panRef.current;
-    if (!viewport || newZoom === curZoom) return;
-    userInteracted.current = true;
-
-    const vW = viewport.clientWidth;
-    const vH = viewport.clientHeight;
-
-    // Content point currently at viewport center
-    const cx = (vW / 2 - curPan.x) / curZoom;
-    const cy = (vH / 2 - curPan.y) / curZoom;
-
-    // Adjust pan so the same content point stays at viewport center
-    const newPan = {
-      x: vW / 2 - cx * newZoom,
-      y: vH / 2 - cy * newZoom,
-    };
-
-    // Update refs immediately so rapid calls don't use stale values
-    zoomRef.current = newZoom;
-    panRef.current = newPan;
-
-    setZoom(newZoom);
-    setPan(newPan);
-  }, []);
-
-  const handleZoomIn = useCallback(() => {
-    const step = baseZoom.current * ZOOM_STEP;
-    zoomToCenter(Math.min(zoomRef.current + step, MAX_ZOOM));
-  }, [zoomToCenter]);
-
-  const handleZoomOut = useCallback(() => {
-    const step = baseZoom.current * ZOOM_STEP;
-    zoomToCenter(Math.max(zoomRef.current - step, MIN_ZOOM));
-  }, [zoomToCenter]);
-
-  const handleReset = useCallback(() => {
-    userInteracted.current = false;
-    setZoom(baseZoom.current);
-    setPan(basePan.current);
-  }, []);
-
-  // Drag to pan
-  const handlePointerDown = useCallback(
-    (e: React.PointerEvent) => {
-      userInteracted.current = true;
-      isDragging.current = true;
-      dragStart.current = { x: e.clientX, y: e.clientY };
-      panStart.current = { ...pan };
-      (e.target as HTMLElement).setPointerCapture(e.pointerId);
-    },
-    [pan],
-  );
-
-  const handlePointerMove = useCallback((e: React.PointerEvent) => {
-    if (!isDragging.current) return;
-    const dx = e.clientX - dragStart.current.x;
-    const dy = e.clientY - dragStart.current.y;
-    setPan({ x: panStart.current.x + dx, y: panStart.current.y + dy });
-  }, []);
-
-  const handlePointerUp = useCallback(() => {
-    isDragging.current = false;
-  }, []);
-
-  // Wheel to zoom (toward center)
-  useEffect(() => {
-    const el = viewportRef.current;
-    if (!el) return;
-
-    const handleWheel = (e: WheelEvent) => {
-      if (!e.ctrlKey && !e.metaKey) return;
-      e.preventDefault();
-      const step = baseZoom.current * ZOOM_STEP;
-      const delta = e.deltaY > 0 ? -step : step;
-      const newZoom = Math.min(Math.max(zoomRef.current + delta, MIN_ZOOM), MAX_ZOOM);
-      zoomToCenter(newZoom);
-    };
-
-    el.addEventListener('wheel', handleWheel, { passive: false });
-    return () => el.removeEventListener('wheel', handleWheel);
-  }, [zoomToCenter]);
 
   // Mermaid render
   useEffect(() => {
@@ -253,7 +79,6 @@ export const MermaidBlock = ({ content }: { content: string }) => {
         if (!cancelled) {
           setRenderState('success');
 
-          // Read SVG dimensions and calculate fit to center in viewport
           const calcFit = () => {
             if (cancelled) return;
             const svg = node.querySelector('svg');
@@ -270,7 +95,6 @@ export const MermaidBlock = ({ content }: { content: string }) => {
 
             const viewBox = svg.getAttribute('viewBox');
             if (viewBox) {
-              // SVG has viewBox — use intrinsic dimensions for fit calculation
               const parts = viewBox.split(/[\s,]+/);
               const svgW = parseFloat(parts[2]) || 0;
               const svgH = parseFloat(parts[3]) || 0;
@@ -283,7 +107,6 @@ export const MermaidBlock = ({ content }: { content: string }) => {
               offsetX = (vW - contentW * fit) / 2;
               offsetY = (vH - contentH * fit) / 2;
             } else {
-              // No viewBox (width="100%") — SVG handles its own width, just center vertically
               const svgH = svg.clientHeight || 300;
               fit = 1;
               offsetX = 0;
@@ -296,19 +119,14 @@ export const MermaidBlock = ({ content }: { content: string }) => {
             if (!userInteracted.current) {
               zoomRef.current = fit;
               panRef.current = { x: offsetX, y: offsetY };
-              setZoom(fit);
-              setPan({ x: offsetX, y: offsetY });
             }
           };
 
-          // Persistent ResizeObserver — recalculates when viewport dimensions change
           const viewport = viewportRef.current;
           if (viewport) {
             ro = new ResizeObserver(() => calcFit());
             ro.observe(viewport);
           }
-          // Retry calcFit after delays to catch SVG rendering completing
-          // (on initial load, SVG content may not be painted when observer first fires)
           const t1 = setTimeout(() => calcFit(), 100);
           const t2 = setTimeout(() => calcFit(), 500);
           timers.push(t1, t2);
@@ -328,7 +146,7 @@ export const MermaidBlock = ({ content }: { content: string }) => {
       ro?.disconnect();
       timers.forEach(clearTimeout);
     };
-  }, [cleaned, resolvedTheme]);
+  }, [cleaned, resolvedTheme]); // eslint-disable-line react-hooks/exhaustive-deps
 
   if (renderState === 'error') {
     return (

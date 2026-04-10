@@ -86,7 +86,6 @@ export const JobManagerProvider = ({ children }: { children: React.ReactNode }) 
   // Also provides instant local tracking before the query cache updates.
   const trackJob = useCallback(
     (job: TrackJobParams) => {
-      console.log('[JobManager] Tracking job:', job.jobId, 'type:', job.type, 'courseId:', job.courseId);
 
       // Clear any existing entry for this job
       const existing = callbacksRef.current.get(job.jobId);
@@ -134,7 +133,6 @@ export const JobManagerProvider = ({ children }: { children: React.ReactNode }) 
 
     // Best-effort instant tracking for chat-initiated jobs
     const handleStarted = (event: JobStartedEvent) => {
-      console.log('[JobManager] Job started (WS):', event.jobId, event.type, event.moduleIndex, event.lessonIndex);
       setActiveCourseIds((prev) => new Set(prev).add(event.courseId));
       if (event.type === 'generate_lesson' && event.moduleIndex != null && event.lessonIndex != null) {
         setGeneratingLesson({ courseId: event.courseId, moduleIndex: event.moduleIndex, lessonIndex: event.lessonIndex });
@@ -143,7 +141,6 @@ export const JobManagerProvider = ({ children }: { children: React.ReactNode }) 
 
     // Job completion/failure
     const handleStatus = (event: JobStatusEvent) => {
-      console.log('[JobManager] Job status (WS):', event.jobId, event.status);
 
       // Fire onComplete callback only on success (wizard flows) and clean up timer
       const entry = callbacksRef.current.get(event.jobId);
@@ -220,8 +217,6 @@ export const JobManagerProvider = ({ children }: { children: React.ReactNode }) 
     const handleConnect = async () => {
       const tracked = activeCourseIdsRef.current;
       if (tracked.size === 0) return;
-
-      console.log('[JobManager] Socket reconnected, reconciling active courses');
 
       // Refetch courses to get current activeJobId values
       queryClient.invalidateQueries({ queryKey: [QKeys.COURSES] });

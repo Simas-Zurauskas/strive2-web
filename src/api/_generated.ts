@@ -888,6 +888,53 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/course/bookmarked-lessons": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Get all bookmarked lessons across all courses */
+        get: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path?: never;
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": {
+                            data: {
+                                courseId: string;
+                                courseName: string;
+                                courseSlug: string | null;
+                                moduleIndex: number;
+                                lessonIndex: number;
+                                moduleName: string;
+                                lessonName: string;
+                                /** Format: date-time */
+                                bookmarkedAt: string;
+                            }[];
+                        };
+                    };
+                };
+            };
+        };
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/course/{courseId}/chat/history": {
         parameters: {
             query?: never;
@@ -1062,6 +1109,43 @@ export interface paths {
                                 scheduledReviews?: number;
                                 totalTimeSpentMinutes?: number;
                             };
+                        };
+                    };
+                };
+            };
+        };
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/course/favorites": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Get the list of favorited course IDs */
+        get: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path?: never;
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": {
+                            data: string[];
                         };
                     };
                 };
@@ -1328,6 +1412,53 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/course/recent-activity": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Get recently accessed lessons across all courses */
+        get: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path?: never;
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": {
+                            data: {
+                                courseId: string;
+                                courseSlug: string | null;
+                                courseName: string;
+                                moduleIndex: number;
+                                lessonIndex: number;
+                                moduleName: string;
+                                lessonName: string;
+                                /** Format: date-time */
+                                lastAccessedAt: string;
+                            }[];
+                        };
+                    };
+                };
+            };
+        };
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/course/reviews-due": {
         parameters: {
             query?: never;
@@ -1506,6 +1637,47 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/course/favorite/{courseId}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Toggle a course as favorite/unfavorite */
+        post: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path: {
+                    courseId: string;
+                };
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": {
+                            data: {
+                                favorited: boolean;
+                            };
+                        };
+                    };
+                };
+            };
+        };
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/course/{courseId}/progress/{moduleIndex}/{lessonIndex}": {
         parameters: {
             query?: never;
@@ -1548,6 +1720,120 @@ export interface paths {
                     content: {
                         "application/json": {
                             data: components["schemas"]["UserLessonProgress"];
+                        };
+                    };
+                };
+            };
+        };
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/gamification/profile": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Get the user's gamification profile (XP, level, streak, achievements, settings) */
+        get: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path?: never;
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": {
+                            data: components["schemas"]["GamificationProfile"];
+                        };
+                    };
+                };
+            };
+        };
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/gamification/stats": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Get gamification stats (XP history, time learned, weekly lessons) */
+        get: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path?: never;
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": {
+                            data: components["schemas"]["GamificationStats"];
+                        };
+                    };
+                };
+            };
+        };
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/gamification/streak-freeze": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Manually use a streak freeze */
+        post: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path?: never;
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": {
+                            data: {
+                                success: boolean;
+                                freezesRemaining: number;
+                            };
                         };
                     };
                 };
@@ -1804,11 +2090,54 @@ export interface components {
             nextReviewAt: string | null;
             reviewReason: components["schemas"]["ReviewReason"];
         };
+        /** @enum {string} */
+        XpSource: "lesson_complete" | "quiz_score" | "exercise_pass" | "review_complete";
+        /** @enum {string} */
+        AchievementCategory: "milestone" | "streak" | "mastery" | "dedication";
+        EarnedAchievement: {
+            achievementId: string;
+            /** Format: date-time */
+            earnedAt: string;
+            metadata?: {
+                [key: string]: unknown;
+            } | null;
+        };
+        XpLogEntry: {
+            date: string;
+            xp: number;
+            source: components["schemas"]["XpSource"];
+        };
+        GamificationProfile: {
+            userId: string;
+            totalXp: number;
+            level: number;
+            xpForNextLevel: number;
+            currentStreak: number;
+            longestStreak: number;
+            lastActiveDate?: string | null;
+            streakFreezeAvailable: number;
+            streakFreezeUsedDates?: string[];
+            earnedAchievements: components["schemas"]["EarnedAchievement"][];
+            activeDates?: string[];
+            xpLog?: components["schemas"]["XpLogEntry"][];
+        };
+        GamificationStats: {
+            xpByDay: {
+                date: string;
+                xp: number;
+            }[];
+            xpByWeek: {
+                week: string;
+                xp: number;
+            }[];
+            totalTimeLearned: number;
+            lessonsThisWeek: number;
+        };
         Course: {
             _id: string;
             userId: string;
             name: string;
-            slug?: string | null;
+            slug: string | null;
             status: components["schemas"]["CourseStatus"];
             goal: string;
             clarifyData?: components["schemas"]["ClarifyResponse"];

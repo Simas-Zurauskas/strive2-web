@@ -44,7 +44,7 @@ export const Textarea = styled.textarea`
   max-height: 400px;
   padding: 1rem;
   border-radius: 10px;
-  border: 1px solid ${(p) => p.theme.colors.border};
+  border: 1px solid ${(p) => p.theme.colors.surfaceBorder};
   background: ${(p) => p.theme.colors.surface};
   color: ${(p) => p.theme.colors.foreground};
   font-size: 0.9375em;

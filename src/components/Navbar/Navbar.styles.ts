@@ -65,6 +65,23 @@ export const NavLink = styled(Link)<{ $active?: boolean }>`
   }
 `;
 
+export const Badge = styled.span`
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 16px;
+  height: 16px;
+  padding: 0 4px;
+  border-radius: 9999px;
+  font-size: 0.625rem;
+  font-weight: 700;
+  line-height: 1;
+  background: ${(p) => p.theme.colors.warning};
+  color: ${(p) => p.theme.colors.background};
+  margin-left: 0.375rem;
+  vertical-align: middle;
+`;
+
 export const Right = styled.div`
   display: flex;
   align-items: center;

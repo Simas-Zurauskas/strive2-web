@@ -10,7 +10,7 @@ export const Container = styled.nav`
   display: flex;
   flex-direction: column;
   background: ${(p) => p.theme.colors.surface};
-  border-right: 1px solid ${(p) => p.theme.colors.border};
+  border-right: 1px solid ${(p) => p.theme.colors.surfaceBorder};
   transition:
     top 0.3s ease,
     height 0.3s ease;
@@ -29,7 +29,7 @@ export const Header = styled.div`
   flex-direction: column;
   gap: 0.75rem;
   padding: 1.25rem 1.25rem;
-  border-bottom: 1px solid ${(p) => p.theme.colors.border};
+  border-bottom: 1px solid ${(p) => p.theme.colors.surfaceBorder};
   flex-shrink: 0;
 `;
 
@@ -103,7 +103,7 @@ export const ProgressBarTrack = styled.div`
   flex: 1;
   height: 4px;
   border-radius: 2px;
-  background: ${(p) => p.theme.colors.border};
+  background: ${(p) => p.theme.colors.surfaceBorder};
 `;
 
 export const ProgressBarFill = styled.div<{ $percent: number }>`
@@ -134,7 +134,7 @@ export const Tree = styled.div`
 
 export const ModuleSection = styled.div`
   & + & {
-    border-top: 1px solid ${(p) => p.theme.colors.border};
+    border-top: 1px solid ${(p) => p.theme.colors.surfaceBorder};
   }
 `;
 
@@ -290,7 +290,7 @@ export const QuizIconCircle = styled.span<{ $locked?: boolean }>`
   font-size: 0.5625rem;
   font-weight: 700;
   flex-shrink: 0;
-  background: ${(p) => (p.$locked ? p.theme.colors.border : `${p.theme.colors.tertiary}20`)};
+  background: ${(p) => (p.$locked ? p.theme.colors.surfaceBorder : `${p.theme.colors.tertiary}20`)};
   color: ${(p) => (p.$locked ? p.theme.colors.muted : p.theme.colors.tertiary)};
 `;
 

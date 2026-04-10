@@ -6,6 +6,7 @@ import { resendVerificationAuthenticated, deleteAccount } from '@/api/routes/aut
 import { Button, InlineLink } from '@/components';
 import { TOASTS } from '@/constants/toasts';
 import { useAuth, useCourses, useProgressSummary } from '@/hooks';
+import { GamificationSection } from './internal/GamificationSection/GamificationSection';
 import * as S from './ProfileScreen.styles';
 
 const formatProvider = (provider: string) => {
@@ -35,10 +36,14 @@ export const ProfileScreen: React.FC = () => {
     return { totalCourses, completedLessons, overallProgress };
   }, [courses, progressSummary]);
 
-  const getInitial = () => {
-    if (user?.name) return user.name.charAt(0).toUpperCase();
-    if (user?.email) return user.email.charAt(0).toUpperCase();
-    return '?';
+  const getInitials = () => {
+    if (user?.name) {
+      const parts = user.name.trim().split(/\s+/);
+      if (parts.length >= 2) return (parts[0][0] + parts[1][0]).toUpperCase();
+      return parts[0].slice(0, 2).toUpperCase();
+    }
+    if (user?.email) return user.email.slice(0, 2).toUpperCase();
+    return '??';
   };
 
   const handleResendVerification = async () => {
@@ -83,8 +88,9 @@ export const ProfileScreen: React.FC = () => {
     <S.Layout>
       {/* ── Profile header ──────────────────────────── */}
       <S.ProfileHeader>
-        <S.Avatar $hasImage={!!user.image}>
-          {user.image ? <img src={user.image} alt={user.name || 'Avatar'} /> : getInitial()}
+        <S.Avatar>
+          {getInitials()}
+          {user.image && <img src={user.image} alt={user.name || 'Avatar'} />}
         </S.Avatar>
         <S.ProfileInfo>
           <S.ProfileName>{user.name || user.email.split('@')[0]}</S.ProfileName>
@@ -118,7 +124,7 @@ export const ProfileScreen: React.FC = () => {
       )}
 
       {/* ── Learning stats ──────────────────────────── */}
-      {stats && stats.totalCourses > 0 && (
+      {stats && (stats.totalCourses > 0 || stats.completedLessons > 0) && (
         <S.StatsGrid>
           <S.StatCard>
             <S.StatValue>{stats.totalCourses}</S.StatValue>
@@ -134,6 +140,9 @@ export const ProfileScreen: React.FC = () => {
           </S.StatCard>
         </S.StatsGrid>
       )}
+
+      {/* ── Gamification ──────────────────────────── */}
+      <GamificationSection />
 
       {/* ── Account details ─────────────────────────── */}
       <S.Section>
