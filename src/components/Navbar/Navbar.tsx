@@ -1,8 +1,9 @@
 'use client';
 
 import Link from 'next/link';
-import { useRouter } from 'next/navigation';
+import { usePathname, useRouter } from 'next/navigation';
 import { useTheme } from 'next-themes';
+import { User } from 'lucide-react';
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { useAuth } from '@/hooks';
 import * as S from './Navbar.styles';
@@ -75,15 +76,10 @@ const useHideOnScroll = () => {
 
 export const Navbar = () => {
   const router = useRouter();
+  const pathname = usePathname();
   const { user } = useAuth();
   const { resolvedTheme, setTheme } = useTheme();
   const hidden = useHideOnScroll();
-
-  const getInitial = () => {
-    if (user?.name) return user.name.charAt(0).toUpperCase();
-    if (user?.email) return user.email.charAt(0).toUpperCase();
-    return '?';
-  };
 
   const toggleTheme = () => {
     setTheme(resolvedTheme === 'dark' ? 'light' : 'dark');
@@ -95,9 +91,12 @@ export const Navbar = () => {
         <Link href="/" passHref legacyBehavior>
           <S.Logo>Strive</S.Logo>
         </Link>
-
-        <S.NavLink href="/courses/new">New Course</S.NavLink>
       </S.Left>
+
+      <S.Center>
+        <S.NavLink href="/courses/new" $active={pathname === '/courses/new'}>New Course</S.NavLink>
+        <S.NavLink href="/" $active={pathname === '/'}>Placeholder</S.NavLink>
+      </S.Center>
 
       <S.Right>
         <S.ThemeToggle
@@ -106,9 +105,9 @@ export const Navbar = () => {
         >
           {resolvedTheme === 'dark' ? <SunIcon /> : <MoonIcon />}
         </S.ThemeToggle>
-        <S.Avatar onClick={() => router.push('/profile')} title={user?.email ?? 'Profile'}>
-          {getInitial()}
-        </S.Avatar>
+        <S.ThemeToggle onClick={() => router.push('/profile')} title={user?.email ?? 'Profile'}>
+          <User />
+        </S.ThemeToggle>
       </S.Right>
     </S.Nav>
   );

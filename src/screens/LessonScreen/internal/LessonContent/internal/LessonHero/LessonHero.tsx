@@ -28,12 +28,23 @@ export const LessonHero = ({
 }: LessonHeroProps) => {
   const [imageLoaded, setImageLoaded] = useState(false);
 
-  // Skeleton while generating/loading
+  // Skeleton while generating/loading — keep the title visible
   if (!heroImage && showSkeleton) {
     return (
-      <S.ImageContainer>
-        <Skeleton height={380} borderRadius={0} />
-      </S.ImageContainer>
+      <S.HeroWrapper>
+        <S.ImageContainer>
+          <Skeleton height={380} borderRadius={0} />
+        </S.ImageContainer>
+        <S.TitleRow>
+          <S.TitleArea>
+            <S.EyebrowRow>
+              <S.Eyebrow>{eyebrowText}</S.Eyebrow>
+              {isGenerating && <S.GeneratingDot />}
+            </S.EyebrowRow>
+            <S.Title>{lessonName}</S.Title>
+          </S.TitleArea>
+        </S.TitleRow>
+      </S.HeroWrapper>
     );
   }
 
@@ -42,7 +53,10 @@ export const LessonHero = ({
     return (
       <S.TitleRow>
         <S.TitleArea>
-          <S.Eyebrow>{eyebrowText}</S.Eyebrow>
+          <S.EyebrowRow>
+            <S.Eyebrow>{eyebrowText}</S.Eyebrow>
+            {isGenerating && <S.GeneratingDot />}
+          </S.EyebrowRow>
           <S.Title>{lessonName}</S.Title>
         </S.TitleArea>
         {hasContent && (
@@ -64,16 +78,14 @@ export const LessonHero = ({
       <S.ImageContainer>
         {!imageLoaded && <Skeleton height={380} borderRadius={0} />}
         <S.Image src={heroImage} alt="" onLoad={() => setImageLoaded(true)} $loaded={imageLoaded} />
-        {isGenerating && (
-          <S.ImageActions>
-            <S.GeneratingDot />
-          </S.ImageActions>
-        )}
       </S.ImageContainer>
 
       <S.TitleRow>
         <S.TitleArea>
-          <S.Eyebrow>{eyebrowText}</S.Eyebrow>
+          <S.EyebrowRow>
+            <S.Eyebrow>{eyebrowText}</S.Eyebrow>
+            {isGenerating && <S.GeneratingDot />}
+          </S.EyebrowRow>
           <S.Title>{lessonName}</S.Title>
         </S.TitleArea>
         {hasContent && (

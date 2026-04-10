@@ -2,14 +2,14 @@
 
 import { useQueryClient } from '@tanstack/react-query';
 import { AnimatePresence, motion } from 'framer-motion';
-import { useCallback, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import { toast } from 'sonner';
 import { streamLesson, PlaceholderBlock } from '@/api/routes/course';
 import type { CourseProgressResponse } from '@/api/routes/course';
-import type { LessonBlock } from '@/api/types';
+import type { Course, LessonBlock } from '@/api/types';
 import { Button, Checkbox } from '@/components';
 import { TOASTS, toastMessage } from '@/constants/toasts';
-import { useLessonContent, useUpsertProgress } from '@/hooks';
+import { useJobManager, useLessonContent, useUpsertProgress } from '@/hooks';
 import { celebrateLessonComplete, celebrateModuleComplete, celebrateCourseComplete } from '@/lib/celebrations';
 import { QKeys } from '@/types';
 import { BlockRenderer, FontScaler, getSavedScale, FONT_SCALE_KEY, LessonHero, NotesPanel } from './internal';
@@ -27,6 +27,7 @@ interface Module {
 
 interface LessonContentProps {
   courseId: string;
+  courseObjectId: string | undefined;
   moduleName: string;
   moduleIndex: number;
   lessonIndex: number;
@@ -39,11 +40,13 @@ interface LessonContentProps {
   onOpenSidebar: () => void;
   sidebarOpen: boolean;
   isGenerationRunning: boolean;
+  isThisLessonGenerating: boolean;
   progressData?: CourseProgressResponse;
 }
 
 export const LessonContent = ({
   courseId,
+  courseObjectId,
   moduleIndex,
   lessonIndex,
   lesson,
@@ -53,9 +56,13 @@ export const LessonContent = ({
   onPrev,
   onNext,
   isGenerationRunning,
+  isThisLessonGenerating: isThisLessonGeneratingWs,
   progressData,
 }: LessonContentProps) => {
   const queryClient = useQueryClient();
+  const { generatingLesson, setGeneratingLesson } = useJobManager();
+  // Use both sources: WS-based generatingLesson (instant) + server activeJobId (survives reload)
+  const isAnyLessonGenerating = !!generatingLesson || isGenerationRunning;
   const upsertProgress = useUpsertProgress();
   const [fontScale, setFontScale] = useState(getSavedScale);
 
@@ -64,11 +71,13 @@ export const LessonContent = ({
     localStorage.setItem(FONT_SCALE_KEY, String(scale));
   };
 
+  // Poll when generating: WS match OR reload fallback (activeJobId set but no WS state yet)
+  const shouldPoll = isThisLessonGeneratingWs || (!generatingLesson && isGenerationRunning);
   const { data: lessonContent, isLoading: isLoadingContent } = useLessonContent(
     courseId,
     moduleIndex,
     lessonIndex,
-    isGenerationRunning,
+    shouldPoll,
   );
   const hasContent = !!lessonContent?.blocks?.length;
 
@@ -97,8 +106,25 @@ export const LessonContent = ({
   const [isStarting, setIsStarting] = useState(false);
   const [placeholders, setPlaceholders] = useState<PlaceholderBlock[]>([]);
 
+  const abortRef = useRef<AbortController | null>(null);
+
+  // Abort any in-flight stream when the component unmounts (lesson change or navigation)
+  useEffect(() => {
+    console.log(`[DEBUG] LessonContent MOUNT m${moduleIndex}/l${lessonIndex}`);
+    return () => {
+      console.log(`[DEBUG] LessonContent UNMOUNT m${moduleIndex}/l${lessonIndex}`);
+      abortRef.current?.abort();
+    };
+  }, []);
+
   const isStreaming = streamPhase !== 'idle';
   const isActivelyGenerating = streamPhase === 'streaming';
+  // True when THIS specific lesson is being generated:
+  // - isStreaming: local SSE stream is active (user stayed on page)
+  // - isThisLessonGeneratingWs: WebSocket told us this lesson's coordinates match (navigate away/back, other tabs)
+  // - reloadFallback: page reload loses WS state — use activeJobId + hasContent (partial save = generating)
+  const reloadFallback = !generatingLesson && isGenerationRunning && hasContent && !(lessonContent as Record<string, unknown>)?.completed;
+  const isThisLessonGenerating = isStreaming || isThisLessonGeneratingWs || reloadFallback;
   // Generation options (persisted to localStorage)
   const [includeImage, setIncludeImage] = useState(() => localStorage.getItem('gen_includeImage') !== 'false');
   const [includeLinks, setIncludeLinks] = useState(() => localStorage.getItem('gen_includeLinks') !== 'false');
@@ -122,6 +148,18 @@ export const LessonContent = ({
 
   const handleGenerate = useCallback(async () => {
     if (isStreaming || isStarting) return;
+    console.log(`[DEBUG] handleGenerate START m${moduleIndex}/l${lessonIndex}`);
+
+    abortRef.current?.abort();
+    const controller = new AbortController();
+    abortRef.current = controller;
+
+    // Optimistically track which lesson is generating (before WS event arrives)
+    // Use courseObjectId (MongoDB _id) to match what the server sends via WebSocket
+    if (courseObjectId) {
+      setGeneratingLesson({ courseId: courseObjectId, moduleIndex, lessonIndex });
+    }
+    console.log(`[DEBUG] handleGenerate OPTIMISTIC generatingLesson set (objectId=${courseObjectId})`);
 
     setIsStarting(true);
     setStreamBlocks([]);
@@ -132,7 +170,8 @@ export const LessonContent = ({
       setStreamPhase('streaming');
       setIsStarting(false);
 
-      await streamLesson({ courseId, moduleIndex, lessonIndex, includeImage, includeLinks, onEvent: (event) => {
+      await streamLesson({ courseId, moduleIndex, lessonIndex, includeImage, includeLinks, signal: controller.signal, onEvent: (event) => {
+        console.log(`[DEBUG] stream event: ${event.type}`);
         switch (event.type) {
           case 'block':
             setStreamBlocks((prev) => [...prev, event.block]);
@@ -155,19 +194,36 @@ export const LessonContent = ({
             setPlaceholders(event.placeholders);
             break;
           case 'complete':
+            console.log(`[DEBUG] stream COMPLETE — clearing state`);
             setStreamPhase('idle');
             setPlaceholders([]);
+            setGeneratingLesson(null);
+            // Optimistically clear activeJobId so navigation to other lessons immediately shows "Create lesson"
+            queryClient.setQueryData<Course>([QKeys.COURSE, courseId], (old) =>
+              old ? { ...old, activeJobId: undefined } : old,
+            );
             queryClient.invalidateQueries({ queryKey: [QKeys.LESSON_CONTENT, courseId, moduleIndex, lessonIndex] });
             queryClient.invalidateQueries({ queryKey: [QKeys.GENERATED_LESSONS, courseId] });
+            queryClient.invalidateQueries({ queryKey: [QKeys.COURSE, courseId] });
             break;
           case 'error':
+            console.log(`[DEBUG] stream ERROR: ${event.message} — clearing state`);
             setStreamPhase('idle');
             setPlaceholders([]);
+            setGeneratingLesson(null);
+            queryClient.setQueryData<Course>([QKeys.COURSE, courseId], (old) =>
+              old ? { ...old, activeJobId: undefined } : old,
+            );
+            queryClient.invalidateQueries({ queryKey: [QKeys.COURSE, courseId] });
+            queryClient.invalidateQueries({ queryKey: [QKeys.LESSON_CONTENT, courseId, moduleIndex, lessonIndex] });
+            queryClient.invalidateQueries({ queryKey: [QKeys.GENERATED_LESSONS, courseId] });
             toast.error(toastMessage(event.message, TOASTS.GENERATION_FAILED));
             break;
         }
       } });
-    } catch {
+    } catch (err: unknown) {
+      console.log(`[DEBUG] stream CATCH: ${err} | abort=${err instanceof DOMException && err.name === 'AbortError'}`);
+      if (err instanceof DOMException && err.name === 'AbortError') return; // navigated away — WS handles cleanup
       setStreamPhase('idle');
       setIsStarting(false);
       setPlaceholders([]);
@@ -252,6 +308,8 @@ export const LessonContent = ({
     return modules[moduleIndex + 1]?.lessons?.[0]?.name;
   };
 
+  console.log(`[DEBUG] LessonContent RENDER m${moduleIndex}/l${lessonIndex} | isGenRunning=${isGenerationRunning} thisGenerating=${isThisLessonGenerating} | hasContent=${hasContent} blocks=${blocks?.length ?? 0} | isStreaming=${isStreaming} phase=${streamPhase} | heroImage=${!!heroImage} | showComplete=${hasContent && !isThisLessonGenerating}`);
+
   if (isLoadingContent) {
     return (
       <S.Container>
@@ -270,10 +328,10 @@ export const LessonContent = ({
         lessonName={lesson.name}
         isBookmarked={isBookmarked}
         hasContent={hasContent}
-        isGenerating={isStreaming || isGenerationRunning}
+        isGenerating={isThisLessonGenerating}
         showSkeleton={
           ((isStreaming || isStarting) && includeImage) ||
-          (isGenerationRunning && (lessonContent?.includeHeroImage ?? true))
+          (isThisLessonGenerating && !isStreaming && (lessonContent?.includeHeroImage ?? true) && !lessonContent?.heroImageUrl)
         }
         onToggleBookmark={handleToggleBookmark}
       />
@@ -319,9 +377,9 @@ export const LessonContent = ({
             {streamPhase === 'finishing' && !placeholders.length && (
               <S.FinishingIndicator>Finishing up...</S.FinishingIndicator>
             )}
-            {!isStreaming && isGenerationRunning && <S.StreamingIndicator>Creating lesson...</S.StreamingIndicator>}
+            {!isStreaming && isThisLessonGenerating && <S.StreamingIndicator>Creating lesson...</S.StreamingIndicator>}
           </>
-        ) : isStreaming || isStarting ? (
+        ) : isStreaming || isStarting || isThisLessonGenerating ? (
           <S.StreamingIndicator>Creating lesson...</S.StreamingIndicator>
         ) : (
           <S.Placeholder>
@@ -343,8 +401,8 @@ export const LessonContent = ({
                   />
                 </S.GenerateOptions>
 
-                <Button onClick={handleGenerate} disabled={isGenerationRunning}>
-                  {isGenerationRunning ? 'Another lesson is being created...' : 'Create lesson'}
+                <Button onClick={handleGenerate} disabled={isAnyLessonGenerating}>
+                  {isAnyLessonGenerating ? 'Another lesson is being created...' : 'Create lesson'}
                 </Button>
               </>
             ) : (
@@ -354,7 +412,7 @@ export const LessonContent = ({
         )}
 
         {/* Notes panel */}
-        {hasContent && !isStreaming && !isGenerationRunning && (
+        {hasContent && !isThisLessonGenerating && (
           <NotesPanel
             courseId={courseId}
             moduleIndex={moduleIndex}
@@ -364,7 +422,7 @@ export const LessonContent = ({
         )}
 
         {/* Mark as Complete */}
-        {hasContent && !isStreaming && !isGenerationRunning && (
+        {hasContent && !isThisLessonGenerating && (
           <S.CompleteSection>
             <AnimatePresence mode="wait" initial={false}>
               {isCompleted ? (

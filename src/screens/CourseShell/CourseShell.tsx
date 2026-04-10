@@ -54,6 +54,8 @@ export const CourseShell = ({ children }: CourseShellProps) => {
   const { data: progressData } = useCourseProgress(courseId);
   const { data: generatedLessons } = useGeneratedLessons(courseId);
 
+  console.log(`[DEBUG] CourseShell | activeJobId=${course?.activeJobId} | generatedLessons=${generatedLessons?.length ?? 'loading'}`);
+
   // ── Delete course ────────────────────────────────────
   const [showDeleteDialog, setShowDeleteDialog] = useState(false);
   const deleteMutation = useMutation({

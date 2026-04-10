@@ -97,23 +97,3 @@ export const ThemeToggle = styled.button`
   }
 `;
 
-export const Avatar = styled.button`
-  width: 32px;
-  height: 32px;
-  border-radius: 50%;
-  border: 1px solid ${(p) => p.theme.colors.border};
-  background: ${(p) => p.theme.colors.surface};
-  color: ${(p) => p.theme.colors.foreground};
-  font-family: var(--font-heading-serif), Georgia, serif;
-  font-size: 0.8125rem;
-  font-weight: 500;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  cursor: pointer;
-  transition: border-color 0.15s;
-
-  &:hover {
-    border-color: ${(p) => p.theme.colors.accent};
-  }
-`;

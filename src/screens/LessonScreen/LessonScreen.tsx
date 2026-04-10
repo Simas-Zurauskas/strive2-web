@@ -6,6 +6,7 @@ import { useCallback, useEffect, useRef } from 'react';
 import { getAuthToken } from '@/api/client';
 import { upsertLessonProgress } from '@/api/routes/course';
 import { NEXT_PUBLIC_API_URL } from '@/conf/env';
+import { useJobManager } from '@/hooks';
 import { useCourseContext } from '@/screens/CourseShell';
 import { QKeys } from '@/types';
 import { LessonContent } from './internal';
@@ -101,6 +102,19 @@ export const LessonScreen = () => {
 
   // ── Not found ─────────────────────────────────────────
 
+  const { generatingLesson } = useJobManager();
+  const courseObjectId = course?._id;
+  const isGenerationRunning = !!course?.activeJobId;
+
+  // WebSocket tells us exactly which lesson is generating
+  const isThisLessonGenerating =
+    !!courseObjectId &&
+    generatingLesson?.courseId === courseObjectId &&
+    generatingLesson?.moduleIndex === moduleIndex &&
+    generatingLesson?.lessonIndex === lessonIndex;
+
+  console.log(`[DEBUG] LessonScreen RENDER m${moduleIndex}/l${lessonIndex} | activeJobId=${course?.activeJobId} → isGenRunning=${!!course?.activeJobId} | wsGenerating=${isThisLessonGenerating} genLesson=${JSON.stringify(generatingLesson)}`);
+
   if (!currentModule || !currentLesson) {
     return (
       <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', flex: 1, opacity: 0.5 }}>
@@ -111,7 +125,9 @@ export const LessonScreen = () => {
 
   return (
     <LessonContent
+      key={`${moduleIndex}-${lessonIndex}`}
       courseId={courseId}
+      courseObjectId={courseObjectId}
       moduleName={currentModule.name}
       moduleIndex={moduleIndex}
       lessonIndex={lessonIndex}
@@ -123,7 +139,8 @@ export const LessonScreen = () => {
       onNext={nextLesson}
       onOpenSidebar={() => setSidebarOpen(true)}
       sidebarOpen={sidebarOpen}
-      isGenerationRunning={!!course?.activeJobId}
+      isGenerationRunning={isGenerationRunning}
+      isThisLessonGenerating={isThisLessonGenerating}
       progressData={progressData}
     />
   );

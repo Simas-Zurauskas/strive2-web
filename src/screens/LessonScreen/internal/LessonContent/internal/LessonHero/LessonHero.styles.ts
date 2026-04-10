@@ -122,6 +122,12 @@ export const BookmarkButtonInline = styled.button<{ $active: boolean }>`
   }
 `;
 
+export const EyebrowRow = styled.div`
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+`;
+
 export const Eyebrow = styled.span`
   font-size: 0.6875rem;
   font-weight: 700;

@@ -136,10 +136,11 @@ export const streamLesson = async (
     lessonIndex: number;
     includeImage?: boolean;
     includeLinks?: boolean;
+    signal?: AbortSignal;
     onEvent: (event: LessonStreamEvent) => void;
   },
 ): Promise<void> => {
-  const { courseId, onEvent, ...body } = params;
+  const { courseId, onEvent, signal, ...body } = params;
   const token = getAuthToken();
 
   const response = await fetch(`${NEXT_PUBLIC_API_URL}/api/course/${courseId}/stream-lesson`, {
@@ -149,6 +150,7 @@ export const streamLesson = async (
       ...(token && { Authorization: `Bearer ${token}` }),
     },
     body: JSON.stringify(body),
+    signal,
   });
 
   if (!response.ok) {

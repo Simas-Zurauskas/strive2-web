@@ -960,6 +960,7 @@ export interface paths {
                         "application/json": {
                             data: {
                                 courseId: string;
+                                courseSlug: string | null;
                                 courseName: string;
                                 courseGoal: string;
                                 moduleName: string;
@@ -1793,6 +1794,7 @@ export interface components {
         };
         ReviewDueItem: {
             courseId: string;
+            courseSlug: string | null;
             courseName: string;
             moduleIndex: number;
             moduleName: string;
@@ -1806,6 +1808,7 @@ export interface components {
             _id: string;
             userId: string;
             name: string;
+            slug?: string | null;
             status: components["schemas"]["CourseStatus"];
             goal: string;
             clarifyData?: components["schemas"]["ClarifyResponse"];
