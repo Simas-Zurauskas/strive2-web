@@ -12,6 +12,10 @@ export const signUpSchema = yup.object({
     .min(8, 'Password must be at least 8 characters')
     .max(128, 'Password must be at most 128 characters')
     .required('Password is required'),
+  confirmPassword: yup
+    .string()
+    .oneOf([yup.ref('password')], 'Passwords do not match')
+    .required('Please confirm your password'),
 });
 
 export type SignInValues = yup.InferType<typeof signInSchema>;
