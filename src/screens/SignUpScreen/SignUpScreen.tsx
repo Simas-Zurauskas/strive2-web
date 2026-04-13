@@ -7,7 +7,7 @@ import { useState } from 'react';
 import { signUpSchema, SignUpValues } from '@/validation';
 import * as S from '../LoginScreen/LoginScreen.styles';
 
-const initialValues: SignUpValues = { email: '', password: '' };
+const initialValues: SignUpValues = { email: '', password: '', confirmPassword: '' };
 
 export const SignUpScreen = () => {
   const [apiError, setApiError] = useState('');
@@ -66,6 +66,19 @@ export const SignUpScreen = () => {
           />
           {touched.password && errors.password && (
             <p className="form__field-error">{errors.password}</p>
+          )}
+
+          <input
+            className="form__input"
+            type="password"
+            name="confirmPassword"
+            placeholder="Confirm password"
+            value={values.confirmPassword}
+            onChange={handleChange}
+            onBlur={handleBlur}
+          />
+          {touched.confirmPassword && errors.confirmPassword && (
+            <p className="form__field-error">{errors.confirmPassword}</p>
           )}
 
           {apiError && <p className="form__error">{apiError}</p>}
