@@ -17,25 +17,101 @@ const ICON_MAP: Record<string, string> = {
   'refresh-cw': '\ud83d\udd04',
   clock: '\u23f1\ufe0f',
   zap: '\u26a1',
+  globe: '\ud83c\udf0d',
 };
 
 // All achievement definitions (must match API constants)
 const ACHIEVEMENTS = [
-  { id: 'first_lesson', category: 'milestone', name: 'First Steps', description: 'Complete your first lesson', icon: 'book-open' },
-  { id: 'ten_lessons', category: 'milestone', name: 'Getting Serious', description: 'Complete 10 lessons', icon: 'books' },
-  { id: 'fifty_lessons', category: 'milestone', name: 'Knowledge Seeker', description: 'Complete 50 lessons', icon: 'graduation-cap' },
-  { id: 'first_course', category: 'milestone', name: 'Course Complete', description: 'Complete an entire course', icon: 'trophy' },
-  { id: 'three_courses', category: 'milestone', name: 'Lifelong Learner', description: 'Complete 3 courses', icon: 'star' },
-  { id: 'streak_3', category: 'streak', name: 'Getting Started', description: '3-day learning streak', icon: 'flame' },
+  {
+    id: 'lesson_first',
+    category: 'milestone',
+    name: 'First Steps',
+    description: 'Complete your first lesson',
+    icon: 'book-open',
+  },
+  {
+    id: 'lessons_ten',
+    category: 'milestone',
+    name: 'Getting Serious',
+    description: 'Complete 10 lessons',
+    icon: 'books',
+  },
+  {
+    id: 'lessons_fifty',
+    category: 'milestone',
+    name: 'Century Scholar',
+    description: 'Complete 50 lessons',
+    icon: 'graduation-cap',
+  },
+  {
+    id: 'course_first',
+    category: 'milestone',
+    name: 'Course Complete',
+    description: 'Complete an entire course',
+    icon: 'trophy',
+  },
+  {
+    id: 'courses_three',
+    category: 'milestone',
+    name: 'Lifelong Learner',
+    description: 'Complete 3 courses',
+    icon: 'star',
+  },
+  { id: 'courses_five', category: 'milestone', name: 'Polymath', description: 'Complete 5 courses', icon: 'globe' },
+  { id: 'streak_3', category: 'streak', name: 'Spark', description: '3-day learning streak', icon: 'flame' },
   { id: 'streak_7', category: 'streak', name: 'One Week Strong', description: '7-day learning streak', icon: 'flame' },
-  { id: 'streak_30', category: 'streak', name: 'Monthly Dedication', description: '30-day learning streak', icon: 'flame' },
-  { id: 'perfect_quiz', category: 'mastery', name: 'Perfect Score', description: 'Score 100% on a module quiz', icon: 'target' },
-  { id: 'all_mastered_course', category: 'mastery', name: 'Total Mastery', description: 'Master all modules in a course', icon: 'crown' },
-  { id: 'first_review', category: 'mastery', name: 'Spaced Learner', description: 'Complete your first spaced review', icon: 'refresh-cw' },
-  { id: 'hour_learned', category: 'dedication', name: 'Hour of Learning', description: 'Spend 1 hour learning', icon: 'clock' },
-  { id: 'ten_hours', category: 'dedication', name: 'Dedicated Learner', description: 'Spend 10 hours learning', icon: 'clock' },
+  {
+    id: 'streak_14',
+    category: 'streak',
+    name: 'Monthly Dedication',
+    description: '14-day learning streak',
+    icon: 'flame',
+  },
+  {
+    id: 'quiz_perfect',
+    category: 'mastery',
+    name: 'Perfect Score',
+    description: 'Score 100% on a module quiz',
+    icon: 'target',
+  },
+  {
+    id: 'course_mastered',
+    category: 'mastery',
+    name: 'Total Mastery',
+    description: 'Master all modules in a course',
+    icon: 'crown',
+  },
+  {
+    id: 'review_first',
+    category: 'mastery',
+    name: 'Spaced Learner',
+    description: 'Complete your first spaced review',
+    icon: 'refresh-cw',
+  },
+  {
+    id: 'hours_one',
+    category: 'dedication',
+    name: 'Hour of Learning',
+    description: 'Spend 1 hour learning',
+    icon: 'clock',
+  },
+  {
+    id: 'hours_ten',
+    category: 'dedication',
+    name: 'Dedicated Learner',
+    description: 'Spend 10 hours learning',
+    icon: 'clock',
+  },
+  {
+    id: 'hours_twentyfive',
+    category: 'dedication',
+    name: 'Centurion',
+    description: 'Spend 25 hours learning',
+    icon: 'clock',
+  },
   { id: 'level_5', category: 'dedication', name: 'Level 5', description: 'Reach level 5', icon: 'zap' },
-  { id: 'level_10', category: 'dedication', name: 'Level 10', description: 'Reach level 10', icon: 'zap' },
+  { id: 'level_15', category: 'dedication', name: 'Level 15', description: 'Reach level 15', icon: 'zap' },
+  { id: 'level_25', category: 'dedication', name: 'Grandmaster', description: 'Reach level 25', icon: 'zap' },
 ] as const;
 
 const formatTime = (seconds: number): string => {
@@ -107,7 +183,11 @@ export const GamificationSection = () => {
               <S.ChartLabel>XP (last 30 days)</S.ChartLabel>
               <S.BarChart>
                 {stats.xpByDay.map((d) => (
-                  <S.Bar key={d.date} $height={maxDayXp > 0 ? (d.xp / maxDayXp) * 100 : 0} title={`${d.date}: ${d.xp} XP`} />
+                  <S.Bar
+                    key={d.date}
+                    $height={maxDayXp > 0 ? (d.xp / maxDayXp) * 100 : 0}
+                    title={`${d.date}: ${d.xp} XP`}
+                  />
                 ))}
               </S.BarChart>
               <S.BarLabels>

@@ -7,13 +7,13 @@ import * as S from './GamificationCard.styles';
 
 const LEVEL_THRESHOLDS = [
   0, 100, 250, 450, 700, 1000, 1400, 1900, 2500, 3200,
-  4000, 5000, 6200, 7600, 9200, 11000, 13000, 15500, 18500, 22000,
-  26000, 30500, 35500, 41000, 47000,
+  4000, 4850, 5750, 6700, 7700, 8700, 9700, 10700, 11700, 12700,
+  13700, 14700, 15700, 16700, 17700,
 ];
 
 function getLevelThreshold(level: number): number {
   if (level <= LEVEL_THRESHOLDS.length) return LEVEL_THRESHOLDS[level - 1] ?? 0;
-  return 47000 + (level - LEVEL_THRESHOLDS.length) * 7000;
+  return 17700 + (level - LEVEL_THRESHOLDS.length) * 1000;
 }
 
 function xpNeededForLevel(level: number): number {
