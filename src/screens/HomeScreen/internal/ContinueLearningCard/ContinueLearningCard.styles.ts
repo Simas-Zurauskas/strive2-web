@@ -9,7 +9,6 @@ export const Container = styled.div`
   overflow: hidden;
   cursor: pointer;
   transition: border-color 0.15s;
-  margin-bottom: 1.5rem;
 
   &:hover {
     border-color: ${(p) => p.theme.colors.accent};
@@ -69,7 +68,7 @@ export const ProgressBarTrack = styled.div`
   flex: 1;
   height: 3px;
   border-radius: 2px;
-  background: ${(p) => p.theme.colors.border};
+  background: ${(p) => p.theme.colors.surfaceBorder};
 `;
 
 export const ProgressBarFill = styled.div<{ $percent: number }>`

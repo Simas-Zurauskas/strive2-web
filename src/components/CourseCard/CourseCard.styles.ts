@@ -38,6 +38,34 @@ export const CourseName = styled.h3`
   white-space: nowrap;
 `;
 
+export const HeaderRight = styled.div`
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  flex-shrink: 0;
+`;
+
+export const FavoriteButton = styled.button<{ $active?: boolean }>`
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 28px;
+  height: 28px;
+  border-radius: 6px;
+  border: none;
+  background: transparent;
+  color: ${(p) => (p.$active ? p.theme.colors.warning : p.theme.colors.muted)};
+  cursor: pointer;
+  transition:
+    color 0.15s,
+    background 0.15s;
+
+  &:hover {
+    color: ${(p) => p.theme.colors.warning};
+    background: ${(p) => `${p.theme.colors.warning}10`};
+  }
+`;
+
 export const Meta = styled.div`
   display: flex;
   align-items: center;
@@ -101,7 +129,7 @@ export const ProgressTrack = styled.div`
   flex: 1;
   height: 3px;
   border-radius: 2px;
-  background: ${(p) => p.theme.colors.border};
+  background: ${(p) => p.theme.colors.surfaceBorder};
 `;
 
 export const ProgressFill = styled.div<{ $percent: number }>`

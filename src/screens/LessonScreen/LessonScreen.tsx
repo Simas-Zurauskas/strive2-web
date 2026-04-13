@@ -16,7 +16,7 @@ export const LessonScreen = () => {
   const router = useRouter();
   const queryClient = useQueryClient();
 
-  const { courseId, courseBasePath, course, modules, progressData, sidebarOpen, setSidebarOpen, navigateToLesson } =
+  const { courseSlug, courseBasePath, course, modules, progressData, sidebarOpen, setSidebarOpen, navigateToLesson } =
     useCourseContext();
 
   const moduleIndex = Number(params.moduleIndex);
@@ -52,7 +52,7 @@ export const LessonScreen = () => {
         navigateToLesson(moduleIndex + 1, 0);
       }
     }
-  }, [moduleIndex, lessonIndex, currentModule, modules, navigateToLesson, progressData, courseId, router]);
+  }, [moduleIndex, lessonIndex, currentModule, modules, navigateToLesson, progressData, courseBasePath, router]);
 
   const hasPrev = moduleIndex > 0 || lessonIndex > 0;
   const hasNext = moduleIndex < modules.length - 1 || lessonIndex < (currentModule?.lessons?.length ?? 0) - 1;
@@ -62,7 +62,7 @@ export const LessonScreen = () => {
   const timeRef = useRef(0);
 
   useEffect(() => {
-    upsertLessonProgress({ courseId, moduleIndex, lessonIndex, data: { status: 'in_progress' } }).then(() => {
+    upsertLessonProgress({ courseId: courseSlug, moduleIndex, lessonIndex, data: { status: 'in_progress' } }).then(() => {
       queryClient.invalidateQueries({ queryKey: [QKeys.CONTINUE_LEARNING] });
       queryClient.invalidateQueries({ queryKey: [QKeys.PROGRESS_SUMMARY] });
     }).catch(() => {});
@@ -70,14 +70,14 @@ export const LessonScreen = () => {
     timeRef.current = 0;
     const interval = setInterval(() => {
       timeRef.current += 30;
-      upsertLessonProgress({ courseId, moduleIndex, lessonIndex, data: { timeSpentDelta: 30 } }).catch(() => {});
+      upsertLessonProgress({ courseId: courseSlug, moduleIndex, lessonIndex, data: { timeSpentDelta: 30 } }).catch(() => {});
     }, 30_000);
 
     const sendBeacon = () => {
       const remaining = 30 - (timeRef.current % 30 || 30);
       if (remaining > 0 && remaining < 30) {
         const token = getAuthToken();
-        const url = `${NEXT_PUBLIC_API_URL}/api/course/${courseId}/progress/${moduleIndex}/${lessonIndex}`;
+        const url = `${NEXT_PUBLIC_API_URL}/api/course/${courseSlug}/progress/${moduleIndex}/${lessonIndex}`;
         const body = JSON.stringify({ timeSpentDelta: remaining });
         fetch(url, {
           method: 'POST',
@@ -98,7 +98,7 @@ export const LessonScreen = () => {
       window.removeEventListener('beforeunload', sendBeacon);
       sendBeacon();
     };
-  }, [courseId, moduleIndex, lessonIndex, queryClient]);
+  }, [courseSlug, moduleIndex, lessonIndex, queryClient]);
 
   // ── Not found ─────────────────────────────────────────
 
@@ -113,8 +113,6 @@ export const LessonScreen = () => {
     generatingLesson?.moduleIndex === moduleIndex &&
     generatingLesson?.lessonIndex === lessonIndex;
 
-  console.log(`[DEBUG] LessonScreen RENDER m${moduleIndex}/l${lessonIndex} | activeJobId=${course?.activeJobId} → isGenRunning=${!!course?.activeJobId} | wsGenerating=${isThisLessonGenerating} genLesson=${JSON.stringify(generatingLesson)}`);
-
   if (!currentModule || !currentLesson) {
     return (
       <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', flex: 1, opacity: 0.5 }}>
@@ -126,7 +124,7 @@ export const LessonScreen = () => {
   return (
     <LessonContent
       key={`${moduleIndex}-${lessonIndex}`}
-      courseId={courseId}
+      courseId={courseSlug}
       courseObjectId={courseObjectId}
       moduleName={currentModule.name}
       moduleIndex={moduleIndex}

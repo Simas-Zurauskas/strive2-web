@@ -14,6 +14,8 @@ export {
   useSubmitQuizAttempt,
   useReviewsDue,
   useResetModuleQuiz,
+  useBookmarkedLessons,
 } from './useProgress';
 export { useJobManager } from './useJobManager';
 export { useSocket, SocketProvider } from './useSocket';
+export { useFavoriteCourseIds, useToggleFavoriteCourse } from './useFavorites';

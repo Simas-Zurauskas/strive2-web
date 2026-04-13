@@ -46,20 +46,18 @@ export const CourseShell = ({ children }: CourseShellProps) => {
   const queryClient = useQueryClient();
   const isDesktop = useIsDesktop();
 
-  const courseId = params.id as string;
+  const courseSlug = params.slug as string;
   const moduleIndex = params.moduleIndex !== undefined ? Number(params.moduleIndex) : undefined;
   const lessonIndex = params.lessonIndex !== undefined ? Number(params.lessonIndex) : undefined;
 
-  const { data: course, isLoading } = useCourse(courseId);
-  const { data: progressData } = useCourseProgress(courseId);
-  const { data: generatedLessons } = useGeneratedLessons(courseId);
-
-  console.log(`[DEBUG] CourseShell | activeJobId=${course?.activeJobId} | generatedLessons=${generatedLessons?.length ?? 'loading'}`);
+  const { data: course, isLoading } = useCourse(courseSlug);
+  const { data: progressData } = useCourseProgress(courseSlug);
+  const { data: generatedLessons } = useGeneratedLessons(courseSlug);
 
   // ── Delete course ────────────────────────────────────
   const [showDeleteDialog, setShowDeleteDialog] = useState(false);
   const deleteMutation = useMutation({
-    mutationFn: () => deleteCourse(courseId),
+    mutationFn: () => deleteCourse(courseSlug),
     onSuccess: () => {
       setShowDeleteDialog(false);
       queryClient.invalidateQueries({ queryKey: [QKeys.COURSES] });
@@ -88,7 +86,7 @@ export const CourseShell = ({ children }: CourseShellProps) => {
   const modules = useMemo(() => course?.structure?.modules ?? [], [course?.structure?.modules]);
 
   // ── Navigation ───────────────────────────────────────
-  const courseBasePath = `/course/${(course as Record<string, unknown>)?.slug ?? courseId}`;
+  const courseBasePath = `/course/${course?.slug ?? courseSlug}`;
 
   const navigateToLesson = useCallback(
     (mi: number, li: number) => {
@@ -124,7 +122,7 @@ export const CourseShell = ({ children }: CourseShellProps) => {
   // ── Context value ────────────────────────────────────
   const contextValue: CourseContextValue = useMemo(
     () => ({
-      courseId,
+      courseSlug,
       courseBasePath,
       course,
       isLoading,
@@ -142,7 +140,7 @@ export const CourseShell = ({ children }: CourseShellProps) => {
       onDeleteCourse: () => setShowDeleteDialog(true),
     }),
     [
-      courseId, courseBasePath, course, isLoading, modules, progressData, generatedLessons,
+      courseSlug, courseBasePath, course, isLoading, modules, progressData, generatedLessons,
       sidebarOpen, chatOpen, isDesktop, expandedModules, setExpandedModules,
       navigateToLesson,
     ],

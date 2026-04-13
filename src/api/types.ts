@@ -44,3 +44,8 @@ export type UserModuleQuizProgress = components['schemas']['UserModuleQuizProgre
 export type CourseQuizProgressItem = components['schemas']['CourseQuizProgressItem'];
 export type ReviewDueItem = components['schemas']['ReviewDueItem'];
 
+export type AchievementCategory = components['schemas']['AchievementCategory'];
+export type EarnedAchievement = components['schemas']['EarnedAchievement'];
+export type GamificationProfile = components['schemas']['GamificationProfile'];
+export type GamificationStats = components['schemas']['GamificationStats'];
+

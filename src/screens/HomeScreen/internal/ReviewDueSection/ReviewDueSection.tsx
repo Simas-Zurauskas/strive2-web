@@ -1,8 +1,8 @@
 'use client';
 
 import { useRouter } from 'next/navigation';
-import type { ReviewDueItem } from '@/api/types';
 import * as S from './ReviewDueSection.styles';
+import type { ReviewDueItem } from '@/api/types';
 
 interface ReviewDueSectionProps {
   items: ReviewDueItem[];
@@ -20,7 +20,7 @@ export const ReviewDueSection = ({ items }: ReviewDueSectionProps) => {
         <S.Label>Reviews due</S.Label>
         <S.ReviewList>
           {items.map((item) => {
-            const slug = (item as Record<string, unknown>).courseSlug as string;
+            const slug = item.courseSlug;
             return (
               <S.ReviewItem
                 key={`${item.courseId}-${item.moduleIndex}`}

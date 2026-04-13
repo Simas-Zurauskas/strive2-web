@@ -14,6 +14,8 @@ import {
   getModuleQuizProgress,
   getReviewsDue,
   resetModuleQuiz,
+  getBookmarkedLessons,
+  getRecentActivity,
 } from '@/api/routes/course';
 import { QKeys } from '@/types';
 
@@ -63,6 +65,9 @@ export const useUpsertProgress = () => {
       });
       queryClient.invalidateQueries({
         queryKey: [QKeys.PROGRESS_SUMMARY],
+      });
+      queryClient.invalidateQueries({
+        queryKey: [QKeys.GAMIFICATION_PROFILE],
       });
     },
   });
@@ -118,6 +123,9 @@ export const useSubmitQuizAttempt = () => {
       queryClient.invalidateQueries({
         queryKey: [QKeys.REVIEWS_DUE],
       });
+      queryClient.invalidateQueries({
+        queryKey: [QKeys.GAMIFICATION_PROFILE],
+      });
     },
   });
 };
@@ -151,4 +159,20 @@ export const useReviewsDue = () =>
   useQuery({
     queryKey: [QKeys.REVIEWS_DUE],
     queryFn: getReviewsDue,
+  });
+
+// ── Bookmarked lessons ────────────────────────────────
+
+export const useBookmarkedLessons = () =>
+  useQuery({
+    queryKey: [QKeys.BOOKMARKED_LESSONS],
+    queryFn: getBookmarkedLessons,
+  });
+
+// ── Recent activity ─────────────────────────────────
+
+export const useRecentActivity = () =>
+  useQuery({
+    queryKey: [QKeys.RECENT_ACTIVITY],
+    queryFn: getRecentActivity,
   });

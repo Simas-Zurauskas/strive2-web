@@ -28,13 +28,9 @@ export const SocketProvider = ({ children }: { children: React.ReactNode }) => {
       transports: ['websocket', 'polling'],
     });
 
-    s.on('connect', () => {
-      console.log('[Socket.io] Connected');
-    });
+    s.on('connect', () => {});
 
-    s.on('disconnect', (reason) => {
-      console.log('[Socket.io] Disconnected:', reason);
-    });
+    s.on('disconnect', () => {});
 
     s.on('connect_error', (err) => {
       console.error('[Socket.io] Connection error:', err.message);

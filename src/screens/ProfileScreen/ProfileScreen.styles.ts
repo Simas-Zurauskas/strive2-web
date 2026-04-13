@@ -29,16 +29,17 @@ export const ProfileHeader = styled.div`
   }
 `;
 
-export const Avatar = styled.div<{ $hasImage?: boolean }>`
+export const Avatar = styled.div`
+  position: relative;
   width: 72px;
   height: 72px;
   border-radius: 50%;
-  border: 2px solid ${(p) => p.theme.colors.border};
-  background: ${(p) => p.theme.colors.surface};
-  color: ${(p) => p.theme.colors.foreground};
+  border: 2px solid ${(p) => p.theme.colors.tertiary};
+  background: ${(p) => p.theme.colors.accent};
+  color: #fff;
   font-family: var(--font-heading-serif), Georgia, serif;
-  font-size: 1.75rem;
-  font-weight: 500;
+  font-size: 1.5rem;
+  font-weight: 600;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -46,9 +47,12 @@ export const Avatar = styled.div<{ $hasImage?: boolean }>`
   overflow: hidden;
 
   img {
+    position: absolute;
+    inset: 0;
     width: 100%;
     height: 100%;
     object-fit: cover;
+    border-radius: 50%;
   }
 `;
 

@@ -91,7 +91,7 @@ export const ProgressValue = styled.span`
 export const ProgressBarTrack = styled.div`
   height: 6px;
   border-radius: 3px;
-  background: ${(p) => p.theme.colors.border};
+  background: ${(p) => p.theme.colors.surfaceBorder};
 `;
 
 export const ProgressBarFill = styled.div<{ $percent: number }>`
@@ -169,6 +169,54 @@ export const ReviewAction = styled.span`
   flex-shrink: 0;
 `;
 
+// ── Bookmarks section ────────────────────────────────
+
+export const BookmarksSection = styled.div`
+  margin-bottom: 2rem;
+`;
+
+export const BookmarksHeader = styled.h2`
+  font-size: 0.6875rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: ${(p) => p.theme.colors.muted};
+  margin: 0 0 0.75rem;
+`;
+
+export const BookmarkItem = styled.button`
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  width: 100%;
+  padding: 0.625rem 1rem;
+  border-radius: 8px;
+  border: 1px solid ${(p) => p.theme.colors.border};
+  background: ${(p) => p.theme.colors.surface};
+  font-family: inherit;
+  cursor: pointer;
+  text-align: left;
+  transition: border-color 0.15s;
+  margin-bottom: 0.5rem;
+
+  &:hover {
+    border-color: ${(p) => p.theme.colors.accent};
+  }
+`;
+
+export const BookmarkLessonName = styled.span`
+  flex: 1;
+  font-size: 0.8125rem;
+  color: ${(p) => p.theme.colors.foreground};
+`;
+
+export const BookmarkArrow = styled.span`
+  font-size: 0.75rem;
+  font-weight: 600;
+  color: ${(p) => p.theme.colors.accent};
+  flex-shrink: 0;
+`;
+
 // ── Outline section ──────────────────────────────────
 
 export const SectionTitle = styled.h2`
@@ -190,26 +238,23 @@ export const ModuleCard = styled.div`
 export const ModuleHeader = styled.div`
   display: flex;
   align-items: center;
-  gap: 0.75rem;
-  padding: 0.875rem 1.25rem;
+  gap: 1rem;
+  padding: 1rem 1.25rem;
   background: ${(p) => p.theme.colors.surface};
   border-bottom: 1px solid ${(p) => p.theme.colors.border};
 `;
 
-export const ModuleNumber = styled.span`
-  font-size: 0.6875rem;
-  font-weight: 700;
-  text-transform: uppercase;
-  letter-spacing: 0.05em;
-  color: ${(p) => p.theme.colors.muted};
-  flex-shrink: 0;
-`;
-
 export const ModuleTitle = styled.span`
   flex: 1;
-  font-size: 0.9375rem;
+  font-family: var(--font-heading-serif), Georgia, serif;
+  font-size: 1rem;
   font-weight: 600;
   color: ${(p) => p.theme.colors.foreground};
+`;
+
+export const ModuleDot = styled.span`
+  color: ${(p) => p.theme.colors.muted};
+  margin: 0 0.125rem;
 `;
 
 export const ModuleProgress = styled.span`
@@ -244,7 +289,7 @@ export const LessonItem = styled.button<{ $status: LessonProgressStatus | 'defau
   font-family: inherit;
   cursor: pointer;
   text-align: left;
-  transition: background 0.15s;
+  transition: background 0.15s, transform 0.15s ease;
   border-bottom: 1px solid ${(p) => p.theme.colors.border};
 
   &:last-child {
@@ -252,7 +297,8 @@ export const LessonItem = styled.button<{ $status: LessonProgressStatus | 'defau
   }
 
   &:hover {
-    background: ${(p) => p.theme.colors.background};
+    background: ${(p) => `${p.theme.colors.accent}06`};
+    transform: translateX(4px);
   }
 `;
 
@@ -306,9 +352,14 @@ export const QuizRow = styled.button<{ $locked: boolean }>`
   cursor: ${(p) => (p.$locked ? 'default' : 'pointer')};
   opacity: ${(p) => (p.$locked ? 0.4 : 1)};
   text-align: left;
-  transition: background 0.15s;
+  transition: background 0.15s, transform 0.15s ease;
 
-  ${(p) => !p.$locked && `&:hover { background: ${p.theme.colors.background}; }`}
+  ${(p) => !p.$locked && `
+    &:hover {
+      background: ${p.theme.colors.accent}06;
+      transform: translateX(4px);
+    }
+  `}
 `;
 
 export const QuizIcon = styled.span<{ $locked: boolean }>`
@@ -321,7 +372,7 @@ export const QuizIcon = styled.span<{ $locked: boolean }>`
   font-size: 0.625rem;
   font-weight: 700;
   flex-shrink: 0;
-  background: ${(p) => (p.$locked ? p.theme.colors.border : `${p.theme.colors.tertiary}20`)};
+  background: ${(p) => (p.$locked ? p.theme.colors.surfaceBorder : `${p.theme.colors.tertiary}20`)};
   color: ${(p) => (p.$locked ? p.theme.colors.muted : p.theme.colors.tertiary)};
 `;
 

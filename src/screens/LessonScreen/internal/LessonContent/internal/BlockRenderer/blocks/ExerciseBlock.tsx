@@ -173,11 +173,7 @@ export const ExerciseBlock = ({
           <S.ExerciseEditorWrapper ref={editorRef} />
 
           <S.ExerciseToolbar>
-            <Button
-              size="small"
-              onClick={() => executeMutation.mutate()}
-              loading={executeMutation.isPending}
-            >
+            <Button size="small" onClick={() => executeMutation.mutate()} loading={executeMutation.isPending}>
               Run
             </Button>
             <S.ToolbarInfo>{language}</S.ToolbarInfo>

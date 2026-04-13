@@ -214,7 +214,7 @@ export const ProgressBarTrack = styled.div`
   flex: 1;
   height: 6px;
   border-radius: 3px;
-  background: ${(p) => p.theme.colors.border};
+  background: ${(p) => p.theme.colors.surfaceBorder};
   overflow: hidden;
 `;
 

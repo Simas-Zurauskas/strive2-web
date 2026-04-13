@@ -73,7 +73,7 @@ export const Connector = styled.span<{ $completed: boolean }>`
   flex: 1;
   height: 1px;
   margin: 0 0.75rem;
-  background: ${(p) => (p.$completed ? p.theme.colors.foreground : p.theme.colors.border)};
+  background: ${(p) => (p.$completed ? p.theme.colors.foreground : p.theme.colors.surfaceBorder)};
   opacity: ${(p) => (p.$completed ? 0.2 : 1)};
   transition: background 0.15s, opacity 0.15s;
 `;

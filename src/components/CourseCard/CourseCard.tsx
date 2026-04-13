@@ -1,5 +1,6 @@
 'use client';
 
+import { Star } from 'lucide-react';
 import { Course, CourseStatus } from '@/api/types';
 import { Badge } from '@/components/Badge';
 import * as S from './CourseCard.styles';
@@ -8,6 +9,8 @@ interface CourseCardProps {
   course: Pick<Course, '_id' | 'name' | 'status' | 'goal' | 'depth' | 'structure' | 'updatedAt'>;
   isGenerating?: boolean;
   progress?: number;
+  isFavorited?: boolean;
+  onToggleFavorite?: (courseId: string) => void;
   onClick: () => void;
 }
 
@@ -36,7 +39,7 @@ const getRelativeTime = (dateString: string): string => {
   return `${diffDays} day${diffDays === 1 ? '' : 's'} ago`;
 };
 
-export const CourseCard = ({ course, isGenerating = false, progress, onClick }: CourseCardProps) => {
+export const CourseCard = ({ course, isGenerating = false, progress, isFavorited = false, onToggleFavorite, onClick }: CourseCardProps) => {
   const moduleCount = course.structure?.modules?.length ?? 0;
   const lessonCount =
     course.structure?.modules?.reduce((sum, mod) => sum + (mod.lessons?.length ?? 0), 0) ?? 0;
@@ -45,7 +48,21 @@ export const CourseCard = ({ course, isGenerating = false, progress, onClick }: 
     <S.Container onClick={onClick}>
       <S.Header>
         <S.CourseName>{course.name || 'Untitled Course'}</S.CourseName>
-        <Badge variant={getStatusVariant(course.status)}>{course.status}</Badge>
+        <S.HeaderRight>
+          {onToggleFavorite && (
+            <S.FavoriteButton
+              $active={isFavorited}
+              onClick={(e) => {
+                e.stopPropagation();
+                onToggleFavorite(course._id);
+              }}
+              title={isFavorited ? 'Remove from favorites' : 'Add to favorites'}
+            >
+              <Star size={14} fill={isFavorited ? 'currentColor' : 'none'} />
+            </S.FavoriteButton>
+          )}
+          <Badge variant={getStatusVariant(course.status)}>{course.status}</Badge>
+        </S.HeaderRight>
       </S.Header>
 
       {isGenerating && (

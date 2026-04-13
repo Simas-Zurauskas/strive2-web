@@ -32,6 +32,20 @@ export const CourseOverview = () => {
     return map;
   }, [progressData]);
 
+  const bookmarkedLessons = useMemo(() => {
+    if (!progressData?.lessons) return [];
+    return progressData.lessons
+      .filter((lp) => lp.bookmarked)
+      .map((lp) => ({
+        moduleIndex: lp.moduleIndex,
+        lessonIndex: lp.lessonIndex,
+        moduleName: modules[lp.moduleIndex]?.name ?? `Module ${lp.moduleIndex + 1}`,
+        lessonName:
+          modules[lp.moduleIndex]?.lessons?.[lp.lessonIndex]?.name ??
+          `Lesson ${lp.lessonIndex + 1}`,
+      }));
+  }, [progressData, modules]);
+
   const reviewsDue = useMemo(() => {
     if (!progressData?.quizzes) return [];
     return progressData.quizzes
@@ -124,6 +138,26 @@ export const CourseOverview = () => {
         </S.ReviewsSection>
       )}
 
+      {/* Bookmarked lessons */}
+      {bookmarkedLessons.length > 0 && (
+        <S.BookmarksSection>
+          <S.BookmarksHeader>
+            Bookmarked lessons ({bookmarkedLessons.length})
+          </S.BookmarksHeader>
+          {bookmarkedLessons.map((b) => (
+            <S.BookmarkItem
+              key={`${b.moduleIndex}-${b.lessonIndex}`}
+              onClick={() => navigateToLesson(b.moduleIndex, b.lessonIndex)}
+            >
+              <S.BookmarkLessonName>
+                {b.moduleName} &middot; {b.lessonName}
+              </S.BookmarkLessonName>
+              <S.BookmarkArrow>&rarr;</S.BookmarkArrow>
+            </S.BookmarkItem>
+          ))}
+        </S.BookmarksSection>
+      )}
+
       {/* Course outline */}
       <S.SectionTitle>Course Outline</S.SectionTitle>
       {modules.map((mod, mi) => {
@@ -134,8 +168,7 @@ export const CourseOverview = () => {
         return (
           <S.ModuleCard key={mi}>
             <S.ModuleHeader>
-              <S.ModuleNumber>Module {mi + 1}</S.ModuleNumber>
-              <S.ModuleTitle>{mod.name}</S.ModuleTitle>
+              <S.ModuleTitle>Module {mi + 1} <S.ModuleDot>&middot;</S.ModuleDot> {mod.name}</S.ModuleTitle>
               {mp.completed > 0 && (
                 <S.ModuleProgress>
                   {mp.completed}/{mp.total}
