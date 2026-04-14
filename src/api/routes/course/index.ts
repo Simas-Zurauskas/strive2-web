@@ -409,6 +409,23 @@ export const getReviewsDue = () => {
   }).then((res) => res.data.data);
 };
 
+// ── Unattempted quizzes ─────────────────────────────────
+
+export interface UnattemptedQuizItem {
+  courseId: string;
+  courseSlug: string | null;
+  courseName: string;
+  moduleIndex: number;
+  moduleName: string;
+}
+
+export const getUnattemptedQuizzes = () => {
+  return client<{ data: UnattemptedQuizItem[] }>({
+    url: '/course/unattempted-quiz-count',
+    method: 'GET',
+  }).then((res) => res.data.data);
+};
+
 // ── Favorites ──────────────────────────────────────────
 
 export const getFavoriteCourseIds = () => {

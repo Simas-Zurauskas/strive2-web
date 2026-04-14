@@ -13,6 +13,7 @@ export {
   useGenerateModuleQuiz,
   useSubmitQuizAttempt,
   useReviewsDue,
+  useUnattemptedQuizzes,
   useResetModuleQuiz,
   useBookmarkedLessons,
 } from './useProgress';

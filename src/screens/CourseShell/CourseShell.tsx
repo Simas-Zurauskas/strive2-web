@@ -5,9 +5,10 @@ import { Menu, MessageCircle } from 'lucide-react';
 import { useParams, useRouter } from 'next/navigation';
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { toast } from 'sonner';
-import { deleteCourse } from '@/api/routes/course';
+import { deleteCourse, updateCourse } from '@/api/routes/course';
 import { AlertDialog } from '@/components';
 import { TOASTS } from '@/constants/toasts';
+import type { CourseStatus } from '@/api/types';
 import { useCourse, useCourseProgress, useGeneratedLessons } from '@/hooks';
 import { breakpoints } from '@/theme';
 import { QKeys } from '@/types';
@@ -62,6 +63,23 @@ export const CourseShell = ({ children }: CourseShellProps) => {
       setShowDeleteDialog(false);
       queryClient.invalidateQueries({ queryKey: [QKeys.COURSES] });
       toast.success(TOASTS.COURSE_DELETED);
+      router.push('/');
+    },
+  });
+
+  // ── Archive / unarchive course ────────────────────────
+  const [showArchiveDialog, setShowArchiveDialog] = useState(false);
+  const isArchived = course?.status === 'archived';
+  const archiveMutation = useMutation({
+    mutationFn: () => {
+      const newStatus: CourseStatus = isArchived ? 'ready' : 'archived';
+      return updateCourse({ id: courseSlug, data: { status: newStatus } });
+    },
+    onSuccess: () => {
+      setShowArchiveDialog(false);
+      queryClient.invalidateQueries({ queryKey: [QKeys.COURSES] });
+      queryClient.invalidateQueries({ queryKey: [QKeys.COURSE, courseSlug] });
+      toast.success(isArchived ? TOASTS.COURSE_UNARCHIVED : TOASTS.COURSE_ARCHIVED);
       router.push('/');
     },
   });
@@ -138,6 +156,7 @@ export const CourseShell = ({ children }: CourseShellProps) => {
       setExpandedModules,
       navigateToLesson,
       onDeleteCourse: () => setShowDeleteDialog(true),
+      onArchiveCourse: () => setShowArchiveDialog(true),
     }),
     [
       courseSlug, courseBasePath, course, isLoading, modules, progressData, generatedLessons,
@@ -221,6 +240,21 @@ export const CourseShell = ({ children }: CourseShellProps) => {
           loading={deleteMutation.isPending}
           onConfirm={() => deleteMutation.mutate()}
           onCancel={() => setShowDeleteDialog(false)}
+        />
+
+        <AlertDialog
+          open={showArchiveDialog}
+          title={isArchived ? 'Unarchive this course?' : 'Archive this course?'}
+          description={
+            isArchived
+              ? 'This course will be moved back to your active courses.'
+              : 'This course will be moved to your archived courses. You can unarchive it at any time.'
+          }
+          confirmLabel={isArchived ? 'Unarchive' : 'Archive'}
+          cancelLabel="Cancel"
+          loading={archiveMutation.isPending}
+          onConfirm={() => archiveMutation.mutate()}
+          onCancel={() => setShowArchiveDialog(false)}
         />
       </S.Layout>
     </CourseContextProvider>
