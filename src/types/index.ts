@@ -11,6 +11,7 @@ export enum QKeys {
   MODULE_QUIZ_CONTENT = 'moduleQuizContent',
   MODULE_QUIZ_PROGRESS = 'moduleQuizProgress',
   REVIEWS_DUE = 'reviewsDue',
+  UNATTEMPTED_QUIZ_COUNT = 'unattemptedQuizCount',
   FAVORITE_COURSES = 'favoriteCourses',
   BOOKMARKED_LESSONS = 'bookmarkedLessons',
   RECENT_ACTIVITY = 'recentActivity',

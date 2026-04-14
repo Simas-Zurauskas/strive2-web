@@ -42,7 +42,7 @@ export const ModuleQuizScreen = () => {
     );
   }
 
-  const handleBack = () => router.push(`${courseBasePath}/lesson/${moduleIndex}/0`);
+  const handleBack = () => router.push(isReviewMode ? '/review' : `${courseBasePath}/lesson/${moduleIndex}/0`);
 
   // ── Results view ──────────────────────────────────────
 

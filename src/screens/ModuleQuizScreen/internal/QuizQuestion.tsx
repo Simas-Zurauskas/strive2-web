@@ -48,7 +48,7 @@ export const QuizQuestion = ({
       <S.Content>
         <S.TopBar>
           <S.BackLink onClick={onBack}>
-            <ArrowLeft size={14} /> Back to course
+            <ArrowLeft size={14} /> {isReviewMode ? 'Back to review' : 'Back to course'}
           </S.BackLink>
           {DEV_MODE && (
             <S.DevResetButton onClick={onDevReset} disabled={isResetting}>

@@ -7,6 +7,8 @@ export const TOASTS = {
   DEPTH_PREVIEWS_ERROR: 'Failed to load depth options. Please try again.',
   COURSE_DELETED: 'Course deleted',
   COURSE_DELETE_ERROR: 'Failed to delete course',
+  COURSE_ARCHIVED: 'Course archived',
+  COURSE_UNARCHIVED: 'Course unarchived',
   COURSE_READY: 'Course is ready!',
 
   // ── Lesson generation ────────────────────────────────

@@ -13,6 +13,7 @@ import {
   submitQuizAttempt,
   getModuleQuizProgress,
   getReviewsDue,
+  getUnattemptedQuizzes,
   resetModuleQuiz,
   getBookmarkedLessons,
   getRecentActivity,
@@ -159,6 +160,14 @@ export const useReviewsDue = () =>
   useQuery({
     queryKey: [QKeys.REVIEWS_DUE],
     queryFn: getReviewsDue,
+  });
+
+// ── Unattempted quiz count ───────────────────────────────
+
+export const useUnattemptedQuizzes = () =>
+  useQuery({
+    queryKey: [QKeys.UNATTEMPTED_QUIZ_COUNT],
+    queryFn: getUnattemptedQuizzes,
   });
 
 // ── Bookmarked lessons ────────────────────────────────

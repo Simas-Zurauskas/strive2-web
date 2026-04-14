@@ -151,3 +151,20 @@ export const ReviewButton = styled.span`
   flex-shrink: 0;
   white-space: nowrap;
 `;
+
+export const SectionLabel = styled.h2`
+  font-size: 0.6875rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: ${(p) => p.theme.colors.muted};
+  margin: 0;
+`;
+
+export const TakeQuizButton = styled.span`
+  font-size: 0.8125rem;
+  font-weight: 600;
+  color: ${(p) => p.theme.colors.accent};
+  flex-shrink: 0;
+  white-space: nowrap;
+`;

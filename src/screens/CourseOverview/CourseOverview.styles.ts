@@ -415,12 +415,49 @@ export const ReviewDueBadge = styled.span`
   flex-shrink: 0;
 `;
 
+export const TakeQuizBadge = styled.span`
+  padding: 0.125rem 0.4375rem;
+  border-radius: 9999px;
+  font-size: 0.625rem;
+  font-weight: 600;
+  letter-spacing: 0.02em;
+  text-transform: uppercase;
+  background: ${(p) => `${p.theme.colors.accent}18`};
+  color: ${(p) => p.theme.colors.accent};
+  flex-shrink: 0;
+`;
+
+export const TakeQuizAction = styled.span`
+  font-size: 0.75rem;
+  font-weight: 600;
+  color: ${(p) => p.theme.colors.accent};
+  flex-shrink: 0;
+`;
+
 // ── Danger zone ──────────────────────────────────────
 
 export const DangerZone = styled.div`
   margin-top: 2rem;
   padding-top: 1.5rem;
   border-top: 1px solid ${(p) => p.theme.colors.border};
+`;
+
+export const ArchiveLink = styled.button`
+  font-size: 0.8125rem;
+  font-weight: 500;
+  color: ${(p) => p.theme.colors.muted};
+  background: none;
+  border: none;
+  padding: 0;
+  cursor: pointer;
+  font-family: inherit;
+  transition: color 0.15s;
+  margin-bottom: 0.75rem;
+  display: block;
+
+  &:hover {
+    color: ${(p) => p.theme.colors.foreground};
+  }
 `;
 
 export const DeleteLink = styled.button`

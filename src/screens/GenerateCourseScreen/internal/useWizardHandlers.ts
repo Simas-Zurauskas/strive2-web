@@ -208,8 +208,8 @@ export const useWizardHandlers = ({
           jobId: data.jobId,
           courseId,
           type: 'generate_structure',
-          onComplete: () => setStep(4),
         });
+        setStep(4);
       },
     });
   }, [courseId, structureMutation, trackJob, setStep]);

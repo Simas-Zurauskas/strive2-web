@@ -7,6 +7,7 @@ import {
   useCourses,
   useContinueLearning,
   useReviewsDue,
+  useUnattemptedQuizzes,
   useProgressSummary,
   useFavoriteCourseIds,
   useToggleFavoriteCourse,
@@ -16,7 +17,6 @@ import { useJobManager } from '@/hooks/useJobManager';
 import * as S from './HomeScreen.styles';
 import { ContinueLearningCard } from './internal/ContinueLearningCard/ContinueLearningCard';
 import { GamificationCard } from './internal/GamificationCard/GamificationCard';
-import { ReviewDueSection } from './internal/ReviewDueSection/ReviewDueSection';
 
 type TopTab = 'courses' | 'bookmarks';
 
@@ -26,13 +26,14 @@ export const HomeScreen: React.FC = () => {
   const { data: continueLearning } = useContinueLearning();
   const { data: progressSummary } = useProgressSummary();
   const { data: reviewsDue } = useReviewsDue();
+  const { data: unattemptedQuizzes } = useUnattemptedQuizzes();
   const { data: favoriteCourseIds } = useFavoriteCourseIds();
   const { mutate: toggleFavorite } = useToggleFavoriteCourse();
   const { isJobRunningForCourse } = useJobManager();
   const { data: bookmarkedLessons } = useBookmarkedLessons();
 
   const [topTab, setTopTab] = useState<TopTab>('courses');
-  const [filter, setFilter] = useState<'all' | 'active' | 'completed' | 'archived'>('all');
+  const [filter, setFilter] = useState<'all' | 'active' | 'completed' | 'archived'>('active');
   const [sort, setSort] = useState<'recent' | 'alphabetical'>('recent');
 
   const favoriteSet = useMemo(() => new Set(favoriteCourseIds ?? []), [favoriteCourseIds]);
@@ -142,7 +143,7 @@ export const HomeScreen: React.FC = () => {
                 <>
                   <S.FilterBar>
                     <S.FilterTabs>
-                      {(['all', 'active', 'completed', 'archived'] as const).map((tab) => (
+                      {(['active', 'completed', 'archived', 'all'] as const).map((tab) => (
                         <S.FilterTab key={tab} $active={filter === tab} onClick={() => setFilter(tab)}>
                           {tab.charAt(0).toUpperCase() + tab.slice(1)}
                         </S.FilterTab>
@@ -208,7 +209,23 @@ export const HomeScreen: React.FC = () => {
           <S.SideColumn>
             <GamificationCard />
 
-            {reviewsDue && reviewsDue.length > 0 && <ReviewDueSection items={reviewsDue} />}
+            {((reviewsDue && reviewsDue.length > 0) || (unattemptedQuizzes && unattemptedQuizzes.length > 0)) && (
+              <S.QuizCard onClick={() => router.push('/review')}>
+                <S.QuizCardLabel>Quizzes</S.QuizCardLabel>
+                {reviewsDue && reviewsDue.length > 0 && (
+                  <S.QuizCardRow>
+                    <S.QuizCardCount $color="warning">{reviewsDue.length}</S.QuizCardCount>
+                    <S.QuizCardText>review{reviewsDue.length !== 1 ? 's' : ''} due</S.QuizCardText>
+                  </S.QuizCardRow>
+                )}
+                {unattemptedQuizzes && unattemptedQuizzes.length > 0 && (
+                  <S.QuizCardRow>
+                    <S.QuizCardCount $color="accent">{unattemptedQuizzes.length}</S.QuizCardCount>
+                    <S.QuizCardText>not yet taken</S.QuizCardText>
+                  </S.QuizCardRow>
+                )}
+              </S.QuizCard>
+            )}
           </S.SideColumn>
         </S.DashboardGrid>
       </S.Container>

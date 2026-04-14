@@ -1,117 +1,29 @@
 'use client';
 
+import Image from 'next/image';
 import { useMemo } from 'react';
 import { useGamificationProfile, useGamificationStats } from '@/hooks/useGamification';
 import * as S from './GamificationSection.styles';
 
-// Achievement icon mapping
-const ICON_MAP: Record<string, string> = {
-  'book-open': '\ud83d\udcd6',
-  books: '\ud83d\udcda',
-  'graduation-cap': '\ud83c\udf93',
-  trophy: '\ud83c\udfc6',
-  star: '\u2b50',
-  flame: '\ud83d\udd25',
-  target: '\ud83c\udfaf',
-  crown: '\ud83d\udc51',
-  'refresh-cw': '\ud83d\udd04',
-  clock: '\u23f1\ufe0f',
-  zap: '\u26a1',
-  globe: '\ud83c\udf0d',
-};
-
-// All achievement definitions (must match API constants)
-const ACHIEVEMENTS = [
-  {
-    id: 'lesson_first',
-    category: 'milestone',
-    name: 'First Steps',
-    description: 'Complete your first lesson',
-    icon: 'book-open',
-  },
-  {
-    id: 'lessons_ten',
-    category: 'milestone',
-    name: 'Getting Serious',
-    description: 'Complete 10 lessons',
-    icon: 'books',
-  },
-  {
-    id: 'lessons_fifty',
-    category: 'milestone',
-    name: 'Century Scholar',
-    description: 'Complete 50 lessons',
-    icon: 'graduation-cap',
-  },
-  {
-    id: 'course_first',
-    category: 'milestone',
-    name: 'Course Complete',
-    description: 'Complete an entire course',
-    icon: 'trophy',
-  },
-  {
-    id: 'courses_three',
-    category: 'milestone',
-    name: 'Lifelong Learner',
-    description: 'Complete 3 courses',
-    icon: 'star',
-  },
-  { id: 'courses_five', category: 'milestone', name: 'Polymath', description: 'Complete 5 courses', icon: 'globe' },
-  { id: 'streak_3', category: 'streak', name: 'Spark', description: '3-day learning streak', icon: 'flame' },
-  { id: 'streak_7', category: 'streak', name: 'One Week Strong', description: '7-day learning streak', icon: 'flame' },
-  {
-    id: 'streak_14',
-    category: 'streak',
-    name: 'Monthly Dedication',
-    description: '14-day learning streak',
-    icon: 'flame',
-  },
-  {
-    id: 'quiz_perfect',
-    category: 'mastery',
-    name: 'Perfect Score',
-    description: 'Score 100% on a module quiz',
-    icon: 'target',
-  },
-  {
-    id: 'course_mastered',
-    category: 'mastery',
-    name: 'Total Mastery',
-    description: 'Master all modules in a course',
-    icon: 'crown',
-  },
-  {
-    id: 'review_first',
-    category: 'mastery',
-    name: 'Spaced Learner',
-    description: 'Complete your first spaced review',
-    icon: 'refresh-cw',
-  },
-  {
-    id: 'hours_one',
-    category: 'dedication',
-    name: 'Hour of Learning',
-    description: 'Spend 1 hour learning',
-    icon: 'clock',
-  },
-  {
-    id: 'hours_ten',
-    category: 'dedication',
-    name: 'Dedicated Learner',
-    description: 'Spend 10 hours learning',
-    icon: 'clock',
-  },
-  {
-    id: 'hours_twentyfive',
-    category: 'dedication',
-    name: 'Centurion',
-    description: 'Spend 25 hours learning',
-    icon: 'clock',
-  },
-  { id: 'level_5', category: 'dedication', name: 'Level 5', description: 'Reach level 5', icon: 'zap' },
-  { id: 'level_15', category: 'dedication', name: 'Level 15', description: 'Reach level 15', icon: 'zap' },
-  { id: 'level_25', category: 'dedication', name: 'Grandmaster', description: 'Reach level 25', icon: 'zap' },
+const BADGES = [
+  { id: 'lesson_first', name: 'First Steps', requirement: 'Complete 1 lesson' },
+  { id: 'lessons_ten', name: 'Getting Serious', requirement: 'Complete 10 lessons' },
+  { id: 'lessons_fifty', name: 'Bookworm', requirement: 'Complete 50 lessons' },
+  { id: 'course_first', name: 'Course Complete', requirement: 'Complete 1 course' },
+  { id: 'courses_three', name: 'Lifelong Learner', requirement: 'Complete 3 courses' },
+  { id: 'courses_five', name: 'Polymath', requirement: 'Complete 5 courses' },
+  { id: 'streak_3', name: 'Spark', requirement: '3-day streak' },
+  { id: 'streak_7', name: 'One Week Strong', requirement: '7-day streak' },
+  { id: 'streak_14', name: 'Fortnight Flame', requirement: '14-day streak' },
+  { id: 'review_first', name: 'Spaced Learner', requirement: 'Complete 1 spaced review' },
+  { id: 'quiz_perfect', name: 'Perfect Score', requirement: '100% on a module quiz' },
+  { id: 'course_mastered', name: 'Total Mastery', requirement: 'Master all modules' },
+  { id: 'hours_one', name: 'Hour of Learning', requirement: 'Spend 1 hour learning' },
+  { id: 'hours_ten', name: 'Dedicated Learner', requirement: 'Spend 10 hours learning' },
+  { id: 'hours_twentyfive', name: 'Marathon Learner', requirement: 'Spend 25 hours learning' },
+  { id: 'level_5', name: 'Level 5', requirement: 'Reach level 5' },
+  { id: 'level_15', name: 'Level 15', requirement: 'Reach level 15' },
+  { id: 'level_25', name: 'Grandmaster', requirement: 'Reach level 25' },
 ] as const;
 
 const formatTime = (seconds: number): string => {
@@ -142,20 +54,29 @@ export const GamificationSection = () => {
       {/* ── Achievements ─────────────────────────────── */}
       <S.Section>
         <S.SectionTitle>
-          Achievements ({earnedIds.size}/{ACHIEVEMENTS.length})
+          Achievements ({earnedIds.size}/{BADGES.length})
         </S.SectionTitle>
 
-        <S.AchievementsGrid>
-          {ACHIEVEMENTS.map((a) => (
-            <S.AchievementCard key={a.id} $earned={earnedIds.has(a.id)}>
-              <S.AchievementIcon>{ICON_MAP[a.icon] ?? a.icon}</S.AchievementIcon>
-              <S.AchievementInfo>
-                <S.AchievementName>{a.name}</S.AchievementName>
-                <S.AchievementDesc>{a.description}</S.AchievementDesc>
-              </S.AchievementInfo>
-            </S.AchievementCard>
-          ))}
-        </S.AchievementsGrid>
+        <S.BadgeGrid>
+          {BADGES.map((badge) => {
+            const earned = earnedIds.has(badge.id);
+            return (
+              <S.BadgeTile key={badge.id}>
+                <S.BadgeImageWrap $earned={earned}>
+                  <Image
+                    src={`/images/gmf/${badge.id}.png`}
+                    alt={badge.name}
+                    width={80}
+                    height={80}
+                    draggable={false}
+                  />
+                </S.BadgeImageWrap>
+                <S.BadgeName $earned={earned}>{badge.name}</S.BadgeName>
+                <S.BadgeRequirement $earned={earned}>{badge.requirement}</S.BadgeRequirement>
+              </S.BadgeTile>
+            );
+          })}
+        </S.BadgeGrid>
       </S.Section>
 
       {/* ── Learning Stats ───────────────────────────── */}

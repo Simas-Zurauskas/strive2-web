@@ -3,9 +3,10 @@ import styled from 'styled-components';
 export const Section = styled.section`
   border: 1px solid ${(p) => p.theme.colors.border};
   border-radius: 12px;
-  padding: 1.5rem;
+  padding: clamp(1rem, 3cqw, 1.5rem);
   background: ${(p) => p.theme.colors.surface};
   margin-bottom: 1.5rem;
+  container-type: inline-size;
 `;
 
 export const SectionTitle = styled.h2`
@@ -17,49 +18,62 @@ export const SectionTitle = styled.h2`
   margin: 0 0 1rem 0;
 `;
 
-// ── Achievements grid ──────────────────────────────
+// ── Badge grid ───────────────────────────────────
 
-export const AchievementsGrid = styled.div`
+export const BadgeGrid = styled.div`
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
-  gap: 0.75rem;
-  margin-top: 0.5rem;
+  grid-template-columns: repeat(auto-fill, minmax(90px, 1fr));
+  gap: clamp(0.75rem, 3cqw, 1.25rem);
 `;
 
-export const AchievementCard = styled.div<{ $earned: boolean }>`
-  display: flex;
-  align-items: center;
-  gap: 0.75rem;
-  padding: 0.875rem 1rem;
-  border-radius: 10px;
-  border: 1px solid ${(p) => p.theme.colors.border};
-  background: ${(p) => p.theme.colors.surface};
-  opacity: ${(p) => (p.$earned ? 1 : 0.45)};
-  transition: opacity 0.2s;
-`;
-
-export const AchievementIcon = styled.span`
-  font-size: 1.25rem;
-  line-height: 1;
-  flex-shrink: 0;
-`;
-
-export const AchievementInfo = styled.div`
+export const BadgeTile = styled.div`
   display: flex;
   flex-direction: column;
-  gap: 0.125rem;
-  min-width: 0;
+  align-items: center;
+  gap: clamp(0.25rem, 1cqw, 0.375rem);
+  cursor: default;
 `;
 
-export const AchievementName = styled.span`
+export const BadgeImageWrap = styled.div<{ $earned: boolean }>`
+  width: 100%;
+  aspect-ratio: 1;
+  border-radius: clamp(6px, 1.5cqw, 12px);
+  overflow: hidden;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: filter 0.3s, opacity 0.3s;
+
+  ${(p) =>
+    !p.$earned &&
+    `
+    filter: grayscale(1) blur(1.5px);
+    opacity: 0.45;
+  `}
+
+  img {
+    width: 100%;
+    height: 100%;
+    object-fit: contain;
+    user-select: none;
+    pointer-events: none;
+  }
+`;
+
+export const BadgeName = styled.span<{ $earned: boolean }>`
   font-size: 0.8125rem;
   font-weight: 600;
-  color: ${(p) => p.theme.colors.foreground};
+  text-align: center;
+  line-height: 1.25;
+  color: ${(p) => (p.$earned ? p.theme.colors.foreground : p.theme.colors.muted)};
 `;
 
-export const AchievementDesc = styled.span`
+export const BadgeRequirement = styled.span<{ $earned: boolean }>`
   font-size: 0.6875rem;
+  text-align: center;
+  line-height: 1.3;
   color: ${(p) => p.theme.colors.muted};
+  opacity: ${(p) => (p.$earned ? 0.85 : 0.65)};
 `;
 
 // ── Stats ──────────────────────────────────────────

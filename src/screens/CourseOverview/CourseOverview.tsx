@@ -10,7 +10,7 @@ import type { CourseQuizProgressItem, LessonProgressStatus } from '@/api/types';
 
 export const CourseOverview = () => {
   const router = useRouter();
-  const { courseBasePath, course, modules, progressData, navigateToLesson, onDeleteCourse } = useCourseContext();
+  const { courseBasePath, course, modules, progressData, navigateToLesson, onDeleteCourse, onArchiveCourse } = useCourseContext();
 
   const progressMap = useMemo(() => {
     const map = new Map<string, string>();
@@ -56,6 +56,26 @@ export const CourseOverview = () => {
         bestScore: q.bestScore,
       }));
   }, [progressData, modules]);
+
+  // Modules where all lessons are completed but quiz has never been attempted
+  const unattemptedQuizzes = useMemo(() => {
+    const results: { moduleIndex: number; moduleName: string }[] = [];
+    for (let mi = 0; mi < modules.length; mi++) {
+      const lessons = modules[mi]?.lessons ?? [];
+      if (lessons.length === 0) continue;
+      let completed = 0;
+      for (let li = 0; li < lessons.length; li++) {
+        if (progressMap.get(`${mi}-${li}`) === 'completed') completed++;
+      }
+      if (completed === lessons.length && !quizProgressMap.has(mi)) {
+        results.push({
+          moduleIndex: mi,
+          moduleName: modules[mi]?.name ?? `Module ${mi + 1}`,
+        });
+      }
+    }
+    return results;
+  }, [modules, progressMap, quizProgressMap]);
 
   // Find last accessed lesson for "Continue" button
   const continueTarget = useMemo(() => {
@@ -118,15 +138,26 @@ export const CourseOverview = () => {
         </S.ProgressSection>
       )}
 
-      {/* Reviews due */}
-      {reviewsDue.length > 0 && (
+      {/* Quizzes to do: unattempted + reviews due */}
+      {(unattemptedQuizzes.length > 0 || reviewsDue.length > 0) && (
         <S.ReviewsSection>
           <S.ReviewsHeader>
-            {reviewsDue.length} review{reviewsDue.length !== 1 ? 's' : ''} due
+            {unattemptedQuizzes.length + reviewsDue.length} quiz{unattemptedQuizzes.length + reviewsDue.length !== 1 ? 'zes' : ''} to do
           </S.ReviewsHeader>
+          {unattemptedQuizzes.map((q) => (
+            <S.ReviewItem
+              key={`unattempted-${q.moduleIndex}`}
+              onClick={() => router.push(`${courseBasePath}/quiz/${q.moduleIndex}`)}
+            >
+              <S.ReviewModuleName>
+                Module {q.moduleIndex + 1}: {q.moduleName}
+              </S.ReviewModuleName>
+              <S.TakeQuizAction>Take quiz &rarr;</S.TakeQuizAction>
+            </S.ReviewItem>
+          ))}
           {reviewsDue.map((r) => (
             <S.ReviewItem
-              key={r.moduleIndex}
+              key={`review-${r.moduleIndex}`}
               onClick={() => router.push(`${courseBasePath}/quiz/${r.moduleIndex}?review=true`)}
             >
               <S.ReviewModuleName>
@@ -208,6 +239,7 @@ export const CourseOverview = () => {
               >
                 <S.QuizIcon $locked={!isModuleComplete}>Q</S.QuizIcon>
                 <S.QuizLabel>Module Quiz</S.QuizLabel>
+                {isModuleComplete && !qp && <S.TakeQuizBadge>Take quiz</S.TakeQuizBadge>}
                 {qp?.reviewDue && <S.ReviewDueBadge>Review due</S.ReviewDueBadge>}
                 {qp?.bestTier && <S.QuizBadge $tier={qp.bestTier}>{qp.bestScore}%</S.QuizBadge>}
               </S.QuizRow>
@@ -217,6 +249,9 @@ export const CourseOverview = () => {
       })}
 
       <S.DangerZone>
+        <S.ArchiveLink onClick={onArchiveCourse}>
+          {course?.status === 'archived' ? 'Unarchive course' : 'Archive course'}
+        </S.ArchiveLink>
         <S.DeleteLink onClick={onDeleteCourse}>Delete course</S.DeleteLink>
       </S.DangerZone>
     </S.Container>

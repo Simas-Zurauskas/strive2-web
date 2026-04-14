@@ -27,6 +27,7 @@ export interface CourseContextValue {
   setExpandedModules: (val: Set<number>) => void;
   navigateToLesson: (mi: number, li: number) => void;
   onDeleteCourse: () => void;
+  onArchiveCourse: () => void;
 }
 
 const CourseContext = createContext<CourseContextValue | null>(null);
