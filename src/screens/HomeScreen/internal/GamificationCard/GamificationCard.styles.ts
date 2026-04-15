@@ -103,19 +103,31 @@ export const CalendarGrid = styled.div`
   gap: 3px;
 `;
 
-export const CalendarDay = styled.div<{ $level: 0 | 1 | 2 }>`
+export const CalendarDay = styled.div<{ $level: 0 | 1 | 2; $weekend?: boolean }>`
   aspect-ratio: 1;
-  border-radius: 4px;
+  border-radius: 3px;
+  cursor: default;
+  transition:
+    background 0.2s,
+    box-shadow 0.2s,
+    outline-color 0.15s;
+  outline: 1.5px solid transparent;
+  outline-offset: -1.5px;
   background: ${(p) => {
     if (p.$level === 2) return p.theme.colors.accent;
     if (p.$level === 1) return `color-mix(in srgb, ${p.theme.colors.accent} 40%, ${p.theme.colors.surfaceBorder})`;
     return p.theme.colors.surfaceBorder;
   }};
   box-shadow: ${(p) => {
-    if (p.$level === 2) return `0 0 6px ${p.theme.colors.accentMuted}`;
-    return 'none';
+    const shadows: string[] = [];
+    if (p.$level === 2) shadows.push(`0 0 6px ${p.theme.colors.accentMuted}`);
+    if (p.$weekend) shadows.push(`inset 0 0 0 1.5px ${p.theme.colors.background}40`);
+    return shadows.length > 0 ? shadows.join(', ') : 'none';
   }};
-  transition: background 0.2s, box-shadow 0.2s;
+
+  &:hover {
+    outline-color: ${(p) => p.theme.colors.accent};
+  }
 `;
 
 export const CalendarDayEmpty = styled.div`
@@ -128,9 +140,10 @@ export const CalendarDays = styled.div`
   margin-top: 0.25rem;
 `;
 
-export const CalendarDayLabel = styled.span`
+export const CalendarDayLabel = styled.span<{ $weekend?: boolean }>`
   font-size: 0.5625rem;
-  color: ${(p) => p.theme.colors.muted};
+  color: ${(p) => (p.$weekend ? p.theme.colors.tertiary : p.theme.colors.muted)};
+  font-weight: ${(p) => (p.$weekend ? '600' : '400')};
   text-align: center;
 `;
 

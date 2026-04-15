@@ -1,6 +1,6 @@
 'use client';
 
-import { Navbar, Footer } from '@/components';
+import { Navbar, Footer, TextLoader } from '@/components';
 import { useAuth } from '@/hooks';
 
 export default function SignedInLayout({ children }: { children: React.ReactNode }) {
@@ -17,7 +17,7 @@ export default function SignedInLayout({ children }: { children: React.ReactNode
           width: '100vw',
         }}
       >
-        <p style={{ fontSize: '1.25rem', opacity: 0.6 }}>Loading…</p>
+        <TextLoader />
       </div>
     );
   }
@@ -25,7 +25,7 @@ export default function SignedInLayout({ children }: { children: React.ReactNode
   return (
     <>
       <Navbar />
-      <main style={{ paddingTop: '56px', minHeight: 'calc(100vh - 56px)' }}>
+      <main style={{ paddingTop: '56px', minHeight: 'calc(100vh - 56px)', display: 'flex', flexDirection: 'column' }}>
         {children}
         <Footer />
       </main>

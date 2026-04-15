@@ -1,4 +1,5 @@
-import { ArrowLeft, ArrowRight, Trash2 } from 'lucide-react';
+import { ArrowRight, Trash2 } from 'lucide-react';
+import { Eyebrow } from '@/components';
 import { DEV_MODE } from '@/conf/env';
 import * as S from '../ModuleQuizScreen.styles';
 import type { CourseModule, ModuleQuizQuestion } from '@/api/types';
@@ -17,7 +18,6 @@ interface QuizQuestionProps {
   isReviewMode: boolean;
   isSubmitting: boolean;
   isResetting: boolean;
-  onBack: () => void;
   onSelectOption: (index: number) => void;
   onNext: () => void;
   onDevReset: () => void;
@@ -33,7 +33,6 @@ export const QuizQuestion = ({
   isReviewMode,
   isSubmitting,
   isResetting,
-  onBack,
   onSelectOption,
   onNext,
   onDevReset,
@@ -46,21 +45,18 @@ export const QuizQuestion = ({
   return (
     <S.Container>
       <S.Content>
-        <S.TopBar>
-          <S.BackLink onClick={onBack}>
-            <ArrowLeft size={14} /> {isReviewMode ? 'Back to review' : 'Back to course'}
-          </S.BackLink>
-          {DEV_MODE && (
+        {DEV_MODE && (
+          <S.TopBar>
             <S.DevResetButton onClick={onDevReset} disabled={isResetting}>
               <Trash2 size={10} /> Reset Quiz
             </S.DevResetButton>
-          )}
-        </S.TopBar>
+          </S.TopBar>
+        )}
 
         <S.HeaderSection>
-          <S.Eyebrow>
+          <Eyebrow>
             {isReviewMode ? 'Spaced Review' : `Module ${moduleIndex + 1} Quiz`}
-          </S.Eyebrow>
+          </Eyebrow>
           <S.Title>{mod.name}</S.Title>
         </S.HeaderSection>
 

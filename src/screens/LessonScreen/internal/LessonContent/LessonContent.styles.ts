@@ -1,4 +1,5 @@
 import styled from 'styled-components';
+import { SectionLabel } from '@/components';
 
 // ── Container ─────────────────────────────────────────
 
@@ -265,13 +266,7 @@ export const NavButton = styled.button<{ $hidden?: boolean; $direction?: 'prev' 
   }
 `;
 
-export const NavLabel = styled.span`
-  font-size: 0.6875rem;
-  font-weight: 600;
-  text-transform: uppercase;
-  letter-spacing: 0.08em;
-  color: ${(p) => p.theme.colors.muted};
-`;
+export const NavLabel = styled(SectionLabel).attrs({ as: 'span' })``;
 
 export const NavLessonName = styled.span`
   font-size: 0.875rem;

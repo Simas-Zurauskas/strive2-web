@@ -1,4 +1,4 @@
-import { ArrowLeft } from 'lucide-react';
+import { Eyebrow, TextLoader } from '@/components';
 import * as S from '../ModuleQuizScreen.styles';
 import type { CourseModule, UserModuleQuizProgress } from '@/api/types';
 
@@ -10,7 +10,6 @@ interface QuizLandingProps {
   isReviewMode: boolean;
   isGenerating: boolean;
   hasQuizContent: boolean;
-  onBack: () => void;
   onStart: () => void;
   onGenerate: () => void;
 }
@@ -23,22 +22,15 @@ export const QuizLanding = ({
   isReviewMode,
   isGenerating,
   hasQuizContent,
-  onBack,
   onStart,
   onGenerate,
 }: QuizLandingProps) => (
   <S.Container>
     <S.Content>
-      <S.TopBar>
-        <S.BackLink onClick={onBack}>
-          <ArrowLeft size={14} /> {isReviewMode ? 'Back to review' : 'Back to course'}
-        </S.BackLink>
-      </S.TopBar>
-
       <S.HeaderSection>
-        <S.Eyebrow>
+        <Eyebrow>
           {isReviewMode ? 'Spaced Review' : `Module ${moduleIndex + 1} Quiz`}
-        </S.Eyebrow>
+        </Eyebrow>
         <S.Title>{mod.name}</S.Title>
       </S.HeaderSection>
 
@@ -61,10 +53,7 @@ export const QuizLanding = ({
       )}
 
       {isGenerating ? (
-        <S.LoadingContainer>
-          <S.Spinner />
-          <span>Creating quiz questions...</span>
-        </S.LoadingContainer>
+        <TextLoader text="Creating quiz questions..." />
       ) : hasQuizContent ? (
         <>
           <S.DescriptionText>

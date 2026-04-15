@@ -2,7 +2,7 @@
 
 import { useEffect, useMemo, useState } from 'react';
 import { ClarifyQuestion } from '@/api/types';
-import { RadioGroup, CheckboxGroup, Input, Button, Card } from '@/components';
+import { RadioGroup, CheckboxGroup, Input, Button, Card, Eyebrow } from '@/components';
 import * as S from './ClarifyStep.styles';
 
 type AnswerValue = string | string[];
@@ -108,7 +108,7 @@ export const ClarifyStep = ({
   return (
     <S.Container>
       <S.Header>
-        <S.Eyebrow>Questions</S.Eyebrow>
+        <Eyebrow>Questions</Eyebrow>
         <S.Title>A few questions to personalize your course</S.Title>
         <S.Subtitle>Your answers shape the topics, focus areas, and difficulty of your curriculum.</S.Subtitle>
       </S.Header>

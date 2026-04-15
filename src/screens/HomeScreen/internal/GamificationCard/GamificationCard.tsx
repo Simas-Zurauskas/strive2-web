@@ -20,27 +20,27 @@ function xpNeededForLevel(level: number): number {
   return getLevelThreshold(level + 1) - getLevelThreshold(level);
 }
 
-// Build a 5-row x 7-col grid aligned to weekdays (Mon=col0 ... Sun=col6).
-// null = future or before registration. Active days show as filled.
-// Returns cells + the start day-of-week offset for proper label alignment.
+interface CalendarCell {
+  level: 0 | 1 | 2;
+  date: string; // YYYY-MM-DD
+  xp: number;
+  weekend: boolean;
+}
+
 function buildStreakCalendar(
   activeDates: string[] | undefined,
   xpLog: { date: string; xp: number }[] | undefined,
   registeredAt: string | undefined,
-): (0 | 1 | 2 | null)[] {
+): (CalendarCell | null)[] {
   const today = new Date();
   const todayStr = today.toISOString().slice(0, 10);
-  // Day of week: 0=Mon ... 6=Sun
-  const todayDow = (today.getDay() + 6) % 7;
+  const todayDow = (today.getDay() + 6) % 7; // 0=Mon ... 6=Sun
 
-  // Start from Monday of 4 weeks ago (gives us 5 rows including current partial week)
   const startDate = new Date(today);
   startDate.setDate(today.getDate() - todayDow - 28);
 
-  // Registration date as YYYY-MM-DD string for safe comparison
   const regDateStr = registeredAt ? registeredAt.slice(0, 10) : null;
 
-  // Build set of active dates + aggregate XP for intensity
   const activeSet = new Set(activeDates ?? []);
   const xpByDay = new Map<string, number>();
   if (xpLog) {
@@ -49,31 +49,33 @@ function buildStreakCalendar(
     }
   }
 
-  const cells: (0 | 1 | 2 | null)[] = [];
+  const cells: (CalendarCell | null)[] = [];
   for (let i = 0; i < 35; i++) {
     const d = new Date(startDate);
     d.setDate(startDate.getDate() + i);
     const dateStr = d.toISOString().slice(0, 10);
+    const dow = i % 7; // 0=Mon ... 6=Sun
+    const weekend = dow >= 5;
 
-    // Future days or before registration → null
-    if (dateStr > todayStr) {
-      cells.push(null);
-      continue;
-    }
-    if (regDateStr && dateStr < regDateStr) {
+    if (dateStr > todayStr || (regDateStr && dateStr < regDateStr)) {
       cells.push(null);
       continue;
     }
 
     const isActive = activeSet.has(dateStr);
     const xp = xpByDay.get(dateStr) ?? 0;
+    let level: 0 | 1 | 2 = 0;
+    if (isActive || xp > 0) level = xp >= 100 ? 2 : 1;
 
-    if (!isActive && xp === 0) cells.push(0);
-    else if (xp >= 100) cells.push(2);
-    else cells.push(1);
+    cells.push({ level, date: dateStr, xp, weekend });
   }
 
   return cells;
+}
+
+function formatCellDate(dateStr: string): string {
+  const d = new Date(dateStr + 'T00:00:00');
+  return d.toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric' });
 }
 
 function getNextMilestone(profile: { currentStreak: number; level: number; totalXp: number }): string | null {
@@ -115,14 +117,12 @@ export const GamificationCard = () => {
     return { completedLessons, completedCourses };
   }, [progressSummary]);
 
-  const calendarDays = useMemo(() => {
-    const days = buildStreakCalendar(profile?.activeDates, profile?.xpLog, user?.createdAt);
-    // Trim full leading rows that are entirely null (before registration)
-    // This preserves weekday alignment since we always remove complete 7-day rows
-    while (days.length > 7 && days.slice(0, 7).every((d) => d === null)) {
-      days.splice(0, 7);
+  const calendarCells = useMemo(() => {
+    const cells = buildStreakCalendar(profile?.activeDates, profile?.xpLog, user?.createdAt);
+    while (cells.length > 7 && cells.slice(0, 7).every((d) => d === null)) {
+      cells.splice(0, 7);
     }
-    return days;
+    return cells;
   }, [profile?.activeDates, profile?.xpLog, user?.createdAt]);
 
   const milestone = useMemo(() => {
@@ -132,7 +132,6 @@ export const GamificationCard = () => {
 
   if (!profile) return null;
 
-  // XP progress within current level
   const currentThreshold = getLevelThreshold(profile.level);
   const xpInCurrentLevel = profile.totalXp - currentThreshold;
   const xpNeeded = xpNeededForLevel(profile.level);
@@ -140,7 +139,6 @@ export const GamificationCard = () => {
 
   return (
     <S.Container>
-      {/* Level + XP */}
       <S.Header>
         <S.LevelBadge>
           <S.LevelIcon>&#11088;</S.LevelIcon>
@@ -155,7 +153,6 @@ export const GamificationCard = () => {
         </S.XpBarTrack>
       </div>
 
-      {/* Merged stats */}
       <S.StatsRow>
         <S.Stat>
           <S.StatValue>{profile.currentStreak}</S.StatValue>
@@ -173,15 +170,21 @@ export const GamificationCard = () => {
 
       <S.Divider />
 
-      {/* Streak calendar */}
       <div>
         <S.CalendarLabel>Activity</S.CalendarLabel>
         <S.CalendarGrid>
-          {calendarDays.map((level, i) => (
-            level === null
-              ? <S.CalendarDayEmpty key={i} />
-              : <S.CalendarDay key={i} $level={level} />
-          ))}
+          {calendarCells.map((cell, i) =>
+            cell === null ? (
+              <S.CalendarDayEmpty key={i} />
+            ) : (
+              <S.CalendarDay
+                key={i}
+                $level={cell.level}
+                $weekend={cell.weekend}
+                title={cell.xp > 0 ? `${formatCellDate(cell.date)} — ${cell.xp} XP` : `${formatCellDate(cell.date)} — No activity`}
+              />
+            ),
+          )}
         </S.CalendarGrid>
         <S.CalendarDays>
           <S.CalendarDayLabel>M</S.CalendarDayLabel>
@@ -189,12 +192,11 @@ export const GamificationCard = () => {
           <S.CalendarDayLabel>W</S.CalendarDayLabel>
           <S.CalendarDayLabel>T</S.CalendarDayLabel>
           <S.CalendarDayLabel>F</S.CalendarDayLabel>
-          <S.CalendarDayLabel>S</S.CalendarDayLabel>
-          <S.CalendarDayLabel>S</S.CalendarDayLabel>
+          <S.CalendarDayLabel $weekend>S</S.CalendarDayLabel>
+          <S.CalendarDayLabel $weekend>S</S.CalendarDayLabel>
         </S.CalendarDays>
       </div>
 
-      {/* Next milestone */}
       {milestone && (
         <S.Milestone>
           <S.MilestoneHighlight>{milestone}</S.MilestoneHighlight>

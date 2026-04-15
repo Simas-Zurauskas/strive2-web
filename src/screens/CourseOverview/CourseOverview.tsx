@@ -3,14 +3,15 @@
 import { Check, Circle, Minus } from 'lucide-react';
 import { useRouter } from 'next/navigation';
 import { useMemo } from 'react';
-import { Badge } from '@/components';
+import { Badge, TextAction } from '@/components';
 import { useCourseContext } from '@/screens/CourseShell';
 import * as S from './CourseOverview.styles';
 import type { CourseQuizProgressItem, LessonProgressStatus } from '@/api/types';
 
 export const CourseOverview = () => {
   const router = useRouter();
-  const { courseBasePath, course, modules, progressData, navigateToLesson, onDeleteCourse, onArchiveCourse } = useCourseContext();
+  const { courseBasePath, course, modules, progressData, navigateToLesson, onDeleteCourse, onArchiveCourse } =
+    useCourseContext();
 
   const progressMap = useMemo(() => {
     const map = new Map<string, string>();
@@ -40,9 +41,7 @@ export const CourseOverview = () => {
         moduleIndex: lp.moduleIndex,
         lessonIndex: lp.lessonIndex,
         moduleName: modules[lp.moduleIndex]?.name ?? `Module ${lp.moduleIndex + 1}`,
-        lessonName:
-          modules[lp.moduleIndex]?.lessons?.[lp.lessonIndex]?.name ??
-          `Lesson ${lp.lessonIndex + 1}`,
+        lessonName: modules[lp.moduleIndex]?.lessons?.[lp.lessonIndex]?.name ?? `Lesson ${lp.lessonIndex + 1}`,
       }));
   }, [progressData, modules]);
 
@@ -141,9 +140,7 @@ export const CourseOverview = () => {
       {/* Quizzes to do: unattempted + reviews due */}
       {(unattemptedQuizzes.length > 0 || reviewsDue.length > 0) && (
         <S.ReviewsSection>
-          <S.ReviewsHeader>
-            {unattemptedQuizzes.length + reviewsDue.length} quiz{unattemptedQuizzes.length + reviewsDue.length !== 1 ? 'zes' : ''} to do
-          </S.ReviewsHeader>
+          <S.ReviewsHeader>Quizzes ({unattemptedQuizzes.length + reviewsDue.length})</S.ReviewsHeader>
           {unattemptedQuizzes.map((q) => (
             <S.ReviewItem
               key={`unattempted-${q.moduleIndex}`}
@@ -152,7 +149,7 @@ export const CourseOverview = () => {
               <S.ReviewModuleName>
                 Module {q.moduleIndex + 1}: {q.moduleName}
               </S.ReviewModuleName>
-              <S.TakeQuizAction>Take quiz &rarr;</S.TakeQuizAction>
+              <S.RowArrow>&rarr;</S.RowArrow>
             </S.ReviewItem>
           ))}
           {reviewsDue.map((r) => (
@@ -163,7 +160,7 @@ export const CourseOverview = () => {
               <S.ReviewModuleName>
                 Module {r.moduleIndex + 1}: {r.moduleName}
               </S.ReviewModuleName>
-              <S.ReviewAction>Review &rarr;</S.ReviewAction>
+              <S.RowArrow>&rarr;</S.RowArrow>
             </S.ReviewItem>
           ))}
         </S.ReviewsSection>
@@ -172,9 +169,7 @@ export const CourseOverview = () => {
       {/* Bookmarked lessons */}
       {bookmarkedLessons.length > 0 && (
         <S.BookmarksSection>
-          <S.BookmarksHeader>
-            Bookmarked lessons ({bookmarkedLessons.length})
-          </S.BookmarksHeader>
+          <S.BookmarksHeader>Bookmarked lessons ({bookmarkedLessons.length})</S.BookmarksHeader>
           {bookmarkedLessons.map((b) => (
             <S.BookmarkItem
               key={`${b.moduleIndex}-${b.lessonIndex}`}
@@ -183,7 +178,7 @@ export const CourseOverview = () => {
               <S.BookmarkLessonName>
                 {b.moduleName} &middot; {b.lessonName}
               </S.BookmarkLessonName>
-              <S.BookmarkArrow>&rarr;</S.BookmarkArrow>
+              <S.RowArrow>&rarr;</S.RowArrow>
             </S.BookmarkItem>
           ))}
         </S.BookmarksSection>
@@ -199,7 +194,9 @@ export const CourseOverview = () => {
         return (
           <S.ModuleCard key={mi}>
             <S.ModuleHeader>
-              <S.ModuleTitle>Module {mi + 1} <S.ModuleDot>&middot;</S.ModuleDot> {mod.name}</S.ModuleTitle>
+              <S.ModuleTitle>
+                Module {mi + 1} <S.ModuleDot>&middot;</S.ModuleDot> {mod.name}
+              </S.ModuleTitle>
               {mp.completed > 0 && (
                 <S.ModuleProgress>
                   {mp.completed}/{mp.total}
@@ -233,8 +230,7 @@ export const CourseOverview = () => {
               <S.QuizRow
                 $locked={!isModuleComplete}
                 onClick={() =>
-                  isModuleComplete &&
-                  router.push(`${courseBasePath}/quiz/${mi}${qp?.reviewDue ? '?review=true' : ''}`)
+                  isModuleComplete && router.push(`${courseBasePath}/quiz/${mi}${qp?.reviewDue ? '?review=true' : ''}`)
                 }
               >
                 <S.QuizIcon $locked={!isModuleComplete}>Q</S.QuizIcon>
@@ -252,7 +248,9 @@ export const CourseOverview = () => {
         <S.ArchiveLink onClick={onArchiveCourse}>
           {course?.status === 'archived' ? 'Unarchive course' : 'Archive course'}
         </S.ArchiveLink>
-        <S.DeleteLink onClick={onDeleteCourse}>Delete course</S.DeleteLink>
+        <TextAction $variant="danger" onClick={onDeleteCourse}>
+          Delete course
+        </TextAction>
       </S.DangerZone>
     </S.Container>
   );

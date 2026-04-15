@@ -1,5 +1,5 @@
-import { ArrowLeft, ArrowRight, Trash2 } from 'lucide-react';
-import { InlineLink } from '@/components';
+import { ArrowRight, Trash2 } from 'lucide-react';
+import { InlineLink, Eyebrow } from '@/components';
 import { DEV_MODE } from '@/conf/env';
 import * as S from '../ModuleQuizScreen.styles';
 import type { CourseModule, QuizAttemptResult } from '@/api/types';
@@ -14,7 +14,6 @@ interface QuizResultsProps {
   isReviewMode: boolean;
   isGenerating: boolean;
   isResetting: boolean;
-  onBack: () => void;
   onRetake: () => void;
   onNextModule: () => void;
   onBackToCourses: () => void;
@@ -30,7 +29,6 @@ export const QuizResults = ({
   isReviewMode,
   isGenerating,
   isResetting,
-  onBack,
   onRetake,
   onNextModule,
   onBackToCourses,
@@ -39,19 +37,16 @@ export const QuizResults = ({
 }: QuizResultsProps) => (
   <S.Container>
     <S.Content>
-      <S.TopBar>
-        <S.BackLink onClick={onBack}>
-          <ArrowLeft size={14} /> {isReviewMode ? 'Back to review' : 'Back to course'}
-        </S.BackLink>
-        {DEV_MODE && (
+      {DEV_MODE && (
+        <S.TopBar>
           <S.DevResetButton onClick={onDevReset} disabled={isResetting}>
             <Trash2 size={10} /> Reset Quiz
           </S.DevResetButton>
-        )}
-      </S.TopBar>
+        </S.TopBar>
+      )}
 
       <S.ResultsHeader>
-        <S.Eyebrow>{isReviewMode ? 'Review Results' : 'Quiz Results'}</S.Eyebrow>
+        <Eyebrow>{isReviewMode ? 'Review Results' : 'Quiz Results'}</Eyebrow>
         <S.Title>{mod.name}</S.Title>
         <S.ScoreDisplay>{results.score}%</S.ScoreDisplay>
         <S.MasteryBadge $tier={results.masteryTier}>

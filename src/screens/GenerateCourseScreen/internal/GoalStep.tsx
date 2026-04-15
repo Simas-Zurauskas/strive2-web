@@ -2,7 +2,7 @@
 
 import { Formik } from 'formik';
 import { useRef } from 'react';
-import { Button } from '@/components';
+import { Button, Eyebrow } from '@/components';
 import { goalInputSchema, GoalInputValues } from '@/validation';
 import * as S from './GoalStep.styles';
 
@@ -22,7 +22,7 @@ export const GoalStep = ({ initialGoal, hasExistingData, loading, error, onSubmi
   return (
     <S.Container>
       <S.Header>
-        <S.Eyebrow>Learning Goal</S.Eyebrow>
+        <Eyebrow>Learning Goal</Eyebrow>
         <S.Title>What do you want to learn?</S.Title>
         <S.Subtitle>
           Describe your learning goal in your own words. We&apos;ll build a personalized course around it.

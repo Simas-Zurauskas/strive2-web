@@ -1,6 +1,7 @@
 import styled from 'styled-components';
 
 export const Container = styled.footer`
+  margin-top: auto;
   border-top: 1px solid ${(p) => p.theme.colors.border};
   padding: 2rem;
   display: flex;
