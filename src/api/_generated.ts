@@ -1496,6 +1496,49 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/course/unattempted-quiz-count": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Get module quizzes never attempted across all courses (where module lessons are complete) */
+        get: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path?: never;
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": {
+                            data: {
+                                courseId: string;
+                                courseSlug?: string | null;
+                                courseName: string;
+                                moduleIndex: number;
+                                moduleName: string;
+                            }[];
+                        };
+                    };
+                };
+            };
+        };
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/course/{courseId}/refine-structure": {
         parameters: {
             query?: never;

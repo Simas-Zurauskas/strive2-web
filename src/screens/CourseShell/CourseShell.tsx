@@ -6,7 +6,7 @@ import { useParams, useRouter } from 'next/navigation';
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { toast } from 'sonner';
 import { deleteCourse, updateCourse } from '@/api/routes/course';
-import { AlertDialog } from '@/components';
+import { AlertDialog, TextLoader } from '@/components';
 import { TOASTS } from '@/constants/toasts';
 import type { CourseStatus } from '@/api/types';
 import { useCourse, useCourseProgress, useGeneratedLessons } from '@/hooks';
@@ -168,7 +168,7 @@ export const CourseShell = ({ children }: CourseShellProps) => {
   // ── Loading state ────────────────────────────────────
   if (isLoading) {
     return (
-      <S.FullCenter>Loading...</S.FullCenter>
+      <S.FullCenter><TextLoader /></S.FullCenter>
     );
   }
 

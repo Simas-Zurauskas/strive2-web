@@ -48,6 +48,7 @@ export const GlobalStyles = createGlobalStyle`
 
   html {
     scroll-behavior: smooth;
+    scroll-padding-top: var(--navbar-offset);
     -webkit-text-size-adjust: 100%;
     text-size-adjust: 100%;
     background-color: var(--background);

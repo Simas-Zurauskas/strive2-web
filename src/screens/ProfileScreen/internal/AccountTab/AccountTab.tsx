@@ -1,0 +1,122 @@
+import { useState } from 'react';
+import { toast } from 'sonner';
+import { deleteAccount } from '@/api/routes/auth';
+import { Button, InlineLink } from '@/components';
+import { TOASTS } from '@/constants/toasts';
+import { useAuth } from '@/hooks';
+import * as S from './AccountTab.styles';
+
+const formatProvider = (provider: string) => {
+  if (provider === 'GOOGLE') return 'Google';
+  if (provider === 'CREDENTIALS') return 'Email & Password';
+  return provider;
+};
+
+export const AccountTab: React.FC = () => {
+  const { user, signOut } = useAuth();
+
+  const [deleting, setDeleting] = useState(false);
+  const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
+  const [deletePassword, setDeletePassword] = useState('');
+
+  const hasCredentials = user?.authProviders?.some((p) => p.provider === 'CREDENTIALS');
+
+  const handleDeleteAccount = async () => {
+    if (hasCredentials && !deletePassword) {
+      toast.error(TOASTS.PASSWORD_REQUIRED);
+      return;
+    }
+
+    setDeleting(true);
+    try {
+      await deleteAccount({ password: deletePassword });
+      await signOut();
+    } catch (err: unknown) {
+      const message = err instanceof Error ? err.message : 'Failed to delete account';
+      toast.error(message);
+      setDeleting(false);
+    }
+  };
+
+  if (!user) return null;
+
+  return (
+    <>
+      <S.Section>
+        <S.SectionTitle>Account</S.SectionTitle>
+        <S.InfoRow>
+          <S.Label>Sign-in methods</S.Label>
+          <S.Value>
+            {user.authProviders?.map((p) => (
+              <S.ProviderTag key={p.provider}>{formatProvider(p.provider)}</S.ProviderTag>
+            ))}
+          </S.Value>
+        </S.InfoRow>
+      </S.Section>
+
+      <S.Section>
+        <S.SectionTitle>Legal</S.SectionTitle>
+        <S.InfoRow>
+          <S.Label>Terms of Service</S.Label>
+          <InlineLink href="/terms" newTab>View</InlineLink>
+        </S.InfoRow>
+        <S.InfoRow>
+          <S.Label>Privacy Policy</S.Label>
+          <InlineLink href="/privacy" newTab>View</InlineLink>
+        </S.InfoRow>
+      </S.Section>
+
+      <S.Section>
+        <S.InfoRow>
+          <S.Label>Sign out of your account</S.Label>
+          <Button variant="secondary" size="small" onClick={() => signOut()}>
+            Logout
+          </Button>
+        </S.InfoRow>
+      </S.Section>
+
+      <S.DangerZone>
+        <S.DangerTitle>Danger Zone</S.DangerTitle>
+        <S.DangerText>
+          Permanently delete your account and all associated data. This action cannot be undone.
+        </S.DangerText>
+
+        {!showDeleteConfirm ? (
+          <S.DangerButton onClick={() => setShowDeleteConfirm(true)}>Delete Account</S.DangerButton>
+        ) : (
+          <>
+            {hasCredentials && (
+              <S.PasswordInput
+                type="password"
+                placeholder="Enter your password to confirm"
+                value={deletePassword}
+                onChange={(e) => setDeletePassword(e.target.value)}
+                disabled={deleting}
+              />
+            )}
+            <S.ButtonRow>
+              <S.DangerButton
+                $loading={deleting}
+                disabled={deleting || (hasCredentials && !deletePassword)}
+                onClick={handleDeleteAccount}
+              >
+                {deleting ? 'Deleting...' : 'Yes, delete my account'}
+              </S.DangerButton>
+              <Button
+                variant="secondary"
+                size="small"
+                onClick={() => {
+                  setShowDeleteConfirm(false);
+                  setDeletePassword('');
+                }}
+                disabled={deleting}
+              >
+                Cancel
+              </Button>
+            </S.ButtonRow>
+          </>
+        )}
+      </S.DangerZone>
+    </>
+  );
+};

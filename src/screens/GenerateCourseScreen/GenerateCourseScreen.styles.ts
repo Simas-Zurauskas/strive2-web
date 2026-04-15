@@ -1,4 +1,5 @@
-import styled, { keyframes } from 'styled-components';
+import styled from 'styled-components';
+import { TextAction } from '@/components';
 
 export const Layout = styled.div`
   min-height: calc(100vh - 56px);
@@ -37,38 +38,10 @@ export const StepperWrapper = styled.div`
 
 export const Content = styled.div``;
 
-const fadeIn = keyframes`
-  from { opacity: 0; }
-  to { opacity: 1; }
-`;
-
-export const LoadingState = styled.div`
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  padding: 6rem 2rem;
-  font-family: var(--font-heading-serif), Georgia, serif;
-  font-style: italic;
-  font-size: 1.125rem;
-  color: ${(p) => p.theme.colors.muted};
-  animation: ${fadeIn} 0.4s ease;
-`;
-
-export const DeleteLink = styled.button`
+export const DiscardLink = styled(TextAction)`
   margin-left: auto;
-  background: none;
-  border: none;
-  color: ${(p) => p.theme.colors.muted};
-  font-size: 0.8125rem;
-  font-weight: 500;
-  font-family: inherit;
-  cursor: pointer;
-  padding: 0;
-  text-decoration: none;
-  transition: color 0.15s;
 
   &:hover {
-    color: ${(p) => p.theme.colors.foreground};
     text-decoration: underline;
   }
 `;

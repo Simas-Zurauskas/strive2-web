@@ -3,7 +3,7 @@
 import { useEffect, useState } from 'react';
 import Skeleton from 'react-loading-skeleton';
 import { CourseDepth, DepthPreviewsResponse } from '@/api/types';
-import { Button, Badge } from '@/components';
+import { Button, Badge, Eyebrow } from '@/components';
 import * as S from './DepthStep.styles';
 
 interface DepthStepProps {
@@ -59,7 +59,7 @@ export const DepthStep = ({
   return (
     <S.Container>
       <S.Header>
-        <S.Eyebrow>Depth</S.Eyebrow>
+        <Eyebrow>Depth</Eyebrow>
         <S.Title>How deep should we go?</S.Title>
         {previewsLoading && !depthPreviews ? (
           <S.Subtitle>Preparing your options...</S.Subtitle>

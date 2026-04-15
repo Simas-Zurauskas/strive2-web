@@ -1,6 +1,7 @@
 'use client';
 
 import styled from 'styled-components';
+import { SectionLabel, TextAction } from '@/components';
 import { thinScrollbar } from '@/theme';
 import type { LessonProgressStatus, QuizMasteryTier } from '@/api/types';
 
@@ -24,13 +25,8 @@ export const Header = styled.header`
   margin-bottom: 2rem;
 `;
 
-export const Eyebrow = styled.span`
+export const Eyebrow = styled(SectionLabel).attrs({ as: 'span' })`
   display: inline-block;
-  font-size: 0.6875rem;
-  font-weight: 600;
-  text-transform: uppercase;
-  letter-spacing: 0.08em;
-  color: ${(p) => p.theme.colors.muted};
   margin-bottom: 0.5rem;
 `;
 
@@ -126,13 +122,7 @@ export const ReviewsSection = styled.div`
   margin-bottom: 2rem;
 `;
 
-export const ReviewsHeader = styled.div`
-  display: flex;
-  align-items: center;
-  gap: 0.375rem;
-  font-size: 0.8125rem;
-  font-weight: 600;
-  color: ${(p) => p.theme.colors.warning};
+export const ReviewsHeader = styled(SectionLabel)`
   margin-bottom: 0.75rem;
 `;
 
@@ -162,10 +152,10 @@ export const ReviewModuleName = styled.span`
   color: ${(p) => p.theme.colors.foreground};
 `;
 
-export const ReviewAction = styled.span`
+export const RowArrow = styled.span`
   font-size: 0.75rem;
   font-weight: 600;
-  color: ${(p) => p.theme.colors.warning};
+  color: ${(p) => p.theme.colors.accent};
   flex-shrink: 0;
 `;
 
@@ -175,13 +165,8 @@ export const BookmarksSection = styled.div`
   margin-bottom: 2rem;
 `;
 
-export const BookmarksHeader = styled.h2`
-  font-size: 0.6875rem;
-  font-weight: 600;
-  text-transform: uppercase;
-  letter-spacing: 0.08em;
-  color: ${(p) => p.theme.colors.muted};
-  margin: 0 0 0.75rem;
+export const BookmarksHeader = styled(SectionLabel)`
+  margin-bottom: 0.75rem;
 `;
 
 export const BookmarkItem = styled.button`
@@ -210,22 +195,12 @@ export const BookmarkLessonName = styled.span`
   color: ${(p) => p.theme.colors.foreground};
 `;
 
-export const BookmarkArrow = styled.span`
-  font-size: 0.75rem;
-  font-weight: 600;
-  color: ${(p) => p.theme.colors.accent};
-  flex-shrink: 0;
-`;
+// BookmarkArrow removed — use RowArrow
 
 // ── Outline section ──────────────────────────────────
 
-export const SectionTitle = styled.h2`
-  font-size: 0.6875rem;
-  font-weight: 600;
-  text-transform: uppercase;
-  letter-spacing: 0.08em;
-  color: ${(p) => p.theme.colors.muted};
-  margin: 0 0 1rem;
+export const SectionTitle = styled(SectionLabel)`
+  margin-bottom: 1rem;
 `;
 
 export const ModuleCard = styled.div`
@@ -289,7 +264,9 @@ export const LessonItem = styled.button<{ $status: LessonProgressStatus | 'defau
   font-family: inherit;
   cursor: pointer;
   text-align: left;
-  transition: background 0.15s, transform 0.15s ease;
+  transition:
+    background 0.15s,
+    padding-left 0.15s ease;
   border-bottom: 1px solid ${(p) => p.theme.colors.border};
 
   &:last-child {
@@ -298,7 +275,7 @@ export const LessonItem = styled.button<{ $status: LessonProgressStatus | 'defau
 
   &:hover {
     background: ${(p) => `${p.theme.colors.accent}06`};
-    transform: translateX(4px);
+    padding-left: calc(1.25rem + 4px);
   }
 `;
 
@@ -352,12 +329,16 @@ export const QuizRow = styled.button<{ $locked: boolean }>`
   cursor: ${(p) => (p.$locked ? 'default' : 'pointer')};
   opacity: ${(p) => (p.$locked ? 0.4 : 1)};
   text-align: left;
-  transition: background 0.15s, transform 0.15s ease;
+  transition:
+    background 0.15s,
+    padding-left 0.15s ease;
 
-  ${(p) => !p.$locked && `
+  ${(p) =>
+    !p.$locked &&
+    `
     &:hover {
       background: ${p.theme.colors.accent}06;
-      transform: translateX(4px);
+      padding-left: calc(1.25rem + 4px);
     }
   `}
 `;
@@ -427,12 +408,7 @@ export const TakeQuizBadge = styled.span`
   flex-shrink: 0;
 `;
 
-export const TakeQuizAction = styled.span`
-  font-size: 0.75rem;
-  font-weight: 600;
-  color: ${(p) => p.theme.colors.accent};
-  flex-shrink: 0;
-`;
+// TakeQuizAction removed — use RowArrow
 
 // ── Danger zone ──────────────────────────────────────
 
@@ -442,36 +418,7 @@ export const DangerZone = styled.div`
   border-top: 1px solid ${(p) => p.theme.colors.border};
 `;
 
-export const ArchiveLink = styled.button`
-  font-size: 0.8125rem;
-  font-weight: 500;
-  color: ${(p) => p.theme.colors.muted};
-  background: none;
-  border: none;
-  padding: 0;
-  cursor: pointer;
-  font-family: inherit;
-  transition: color 0.15s;
+export const ArchiveLink = styled(TextAction)`
   margin-bottom: 0.75rem;
   display: block;
-
-  &:hover {
-    color: ${(p) => p.theme.colors.foreground};
-  }
-`;
-
-export const DeleteLink = styled.button`
-  font-size: 0.8125rem;
-  font-weight: 500;
-  color: ${(p) => p.theme.colors.muted};
-  background: none;
-  border: none;
-  padding: 0;
-  cursor: pointer;
-  font-family: inherit;
-  transition: color 0.15s;
-
-  &:hover {
-    color: ${(p) => p.theme.colors.error};
-  }
 `;

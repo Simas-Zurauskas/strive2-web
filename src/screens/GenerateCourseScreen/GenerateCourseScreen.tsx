@@ -3,7 +3,7 @@
 import { useRouter, useSearchParams } from 'next/navigation';
 import { useEffect, useMemo, useState } from 'react';
 import { Course, CourseDepth } from '@/api/types';
-import { Stepper, AlertDialog } from '@/components';
+import { Stepper, AlertDialog, TextLoader } from '@/components';
 import { useCourse } from '@/hooks/useCourses';
 import * as S from './GenerateCourseScreen.styles';
 import { GoalStep, ClarifyStep, DepthStep, StructureStep, useWizardMutations, useWizardHandlers } from './internal';
@@ -32,7 +32,7 @@ export const GenerateCourseScreen = () => {
     return (
       <S.Layout>
         <S.Container>
-          <p style={{ textAlign: 'center', opacity: 0.6, padding: '4rem 0' }}>Loading course...</p>
+          <TextLoader text="Loading course..." />
         </S.Container>
       </S.Layout>
     );
@@ -149,9 +149,9 @@ const GenerateCourseWizard = ({ resumeCourse }: { resumeCourse: Course | null })
             <S.TopBar>
               {courseName && <S.CourseName>{courseName}</S.CourseName>}
               {courseId && (
-                <S.DeleteLink type="button" onClick={() => setShowDeleteDialog(true)}>
+                <S.DiscardLink type="button" onClick={() => setShowDeleteDialog(true)}>
                   Discard
-                </S.DeleteLink>
+                </S.DiscardLink>
               )}
             </S.TopBar>
 
@@ -180,7 +180,7 @@ const GenerateCourseWizard = ({ resumeCourse }: { resumeCourse: Course | null })
           )}
 
           {step === 2 && !handlers.clarifyData && handlers.isJobRunning && (
-            <S.LoadingState>Preparing your questions...</S.LoadingState>
+            <TextLoader text="Preparing your questions..." />
           )}
 
           {step === 2 && handlers.clarifyData && (
@@ -215,7 +215,7 @@ const GenerateCourseWizard = ({ resumeCourse }: { resumeCourse: Course | null })
           )}
 
           {step === 4 && !handlers.structureData && handlers.isJobRunning && (
-            <S.LoadingState>Building your course structure...</S.LoadingState>
+            <TextLoader text="Building your course structure..." />
           )}
 
           {step === 4 && handlers.structureData && courseId && (

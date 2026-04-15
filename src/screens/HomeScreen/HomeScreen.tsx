@@ -2,7 +2,7 @@
 
 import { useRouter } from 'next/navigation';
 import { useMemo, useState } from 'react';
-import { CourseCard, Button } from '@/components';
+import { CourseCard, Button, SectionLabel, FilterTabs, FilterTab, TopTabs, TopTab, TextLoader } from '@/components';
 import {
   useCourses,
   useContinueLearning,
@@ -83,7 +83,7 @@ export const HomeScreen: React.FC = () => {
     return (
       <S.Layout>
         <S.Container>
-          <S.LoadingText>Loading...</S.LoadingText>
+          <TextLoader />
         </S.Container>
       </S.Layout>
     );
@@ -114,7 +114,7 @@ export const HomeScreen: React.FC = () => {
             {/* ── Drafts ──────────────────────────────── */}
             {draftCourses.length > 0 && (
               <div>
-                <S.SectionLabel>Drafts</S.SectionLabel>
+                <SectionLabel>Drafts</SectionLabel>
                 <S.DraftGrid>
                   {draftCourses.map((course) => (
                     <CourseCard
@@ -130,25 +130,25 @@ export const HomeScreen: React.FC = () => {
 
             {/* ── Top tabs: Courses / Bookmarks ─────── */}
             <div>
-              <S.TopTabs>
-                <S.TopTab $active={topTab === 'courses'} onClick={() => setTopTab('courses')}>
+              <TopTabs>
+                <TopTab $active={topTab === 'courses'} onClick={() => setTopTab('courses')}>
                   Courses
-                </S.TopTab>
-                <S.TopTab $active={topTab === 'bookmarks'} onClick={() => setTopTab('bookmarks')}>
+                </TopTab>
+                <TopTab $active={topTab === 'bookmarks'} onClick={() => setTopTab('bookmarks')}>
                   Bookmarks
-                </S.TopTab>
-              </S.TopTabs>
+                </TopTab>
+              </TopTabs>
 
               {topTab === 'courses' && (
                 <>
                   <S.FilterBar>
-                    <S.FilterTabs>
+                    <FilterTabs>
                       {(['active', 'completed', 'archived', 'all'] as const).map((tab) => (
-                        <S.FilterTab key={tab} $active={filter === tab} onClick={() => setFilter(tab)}>
+                        <FilterTab key={tab} $active={filter === tab} onClick={() => setFilter(tab)}>
                           {tab.charAt(0).toUpperCase() + tab.slice(1)}
-                        </S.FilterTab>
+                        </FilterTab>
                       ))}
-                    </S.FilterTabs>
+                    </FilterTabs>
                     <S.SortToggle onClick={() => setSort((s) => (s === 'recent' ? 'alphabetical' : 'recent'))}>
                       {sort === 'recent' ? 'Recent' : 'A\u2013Z'}
                     </S.SortToggle>
@@ -210,7 +210,7 @@ export const HomeScreen: React.FC = () => {
             <GamificationCard />
 
             {((reviewsDue && reviewsDue.length > 0) || (unattemptedQuizzes && unattemptedQuizzes.length > 0)) && (
-              <S.QuizCard onClick={() => router.push('/review')}>
+              <S.QuizCard onClick={() => router.push('/quizzes')}>
                 <S.QuizCardLabel>Quizzes</S.QuizCardLabel>
                 {reviewsDue && reviewsDue.length > 0 && (
                   <S.QuizCardRow>

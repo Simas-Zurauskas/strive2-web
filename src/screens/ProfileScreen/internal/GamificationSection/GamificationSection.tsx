@@ -2,7 +2,7 @@
 
 import Image from 'next/image';
 import { useMemo } from 'react';
-import { useGamificationProfile, useGamificationStats } from '@/hooks/useGamification';
+import { useGamificationProfile } from '@/hooks/useGamification';
 import * as S from './GamificationSection.styles';
 
 const BADGES = [
@@ -26,99 +26,42 @@ const BADGES = [
   { id: 'level_25', name: 'Grandmaster', requirement: 'Reach level 25' },
 ] as const;
 
-const formatTime = (seconds: number): string => {
-  const hours = Math.floor(seconds / 3600);
-  const minutes = Math.floor((seconds % 3600) / 60);
-  if (hours > 0) return `${hours}h ${minutes}m`;
-  return `${minutes}m`;
-};
-
 export const GamificationSection = () => {
   const { data: profile } = useGamificationProfile();
-  const { data: stats } = useGamificationStats();
 
   const earnedIds = useMemo(
     () => new Set(profile?.earnedAchievements?.map((a) => a.achievementId) ?? []),
     [profile?.earnedAchievements],
   );
 
-  const maxDayXp = useMemo(() => {
-    if (!stats?.xpByDay?.length) return 0;
-    return Math.max(...stats.xpByDay.map((d) => d.xp));
-  }, [stats]);
-
   if (!profile) return null;
 
   return (
-    <>
-      {/* ── Achievements ─────────────────────────────── */}
-      <S.Section>
-        <S.SectionTitle>
-          Achievements ({earnedIds.size}/{BADGES.length})
-        </S.SectionTitle>
+    <S.Section>
+      <S.SectionTitle>
+        Achievements ({earnedIds.size}/{BADGES.length})
+      </S.SectionTitle>
 
-        <S.BadgeGrid>
-          {BADGES.map((badge) => {
-            const earned = earnedIds.has(badge.id);
-            return (
-              <S.BadgeTile key={badge.id}>
-                <S.BadgeImageWrap $earned={earned}>
-                  <Image
-                    src={`/images/gmf/${badge.id}.png`}
-                    alt={badge.name}
-                    width={80}
-                    height={80}
-                    draggable={false}
-                  />
-                </S.BadgeImageWrap>
-                <S.BadgeName $earned={earned}>{badge.name}</S.BadgeName>
-                <S.BadgeRequirement $earned={earned}>{badge.requirement}</S.BadgeRequirement>
-              </S.BadgeTile>
-            );
-          })}
-        </S.BadgeGrid>
-      </S.Section>
-
-      {/* ── Learning Stats ───────────────────────────── */}
-      {stats && (
-        <S.Section>
-          <S.SectionTitle>Learning Stats</S.SectionTitle>
-
-          <S.StatsRow>
-            <S.StatMini>
-              <S.StatMiniValue>{profile.totalXp.toLocaleString()}</S.StatMiniValue>
-              <S.StatMiniLabel>Total XP</S.StatMiniLabel>
-            </S.StatMini>
-            <S.StatMini>
-              <S.StatMiniValue>{formatTime(stats.totalTimeLearned)}</S.StatMiniValue>
-              <S.StatMiniLabel>Time Learned</S.StatMiniLabel>
-            </S.StatMini>
-            <S.StatMini>
-              <S.StatMiniValue>{stats.lessonsThisWeek}</S.StatMiniValue>
-              <S.StatMiniLabel>Lessons This Week</S.StatMiniLabel>
-            </S.StatMini>
-          </S.StatsRow>
-
-          {stats.xpByDay.length > 0 && (
-            <S.ChartContainer>
-              <S.ChartLabel>XP (last 30 days)</S.ChartLabel>
-              <S.BarChart>
-                {stats.xpByDay.map((d) => (
-                  <S.Bar
-                    key={d.date}
-                    $height={maxDayXp > 0 ? (d.xp / maxDayXp) * 100 : 0}
-                    title={`${d.date}: ${d.xp} XP`}
-                  />
-                ))}
-              </S.BarChart>
-              <S.BarLabels>
-                <S.BarLabel>{stats.xpByDay[0]?.date.slice(5)}</S.BarLabel>
-                <S.BarLabel>{stats.xpByDay[stats.xpByDay.length - 1]?.date.slice(5)}</S.BarLabel>
-              </S.BarLabels>
-            </S.ChartContainer>
-          )}
-        </S.Section>
-      )}
-    </>
+      <S.BadgeGrid>
+        {BADGES.map((badge) => {
+          const earned = earnedIds.has(badge.id);
+          return (
+            <S.BadgeTile key={badge.id}>
+              <S.BadgeImageWrap $earned={earned}>
+                <Image
+                  src={`/images/gmf/${badge.id}.png`}
+                  alt={badge.name}
+                  width={80}
+                  height={80}
+                  draggable={false}
+                />
+              </S.BadgeImageWrap>
+              <S.BadgeName $earned={earned}>{badge.name}</S.BadgeName>
+              <S.BadgeRequirement $earned={earned}>{badge.requirement}</S.BadgeRequirement>
+            </S.BadgeTile>
+          );
+        })}
+      </S.BadgeGrid>
+    </S.Section>
   );
 };

@@ -1,14 +1,5 @@
-import styled, { keyframes } from 'styled-components';
+import styled from 'styled-components';
 import type { QuizMasteryTier } from '@/api/types';
-
-const fadeIn = keyframes`
-  from { opacity: 0; }
-  to { opacity: 1; }
-`;
-
-const spin = keyframes`
-  to { transform: rotate(360deg); }
-`;
 
 // ── Layout ────────────────────────────────────────────
 
@@ -99,13 +90,6 @@ export const HeaderSection = styled.div`
   gap: 1rem;
 `;
 
-export const Eyebrow = styled.span`
-  font-size: 0.75rem;
-  font-weight: 500;
-  text-transform: uppercase;
-  letter-spacing: 0.18em;
-  color: ${(p) => p.theme.colors.tertiary};
-`;
 
 export const Title = styled.h1`
   font-family: var(--font-heading-serif), Georgia, serif;
@@ -129,31 +113,6 @@ export const Subtitle = styled.p`
   font-size: 1.0625rem;
   color: ${(p) => p.theme.colors.muted};
   line-height: 1.6;
-`;
-
-// ── Loading / pre-quiz ────────────────────────────────
-
-export const LoadingContainer = styled.div`
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  gap: 1rem;
-  padding: 4rem 0;
-  font-family: var(--font-heading-serif), Georgia, serif;
-  font-style: italic;
-  font-size: 1.125rem;
-  color: ${(p) => p.theme.colors.muted};
-  animation: ${fadeIn} 0.4s ease;
-`;
-
-export const Spinner = styled.div`
-  width: 32px;
-  height: 32px;
-  border: 3px solid ${(p) => p.theme.colors.border};
-  border-top-color: ${(p) => p.theme.colors.accent};
-  border-radius: 50%;
-  animation: ${spin} 0.8s linear infinite;
 `;
 
 export const DescriptionText = styled.p`
@@ -268,14 +227,23 @@ export const Option = styled.button<{ $state: OptionState }>`
   gap: 0.875rem;
   padding: 1.125rem 1.25rem;
   border-radius: 8px;
-  border: ${(p) =>
+  border: 1px solid
+    ${(p) =>
+      p.$state === 'selected'
+        ? p.theme.colors.accent
+        : p.$state === 'correct'
+          ? p.theme.colors.success
+          : p.$state === 'incorrect'
+            ? p.theme.colors.error
+            : p.theme.colors.surfaceBorder};
+  box-shadow: ${(p) =>
     p.$state === 'selected'
-      ? `2px solid ${p.theme.colors.accent}`
+      ? `0 0 0 1px ${p.theme.colors.accent}`
       : p.$state === 'correct'
-        ? `2px solid ${p.theme.colors.success}`
+        ? `0 0 0 1px ${p.theme.colors.success}`
         : p.$state === 'incorrect'
-          ? `2px solid ${p.theme.colors.error}`
-          : `1px solid ${p.theme.colors.surfaceBorder}`};
+          ? `0 0 0 1px ${p.theme.colors.error}`
+          : 'none'};
   background: ${(p) =>
     p.$state === 'selected'
       ? `${p.theme.colors.accent}06`

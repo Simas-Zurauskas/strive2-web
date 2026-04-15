@@ -17,14 +17,6 @@ export const Header = styled.div`
   gap: 1.5rem;
 `;
 
-export const Eyebrow = styled.span`
-  font-size: 0.75rem;
-  font-weight: 500;
-  text-transform: uppercase;
-  letter-spacing: 0.2em;
-  color: ${(p) => p.theme.colors.tertiary};
-`;
-
 export const Title = styled.h1`
   font-family: var(--font-heading-serif), Georgia, serif;
   font-style: italic;

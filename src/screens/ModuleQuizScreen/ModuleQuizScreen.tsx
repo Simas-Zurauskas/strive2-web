@@ -2,6 +2,7 @@
 
 import { useParams, useRouter, useSearchParams } from 'next/navigation';
 import { useEffect } from 'react';
+import { TextLoader } from '@/components';
 import { useCourse } from '@/hooks';
 import { useQuizState, QuizResults, QuizQuestion, QuizLanding } from './internal';
 import * as S from './ModuleQuizScreen.styles';
@@ -36,13 +37,11 @@ export const ModuleQuizScreen = () => {
     return (
       <S.Container>
         <S.Content>
-          <S.LoadingContainer>Loading...</S.LoadingContainer>
+          <TextLoader />
         </S.Content>
       </S.Container>
     );
   }
-
-  const handleBack = () => router.push(isReviewMode ? '/review' : `${courseBasePath}/lesson/${moduleIndex}/0`);
 
   // ── Results view ──────────────────────────────────────
 
@@ -56,7 +55,6 @@ export const ModuleQuizScreen = () => {
         isReviewMode={isReviewMode}
         isGenerating={quiz.isGenerating}
         isResetting={quiz.isResetting}
-        onBack={handleBack}
         onRetake={quiz.handleRetake}
         onNextModule={() => router.push(`${courseBasePath}/lesson/${moduleIndex + 1}/0`)}
         onBackToCourses={() => router.push('/')}
@@ -80,7 +78,6 @@ export const ModuleQuizScreen = () => {
         isReviewMode={isReviewMode}
         isSubmitting={quiz.isSubmitting}
         isResetting={quiz.isResetting}
-        onBack={handleBack}
         onSelectOption={quiz.handleSelectOption}
         onNext={quiz.handleNext}
         onDevReset={quiz.handleDevReset}
@@ -99,7 +96,6 @@ export const ModuleQuizScreen = () => {
       isReviewMode={isReviewMode}
       isGenerating={quiz.isGenerating}
       hasQuizContent={!!quiz.quizContent && !quiz.quizStarted}
-      onBack={handleBack}
       onStart={() => quiz.setQuizStarted(true)}
       onGenerate={quiz.handleGenerate}
     />

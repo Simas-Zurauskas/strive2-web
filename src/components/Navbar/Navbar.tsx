@@ -102,15 +102,15 @@ export const Navbar = () => {
         <S.NavLink href="/courses/new" $active={pathname === '/courses/new'}>
           Create
         </S.NavLink>
-        <S.NavLink href="/review" $active={pathname === '/review'}>
-          Review
+        <S.NavLink href="/quizzes" $active={pathname === '/quizzes'}>
+          Quizzes
           {reviewsDue && reviewsDue.length > 0 && <S.Badge>{reviewsDue.length}</S.Badge>}
         </S.NavLink>
-        {DEV_MODE && (
+        {/* {DEV_MODE && (
           <S.NavLink href="/dev" $active={pathname === '/dev'}>
             _dev
           </S.NavLink>
-        )}
+        )} */}
       </S.Center>
 
       <S.Right>

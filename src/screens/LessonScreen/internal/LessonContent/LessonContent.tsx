@@ -2,7 +2,7 @@
 
 import { AnimatePresence, motion } from 'framer-motion';
 import { useState } from 'react';
-import { Button, Checkbox } from '@/components';
+import { Button, Checkbox, TextLoader } from '@/components';
 import { useJobManager, useLessonContent } from '@/hooks';
 import {
   BlockRenderer,
@@ -147,9 +147,7 @@ export const LessonContent = ({
   if (isLoadingContent) {
     return (
       <S.Container>
-        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', flex: 1, opacity: 0.5 }}>
-          Loading...
-        </div>
+        <TextLoader />
       </S.Container>
     );
   }
