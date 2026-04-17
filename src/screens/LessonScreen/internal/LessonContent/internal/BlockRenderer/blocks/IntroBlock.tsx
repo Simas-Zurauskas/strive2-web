@@ -1,9 +1,8 @@
-import ReactMarkdown from 'react-markdown';
-import remarkGfm from 'remark-gfm';
+import { LessonMarkdown } from '../LessonMarkdown';
 import * as S from '../styles';
 
 export const IntroBlock = ({ content }: { content: string }) => (
   <S.IntroText>
-    <ReactMarkdown remarkPlugins={[remarkGfm]}>{content}</ReactMarkdown>
+    <LessonMarkdown>{content}</LessonMarkdown>
   </S.IntroText>
 );

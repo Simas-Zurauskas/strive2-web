@@ -3,10 +3,9 @@
 import { useMutation } from '@tanstack/react-query';
 import { useTheme } from 'next-themes';
 import { useEffect, useRef, useState } from 'react';
-import ReactMarkdown from 'react-markdown';
-import remarkGfm from 'remark-gfm';
 import { executeCode } from '@/api/routes/course';
 import { Button } from '@/components';
+import { LessonMarkdown } from '../LessonMarkdown';
 import * as S from '../styles';
 
 export const ExerciseBlock = ({
@@ -47,6 +46,7 @@ export const ExerciseBlock = ({
     onError: (err) => {
       setOutput({ stdout: null, stderr: err instanceof Error ? err.message : 'Execution failed', status: 'Error' });
     },
+    meta: { silent: true },
   });
 
   useEffect(() => {
@@ -163,9 +163,9 @@ export const ExerciseBlock = ({
         <S.ExerciseHeaderLabel>Try It Yourself</S.ExerciseHeaderLabel>
       </S.ExerciseHeader>
       <S.ExerciseContent>
-        <ReactMarkdown remarkPlugins={[remarkGfm]}>
+        <LessonMarkdown>
           {expectedOutput ? content.replace(/\n*\*?\*?Expected output\*?\*?:?[\s\S]*$/i, '').trim() : content}
-        </ReactMarkdown>
+        </LessonMarkdown>
       </S.ExerciseContent>
 
       {hasEditor && (

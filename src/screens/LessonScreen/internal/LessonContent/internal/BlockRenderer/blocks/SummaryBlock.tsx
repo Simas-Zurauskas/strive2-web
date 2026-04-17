@@ -1,5 +1,4 @@
-import ReactMarkdown from 'react-markdown';
-import remarkGfm from 'remark-gfm';
+import { LessonMarkdown } from '../LessonMarkdown';
 import * as S from '../styles';
 
 export const SummaryBlock = ({ content }: { content: string }) => {
@@ -22,7 +21,7 @@ export const SummaryBlock = ({ content }: { content: string }) => {
       <S.SummaryList>
         {items.map((item, i) => (
           <S.SummaryItem key={i}>
-            <ReactMarkdown remarkPlugins={[remarkGfm]}>{item}</ReactMarkdown>
+            <LessonMarkdown>{item}</LessonMarkdown>
           </S.SummaryItem>
         ))}
       </S.SummaryList>

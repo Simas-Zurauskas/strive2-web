@@ -1,3 +1,9 @@
+/**
+ * Shared styled-component primitives (page shell, labels, tab strips, etc.)
+ * that are too small to warrant a per-component folder. Defined at file level
+ * by design — the `ComponentName/ComponentName.tsx + .styles.ts + index.ts`
+ * pattern is reserved for primitives that ship logic, props, or refs.
+ */
 import styled from 'styled-components';
 
 // ── Page layout ────────────────────────────────────

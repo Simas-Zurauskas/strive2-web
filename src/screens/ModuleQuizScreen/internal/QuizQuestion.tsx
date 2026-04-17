@@ -3,10 +3,9 @@ import { Button, Eyebrow } from '@/components';
 import { DEV_MODE } from '@/conf/env';
 import * as S from '../ModuleQuizScreen.styles';
 import type { CourseModule, ModuleQuizQuestion } from '@/api/types';
+import type { QuizOptionState } from '@/types';
 
 const LETTERS = ['A', 'B', 'C', 'D'];
-
-type OptionState = 'default' | 'selected' | 'correct' | 'incorrect' | 'dimmed';
 
 interface QuizQuestionProps {
   question: ModuleQuizQuestion;
@@ -37,7 +36,7 @@ export const QuizQuestion = ({
   onNext,
   onDevReset,
 }: QuizQuestionProps) => {
-  const getOptionState = (index: number): OptionState => {
+  const getOptionState = (index: number): QuizOptionState => {
     if (index === selectedOption) return 'selected';
     return 'default';
   };

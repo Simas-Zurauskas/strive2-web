@@ -1,18 +1,19 @@
 import Skeleton from 'react-loading-skeleton';
 import { useGamificationProfile, useGamificationStats, useQuizTrends } from '@/hooks/useGamification';
 import { GamificationSection } from '../GamificationSection/GamificationSection';
-import { WeeklySummary } from './internal/WeeklySummary/WeeklySummary';
-import { XpChart } from './internal/XpChart/XpChart';
 import { ActivityHeatmap } from './internal/ActivityHeatmap/ActivityHeatmap';
+import { InsightsCard } from './internal/InsightsCard/InsightsCard';
 import { QuizScoreTrend } from './internal/QuizScoreTrend/QuizScoreTrend';
-import * as WS from './internal/WeeklySummary/WeeklySummary.styles';
 import * as QS from './internal/QuizScoreTrend/QuizScoreTrend.styles';
+import { WeeklySummary } from './internal/WeeklySummary/WeeklySummary';
+import * as WS from './internal/WeeklySummary/WeeklySummary.styles';
+import { XpChart } from './internal/XpChart/XpChart';
 
 // ── Skeleton placeholders ─────────────────────────
 
 const SummarySkeleton = () => (
   <WS.Grid>
-    {[0, 1, 2, 3].map((i) => (
+    {[0, 1, 2, 3, 4].map((i) => (
       <WS.Card key={i}>
         <WS.Value><Skeleton width={52} /></WS.Value>
         <WS.Label><Skeleton width={68} /></WS.Label>
@@ -56,6 +57,9 @@ export const LearningTab: React.FC = () => {
       {/* Widget 4: Quiz Score Trend */}
       {quizLoading && !quizTrends && <QuizTrendSkeleton />}
       {quizTrends && <QuizScoreTrend data={quizTrends} />}
+
+      {/* Widget 5: Insights retention */}
+      <InsightsCard />
 
       {/* Achievements (existing) */}
       <GamificationSection />

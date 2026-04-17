@@ -1,48 +1,48 @@
 'use client';
 
+import { useMutation } from '@tanstack/react-query';
 import Link from 'next/link';
-import { useState } from 'react';
 import { toast } from 'sonner';
 import { resendVerificationAuthenticated } from '@/api/routes/auth';
-import { TOASTS, toastMessage } from '@/constants/toasts';
-import * as S from '../LoginScreen/LoginScreen.styles';
+import { ClientApiError } from '@/api/types';
+import { AuthForm, AuthFormFooter, AuthFormTitle, AuthSubmitBtn } from '@/components';
+import { TOASTS } from '@/constants/toasts';
 
 export const CheckEmailScreen = () => {
-  const [resending, setResending] = useState(false);
-
-  const handleResend = async () => {
-    setResending(true);
-
-    try {
-      await resendVerificationAuthenticated();
-      toast.success(TOASTS.VERIFICATION_SENT_SHORT);
-    } catch (err) {
-      const error = err as { message?: string; status?: number };
-      if (error?.status === 401 || error?.message === 'Unauthorized') {
+  const resendMutation = useMutation({
+    mutationFn: resendVerificationAuthenticated,
+    onSuccess: () => toast(TOASTS.VERIFICATION_SENT_SHORT),
+    // Surface session expiry specifically; global handler covers anything else.
+    onError: (err) => {
+      const apiError = err as ClientApiError;
+      if (apiError.status === 401 || apiError.message === 'Unauthorized') {
         toast.error(TOASTS.SESSION_EXPIRED);
-      } else {
-        toast.error(toastMessage(error?.message, TOASTS.RESEND_ERROR));
       }
-    } finally {
-      setResending(false);
-    }
-  };
+    },
+    meta: { errorMessage: TOASTS.RESEND_ERROR },
+  });
+  const resending = resendMutation.isPending;
 
   return (
-    <S.Form as="div">
-      <h1 className="form__title">Check your email</h1>
+    <AuthForm as="div">
+      <AuthFormTitle>Check your email</AuthFormTitle>
 
-      <p className="form__footer" style={{ opacity: 1 }}>
+      <AuthFormFooter style={{ opacity: 1 }}>
         We&apos;ve sent a verification link to your email address. Click the link to verify your account.
-      </p>
+      </AuthFormFooter>
 
-      <S.SubmitBtn type="button" $loading={resending} disabled={resending} onClick={handleResend}>
+      <AuthSubmitBtn
+        type="button"
+        $loading={resending}
+        disabled={resending}
+        onClick={() => resendMutation.mutate()}
+      >
         {resending ? 'Sending...' : 'Resend verification email'}
-      </S.SubmitBtn>
+      </AuthSubmitBtn>
 
-      <p className="form__footer">
+      <AuthFormFooter>
         <Link href="/login">Back to sign in</Link>
-      </p>
-    </S.Form>
+      </AuthFormFooter>
+    </AuthForm>
   );
 };

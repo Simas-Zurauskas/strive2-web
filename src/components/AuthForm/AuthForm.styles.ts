@@ -6,56 +6,29 @@ export const Form = styled.form`
   gap: 1rem;
   width: 100%;
   max-width: 360px;
+`;
 
-  .form {
-    &__title {
-      font-size: 1.5rem;
-      font-weight: 700;
-      text-align: center;
-      color: ${(p) => p.theme.colors.foreground};
-    }
+export const FormTitle = styled.h1`
+  font-size: 1.5rem;
+  font-weight: 700;
+  text-align: center;
+  color: ${(p) => p.theme.colors.foreground};
+`;
 
-    &__input {
-      padding: 0.75rem 1rem;
-      border: 1px solid ${(p) => p.theme.colors.border};
-      border-radius: 8px;
-      background: ${(p) => p.theme.colors.background};
-      color: ${(p) => p.theme.colors.foreground};
-      font-size: 0.875rem;
-      outline: none;
-      transition: border-color 0.15s;
+export const FormError = styled.p`
+  font-size: 0.8125rem;
+  color: ${(p) => p.theme.colors.error};
+  text-align: center;
+`;
 
-      &:focus {
-        border-color: ${(p) => p.theme.colors.accent};
-      }
+export const FormFooter = styled.p`
+  font-size: 0.8125rem;
+  text-align: center;
+  opacity: 0.6;
 
-      &::placeholder {
-        opacity: 0.4;
-      }
-    }
-
-    &__field-error {
-      font-size: 0.75rem;
-      color: ${(p) => p.theme.colors.error};
-      margin-top: -0.5rem;
-    }
-
-    &__error {
-      font-size: 0.8125rem;
-      color: ${(p) => p.theme.colors.error};
-      text-align: center;
-    }
-
-    &__footer {
-      font-size: 0.8125rem;
-      text-align: center;
-      opacity: 0.6;
-
-      a {
-        color: ${(p) => p.theme.colors.accent};
-        text-decoration: none;
-      }
-    }
+  a {
+    color: ${(p) => p.theme.colors.accent};
+    text-decoration: none;
   }
 `;
 

@@ -20,3 +20,12 @@ export {
 export { useJobManager } from './useJobManager';
 export { useSocket, SocketProvider } from './useSocket';
 export { useFavoriteCourseIds, useToggleFavoriteCourse } from './useFavorites';
+export {
+  useInsightQueue,
+  useInsightStats,
+  useInsightsDueCount,
+  useRateInsight,
+  useSkipInsight,
+  useSetInsightMode,
+  useGradeInsightAnswer,
+} from './useInsights';

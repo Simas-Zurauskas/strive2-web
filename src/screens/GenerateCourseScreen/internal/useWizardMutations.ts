@@ -18,37 +18,37 @@ export const useWizardMutations = (courseId: string | null) => {
 
   const createCourseMutation = useMutation({
     mutationFn: (params: { goal: string }) => createCourse(params),
-    onError: () => toast.error(TOASTS.COURSE_CREATE_ERROR),
+    meta: { errorMessage: TOASTS.COURSE_CREATE_ERROR },
   });
 
   const clarifyMutation = useMutation({
     mutationFn: (id: string) => clarifyCourse(id),
-    onError: () => toast.error(TOASTS.CLARIFY_ERROR),
+    meta: { errorMessage: TOASTS.CLARIFY_ERROR },
   });
 
   const updateCourseMutation = useMutation({
     mutationFn: (params: Parameters<typeof updateCourse>[0]) => updateCourse(params),
-    onError: () => toast.error(TOASTS.COURSE_SAVE_ERROR),
+    meta: { errorMessage: TOASTS.COURSE_SAVE_ERROR },
   });
 
   const structureMutation = useMutation({
     mutationFn: (id: string) => generateStructure(id),
-    onError: () => toast.error(TOASTS.STRUCTURE_ERROR),
+    meta: { errorMessage: TOASTS.STRUCTURE_ERROR },
   });
 
   const depthPreviewsMutation = useMutation({
     mutationFn: (id: string) => generateDepthPreviews(id),
-    onError: () => toast.error(TOASTS.DEPTH_PREVIEWS_ERROR),
+    meta: { errorMessage: TOASTS.DEPTH_PREVIEWS_ERROR },
   });
 
   const deleteMutation = useMutation({
     mutationFn: () => deleteCourse(courseId!),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: [QKeys.COURSES] });
-      toast.success(TOASTS.COURSE_DELETED);
+      toast(TOASTS.COURSE_DELETED);
       router.push('/');
     },
-    onError: () => toast.error(TOASTS.COURSE_DELETE_ERROR),
+    meta: { errorMessage: TOASTS.COURSE_DELETE_ERROR },
   });
 
   return {

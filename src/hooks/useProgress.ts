@@ -18,6 +18,7 @@ import {
   getBookmarkedLessons,
   getRecentActivity,
 } from '@/api/routes/course';
+import { TOASTS } from '@/constants/toasts';
 import { QKeys } from '@/types';
 
 export const useCourseProgress = (courseId: string | null) =>
@@ -71,6 +72,7 @@ export const useUpsertProgress = () => {
         queryKey: [QKeys.GAMIFICATION_PROFILE],
       });
     },
+    meta: { errorMessage: 'Failed to save progress' },
   });
 };
 
@@ -101,6 +103,7 @@ export const useGenerateModuleQuiz = () => {
         queryKey: [QKeys.MODULE_QUIZ_CONTENT, variables.courseId, variables.moduleIndex],
       });
     },
+    meta: { errorMessage: TOASTS.QUIZ_START_ERROR },
   });
 };
 
@@ -128,6 +131,7 @@ export const useSubmitQuizAttempt = () => {
         queryKey: [QKeys.GAMIFICATION_PROFILE],
       });
     },
+    meta: { errorMessage: TOASTS.QUIZ_SUBMIT_ERROR },
   });
 };
 
@@ -151,6 +155,7 @@ export const useResetModuleQuiz = () => {
         queryKey: [QKeys.REVIEWS_DUE],
       });
     },
+    meta: { errorMessage: 'Failed to reset quiz' },
   });
 };
 

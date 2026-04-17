@@ -1,14 +1,24 @@
 'use client';
 
-import { Check, Circle, Minus } from 'lucide-react';
+import { AlertCircle, Check, CheckCircle, Circle, Lock, Minus, Sparkles, Trophy } from 'lucide-react';
 import { useRouter } from 'next/navigation';
 import { useMemo } from 'react';
 import { Badge, TextAction } from '@/components';
+import { plural } from '@/lib/strings';
 import { useCourseContext } from '@/screens/CourseShell';
-import * as S from './CourseOverview.styles';
+import * as S from './CourseOverviewScreen.styles';
 import type { CourseQuizProgressItem, LessonProgressStatus } from '@/api/types';
+import type { QuizIconVariant } from '@/types';
 
-export const CourseOverview = () => {
+const quizIconFor: Record<QuizIconVariant, typeof Trophy> = {
+  locked: Lock,
+  'not-taken': Sparkles,
+  mastered: Trophy,
+  passed: CheckCircle,
+  needs_review: AlertCircle,
+};
+
+export const CourseOverviewScreen = () => {
   const router = useRouter();
   const { courseBasePath, course, modules, progressData, navigateToLesson, onDeleteCourse, onArchiveCourse } =
     useCourseContext();
@@ -115,8 +125,7 @@ export const CourseOverview = () => {
         <S.MetaRow>
           {depthLabel && <Badge variant="gold">{depthLabel}</Badge>}
           <Badge variant="default">
-            {modules.length} module{modules.length !== 1 ? 's' : ''} &middot; {totalLessons} lesson
-            {totalLessons !== 1 ? 's' : ''}
+            {modules.length} {plural(modules.length, 'module')} &middot; {totalLessons} {plural(totalLessons, 'lesson')}
           </Badge>
         </S.MetaRow>
       </S.Header>
@@ -227,18 +236,29 @@ export const CourseOverview = () => {
               })}
 
               {/* Module quiz */}
-              <S.QuizRow
-                $locked={!isModuleComplete}
-                onClick={() =>
-                  isModuleComplete && router.push(`${courseBasePath}/quiz/${mi}${qp?.reviewDue ? '?review=true' : ''}`)
-                }
-              >
-                <S.QuizIcon $locked={!isModuleComplete}>Q</S.QuizIcon>
-                <S.QuizLabel>Module Quiz</S.QuizLabel>
-                {isModuleComplete && !qp && <S.TakeQuizBadge>Take quiz</S.TakeQuizBadge>}
-                {qp?.reviewDue && <S.ReviewDueBadge>Review due</S.ReviewDueBadge>}
-                {qp?.bestTier && <S.QuizBadge $tier={qp.bestTier}>{qp.bestScore}%</S.QuizBadge>}
-              </S.QuizRow>
+              {(() => {
+                const variant: QuizIconVariant = !isModuleComplete
+                  ? 'locked'
+                  : qp?.bestTier ?? 'not-taken';
+                const QuizIcon = quizIconFor[variant];
+                return (
+                  <S.QuizRow
+                    $locked={!isModuleComplete}
+                    onClick={() =>
+                      isModuleComplete &&
+                      router.push(`${courseBasePath}/quiz/${mi}${qp?.reviewDue ? '?review=true' : ''}`)
+                    }
+                  >
+                    <S.QuizIcon $variant={variant}>
+                      <QuizIcon size={14} strokeWidth={2} />
+                    </S.QuizIcon>
+                    <S.QuizLabel>Module Quiz</S.QuizLabel>
+                    {isModuleComplete && !qp && <S.TakeQuizBadge>Take quiz</S.TakeQuizBadge>}
+                    {qp?.reviewDue && <S.ReviewDueBadge>Review due</S.ReviewDueBadge>}
+                    {qp?.bestTier && <S.QuizBadge $tier={qp.bestTier}>{qp.bestScore}%</S.QuizBadge>}
+                  </S.QuizRow>
+                );
+              })()}
             </S.LessonList>
           </S.ModuleCard>
         );

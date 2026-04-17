@@ -2,7 +2,7 @@
 
 import _ from 'lodash';
 import { memo, useEffect, useRef, useState } from 'react';
-import Markdown from 'react-markdown';
+import { Markdown } from '@/components';
 import * as S from './ChatMessage.styles';
 
 interface ToolInvocation {

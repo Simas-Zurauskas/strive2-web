@@ -1,10 +1,10 @@
-import { useMemo } from 'react';
 import Highcharts from 'highcharts';
 import HighchartsReact from 'highcharts-react-official';
+import { useMemo } from 'react';
 import { useTheme } from 'styled-components';
 import { themeColors } from '@/theme';
-import type { QuizTrendsData } from '@/api/routes/gamification';
 import * as S from './QuizScoreTrend.styles';
+import type { QuizTrendsData } from '@/api/routes/gamification';
 
 interface QuizScoreTrendProps {
   data: QuizTrendsData;
@@ -108,7 +108,7 @@ export const QuizScoreTrend: React.FC<QuizScoreTrendProps> = ({ data }) => {
         padding: 0,
         outside: true,
         formatter: function () {
-          // eslint-disable-next-line @typescript-eslint/no-this-alias
+           
           const ctx = this as unknown as { point: { y: number; custom?: { moduleName: string } }; series: { name: string }; color: string };
           const score = ctx.point.y ?? 0;
           const tier = score >= 80 ? 'Mastered' : score >= 60 ? 'Passed' : 'Needs Review';

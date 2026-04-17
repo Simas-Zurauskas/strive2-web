@@ -4,6 +4,7 @@ import { useCallback, useMemo, useState } from 'react';
 import { CourseModule } from '@/api/types';
 import { Card, Button, Badge, Eyebrow } from '@/components';
 import { useJobManager } from '@/hooks/useJobManager';
+import { plural } from '@/lib/strings';
 import { ChatPanel } from './ChatPanel';
 import * as S from './StructureStep.styles';
 
@@ -35,8 +36,7 @@ export const StructureStep = ({ courseId, modules, onStructureModified, onAccept
           modules, adjust scope, or ask why something was included. When you&apos;re happy with it, accept to start learning.
         </S.Subtitle>
         <Badge variant="default">
-          {modules.length} module{modules.length !== 1 ? 's' : ''} &middot; {totalLessons} lesson
-          {totalLessons !== 1 ? 's' : ''}
+          {modules.length} {plural(modules.length, 'module')} &middot; {totalLessons} {plural(totalLessons, 'lesson')}
         </Badge>
       </S.Header>
 

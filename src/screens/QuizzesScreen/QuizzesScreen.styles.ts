@@ -1,5 +1,6 @@
 import styled from 'styled-components';
 import type { QuizMasteryTier } from '@/api/types';
+import type { QuizIconVariant } from '@/types';
 
 export const ContentWrap = styled.div`
   padding-top: 4vh;
@@ -56,20 +57,13 @@ export const CourseName = styled.span`
   color: ${(p) => p.theme.colors.foreground};
 `;
 
-export const CourseCount = styled.span`
-  font-size: 0.75rem;
-  font-weight: 500;
-  color: ${(p) => p.theme.colors.muted};
-  flex-shrink: 0;
-`;
-
 // ── Quiz rows ───────────────────────────────────────
 
 export const QuizRow = styled.div`
   display: flex;
   align-items: center;
-  gap: 0.75rem;
-  padding: 0.625rem 1.25rem;
+  gap: 0.875rem;
+  padding: 0.875rem 1.25rem;
   cursor: pointer;
   transition:
     background 0.15s,
@@ -85,18 +79,37 @@ export const QuizRow = styled.div`
   }
 `;
 
-export const QuizIcon = styled.span<{ $review?: boolean }>`
+// QuizzesScreen only surfaces post-attempt states, so it never emits 'locked',
+// but types the prop with the shared superset so a future "locked course" filter
+// doesn't require another definition.
+const iconColor = (
+  variant: QuizIconVariant,
+  colors: { success: string; accent: string; error: string; tertiary: string; muted: string },
+) => {
+  switch (variant) {
+    case 'mastered':
+      return colors.success;
+    case 'passed':
+      return colors.accent;
+    case 'needs_review':
+      return colors.error;
+    case 'locked':
+      return colors.muted;
+    default:
+      return colors.tertiary;
+  }
+};
+
+export const QuizIconWrap = styled.span<{ $variant: QuizIconVariant }>`
   display: flex;
   align-items: center;
   justify-content: center;
-  width: 18px;
-  height: 18px;
+  width: 32px;
+  height: 32px;
   border-radius: 50%;
-  font-size: 0.625rem;
-  font-weight: 700;
   flex-shrink: 0;
-  background: ${(p) => (p.$review ? `${p.theme.colors.warning}18` : `${p.theme.colors.tertiary}20`)};
-  color: ${(p) => (p.$review ? p.theme.colors.warning : p.theme.colors.tertiary)};
+  background: ${(p) => `${iconColor(p.$variant, p.theme.colors)}18`};
+  color: ${(p) => iconColor(p.$variant, p.theme.colors)};
 `;
 
 export const QuizContent = styled.div`
@@ -138,18 +151,6 @@ export const TierBadge = styled.span<{ $tier: QuizMasteryTier }>`
       : p.$tier === 'passed'
         ? p.theme.colors.accent
         : p.theme.colors.error};
-`;
-
-export const ReviewDueBadge = styled.span`
-  padding: 0.125rem 0.4375rem;
-  border-radius: 9999px;
-  font-size: 0.625rem;
-  font-weight: 600;
-  letter-spacing: 0.02em;
-  text-transform: uppercase;
-  background: ${(p) => `${p.theme.colors.warning}18`};
-  color: ${(p) => p.theme.colors.warning};
-  flex-shrink: 0;
 `;
 
 // ── Empty states ────────────────────────────────────

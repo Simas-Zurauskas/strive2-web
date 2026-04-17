@@ -33,6 +33,8 @@ export const MermaidBlock = ({ content }: { content: string }) => {
     zoomRef,
     panRef,
     isDragging,
+    setZoom,
+    setPan,
     handleZoomIn,
     handleZoomOut,
     handleReset,
@@ -119,6 +121,8 @@ export const MermaidBlock = ({ content }: { content: string }) => {
             if (!userInteracted.current) {
               zoomRef.current = fit;
               panRef.current = { x: offsetX, y: offsetY };
+              setZoom(fit);
+              setPan({ x: offsetX, y: offsetY });
             }
           };
 

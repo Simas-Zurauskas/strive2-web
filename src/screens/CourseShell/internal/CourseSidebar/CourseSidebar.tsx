@@ -1,13 +1,34 @@
 'use client';
 
-import { Check, ChevronRight, Circle, Minus, Star } from 'lucide-react';
+import {
+  AlertCircle,
+  Check,
+  CheckCircle,
+  ChevronRight,
+  Circle,
+  Lock,
+  Minus,
+  Sparkles,
+  Star,
+  Trophy,
+} from 'lucide-react';
 import { useRouter } from 'next/navigation';
 import { useEffect, useMemo, useRef } from 'react';
 import { Badge } from '@/components';
-import { LessonDotState } from './CourseSidebar.styles';
+import { plural } from '@/lib/strings';
 import * as S from './CourseSidebar.styles';
+import type { LessonDotState } from './CourseSidebar.styles';
 import type { CourseProgressResponse } from '@/api/routes/course';
-import type { CourseQuizProgressItem, QuizMasteryTier } from '@/api/types';
+import type { CourseQuizProgressItem } from '@/api/types';
+import type { QuizIconVariant } from '@/types';
+
+const quizIconFor: Record<QuizIconVariant, typeof Trophy> = {
+  locked: Lock,
+  'not-taken': Sparkles,
+  mastered: Trophy,
+  passed: CheckCircle,
+  needs_review: AlertCircle,
+};
 
 interface Module {
   name: string;
@@ -144,8 +165,7 @@ export const CourseSidebar = ({
         <S.MetaRow>
           {depthLabel && <Badge variant="gold">{depthLabel}</Badge>}
           <S.MetaText>
-            {modules.length} module{modules.length !== 1 ? 's' : ''} &middot; {totalLessons} lesson
-            {totalLessons !== 1 ? 's' : ''}
+            {modules.length} {plural(modules.length, 'module')} &middot; {totalLessons} {plural(totalLessons, 'lesson')}
           </S.MetaText>
         </S.MetaRow>
         <S.ProgressHeader>
@@ -159,7 +179,7 @@ export const CourseSidebar = ({
         {reviewsDueCount > 0 && (
           <S.ReviewsDueBanner>
             <S.ReviewDot />
-            {reviewsDueCount} review{reviewsDueCount !== 1 ? 's' : ''} due
+            {reviewsDueCount} {plural(reviewsDueCount, 'review')} due
           </S.ReviewsDueBanner>
         )}
       </S.Header>
@@ -226,6 +246,10 @@ export const CourseSidebar = ({
                   {(() => {
                     const locked = !isModuleComplete(mi);
                     const qp = quizProgressMap.get(mi);
+                    const variant: QuizIconVariant = locked
+                      ? 'locked'
+                      : qp?.bestTier ?? 'not-taken';
+                    const QuizIcon = quizIconFor[variant];
 
                     return (
                       <S.QuizItem
@@ -236,11 +260,13 @@ export const CourseSidebar = ({
                           }
                         }}
                       >
-                        <S.QuizIconCircle $locked={locked}>Q</S.QuizIconCircle>
+                        <S.QuizIconCircle $variant={variant}>
+                          <QuizIcon size={12} strokeWidth={2} />
+                        </S.QuizIconCircle>
                         <S.LessonName>Module Quiz</S.LessonName>
                         {qp?.reviewDue && <S.ReviewDueBadge>Review due</S.ReviewDueBadge>}
                         {qp?.bestTier && (
-                          <S.QuizBadge $tier={qp.bestTier as QuizMasteryTier}>{qp.bestScore}%</S.QuizBadge>
+                          <S.QuizBadge $tier={qp.bestTier}>{qp.bestScore}%</S.QuizBadge>
                         )}
                       </S.QuizItem>
                     );

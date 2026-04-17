@@ -1,11 +1,13 @@
 'use client';
 
+import { useMutation } from '@tanstack/react-query';
 import { useState } from 'react';
 import { toast } from 'sonner';
 import { resendVerificationAuthenticated } from '@/api/routes/auth';
 import { Button, TextLoader, PageLayout, TopTabs, TopTab } from '@/components';
 import { TOASTS } from '@/constants/toasts';
 import { useAuth } from '@/hooks';
+import { formatDate } from '@/lib/formatDate';
 import { AccountTab } from './internal/AccountTab/AccountTab';
 import { LearningTab } from './internal/LearningTab/LearningTab';
 import * as S from './ProfileScreen.styles';
@@ -14,7 +16,6 @@ export const ProfileScreen: React.FC = () => {
   const { user } = useAuth();
 
   const [activeTab, setActiveTab] = useState<'learning' | 'account'>('learning');
-  const [resending, setResending] = useState(false);
   const [imgError, setImgError] = useState(false);
 
   const getInitials = () => {
@@ -27,18 +28,13 @@ export const ProfileScreen: React.FC = () => {
     return '??';
   };
 
-  const handleResendVerification = async () => {
-    setResending(true);
-    try {
-      await resendVerificationAuthenticated();
-      toast.success(TOASTS.VERIFICATION_SENT);
-    } catch (err: unknown) {
-      const message = err instanceof Error ? err.message : 'Failed to send verification email';
-      toast.error(message);
-    } finally {
-      setResending(false);
-    }
-  };
+  const resendVerification = useMutation({
+    mutationFn: resendVerificationAuthenticated,
+    onSuccess: () => toast(TOASTS.VERIFICATION_SENT),
+    meta: { errorMessage: 'Failed to send verification email' },
+  });
+  const resending = resendVerification.isPending;
+  const handleResendVerification = () => resendVerification.mutate();
 
   if (!user) {
     return (
@@ -73,12 +69,7 @@ export const ProfileScreen: React.FC = () => {
             )}
           </S.ProfileEmail>
           <S.ProfileMeta>
-            Member since{' '}
-            {new Date(user.createdAt).toLocaleDateString('en-US', {
-              year: 'numeric',
-              month: 'long',
-              day: 'numeric',
-            })}
+            Member since {formatDate(new Date(user.createdAt), 'long')}
           </S.ProfileMeta>
         </S.ProfileInfo>
       </S.ProfileHeader>

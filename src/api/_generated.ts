@@ -1811,6 +1811,43 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/gamification/quiz-trends": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Get all quiz attempt scores over time for trend visualization */
+        get: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path?: never;
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": {
+                            data: Record<string, never>;
+                        };
+                    };
+                };
+            };
+        };
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/gamification/stats": {
         parameters: {
             query?: never;
@@ -1848,17 +1885,89 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
-    "/api/gamification/streak-freeze": {
+    "/api/insight/queue": {
         parameters: {
             query?: never;
             header?: never;
             path?: never;
             cookie?: never;
         };
-        get?: never;
+        /** Get the user's daily insight queue (due items + fresh items, interleaved across courses) */
+        get: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path?: never;
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": {
+                            data: components["schemas"]["InsightQueue"];
+                        };
+                    };
+                };
+            };
+        };
         put?: never;
-        /** Manually use a streak freeze */
-        post: {
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/insight/stats": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Get per-user insight review stats (mastery dashboard) */
+        get: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path?: never;
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": {
+                            data: components["schemas"]["InsightStats"];
+                        };
+                    };
+                };
+            };
+        };
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/insight/due-count": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Cheap count of due insights for dashboard widgets */
+        get: {
             parameters: {
                 query?: never;
                 header?: never;
@@ -1874,8 +1983,196 @@ export interface paths {
                     content: {
                         "application/json": {
                             data: {
-                                success: boolean;
-                                freezesRemaining: number;
+                                count: number;
+                            };
+                        };
+                    };
+                };
+            };
+        };
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/insight/{insightId}/grade": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Grade a learner's typed-recall answer against the canonical (Haiku + Levenshtein short-circuit) */
+        post: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path: {
+                    insightId: string;
+                };
+                cookie?: never;
+            };
+            requestBody: {
+                content: {
+                    "application/json": {
+                        userAnswer: string;
+                    };
+                };
+            };
+            responses: {
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": {
+                            data: components["schemas"]["GradeResult"];
+                        };
+                    };
+                };
+            };
+        };
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/insight/{insightId}/rate": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Submit a rating for an insight and advance its scheduler state */
+        post: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path: {
+                    insightId: string;
+                };
+                cookie?: never;
+            };
+            requestBody: {
+                content: {
+                    "application/json": {
+                        /**
+                         * @description 1=Again, 2=Hard, 3=Good, 4=Easy
+                         * @enum {integer}
+                         */
+                        rating: 1 | 2 | 3 | 4;
+                        /** @description Similarity score if answered via typed-recall mode */
+                        typedMatch?: number | null;
+                    };
+                };
+            };
+            responses: {
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": {
+                            data: components["schemas"]["RateInsightResult"];
+                        };
+                    };
+                };
+            };
+        };
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/insight/{insightId}/mode": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Switch an insight between tap-reveal and typed-recall modes */
+        post: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path: {
+                    insightId: string;
+                };
+                cookie?: never;
+            };
+            requestBody: {
+                content: {
+                    "application/json": {
+                        /** @enum {string} */
+                        mode: "tap-reveal" | "typed-recall";
+                    };
+                };
+            };
+            responses: {
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": {
+                            data: {
+                                /** @enum {string} */
+                                mode: "tap-reveal" | "typed-recall";
+                            };
+                        };
+                    };
+                };
+            };
+        };
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/insight/{insightId}/skip": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Defer an insight by 1 day without treating it as a failed review */
+        post: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path: {
+                    insightId: string;
+                };
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": {
+                            data: {
+                                /** Format: date-time */
+                                nextDue: string;
                             };
                         };
                     };
@@ -1902,6 +2199,8 @@ export interface components {
         CourseDepth: "overview" | "comprehensive" | "deep_dive";
         /** @enum {string} */
         CourseStatus: "creating" | "ready" | "archived";
+        /** @enum {string} */
+        CourseDomain: "programming" | "stem" | "humanities" | "language" | "creative" | "other";
         /** @enum {string} */
         JobStatusEnum: "pending" | "processing" | "completed" | "failed";
         /** @enum {string} */
@@ -2134,7 +2433,7 @@ export interface components {
             reviewReason: components["schemas"]["ReviewReason"];
         };
         /** @enum {string} */
-        XpSource: "lesson_complete" | "quiz_score" | "exercise_pass" | "review_complete";
+        XpSource: "lesson_complete" | "quiz_score" | "exercise_pass" | "review_complete" | "insight_review" | "insight_mastery";
         /** @enum {string} */
         AchievementCategory: "milestone" | "streak" | "mastery" | "dedication";
         EarnedAchievement: {
@@ -2158,11 +2457,16 @@ export interface components {
             currentStreak: number;
             longestStreak: number;
             lastActiveDate?: string | null;
-            streakFreezeAvailable: number;
-            streakFreezeUsedDates?: string[];
             earnedAchievements: components["schemas"]["EarnedAchievement"][];
             activeDates?: string[];
             xpLog?: components["schemas"]["XpLogEntry"][];
+        };
+        WeeklySummaryPeriod: {
+            xp: number;
+            timeSeconds: number;
+            lessons: number;
+            quizzes: number;
+            insights: number;
         };
         GamificationStats: {
             xpByDay: {
@@ -2175,6 +2479,10 @@ export interface components {
             }[];
             totalTimeLearned: number;
             lessonsThisWeek: number;
+            weeklySummary?: {
+                thisWeek: components["schemas"]["WeeklySummaryPeriod"];
+                lastWeek: components["schemas"]["WeeklySummaryPeriod"];
+            };
         };
         Course: {
             _id: string;
@@ -2183,6 +2491,7 @@ export interface components {
             slug: string | null;
             status: components["schemas"]["CourseStatus"];
             goal: string;
+            domain?: components["schemas"]["CourseDomain"] | null;
             clarifyData?: components["schemas"]["ClarifyResponse"];
             answers?: Record<string, never>;
             depth?: components["schemas"]["CourseDepth"];
@@ -2196,6 +2505,87 @@ export interface components {
             createdAt: string;
             /** Format: date-time */
             updatedAt: string;
+        };
+        /** @enum {string} */
+        InsightKind: "qa" | "cloze";
+        /** @enum {string} */
+        InsightMode: "tap-reveal" | "typed-recall";
+        /** @enum {string} */
+        InsightState: "new" | "learning" | "review" | "relearning";
+        /**
+         * @description 1=Again, 2=Hard, 3=Good, 4=Easy
+         * @enum {integer}
+         */
+        InsightRating: 1 | 2 | 3 | 4;
+        InsightQueueItem: {
+            insightId: string;
+            courseId: string;
+            courseSlug: string | null;
+            courseName: string;
+            lessonId: string;
+            moduleIndex: number;
+            lessonIndex: number;
+            lessonName: string;
+            moduleName: string;
+            kind: components["schemas"]["InsightKind"];
+            prompt: string;
+            answer: string;
+            conceptTags: string[];
+            sourceBlockId: string;
+            isNew: boolean;
+            mode: components["schemas"]["InsightMode"];
+            box: number;
+            /** Format: date-time */
+            dueAt: string | null;
+        };
+        InsightQueue: {
+            due: components["schemas"]["InsightQueueItem"][];
+            fresh: components["schemas"]["InsightQueueItem"][];
+            counts: {
+                dueTotal: number;
+                freshAvailable: number;
+                learned: number;
+            };
+        };
+        RateInsightResult: {
+            box: number;
+            state: components["schemas"]["InsightState"];
+            reps: number;
+            lapses: number;
+            /** Format: date-time */
+            nextDue: string;
+            /** Format: date-time */
+            lastReview: string | null;
+            /** Format: date-time */
+            masteredAt?: string | null;
+            /** @description True exactly once per insight, when this rating first reached Leitner box 4. Never true on re-mastery. */
+            justMastered?: boolean;
+        };
+        /** @enum {string} */
+        GradeVerdict: "correct" | "partial" | "incorrect";
+        GradeResult: {
+            score: number;
+            verdict: components["schemas"]["GradeVerdict"];
+            feedback: string;
+        };
+        InsightStats: {
+            totalInsights: number;
+            totalReviewed: number;
+            /** @description Insights that reached Leitner box 4 at least once (masteredAt !== null) */
+            totalMastered: number;
+            reviewedThisWeek: number;
+            reviewedLastWeek: number;
+            dueToday: number;
+            dueThisWeek: number;
+            boxDistribution: {
+                box: number;
+                count: number;
+            }[];
+            recentHistory: {
+                date: string;
+                reviews: number;
+                avgRating: number;
+            }[];
         };
     };
     responses: never;

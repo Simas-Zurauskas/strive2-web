@@ -75,9 +75,11 @@ export const NotesPanel = ({ courseId, moduleIndex, lessonIndex, initialNotes }:
         savedClearRef.current = null;
       }
       if (textRef.current !== lastSavedRef.current) {
+        // Fire-and-forget: cleanup closes over the OLD lesson IDs, so this
+        // correctly flushes pending notes to the lesson the user was on.
         upsertLessonProgress({ courseId, moduleIndex, lessonIndex, data: {
           notes: textRef.current || null,
-        } });
+        } }).catch(() => {});
         lastSavedRef.current = textRef.current;
       }
     };

@@ -1,11 +1,10 @@
 'use client';
 
-import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
+import { useQuery } from '@tanstack/react-query';
 import {
   getGamificationProfile,
   getGamificationStats,
   getQuizTrends,
-  postStreakFreeze,
 } from '@/api/routes/gamification';
 import { QKeys } from '@/types';
 
@@ -28,16 +27,3 @@ export const useQuizTrends = () =>
     queryKey: [QKeys.GAMIFICATION_QUIZ_TRENDS],
     queryFn: getQuizTrends,
   });
-
-export const useStreakFreeze = () => {
-  const queryClient = useQueryClient();
-
-  return useMutation({
-    mutationFn: () => postStreakFreeze(),
-    onSuccess: () => {
-      queryClient.invalidateQueries({
-        queryKey: [QKeys.GAMIFICATION_PROFILE],
-      });
-    },
-  });
-};

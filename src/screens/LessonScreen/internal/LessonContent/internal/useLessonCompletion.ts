@@ -60,18 +60,11 @@ export const useLessonCompletion = ({
             toast.success(TOASTS.COURSE_COMPLETE);
           } else if (isModuleComplete) {
             celebrateModuleComplete();
-            toast.success(`Module ${moduleIndex + 1} complete! Take the quiz to test your knowledge.`);
+            toast(`Module ${moduleIndex + 1} complete! Take the quiz to test your knowledge.`);
           } else {
             celebrateLessonComplete();
-            const moduleRemaining = moduleLessons - (moduleCompletedBefore + 1);
-            if (moduleRemaining === 1) {
-              toast.success('Just 1 more lesson in this module!');
-            } else {
-              toast.success(TOASTS.LESSON_COMPLETE);
-            }
             if (hasNext) setTimeout(onNext, 800);
           }
-          toast('+50 XP', { duration: 2000 });
         },
       },
     );

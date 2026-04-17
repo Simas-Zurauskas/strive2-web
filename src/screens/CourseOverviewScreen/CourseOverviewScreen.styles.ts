@@ -4,6 +4,7 @@ import styled from 'styled-components';
 import { SectionLabel, TextAction } from '@/components';
 import { thinScrollbar } from '@/theme';
 import type { LessonProgressStatus, QuizMasteryTier } from '@/api/types';
+import type { QuizIconVariant } from '@/types';
 
 export const Container = styled.div`
   flex: 1;
@@ -343,18 +344,37 @@ export const QuizRow = styled.button<{ $locked: boolean }>`
   `}
 `;
 
-export const QuizIcon = styled.span<{ $locked: boolean }>`
+const quizIconColor = (
+  variant: QuizIconVariant,
+  colors: { success: string; accent: string; error: string; tertiary: string; muted: string },
+) => {
+  switch (variant) {
+    case 'mastered':
+      return colors.success;
+    case 'passed':
+      return colors.accent;
+    case 'needs_review':
+      return colors.error;
+    case 'locked':
+      return colors.muted;
+    default:
+      return colors.tertiary;
+  }
+};
+
+export const QuizIcon = styled.span<{ $variant: QuizIconVariant }>`
   display: flex;
   align-items: center;
   justify-content: center;
-  width: 18px;
-  height: 18px;
+  width: 28px;
+  height: 28px;
   border-radius: 50%;
-  font-size: 0.625rem;
-  font-weight: 700;
   flex-shrink: 0;
-  background: ${(p) => (p.$locked ? p.theme.colors.surfaceBorder : `${p.theme.colors.tertiary}20`)};
-  color: ${(p) => (p.$locked ? p.theme.colors.muted : p.theme.colors.tertiary)};
+  background: ${(p) =>
+    p.$variant === 'locked'
+      ? p.theme.colors.surfaceBorder
+      : `${quizIconColor(p.$variant, p.theme.colors)}18`};
+  color: ${(p) => quizIconColor(p.$variant, p.theme.colors)};
 `;
 
 export const QuizLabel = styled.span`

@@ -1,6 +1,14 @@
+import { AlertCircle, CheckCircle, Trophy } from 'lucide-react';
 import { Eyebrow, TextLoader } from '@/components';
+import { plural } from '@/lib/strings';
 import * as S from '../ModuleQuizScreen.styles';
-import type { CourseModule, UserModuleQuizProgress } from '@/api/types';
+import type { CourseModule, QuizMasteryTier, UserModuleQuizProgress } from '@/api/types';
+
+const tierIcon: Record<QuizMasteryTier, typeof Trophy> = {
+  mastered: Trophy,
+  passed: CheckCircle,
+  needs_review: AlertCircle,
+};
 
 interface QuizLandingProps {
   mod: CourseModule;
@@ -34,23 +42,28 @@ export const QuizLanding = ({
         <S.Title>{mod.name}</S.Title>
       </S.HeaderSection>
 
-      {quizProgress && quizProgress.bestTier && (
-        <S.PreviousAttempt>
-          <span>Previous best:</span>
-          <S.MasteryBadge $tier={quizProgress.bestTier}>
-            {quizProgress.bestScore}% —{' '}
-            {quizProgress.bestTier === 'mastered'
-              ? 'Mastered'
-              : quizProgress.bestTier === 'passed'
-                ? 'Passed'
-                : 'Needs Review'}
-          </S.MasteryBadge>
-          <span style={{ color: 'inherit', opacity: 0.5 }}>
-            ({quizProgress.attempts.length} attempt
-            {quizProgress.attempts.length !== 1 ? 's' : ''})
-          </span>
-        </S.PreviousAttempt>
-      )}
+      {quizProgress && quizProgress.bestTier && (() => {
+        const TierIcon = tierIcon[quizProgress.bestTier];
+        return (
+          <S.PreviousAttempt>
+            <S.TierIconInline $tier={quizProgress.bestTier}>
+              <TierIcon size={16} strokeWidth={2} />
+            </S.TierIconInline>
+            <span>Previous best:</span>
+            <S.MasteryBadge $tier={quizProgress.bestTier}>
+              {quizProgress.bestScore}% —{' '}
+              {quizProgress.bestTier === 'mastered'
+                ? 'Mastered'
+                : quizProgress.bestTier === 'passed'
+                  ? 'Passed'
+                  : 'Needs Review'}
+            </S.MasteryBadge>
+            <span style={{ color: 'inherit', opacity: 0.5 }}>
+              ({quizProgress.attempts.length} {plural(quizProgress.attempts.length, 'attempt')})
+            </span>
+          </S.PreviousAttempt>
+        );
+      })()}
 
       {isGenerating ? (
         <TextLoader text="Creating quiz questions..." />

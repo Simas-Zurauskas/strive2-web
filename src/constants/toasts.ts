@@ -16,7 +16,6 @@ export const TOASTS = {
   GENERATION_FAILED: 'Generation failed',
   GENERATION_FAILED_RETRY: 'Generation failed. Please try again.',
   COURSE_COMPLETE: 'Congratulations! Course complete!',
-  LESSON_COMPLETE: 'Lesson complete!',
 
   // ── Quiz ──────────────────────────────────────────────
   QUIZ_GENERATION_FAILED: 'Quiz generation failed. Please try again.',

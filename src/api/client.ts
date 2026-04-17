@@ -52,10 +52,14 @@ const parseErrorData = (data: unknown): Promise<ApiError> => {
 client.interceptors.response.use(
   (response) => response,
   (err) => {
-    if (err.response?.status === 401) {
+    const status = err.response?.status as number | undefined;
+    if (status === 401) {
+      // Clear token immediately so in-flight requests can't resend the invalidated one
+      // before NextAuth's session update propagates through useAuth's effect.
+      setAuthToken(null);
       signOut();
     }
 
-    return parseErrorData(err.response?.data).then((parsed) => Promise.reject(parsed));
+    return parseErrorData(err.response?.data).then((parsed) => Promise.reject({ ...parsed, status }));
   },
 );

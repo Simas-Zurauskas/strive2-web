@@ -2,14 +2,25 @@
 
 import { Formik } from 'formik';
 import Link from 'next/link';
+import { useRouter } from 'next/navigation';
 import { signIn } from 'next-auth/react';
 import { useState } from 'react';
+import {
+  AuthDivider,
+  AuthForm,
+  AuthFormError,
+  AuthFormFooter,
+  AuthFormTitle,
+  AuthSubmitBtn,
+  GoogleBtn,
+  Input,
+} from '@/components';
 import { signUpSchema, SignUpValues } from '@/validation';
-import * as S from '../LoginScreen/LoginScreen.styles';
 
 const initialValues: SignUpValues = { email: '', password: '', confirmPassword: '' };
 
 export const SignUpScreen = () => {
+  const router = useRouter();
   const [apiError, setApiError] = useState('');
 
   const handleSubmit = async (values: SignUpValues) => {
@@ -27,7 +38,7 @@ export const SignUpScreen = () => {
     }
 
     sessionStorage.setItem('pendingVerificationEmail', values.email);
-    window.location.href = '/signup/check-email';
+    router.push('/signup/check-email');
   };
 
   const handleGoogle = () => signIn('google', { callbackUrl: '/' });
@@ -39,66 +50,56 @@ export const SignUpScreen = () => {
       onSubmit={handleSubmit}
     >
       {({ handleSubmit, handleChange, handleBlur, values, errors, touched, isSubmitting }) => (
-        <S.Form onSubmit={handleSubmit}>
-          <h1 className="form__title">Create account</h1>
+        <AuthForm onSubmit={handleSubmit}>
+          <AuthFormTitle>Create account</AuthFormTitle>
 
-          <input
-            className="form__input"
-            type="email"
+          <Input
             name="email"
+            type="email"
             placeholder="Email"
             value={values.email}
             onChange={handleChange}
             onBlur={handleBlur}
+            error={touched.email ? errors.email : undefined}
           />
-          {touched.email && errors.email && (
-            <p className="form__field-error">{errors.email}</p>
-          )}
 
-          <input
-            className="form__input"
-            type="password"
+          <Input
             name="password"
+            type="password"
             placeholder="Password"
             value={values.password}
             onChange={handleChange}
             onBlur={handleBlur}
+            error={touched.password ? errors.password : undefined}
           />
-          {touched.password && errors.password && (
-            <p className="form__field-error">{errors.password}</p>
-          )}
 
-          <input
-            className="form__input"
-            type="password"
+          <Input
             name="confirmPassword"
+            type="password"
             placeholder="Confirm password"
             value={values.confirmPassword}
             onChange={handleChange}
             onBlur={handleBlur}
+            error={touched.confirmPassword ? errors.confirmPassword : undefined}
           />
-          {touched.confirmPassword && errors.confirmPassword && (
-            <p className="form__field-error">{errors.confirmPassword}</p>
-          )}
 
-          {apiError && <p className="form__error">{apiError}</p>}
+          {apiError && <AuthFormError>{apiError}</AuthFormError>}
 
-          <S.SubmitBtn type="submit" $loading={isSubmitting} disabled={isSubmitting}>
+          <AuthSubmitBtn type="submit" $loading={isSubmitting} disabled={isSubmitting}>
             {isSubmitting ? 'Creating account...' : 'Sign up'}
-          </S.SubmitBtn>
+          </AuthSubmitBtn>
 
-          <S.Divider>or</S.Divider>
+          <AuthDivider>or</AuthDivider>
 
-          <S.GoogleBtn type="button" onClick={handleGoogle}>
+          <GoogleBtn type="button" onClick={handleGoogle}>
             Continue with Google
-          </S.GoogleBtn>
+          </GoogleBtn>
 
-          <p className="form__footer">
+          <AuthFormFooter>
             Already have an account? <Link href="/login">Sign in</Link>
-          </p>
-        </S.Form>
+          </AuthFormFooter>
+        </AuthForm>
       )}
     </Formik>
   );
 };
-

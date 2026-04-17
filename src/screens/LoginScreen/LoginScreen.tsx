@@ -1,22 +1,40 @@
 'use client';
 
+import { useMutation } from '@tanstack/react-query';
 import { Formik } from 'formik';
 import Link from 'next/link';
+import { useRouter } from 'next/navigation';
 import { signIn } from 'next-auth/react';
 import { useState } from 'react';
 import { toast } from 'sonner';
 import { resendVerification } from '@/api/routes/auth';
-import { TOASTS, toastMessage } from '@/constants/toasts';
+import {
+  AuthDivider,
+  AuthForm,
+  AuthFormError,
+  AuthFormFooter,
+  AuthFormTitle,
+  AuthSubmitBtn,
+  GoogleBtn,
+  Input,
+} from '@/components';
+import { TOASTS } from '@/constants/toasts';
 import { signInSchema, SignInValues } from '@/validation';
-import * as S from './LoginScreen.styles';
 
 const initialValues: SignInValues = { email: '', password: '' };
 
 export const LoginScreen = () => {
+  const router = useRouter();
   const [apiError, setApiError] = useState('');
   const [showResend, setShowResend] = useState(false);
-  const [resending, setResending] = useState(false);
   const [lastCredentials, setLastCredentials] = useState<SignInValues | null>(null);
+
+  const resendMutation = useMutation({
+    mutationFn: resendVerification,
+    onSuccess: () => toast(TOASTS.VERIFICATION_SENT),
+    meta: { errorMessage: TOASTS.RESEND_ERROR },
+  });
+  const resending = resendMutation.isPending;
 
   const handleSubmit = async (values: SignInValues) => {
     setApiError('');
@@ -39,23 +57,13 @@ export const LoginScreen = () => {
       return;
     }
 
-    window.location.href = '/';
+    router.push('/');
+    router.refresh();
   };
 
-  const handleResend = async () => {
+  const handleResend = () => {
     if (!lastCredentials) return;
-
-    setResending(true);
-
-    try {
-      await resendVerification({ email: lastCredentials.email, password: lastCredentials.password });
-      toast.success(TOASTS.VERIFICATION_SENT);
-    } catch (err) {
-      const error = err as { message?: string };
-      toast.error(toastMessage(error?.message, TOASTS.RESEND_ERROR));
-    } finally {
-      setResending(false);
-    }
+    resendMutation.mutate({ email: lastCredentials.email, password: lastCredentials.password });
   };
 
   const handleGoogle = () => signIn('google', { callbackUrl: '/' });
@@ -67,59 +75,52 @@ export const LoginScreen = () => {
       onSubmit={handleSubmit}
     >
       {({ handleSubmit, handleChange, handleBlur, values, errors, touched, isSubmitting }) => (
-        <S.Form onSubmit={handleSubmit}>
-          <h1 className="form__title">Sign in</h1>
+        <AuthForm onSubmit={handleSubmit}>
+          <AuthFormTitle>Sign in</AuthFormTitle>
 
-          <input
-            className="form__input"
-            type="email"
+          <Input
             name="email"
+            type="email"
             placeholder="Email"
             value={values.email}
             onChange={handleChange}
             onBlur={handleBlur}
+            error={touched.email ? errors.email : undefined}
           />
-          {touched.email && errors.email && (
-            <p className="form__field-error">{errors.email}</p>
-          )}
 
-          <input
-            className="form__input"
-            type="password"
+          <Input
             name="password"
+            type="password"
             placeholder="Password"
             value={values.password}
             onChange={handleChange}
             onBlur={handleBlur}
+            error={touched.password ? errors.password : undefined}
           />
-          {touched.password && errors.password && (
-            <p className="form__field-error">{errors.password}</p>
-          )}
 
-          {apiError && <p className="form__error">{apiError}</p>}
+          {apiError && <AuthFormError>{apiError}</AuthFormError>}
 
           {showResend && (
-            <S.GoogleBtn type="button" disabled={resending} onClick={handleResend}>
+            <GoogleBtn type="button" disabled={resending} onClick={handleResend}>
               {resending ? 'Sending...' : 'Resend verification email'}
-            </S.GoogleBtn>
+            </GoogleBtn>
           )}
 
-          <S.SubmitBtn type="submit" $loading={isSubmitting} disabled={isSubmitting}>
+          <AuthSubmitBtn type="submit" $loading={isSubmitting} disabled={isSubmitting}>
             {isSubmitting ? 'Signing in...' : 'Sign in'}
-          </S.SubmitBtn>
+          </AuthSubmitBtn>
 
-          <S.Divider>or</S.Divider>
+          <AuthDivider>or</AuthDivider>
 
-          <S.GoogleBtn type="button" onClick={handleGoogle}>
+          <GoogleBtn type="button" onClick={handleGoogle}>
             Continue with Google
-          </S.GoogleBtn>
+          </GoogleBtn>
 
-          <p className="form__footer">
+          <AuthFormFooter>
             Don&apos;t have an account? <Link href="/signup">Sign up</Link>
-          </p>
-        </S.Form>
+          </AuthFormFooter>
+        </AuthForm>
       )}
     </Formik>
   );
 };
-

@@ -20,6 +20,32 @@ export const Container = styled.div`
   gap: 1.5rem;
 `;
 
+// ── Debug panel ─────────────────────────────────────
+
+export const DebugPanel = styled.div`
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  padding: 0.875rem 1rem;
+  background: ${(p) => p.theme.colors.surface};
+  border: 1px dashed ${(p) => p.theme.colors.surfaceBorder};
+  border-radius: 8px;
+`;
+
+export const DebugLabel = styled.span`
+  font-size: 0.6875rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: ${(p) => p.theme.colors.muted};
+`;
+
+export const DebugRow = styled.div`
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+`;
+
 // ── Dashboard grid ──────────────────────────────────
 
 export const DashboardGrid = styled.div`
