@@ -18,6 +18,4 @@ export enum QKeys {
   GAMIFICATION_PROFILE = 'gamificationProfile',
   GAMIFICATION_STATS = 'gamificationStats',
   GAMIFICATION_QUIZ_TRENDS = 'gamificationQuizTrends',
-  GAMIFICATION_MASTERY_OVERVIEW = 'gamificationMasteryOverview',
-  GAMIFICATION_MASTERY_COURSES = 'gamificationMasteryCourses',
 }

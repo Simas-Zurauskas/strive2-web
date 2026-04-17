@@ -333,40 +333,6 @@ export const SourceLinks = styled.div`
   font-size: 0.8125rem;
 `;
 
-export const NextButton = styled.button`
-  align-self: flex-start;
-  display: inline-flex;
-  align-items: center;
-  gap: 0.375rem;
-  padding: 0.75rem 1.75rem;
-  background: ${(p) => p.theme.colors.accent};
-  color: #fff;
-  border: none;
-  border-radius: 6px;
-  font-size: 0.8125rem;
-  font-weight: 600;
-  font-family: inherit;
-  text-transform: uppercase;
-  letter-spacing: 0.05em;
-  cursor: pointer;
-  box-shadow:
-    0 1px 3px rgba(0, 0, 0, 0.12),
-    0 1px 2px rgba(0, 0, 0, 0.08);
-  transition:
-    background 0.15s,
-    box-shadow 0.15s;
-
-  &:hover {
-    background: ${(p) => p.theme.colors.accentHover};
-    box-shadow:
-      0 2px 6px rgba(0, 0, 0, 0.15),
-      0 1px 3px rgba(0, 0, 0, 0.1);
-  }
-
-  &:active {
-    transform: scale(0.98);
-  }
-`;
 
 // ── Results ───────────────────────────────────────────
 

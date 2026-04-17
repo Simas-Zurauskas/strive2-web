@@ -1,7 +1,7 @@
 'use client';
 
 import { useMemo } from 'react';
-import { useAuth, useProgressSummary } from '@/hooks';
+import { useAuth, useCourses, useProgressSummary } from '@/hooks';
 import { useGamificationProfile } from '@/hooks/useGamification';
 import * as S from './GamificationCard.styles';
 
@@ -101,21 +101,22 @@ function getNextMilestone(profile: { currentStreak: number; level: number; total
 export const GamificationCard = () => {
   const { user } = useAuth();
   const { data: profile } = useGamificationProfile();
+  const { data: courses } = useCourses();
   const { data: progressSummary } = useProgressSummary();
 
   const stats = useMemo(() => {
     if (!progressSummary) return null;
 
     let completedLessons = 0;
-    let completedCourses = 0;
 
     for (const item of progressSummary) {
       completedLessons += item.completed;
-      if (item.total > 0 && item.completed >= item.total) completedCourses++;
     }
 
-    return { completedLessons, completedCourses };
-  }, [progressSummary]);
+    const totalCourses = courses?.filter((c) => c.status === 'ready').length ?? 0;
+
+    return { completedLessons, totalCourses };
+  }, [progressSummary, courses]);
 
   const calendarCells = useMemo(() => {
     const cells = buildStreakCalendar(profile?.activeDates, profile?.xpLog, user?.createdAt);
@@ -163,7 +164,7 @@ export const GamificationCard = () => {
           <S.StatLabel>Lessons</S.StatLabel>
         </S.Stat>
         <S.Stat>
-          <S.StatValue>{stats?.completedCourses ?? 0}</S.StatValue>
+          <S.StatValue>{stats?.totalCourses ?? 0}</S.StatValue>
           <S.StatLabel>Courses</S.StatLabel>
         </S.Stat>
       </S.StatsRow>

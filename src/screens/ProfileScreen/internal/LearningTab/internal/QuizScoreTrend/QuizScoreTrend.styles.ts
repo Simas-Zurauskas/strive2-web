@@ -5,6 +5,7 @@ export const Section = styled.section`
   border-radius: 12px;
   padding: 1.25rem 1.5rem;
   background: ${(p) => p.theme.colors.surface};
+  margin-bottom: 1.5rem;
 `;
 
 export const Header = styled.div`

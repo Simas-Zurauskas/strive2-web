@@ -12,11 +12,13 @@ interface QuizResultsProps {
   moduleIndex: number;
   courseBasePath: string;
   isReviewMode: boolean;
+  fromQuizzes: boolean;
   isGenerating: boolean;
   isResetting: boolean;
   onRetake: () => void;
   onNextModule: () => void;
   onBackToCourses: () => void;
+  onBackToReviews: () => void;
   onDevReset: () => void;
   hasNextModule: boolean;
 }
@@ -27,11 +29,13 @@ export const QuizResults = ({
   moduleIndex,
   courseBasePath,
   isReviewMode,
+  fromQuizzes,
   isGenerating,
   isResetting,
   onRetake,
   onNextModule,
   onBackToCourses,
+  onBackToReviews,
   onDevReset,
   hasNextModule,
 }: QuizResultsProps) => (
@@ -99,12 +103,15 @@ export const QuizResults = ({
         <S.SecondaryButton onClick={onRetake} disabled={isGenerating}>
           Retake Quiz
         </S.SecondaryButton>
-        {hasNextModule && (
+        {fromQuizzes ? (
+          <S.StartButton onClick={onBackToReviews}>
+            Back to Quizzes <ArrowRight size={14} />
+          </S.StartButton>
+        ) : hasNextModule ? (
           <S.StartButton onClick={onNextModule}>
             Continue to Next Module <ArrowRight size={14} />
           </S.StartButton>
-        )}
-        {!hasNextModule && (
+        ) : (
           <S.StartButton onClick={onBackToCourses}>Back to Courses</S.StartButton>
         )}
       </S.ActionButtons>

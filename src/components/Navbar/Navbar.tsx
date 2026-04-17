@@ -41,6 +41,13 @@ const MoonIcon = () => (
 const useHideOnScroll = () => {
   const [hidden, setHidden] = useState(false);
   const lastScrollY = useRef(typeof window !== 'undefined' ? window.scrollY : 0);
+  const pathname = usePathname();
+
+  // Reset navbar visibility on route change
+  useEffect(() => {
+    setHidden(false);
+    lastScrollY.current = 0;
+  }, [pathname]);
 
   const onScroll = useCallback(() => {
     const y = window.scrollY;

@@ -29,12 +29,31 @@ export const Stat = styled.span`
   color: ${(p) => p.theme.colors.muted};
 `;
 
-export const CalendarWrap = styled.div`
+export const CalendarWrap = styled.div<{ $loading?: boolean }>`
+  position: relative;
+  overflow: hidden;
   display: flex;
   justify-content: center;
 
-  /* Override react-activity-calendar defaults for theme consistency */
-  .react-activity-calendar__footer {
-    font-size: 0.625rem !important;
+  /* Hide calendar visually while loading but keep it for sizing */
+  ${(p) =>
+    p.$loading &&
+    `
+    pointer-events: none;
+    > :first-child {
+      visibility: hidden;
+    }
+  `}
+
+  svg {
+    display: block;
+    max-width: 100%;
+    height: auto;
   }
+`;
+
+export const SkeletonOverlay = styled.div`
+  position: absolute;
+  inset: 0;
+  z-index: 1;
 `;

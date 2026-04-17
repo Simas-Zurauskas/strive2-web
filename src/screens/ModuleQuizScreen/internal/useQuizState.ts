@@ -14,8 +14,8 @@ import { celebrateModuleComplete } from '@/lib/celebrations';
 import type { ModuleQuizQuestion, QuizAttemptResult } from '@/api/types';
 
 export const useQuizState = (courseSlug: string, moduleIndex: number) => {
-  const { data: quizContent, refetch: refetchQuiz } = useModuleQuizContent(courseSlug, moduleIndex);
-  const { data: quizProgress } = useModuleQuizProgress(courseSlug, moduleIndex);
+  const { data: quizContent, refetch: refetchQuiz, isLoading: isLoadingContent } = useModuleQuizContent(courseSlug, moduleIndex);
+  const { data: quizProgress, isLoading: isLoadingProgress } = useModuleQuizProgress(courseSlug, moduleIndex);
   const generateQuiz = useGenerateModuleQuiz();
   const submitAttempt = useSubmitQuizAttempt();
   const { trackJob, isJobRunningForCourse } = useJobManager();
@@ -55,9 +55,9 @@ export const useQuizState = (courseSlug: string, moduleIndex: number) => {
               jobId: activeJobId,
               courseId: courseSlug,
               type: 'generate_module_quiz',
-              onComplete: () => {
+              onComplete: async () => {
+                await refetchQuiz();
                 isGeneratingRef.current = false;
-                refetchQuiz();
                 setIsGenerating(false);
                 setQuizStarted(true);
               },
@@ -94,9 +94,9 @@ export const useQuizState = (courseSlug: string, moduleIndex: number) => {
         jobId,
         courseId: courseSlug,
         type: 'generate_module_quiz',
-        onComplete: () => {
+        onComplete: async () => {
+          await refetchQuiz();
           isGeneratingRef.current = false;
-          refetchQuiz();
           setIsGenerating(false);
           setQuizStarted(true);
         },
@@ -185,6 +185,7 @@ export const useQuizState = (courseSlug: string, moduleIndex: number) => {
     quizStarted,
     isGenerating,
     isSubmitting: submitAttempt.isPending,
+    isLoadingContent: isLoadingContent || isLoadingProgress,
     isResetting: resetQuiz.isPending,
     detectActiveJob,
     handleGenerate,
