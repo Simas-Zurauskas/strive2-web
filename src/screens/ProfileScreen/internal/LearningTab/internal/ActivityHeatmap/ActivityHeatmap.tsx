@@ -2,13 +2,10 @@ import { useMemo } from 'react';
 import { ActivityCalendar, type Activity, type ThemeInput } from 'react-activity-calendar';
 import Skeleton from 'react-loading-skeleton';
 import { useTheme } from 'styled-components';
+import { plural } from '@/lib/strings';
 import { themeColors } from '@/theme';
 import * as S from './ActivityHeatmap.styles';
-
-interface XpDayEntry {
-  date: string;
-  xp: number;
-}
+import type { XpDayEntry } from '@/api/routes/gamification';
 
 interface ActivityHeatmapProps {
   data?: XpDayEntry[];
@@ -33,6 +30,30 @@ const buildPlaceholderData = (): Activity[] => {
 
 const PLACEHOLDER_DATA = buildPlaceholderData();
 
+/**
+ * Find isolated-weekday gaps between active days and mark them as "bridged".
+ * A date is bridged if it falls between two active days separated by exactly
+ * one missed weekday (weekends never count as missed). Used purely for visuals.
+ */
+const computeBridgedWeekdays = (activeSet: Set<string>): Set<string> => {
+  const bridged = new Set<string>();
+  const sorted = [...activeSet].sort();
+  for (let i = 1; i < sorted.length; i++) {
+    const prev = new Date(sorted[i - 1] + 'T00:00:00Z');
+    const curr = new Date(sorted[i] + 'T00:00:00Z');
+    const between: string[] = [];
+    const d = new Date(prev);
+    d.setUTCDate(d.getUTCDate() + 1);
+    while (d < curr) {
+      const dow = d.getUTCDay();
+      if (dow !== 0 && dow !== 6) between.push(d.toISOString().slice(0, 10));
+      d.setUTCDate(d.getUTCDate() + 1);
+    }
+    if (between.length === 1) bridged.add(between[0]);
+  }
+  return bridged;
+};
+
 export const ActivityHeatmap: React.FC<ActivityHeatmapProps> = ({ data, activeDates, loading }) => {
   const theme = useTheme();
   const scheme = theme.scheme === 'dark' ? 'dark' : 'light';
@@ -47,6 +68,7 @@ export const ActivityHeatmap: React.FC<ActivityHeatmapProps> = ({ data, activeDa
     }
 
     const activeSet = new Set(activeDates ?? []);
+    const bridgedSet = computeBridgedWeekdays(activeSet);
 
     const now = new Date();
     const start = new Date(now);
@@ -61,8 +83,10 @@ export const ActivityHeatmap: React.FC<ActivityHeatmapProps> = ({ data, activeDa
       const dateStr = cursor.toISOString().slice(0, 10);
       const xp = xpMap.get(dateStr) ?? 0;
       const isActive = activeSet.has(dateStr);
+      const isBridged = !isActive && xp === 0 && bridgedSet.has(dateStr);
       let level: 0 | 1 | 2 | 3 | 4;
-      if (xp === 0 && !isActive) level = 0;
+      if (xp === 0 && !isActive && !isBridged) level = 0;
+      else if (isBridged) level = 1;
       else if (xp < 100) level = 1;
       else if (xp < 250) level = 2;
       else if (xp < 500) level = 3;
@@ -77,8 +101,8 @@ export const ActivityHeatmap: React.FC<ActivityHeatmapProps> = ({ data, activeDa
 
   const calendarTheme: ThemeInput = useMemo(
     () => ({
-      dark: ['#373331', '#3b4d43', '#3e7057', '#4e9e74', '#6cd49a'],
-      light: ['#00000008', '#2c554535', '#2c554568', '#2c5545a8', c.accent],
+      dark: ['#373331', '#4d6b5c', '#3e7057', '#4e9e74', '#6cd49a'],
+      light: ['#00000008', '#2c554570', '#2c554599', '#2c5545c2', c.accent],
     }),
     [c],
   );
@@ -91,7 +115,7 @@ export const ActivityHeatmap: React.FC<ActivityHeatmapProps> = ({ data, activeDa
       <S.Header>
         <S.Title>{isLoading ? <Skeleton width={80} /> : 'Activity'}</S.Title>
         <S.Stat>
-          {isLoading ? <Skeleton width={80} /> : `${activeDays} active day${activeDays !== 1 ? 's' : ''}`}
+          {isLoading ? <Skeleton width={80} /> : `${activeDays} active ${plural(activeDays, 'day')}`}
         </S.Stat>
       </S.Header>
       <S.CalendarWrap $loading={isLoading}>

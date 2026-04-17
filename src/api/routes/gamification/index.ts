@@ -15,18 +15,37 @@ export const getGamificationProfile = () => {
 
 // ── Gamification stats ────────────────────────────────────
 
+export interface XpSourceBreakdown {
+  lesson_complete: number;
+  quiz_score: number;
+  exercise_pass: number;
+  review_complete: number;
+  insight_review: number;
+  insight_mastery: number;
+}
+
+export interface XpDayEntry {
+  date: string;
+  xp: number;
+  sources: XpSourceBreakdown;
+}
+
+export interface WeeklySummaryPeriod {
+  xp: number;
+  timeSeconds: number;
+  lessons: number;
+  quizzes: number;
+  insights: number;
+}
+
 export interface GamificationStatsData {
-  xpByDay: {
-    date: string;
-    xp: number;
-    sources: { lesson_complete: number; quiz_score: number; exercise_pass: number; review_complete: number };
-  }[];
+  xpByDay: XpDayEntry[];
   xpByWeek: { week: string; xp: number }[];
   totalTimeLearned: number;
   lessonsThisWeek: number;
   weeklySummary: {
-    thisWeek: { xp: number; timeSeconds: number; lessons: number; quizzes: number };
-    lastWeek: { xp: number; timeSeconds: number; lessons: number; quizzes: number };
+    thisWeek: WeeklySummaryPeriod;
+    lastWeek: WeeklySummaryPeriod;
   };
 }
 
@@ -56,17 +75,5 @@ export const getQuizTrends = () => {
   return client<{ data: QuizTrendsData }>({
     url: '/gamification/quiz-trends',
     method: 'GET',
-  }).then((res) => res.data.data);
-};
-
-// ── Streak freeze ─────────────────────────────────────────
-
-type StreakFreezeResponse =
-  paths['/api/gamification/streak-freeze']['post']['responses']['200']['content']['application/json'];
-
-export const postStreakFreeze = () => {
-  return client<StreakFreezeResponse>({
-    url: '/gamification/streak-freeze',
-    method: 'POST',
   }).then((res) => res.data.data);
 };

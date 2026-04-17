@@ -116,6 +116,8 @@ export const useMermaidZoomPan = () => {
     zoomRef,
     panRef,
     isDragging,
+    setZoom,
+    setPan,
     handleZoomIn,
     handleZoomOut,
     handleReset,

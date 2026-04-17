@@ -59,3 +59,17 @@ export const deleteAccount = (params: DeleteAccountBody) => {
     data: params,
   }).then((res) => res.data.data);
 };
+
+// ── Logout (revoke bearer server-side) ──────────────────────
+
+// Inline type pending `yarn codegen` — the server endpoint was added after
+// the last OpenAPI regeneration. Swap to `paths['/api/auth/logout']['post']...`
+// once the generated file is refreshed.
+type LogoutResponse = { data: { message: string } };
+
+export const logout = () => {
+  return client<LogoutResponse>({
+    url: '/auth/logout',
+    method: 'POST',
+  }).then((res) => res.data.data);
+};

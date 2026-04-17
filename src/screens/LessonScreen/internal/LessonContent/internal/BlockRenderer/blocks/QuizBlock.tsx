@@ -3,8 +3,10 @@
 import { AnimatePresence, motion } from 'framer-motion';
 import { Check, X } from 'lucide-react';
 import { useState } from 'react';
+import { LessonMarkdown } from '../LessonMarkdown';
 import * as S from '../styles';
 import type { QuizResponse } from '@/api/types';
+import type { QuizOptionState } from '@/types';
 
 const OPTION_LETTERS = ['A', 'B', 'C', 'D'];
 
@@ -27,7 +29,7 @@ export const QuizBlock = ({
   const correctIndex = (metadata?.correctIndex as number) ?? 0;
   const explanation = (metadata?.explanation as string) ?? '';
 
-  const getOptionState = (index: number): 'default' | 'selected' | 'correct' | 'incorrect' | 'dimmed' => {
+  const getOptionState = (index: number): QuizOptionState => {
     if (!confirmed) {
       return index === selected ? 'selected' : 'default';
     }
@@ -68,7 +70,9 @@ export const QuizBlock = ({
       </S.QuizHeader>
 
       <S.QuizBody>
-        <S.QuizQuestion>{question}</S.QuizQuestion>
+        <S.QuizQuestion>
+          <LessonMarkdown>{question}</LessonMarkdown>
+        </S.QuizQuestion>
         <S.QuizOptions>
           {options.map((option, i) => (
             <S.QuizOption key={i} $state={getOptionState(i)} onClick={() => handleSelect(i)}>
@@ -115,7 +119,9 @@ export const QuizBlock = ({
         >
           <S.QuizExplanationWrapper>
             <S.QuizExplanationLabel>Explanation</S.QuizExplanationLabel>
-            <S.QuizExplanation>{explanation}</S.QuizExplanation>
+            <S.QuizExplanation>
+              <LessonMarkdown>{explanation}</LessonMarkdown>
+            </S.QuizExplanation>
           </S.QuizExplanationWrapper>
         </motion.div>
       )}

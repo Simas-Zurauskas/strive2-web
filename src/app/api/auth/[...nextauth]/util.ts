@@ -1,16 +1,9 @@
 import axios from 'axios';
 import { NextAuthOptions } from 'next-auth';
-import { JWT } from 'next-auth/jwt';
 import CredentialsProvider from 'next-auth/providers/credentials';
 import GoogleProvider from 'next-auth/providers/google';
 import { NEXT_PUBLIC_API_URL } from '@/conf/env';
 import { GOOGLE_CLIENT_ID, GOOGLE_CLIENT_SECRET, NEXTAUTH_SECRET } from '@/conf/env.server';
-
-interface CredentialsInput {
-  email: string;
-  password: string;
-  type: 'signin' | 'signup';
-}
 
 export const authOptions: NextAuthOptions = {
   providers: [
@@ -26,7 +19,8 @@ export const authOptions: NextAuthOptions = {
         type: { label: 'Type', type: 'text' },
       },
       async authorize(credentials) {
-        const { email, password, type } = credentials as unknown as CredentialsInput;
+        if (!credentials) return null;
+        const { email, password, type } = credentials;
         const endpoint = type === 'signup' ? 'signup' : 'signin';
 
         try {
@@ -54,8 +48,7 @@ export const authOptions: NextAuthOptions = {
     async jwt({ token, user, account }) {
       // Credentials flow: token comes from the authorize return
       if (user) {
-        const customUser = user as unknown as { token: string };
-        token.token = customUser.token;
+        token.token = user.token;
       }
 
       // Google flow: send the ID token for server-side verification
@@ -74,13 +67,11 @@ export const authOptions: NextAuthOptions = {
       return token;
     },
     async session({ session, token }) {
-      const typedToken = token as JWT & { token?: string; error?: string };
-
-      if (typedToken.token) {
-        session.token = typedToken.token;
+      if (token.token) {
+        session.token = token.token;
       }
-      if (typedToken.error) {
-        session.error = typedToken.error;
+      if (token.error) {
+        session.error = token.error;
       }
 
       return session;

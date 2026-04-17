@@ -1,7 +1,6 @@
 import { Info, Lightbulb, TriangleAlert, OctagonAlert } from 'lucide-react';
-import ReactMarkdown from 'react-markdown';
-import remarkGfm from 'remark-gfm';
 import { useTheme } from 'styled-components';
+import { LessonMarkdown } from '../LessonMarkdown';
 import * as S from '../styles';
 
 const VARIANTS = {
@@ -34,7 +33,7 @@ export const CalloutBlock = ({ content, metadata }: { content: string; metadata:
         <Icon />
         {v.label}
       </S.CalloutLabel>
-      <ReactMarkdown remarkPlugins={[remarkGfm]}>{content}</ReactMarkdown>
+      <LessonMarkdown>{content}</LessonMarkdown>
     </S.CalloutContainer>
   );
 };

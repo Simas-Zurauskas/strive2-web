@@ -1,3 +1,5 @@
+export type { QuizIconVariant, QuizOptionState } from './ui';
+
 export enum QKeys {
   AUTH_USER = 'authUser',
   COURSES = 'courses',
@@ -18,4 +20,7 @@ export enum QKeys {
   GAMIFICATION_PROFILE = 'gamificationProfile',
   GAMIFICATION_STATS = 'gamificationStats',
   GAMIFICATION_QUIZ_TRENDS = 'gamificationQuizTrends',
+  INSIGHT_QUEUE = 'insightQueue',
+  INSIGHT_STATS = 'insightStats',
+  INSIGHT_DUE_COUNT = 'insightDueCount',
 }

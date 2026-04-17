@@ -104,7 +104,6 @@ export const useQuizState = (courseSlug: string, moduleIndex: number) => {
     } catch {
       isGeneratingRef.current = false;
       setIsGenerating(false);
-      toast.error(TOASTS.QUIZ_START_ERROR);
     }
   }, [courseSlug, moduleIndex, generateQuiz, refetchQuiz, trackJob]);
 
@@ -140,7 +139,7 @@ export const useQuizState = (courseSlug: string, moduleIndex: number) => {
           toast.success(TOASTS.MODULE_MASTERED);
         }
       } catch {
-        toast.error(TOASTS.QUIZ_SUBMIT_ERROR);
+        // Global mutation error handler toasts QUIZ_SUBMIT_ERROR
       }
     }
   };
@@ -167,9 +166,9 @@ export const useQuizState = (courseSlug: string, moduleIndex: number) => {
       setAnswered(false);
       setResponses([]);
       setQuizStarted(false);
-      toast.success('Quiz reset (dev)');
+      toast('Quiz reset (dev)');
     } catch {
-      toast.error('Failed to reset quiz');
+      // Global mutation error handler toasts the failure
     }
   }, [courseSlug, moduleIndex, resetQuiz]);
 

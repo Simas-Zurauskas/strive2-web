@@ -1,16 +1,12 @@
-import { useMemo } from 'react';
 import Highcharts from 'highcharts';
 import HighchartsReact from 'highcharts-react-official';
+import { useMemo } from 'react';
 import Skeleton from 'react-loading-skeleton';
 import { useTheme } from 'styled-components';
+import { formatDate } from '@/lib/formatDate';
 import { themeColors } from '@/theme';
 import * as S from './XpChart.styles';
-
-interface XpDayEntry {
-  date: string;
-  xp: number;
-  sources: { lesson_complete: number; quiz_score: number; exercise_pass: number; review_complete: number };
-}
+import type { XpDayEntry } from '@/api/routes/gamification';
 
 interface XpChartProps {
   data?: XpDayEntry[];
@@ -27,10 +23,7 @@ export const XpChart: React.FC<XpChartProps> = ({ data, loading }) => {
   const last30 = useMemo(() => (data ?? []).slice(-30), [data]);
 
   const options: Highcharts.Options = useMemo(() => {
-    const categories = last30.map((d) => {
-      const date = new Date(d.date + 'T00:00:00');
-      return date.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
-    });
+    const categories = last30.map((d) => formatDate(d.date));
 
     return {
       chart: {
@@ -89,7 +82,10 @@ export const XpChart: React.FC<XpChartProps> = ({ data, loading }) => {
           const points = this.points ?? [];
           const total = points.reduce((s, p) => s + (p.y ?? 0), 0);
           if (total === 0) return false;
-          const header = `<div style="font-weight:600;font-size:0.8125rem;margin-bottom:8px">${this.x}</div>`;
+          // `this.x` on a shared tooltip over a categorized axis returns the
+          // numeric index — `points[0].key` is the category label (date).
+          const label = (points[0]?.key as string | undefined) ?? String(this.x ?? '');
+          const header = `<div style="font-weight:600;font-size:0.8125rem;margin-bottom:8px">${label}</div>`;
           const rows = points
             .filter((p) => (p.y ?? 0) > 0)
             .map(
@@ -135,6 +131,18 @@ export const XpChart: React.FC<XpChartProps> = ({ data, loading }) => {
           data: last30.map((d) => d.sources.review_complete),
           color: c.warning,
         },
+        {
+          name: 'Insights',
+          type: 'column',
+          data: last30.map((d) => d.sources.insight_review),
+          color: c.tertiaryHover,
+        },
+        {
+          name: 'Mastery',
+          type: 'column',
+          data: last30.map((d) => d.sources.insight_mastery),
+          color: c.error,
+        },
       ],
     };
   }, [last30, c, scheme]);
@@ -143,10 +151,6 @@ export const XpChart: React.FC<XpChartProps> = ({ data, loading }) => {
 
   const startDate = last30[0]?.date;
   const endDate = last30[last30.length - 1]?.date;
-  const fmt = (d: string) => {
-    const date = new Date(d + 'T00:00:00');
-    return date.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
-  };
 
   return (
     <S.Section>
@@ -160,7 +164,7 @@ export const XpChart: React.FC<XpChartProps> = ({ data, loading }) => {
           <>
             <S.Title>XP — Last 30 Days</S.Title>
             {startDate && endDate && (
-              <S.RangeLabel>{fmt(startDate)} — {fmt(endDate)}</S.RangeLabel>
+              <S.RangeLabel>{formatDate(startDate)} — {formatDate(endDate)}</S.RangeLabel>
             )}
           </>
         )}

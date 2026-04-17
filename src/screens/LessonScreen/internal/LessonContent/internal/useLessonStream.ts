@@ -98,6 +98,9 @@ export const useLessonStream = ({
         includeLinks,
         signal: controller.signal,
         onEvent: (event) => {
+          // Drop events that arrive after unmount / lesson change to avoid
+          // stale renders of the old lesson's stream content.
+          if (controller.signal.aborted) return;
           switch (event.type) {
             case 'block':
               setStreamBlocks((prev) => [...prev, event.block]);

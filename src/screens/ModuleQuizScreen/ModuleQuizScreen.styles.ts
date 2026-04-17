@@ -1,5 +1,6 @@
 import styled from 'styled-components';
 import type { QuizMasteryTier } from '@/api/types';
+import type { QuizOptionState } from '@/types';
 
 // ── Layout ────────────────────────────────────────────
 
@@ -89,7 +90,6 @@ export const HeaderSection = styled.div`
   flex-direction: column;
   gap: 1rem;
 `;
-
 
 export const Title = styled.h1`
   font-family: var(--font-heading-serif), Georgia, serif;
@@ -219,9 +219,7 @@ export const OptionsContainer = styled.div`
   gap: 0.625rem;
 `;
 
-type OptionState = 'default' | 'selected' | 'correct' | 'incorrect' | 'dimmed';
-
-export const Option = styled.button<{ $state: OptionState }>`
+export const Option = styled.button<{ $state: QuizOptionState }>`
   display: flex;
   align-items: flex-start;
   gap: 0.875rem;
@@ -270,7 +268,7 @@ export const Option = styled.button<{ $state: OptionState }>`
     }`}
 `;
 
-export const OptionLetter = styled.span<{ $state: OptionState }>`
+export const OptionLetter = styled.span<{ $state: QuizOptionState }>`
   flex-shrink: 0;
   display: flex;
   align-items: center;
@@ -333,7 +331,6 @@ export const SourceLinks = styled.div`
   font-size: 0.8125rem;
 `;
 
-
 // ── Results ───────────────────────────────────────────
 
 export const ResultsHeader = styled.div`
@@ -356,6 +353,33 @@ export const ScoreDisplay = styled.div`
   ${(p) => p.theme.media.mobile} {
     font-size: 3rem;
   }
+`;
+
+const tierColor = (tier: QuizMasteryTier, colors: { success: string; accent: string; error: string }) =>
+  tier === 'mastered' ? colors.success : tier === 'passed' ? colors.accent : colors.error;
+
+export const TierIconHero = styled.span<{ $tier: QuizMasteryTier }>`
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 56px;
+  height: 56px;
+  border-radius: 50%;
+  margin-bottom: 0.25rem;
+  background: ${(p) => `${tierColor(p.$tier, p.theme.colors)}18`};
+  color: ${(p) => tierColor(p.$tier, p.theme.colors)};
+`;
+
+export const TierIconInline = styled.span<{ $tier: QuizMasteryTier }>`
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  flex-shrink: 0;
+  background: ${(p) => `${tierColor(p.$tier, p.theme.colors)}18`};
+  color: ${(p) => tierColor(p.$tier, p.theme.colors)};
 `;
 
 export const MasteryBadge = styled.span<{ $tier: QuizMasteryTier }>`

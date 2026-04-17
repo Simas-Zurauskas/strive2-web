@@ -5,7 +5,7 @@ import { useRouter, useSearchParams } from 'next/navigation';
 import { useSession } from 'next-auth/react';
 import { useEffect, useRef, useState } from 'react';
 import { verifyEmail } from '@/api/routes/auth';
-import * as S from '../LoginScreen/LoginScreen.styles';
+import { AuthForm, AuthFormFooter, AuthFormTitle, AuthSubmitBtn } from '@/components';
 
 type Status = 'verifying' | 'success' | 'error' | 'expired' | 'already-verified';
 
@@ -61,34 +61,34 @@ export const VerifyEmailScreen = () => {
   };
 
   return (
-    <S.Form as="div">
-      <h1 className="form__title">
+    <AuthForm as="div">
+      <AuthFormTitle>
         {status === 'verifying' && 'Verifying...'}
         {status === 'success' && 'Email verified'}
         {status === 'expired' && 'Link expired'}
         {status === 'already-verified' && 'Already verified'}
         {status === 'error' && 'Verification failed'}
-      </h1>
+      </AuthFormTitle>
 
-      {status !== 'verifying' && <p className="form__footer">{message}</p>}
+      {status !== 'verifying' && <AuthFormFooter>{message}</AuthFormFooter>}
 
       {(status === 'success' || status === 'already-verified') && (
-        <S.SubmitBtn as="button" type="button" onClick={handleContinue}>
+        <AuthSubmitBtn as="button" type="button" onClick={handleContinue}>
           {isAuthenticated ? 'Continue' : 'Continue to sign in'}
-        </S.SubmitBtn>
+        </AuthSubmitBtn>
       )}
 
       {status === 'expired' && (
         <Link href="/login">
-          <S.SubmitBtn as="span">Back to sign in</S.SubmitBtn>
+          <AuthSubmitBtn as="span">Back to sign in</AuthSubmitBtn>
         </Link>
       )}
 
       {status === 'error' && (
         <Link href="/signup">
-          <S.SubmitBtn as="span">Back to sign up</S.SubmitBtn>
+          <AuthSubmitBtn as="span">Back to sign up</AuthSubmitBtn>
         </Link>
       )}
-    </S.Form>
+    </AuthForm>
   );
 };

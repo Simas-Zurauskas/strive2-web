@@ -1,6 +1,7 @@
 'use client';
 
 import { useQueryClient } from '@tanstack/react-query';
+import { usePathname, useRouter } from 'next/navigation';
 import { createContext, useCallback, useContext, useEffect, useRef, useState } from 'react';
 import { toast } from 'sonner';
 import { getJobStatus } from '@/api/routes/course';
@@ -59,6 +60,12 @@ const JOB_TIMEOUT_MS = 5 * 60 * 1000; // 5 minutes
 
 export const JobManagerProvider = ({ children }: { children: React.ReactNode }) => {
   const queryClient = useQueryClient();
+  const router = useRouter();
+  const pathname = usePathname();
+  const pathnameRef = useRef(pathname);
+  useEffect(() => {
+    pathnameRef.current = pathname;
+  }, [pathname]);
   const { socket } = useSocket();
   const callbacksRef = useRef<
     Map<string, { callback: () => void; courseId: string; timer: ReturnType<typeof setTimeout> }>
@@ -67,6 +74,20 @@ export const JobManagerProvider = ({ children }: { children: React.ReactNode }) 
   const [activeCourseIds, setActiveCourseIds] = useState<Set<string>>(new Set());
   // Which specific lesson is currently generating (set via WS or optimistically)
   const [generatingLesson, setGeneratingLesson] = useState<GeneratingLesson | null>(null);
+
+  const findCourseSlug = useCallback(
+    (courseId: string): string | null => {
+      const courses = queryClient.getQueryData<Course[]>([QKeys.COURSES]);
+      const fromList = courses?.find((c) => c._id === courseId)?.slug;
+      if (fromList) return fromList;
+      const entries = queryClient.getQueriesData<Course>({
+        queryKey: [QKeys.COURSE],
+        predicate: (q) => (q.state.data as Course | undefined)?._id === courseId,
+      });
+      return entries[0]?.[1]?.slug ?? null;
+    },
+    [queryClient],
+  );
 
   // Clean up a tracked job entry
   const cleanupJob = useCallback((jobId: string) => {
@@ -150,8 +171,27 @@ export const JobManagerProvider = ({ children }: { children: React.ReactNode }) 
         if (entry) {
           clearTimeout(entry.timer);
           entry.callback();
+        } else if (
+          event.type === 'generate_lesson' &&
+          event.moduleIndex != null &&
+          event.lessonIndex != null
+        ) {
+          const slug = findCourseSlug(event.courseId);
+          const lessonPath = slug
+            ? `/course/${slug}/lesson/${event.moduleIndex}/${event.lessonIndex}`
+            : null;
+          if (lessonPath && pathnameRef.current !== lessonPath) {
+            toast(TOASTS.GENERATION_COMPLETE, {
+              action: {
+                label: 'Open lesson',
+                onClick: () => router.push(lessonPath),
+              },
+            });
+          } else {
+            toast(TOASTS.GENERATION_COMPLETE);
+          }
         } else {
-          toast.success(TOASTS.GENERATION_COMPLETE);
+          toast(TOASTS.GENERATION_COMPLETE);
         }
       } else if (event.status === 'failed') {
         if (entry) clearTimeout(entry.timer);
@@ -202,7 +242,7 @@ export const JobManagerProvider = ({ children }: { children: React.ReactNode }) 
       socket.off('job:started', handleStarted);
       socket.off('job:status', handleStatus);
     };
-  }, [socket, queryClient, cleanupJob]);
+  }, [socket, queryClient, cleanupJob, router, findCourseSlug]);
 
   // Stable ref for reconnect handler to avoid re-registering on every activeCourseIds change
   const activeCourseIdsRef = useRef(activeCourseIds);

@@ -1,7 +1,5 @@
 'use client';
 
-import ReactMarkdown from 'react-markdown';
-import remarkGfm from 'remark-gfm';
 import {
   IntroBlock,
   SectionBlock,
@@ -15,18 +13,11 @@ import {
   QuizSkeleton,
   ExerciseSkeleton,
 } from './blocks';
+import { LessonMarkdown } from './LessonMarkdown';
 import * as S from './styles';
-import type { QuizResponse, ExerciseAttempt } from '@/api/types';
+import type { ExerciseAttempt, LessonBlock, QuizResponse } from '@/api/types';
 
 // ── Types ──────────────────────────────────────────────
-
-interface LessonBlock {
-  id: string;
-  type: string;
-  content: string;
-  metadata: Record<string, unknown> | null;
-  order: number;
-}
 
 interface PlaceholderBlock {
   id: string;
@@ -132,7 +123,7 @@ export const BlockRenderer = ({
           default:
             element = (
               <S.BlockWrapper>
-                <ReactMarkdown remarkPlugins={[remarkGfm]}>{block.content}</ReactMarkdown>
+                <LessonMarkdown>{block.content}</LessonMarkdown>
               </S.BlockWrapper>
             );
         }

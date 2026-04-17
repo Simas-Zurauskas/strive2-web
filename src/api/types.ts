@@ -17,6 +17,8 @@ export type ReviewReason = components['schemas']['ReviewReason'];
 // ── Object types ───────────────────────────────────────
 
 export type ApiError = components['schemas']['ApiError'];
+/** Client-enriched error (status attached by the axios interceptor). */
+export type ClientApiError = ApiError & { status?: number };
 
 export type AuthorisedUser = components['schemas']['AuthorisedUser'];
 export type AuthProvider = components['schemas']['AuthProvider'];
@@ -49,3 +51,14 @@ export type EarnedAchievement = components['schemas']['EarnedAchievement'];
 export type GamificationProfile = components['schemas']['GamificationProfile'];
 export type GamificationStats = components['schemas']['GamificationStats'];
 
+// ── Insight types ──────────────────────────────────────
+export type InsightKind = components['schemas']['InsightKind'];
+export type InsightMode = components['schemas']['InsightMode'];
+export type InsightState = components['schemas']['InsightState'];
+export type InsightRating = components['schemas']['InsightRating'];
+export type InsightQueueItem = components['schemas']['InsightQueueItem'];
+export type InsightQueue = components['schemas']['InsightQueue'];
+export type RateInsightResult = components['schemas']['RateInsightResult'];
+export type InsightStats = components['schemas']['InsightStats'];
+export type GradeVerdict = components['schemas']['GradeVerdict'];
+export type GradeResult = components['schemas']['GradeResult'];

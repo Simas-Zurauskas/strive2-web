@@ -24,10 +24,14 @@ export const Nav = styled.nav<{ $hidden?: boolean }>`
   }
 `;
 
-export const Left = styled.div`
+export const LeftCluster = styled.div`
   display: flex;
   align-items: center;
   gap: 1rem;
+
+  ${(p) => p.theme.media.tablet} {
+    gap: 0.75rem;
+  }
 `;
 
 export const Logo = styled.a`
@@ -40,46 +44,52 @@ export const Logo = styled.a`
   letter-spacing: -0.01em;
 `;
 
-export const Center = styled.div`
+export const Divider = styled.span`
+  width: 1px;
+  height: 18px;
+  background: ${(p) => p.theme.colors.border};
+  flex-shrink: 0;
+`;
+
+export const Links = styled.div`
   display: flex;
   align-items: center;
-  gap: 2rem;
+  gap: 1.5rem;
 
   ${(p) => p.theme.media.tablet} {
-    gap: 1.25rem;
+    gap: 1rem;
   }
 `;
 
 export const NavLink = styled(Link)<{ $active?: boolean }>`
-  font-size: 0.8125rem;
+  position: relative;
+  font-size: 0.875rem;
   font-weight: 500;
-  text-transform: uppercase;
-  letter-spacing: 0.08em;
-  color: ${(p) => (p.$active ? p.theme.colors.accent : p.theme.colors.foreground)};
+  color: ${(p) => (p.$active ? p.theme.colors.foreground : p.theme.colors.muted)};
   text-decoration: none;
   transition: color 0.15s;
-  padding: 0.25rem 0;
+  padding: 0.375rem 0;
 
   &:hover {
-    color: ${(p) => p.theme.colors.accent};
+    color: ${(p) => p.theme.colors.foreground};
   }
-`;
 
-export const Badge = styled.span`
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  min-width: 16px;
-  height: 16px;
-  padding: 0 4px;
-  border-radius: 9999px;
-  font-size: 0.625rem;
-  font-weight: 700;
-  line-height: 1;
-  background: ${(p) => p.theme.colors.warning};
-  color: ${(p) => p.theme.colors.background};
-  margin-left: 0.375rem;
-  vertical-align: middle;
+  &::after {
+    content: '';
+    position: absolute;
+    left: 0;
+    right: 0;
+    bottom: -2px;
+    height: 2px;
+    border-radius: 1px;
+    background: ${(p) => p.theme.colors.accent};
+    opacity: ${(p) => (p.$active ? 1 : 0)};
+    transform: scaleX(${(p) => (p.$active ? 1 : 0.6)});
+    transform-origin: center;
+    transition:
+      opacity 0.18s ease,
+      transform 0.18s ease;
+  }
 `;
 
 export const Right = styled.div`

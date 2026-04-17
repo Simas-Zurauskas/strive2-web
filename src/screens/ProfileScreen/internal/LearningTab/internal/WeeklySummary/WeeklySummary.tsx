@@ -1,8 +1,9 @@
 import * as S from './WeeklySummary.styles';
+import type { WeeklySummaryPeriod } from '@/api/routes/gamification';
 
 interface WeeklySummaryProps {
-  thisWeek: { xp: number; timeSeconds: number; lessons: number; quizzes: number };
-  lastWeek: { xp: number; timeSeconds: number; lessons: number; quizzes: number };
+  thisWeek: WeeklySummaryPeriod;
+  lastWeek: WeeklySummaryPeriod;
 }
 
 const formatTime = (seconds: number): string => {
@@ -30,6 +31,7 @@ export const WeeklySummary: React.FC<WeeklySummaryProps> = ({ thisWeek, lastWeek
     },
     { label: 'Lessons', value: String(thisWeek.lessons), delta: formatDelta(thisWeek.lessons, lastWeek.lessons) },
     { label: 'Quizzes', value: String(thisWeek.quizzes), delta: formatDelta(thisWeek.quizzes, lastWeek.quizzes) },
+    { label: 'Insights', value: String(thisWeek.insights), delta: formatDelta(thisWeek.insights, lastWeek.insights) },
   ];
 
   return (

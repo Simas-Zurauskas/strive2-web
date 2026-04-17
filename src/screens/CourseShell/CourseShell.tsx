@@ -1,5 +1,13 @@
 'use client';
 
+/**
+ * CourseShell is the layout wrapper that mounts for every `/course/[slug]/...`
+ * route. It owns course data fetching, the persistent sidebar, the chat panel,
+ * and the CourseContext consumed by its children (LessonScreen,
+ * CourseOverviewScreen, ModuleQuizScreen). The name omits the "Screen" suffix
+ * on purpose — this component never renders stand-alone; Next.js wires it up
+ * through a route-group layout rather than a `page.tsx`.
+ */
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { Menu, MessageCircle } from 'lucide-react';
 import { useParams, useRouter } from 'next/navigation';
@@ -7,8 +15,8 @@ import { useCallback, useEffect, useMemo, useState } from 'react';
 import { toast } from 'sonner';
 import { deleteCourse, updateCourse } from '@/api/routes/course';
 import { AlertDialog, TextLoader } from '@/components';
+import { ROUTES } from '@/constants/routes';
 import { TOASTS } from '@/constants/toasts';
-import type { CourseStatus } from '@/api/types';
 import { useCourse, useCourseProgress, useGeneratedLessons } from '@/hooks';
 import { breakpoints } from '@/theme';
 import { QKeys } from '@/types';
@@ -16,6 +24,7 @@ import { CourseContextProvider } from './CourseContext';
 import * as S from './CourseShell.styles';
 import { CourseSidebar, ChatPanel } from './internal';
 import type { CourseContextValue } from './CourseContext';
+import type { CourseStatus } from '@/api/types';
 
 const DESKTOP_MQ = `(min-width: ${breakpoints.desktop + 1}px)`;
 
@@ -62,7 +71,7 @@ export const CourseShell = ({ children }: CourseShellProps) => {
     onSuccess: () => {
       setShowDeleteDialog(false);
       queryClient.invalidateQueries({ queryKey: [QKeys.COURSES] });
-      toast.success(TOASTS.COURSE_DELETED);
+      toast(TOASTS.COURSE_DELETED);
       router.push('/');
     },
   });
@@ -79,7 +88,7 @@ export const CourseShell = ({ children }: CourseShellProps) => {
       setShowArchiveDialog(false);
       queryClient.invalidateQueries({ queryKey: [QKeys.COURSES] });
       queryClient.invalidateQueries({ queryKey: [QKeys.COURSE, courseSlug] });
-      toast.success(isArchived ? TOASTS.COURSE_UNARCHIVED : TOASTS.COURSE_ARCHIVED);
+      toast(isArchived ? TOASTS.COURSE_UNARCHIVED : TOASTS.COURSE_ARCHIVED);
       router.push('/');
     },
   });
@@ -104,14 +113,14 @@ export const CourseShell = ({ children }: CourseShellProps) => {
   const modules = useMemo(() => course?.structure?.modules ?? [], [course?.structure?.modules]);
 
   // ── Navigation ───────────────────────────────────────
-  const courseBasePath = `/course/${course?.slug ?? courseSlug}`;
+  const courseBasePath = ROUTES.course(course?.slug, courseSlug);
 
   const navigateToLesson = useCallback(
     (mi: number, li: number) => {
-      router.push(`${courseBasePath}/lesson/${mi}/${li}`);
+      router.push(ROUTES.lesson(course?.slug, courseSlug, mi, li));
       if (!isDesktop) setSidebarOpen(false);
     },
-    [courseBasePath, router, isDesktop],
+    [course?.slug, courseSlug, router, isDesktop],
   );
 
   const closeOverlays = useCallback(() => {

@@ -1,4 +1,5 @@
 import styled, { keyframes } from 'styled-components';
+import type { QuizOptionState } from '@/types';
 
 const fadeIn = keyframes`
   from { opacity: 0; transform: translateY(4px); }
@@ -44,13 +45,17 @@ export const QuizBody = styled.div`
   padding: 1.5rem 1.25rem;
 `;
 
-export const QuizQuestion = styled.p`
+export const QuizQuestion = styled.div`
   font-family: var(--font-body-sans), system-ui, sans-serif;
   font-size: 1.0625em;
   font-weight: 500;
   line-height: 1.55;
   color: ${(p) => p.theme.colors.foreground};
   margin-bottom: 1.5rem;
+
+  & > p {
+    margin: 0;
+  }
 `;
 
 export const QuizOptions = styled.div`
@@ -58,8 +63,6 @@ export const QuizOptions = styled.div`
   flex-direction: column;
   gap: 0.375rem;
 `;
-
-type QuizOptionState = 'default' | 'selected' | 'correct' | 'incorrect' | 'dimmed';
 
 export const QuizOption = styled.button<{ $state: QuizOptionState }>`
   display: flex;

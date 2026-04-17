@@ -1,6 +1,7 @@
 import { Inter, Newsreader } from 'next/font/google';
 import Registry from './_registry';
 import type { Metadata } from 'next';
+import 'katex/dist/katex.min.css';
 
 const inter = Inter({
   variable: '--font-body-sans',

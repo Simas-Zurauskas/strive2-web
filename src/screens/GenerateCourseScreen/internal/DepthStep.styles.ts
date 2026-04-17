@@ -12,7 +12,6 @@ export const Header = styled.div`
   gap: 1rem;
 `;
 
-
 export const Title = styled.h2`
   font-family: var(--font-heading-serif), Georgia, serif;
   font-style: italic;

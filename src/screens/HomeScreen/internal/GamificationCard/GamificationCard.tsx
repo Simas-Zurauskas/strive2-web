@@ -3,6 +3,8 @@
 import { useMemo } from 'react';
 import { useAuth, useCourses, useProgressSummary } from '@/hooks';
 import { useGamificationProfile } from '@/hooks/useGamification';
+import { formatDate } from '@/lib/formatDate';
+import { plural } from '@/lib/strings';
 import * as S from './GamificationCard.styles';
 
 const LEVEL_THRESHOLDS = [
@@ -25,6 +27,27 @@ interface CalendarCell {
   date: string; // YYYY-MM-DD
   xp: number;
   weekend: boolean;
+  bridged: boolean;
+}
+
+/** See ActivityHeatmap.tsx for rationale — bridge single-weekday gaps visually. */
+function computeBridgedWeekdays(activeSet: Set<string>): Set<string> {
+  const bridged = new Set<string>();
+  const sorted = [...activeSet].sort();
+  for (let i = 1; i < sorted.length; i++) {
+    const prev = new Date(sorted[i - 1] + 'T00:00:00Z');
+    const curr = new Date(sorted[i] + 'T00:00:00Z');
+    const between: string[] = [];
+    const d = new Date(prev);
+    d.setUTCDate(d.getUTCDate() + 1);
+    while (d < curr) {
+      const dow = d.getUTCDay();
+      if (dow !== 0 && dow !== 6) between.push(d.toISOString().slice(0, 10));
+      d.setUTCDate(d.getUTCDate() + 1);
+    }
+    if (between.length === 1) bridged.add(between[0]);
+  }
+  return bridged;
 }
 
 function buildStreakCalendar(
@@ -42,6 +65,7 @@ function buildStreakCalendar(
   const regDateStr = registeredAt ? registeredAt.slice(0, 10) : null;
 
   const activeSet = new Set(activeDates ?? []);
+  const bridgedSet = computeBridgedWeekdays(activeSet);
   const xpByDay = new Map<string, number>();
   if (xpLog) {
     for (const entry of xpLog) {
@@ -64,18 +88,15 @@ function buildStreakCalendar(
 
     const isActive = activeSet.has(dateStr);
     const xp = xpByDay.get(dateStr) ?? 0;
+    const bridged = !isActive && xp === 0 && bridgedSet.has(dateStr);
     let level: 0 | 1 | 2 = 0;
     if (isActive || xp > 0) level = xp >= 100 ? 2 : 1;
+    else if (bridged) level = 1;
 
-    cells.push({ level, date: dateStr, xp, weekend });
+    cells.push({ level, date: dateStr, xp, weekend, bridged });
   }
 
   return cells;
-}
-
-function formatCellDate(dateStr: string): string {
-  const d = new Date(dateStr + 'T00:00:00');
-  return d.toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric' });
 }
 
 function getNextMilestone(profile: { currentStreak: number; level: number; totalXp: number }): string | null {
@@ -83,7 +104,7 @@ function getNextMilestone(profile: { currentStreak: number; level: number; total
   for (const target of streakTargets) {
     if (profile.currentStreak < target) {
       const remaining = target - profile.currentStreak;
-      return `${remaining} day${remaining !== 1 ? 's' : ''} to ${target}-day streak`;
+      return `${remaining} ${plural(remaining, 'day')} to ${target}-day streak`;
     }
   }
 
@@ -182,7 +203,13 @@ export const GamificationCard = () => {
                 key={i}
                 $level={cell.level}
                 $weekend={cell.weekend}
-                title={cell.xp > 0 ? `${formatCellDate(cell.date)} — ${cell.xp} XP` : `${formatCellDate(cell.date)} — No activity`}
+                title={
+                  cell.xp > 0
+                    ? `${formatDate(cell.date, 'cell')} — ${cell.xp} XP`
+                    : cell.bridged
+                      ? `${formatDate(cell.date, 'cell')} — No activity (between active days)`
+                      : `${formatDate(cell.date, 'cell')} — No activity`
+                }
               />
             ),
           )}

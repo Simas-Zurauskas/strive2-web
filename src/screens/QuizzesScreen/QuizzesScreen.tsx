@@ -1,10 +1,12 @@
 'use client';
 
+import { AlertCircle, CheckCircle, Sparkles, Trophy } from 'lucide-react';
 import { useRouter } from 'next/navigation';
 import { useMemo, useState } from 'react';
 import { FilterTabs, FilterTab, PageLayout } from '@/components';
 import { useReviewsDue, useUnattemptedQuizzes } from '@/hooks';
 import * as S from './QuizzesScreen.styles';
+import type { QuizMasteryTier } from '@/api/types';
 
 type Filter = 'all' | 'review' | 'not-taken';
 
@@ -16,9 +18,15 @@ interface QuizItem {
   moduleIndex: number;
   moduleName: string;
   bestScore?: number;
-  bestTier?: string;
+  bestTier?: QuizMasteryTier;
   reviewReason?: string;
 }
+
+const tierIcon: Record<QuizMasteryTier, typeof Trophy> = {
+  mastered: Trophy,
+  passed: CheckCircle,
+  needs_review: AlertCircle,
+};
 
 interface CourseGroup {
   courseId: string;
@@ -162,34 +170,37 @@ export const QuizzesScreen: React.FC = () => {
               <S.CourseCard key={group.courseId}>
                 <S.CourseHeader>
                   <S.CourseName>{group.courseName}</S.CourseName>
-                  <S.CourseCount>
-                    {group.items.length} quiz{group.items.length !== 1 ? 'zes' : ''}
-                  </S.CourseCount>
                 </S.CourseHeader>
-                {group.items.map((item) => (
-                  <S.QuizRow
-                    key={`${item.courseId}-${item.moduleIndex}`}
-                    onClick={() => handleQuizClick(item)}
-                  >
-                    <S.QuizIcon $review={item.type === 'review'}>Q</S.QuizIcon>
-                    <S.QuizContent>
-                      <S.QuizModuleName>
-                        Module {item.moduleIndex + 1}: {item.moduleName}
-                      </S.QuizModuleName>
-                      {item.type === 'review' && item.reviewReason && (
-                        <S.QuizMeta>
-                          {item.reviewReason === 'progression' ? 'Triggered by new progress' : 'Scheduled review'}
-                        </S.QuizMeta>
+                {group.items.map((item) => {
+                  const tier: QuizMasteryTier | undefined =
+                    item.type === 'review' ? (item.bestTier ?? 'needs_review') : undefined;
+                  const Icon = tier ? tierIcon[tier] : Sparkles;
+                  return (
+                    <S.QuizRow
+                      key={`${item.courseId}-${item.moduleIndex}`}
+                      onClick={() => handleQuizClick(item)}
+                    >
+                      <S.QuizIconWrap $variant={tier ?? 'not-taken'}>
+                        <Icon size={16} strokeWidth={2} />
+                      </S.QuizIconWrap>
+                      <S.QuizContent>
+                        <S.QuizModuleName>
+                          Module {item.moduleIndex + 1}: {item.moduleName}
+                        </S.QuizModuleName>
+                        {item.type === 'review' && (
+                          <S.QuizMeta>
+                            {item.reviewReason === 'progression'
+                              ? 'Triggered by new progress'
+                              : 'Scheduled review'}
+                          </S.QuizMeta>
+                        )}
+                      </S.QuizContent>
+                      {tier && item.bestScore != null && (
+                        <S.TierBadge $tier={tier}>{item.bestScore}%</S.TierBadge>
                       )}
-                    </S.QuizContent>
-                    {item.type === 'review' && item.bestTier && item.bestScore != null && (
-                      <S.TierBadge $tier={item.bestTier as 'mastered' | 'passed' | 'needs_review'}>
-                        {item.bestScore}%
-                      </S.TierBadge>
-                    )}
-                    {item.type === 'review' && <S.ReviewDueBadge>Review</S.ReviewDueBadge>}
-                  </S.QuizRow>
-                ))}
+                    </S.QuizRow>
+                  );
+                })}
               </S.CourseCard>
             ))}
           </S.CourseList>

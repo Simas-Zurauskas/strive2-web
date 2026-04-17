@@ -1,7 +1,6 @@
 'use client';
 
-import ReactMarkdown from 'react-markdown';
-import remarkGfm from 'remark-gfm';
+import { Markdown } from '@/components';
 import { TERMS_CONTENT } from './content';
 import * as S from './TermsScreen.styles';
 
@@ -11,7 +10,7 @@ export const TermsScreen: React.FC = () => {
       <S.Title>Terms of Service</S.Title>
       <S.LastUpdated>Last updated: April 9, 2026</S.LastUpdated>
       <S.MarkdownBody>
-        <ReactMarkdown remarkPlugins={[remarkGfm]}>{TERMS_CONTENT}</ReactMarkdown>
+        <Markdown>{TERMS_CONTENT}</Markdown>
       </S.MarkdownBody>
     </S.Layout>
   );

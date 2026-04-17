@@ -2,7 +2,9 @@
 
 import { useRouter } from 'next/navigation';
 import { useMemo, useState } from 'react';
+import { toast } from 'sonner';
 import { CourseCard, Button, SectionLabel, FilterTabs, FilterTab, TopTabs, TopTab, TextLoader } from '@/components';
+import { ROUTES } from '@/constants/routes';
 import {
   useCourses,
   useContinueLearning,
@@ -12,8 +14,10 @@ import {
   useFavoriteCourseIds,
   useToggleFavoriteCourse,
   useBookmarkedLessons,
+  useInsightsDueCount,
 } from '@/hooks';
 import { useJobManager } from '@/hooks/useJobManager';
+import { plural } from '@/lib/strings';
 import * as S from './HomeScreen.styles';
 import { ContinueLearningCard } from './internal/ContinueLearningCard/ContinueLearningCard';
 import { GamificationCard } from './internal/GamificationCard/GamificationCard';
@@ -27,6 +31,7 @@ export const HomeScreen: React.FC = () => {
   const { data: progressSummary } = useProgressSummary();
   const { data: reviewsDue } = useReviewsDue();
   const { data: unattemptedQuizzes } = useUnattemptedQuizzes();
+  const { data: insightsDue } = useInsightsDueCount();
   const { data: favoriteCourseIds } = useFavoriteCourseIds();
   const { mutate: toggleFavorite } = useToggleFavoriteCourse();
   const { isJobRunningForCourse } = useJobManager();
@@ -107,6 +112,55 @@ export const HomeScreen: React.FC = () => {
   return (
     <S.Layout>
       <S.Container>
+        <S.DebugPanel>
+          <S.DebugLabel>Sonner debug</S.DebugLabel>
+          <S.DebugRow>
+            <Button variant="secondary" size="small" onClick={() => toast('Plain toast')}>
+              Default
+            </Button>
+            <Button variant="secondary" size="small" onClick={() => toast.success('It worked!')}>
+              Success
+            </Button>
+            <Button variant="secondary" size="small" onClick={() => toast.error('Something went wrong.')}>
+              Error
+            </Button>
+            <Button variant="secondary" size="small" onClick={() => toast.info('Heads up — just so you know.')}>
+              Info
+            </Button>
+            <Button variant="secondary" size="small" onClick={() => toast.warning('Careful, this might blow up.')}>
+              Warning
+            </Button>
+            <Button
+              variant="secondary"
+              size="small"
+              onClick={() =>
+                toast('Event created', {
+                  description: 'Monday, April 20 at 10:00 AM',
+                  action: { label: 'Undo', onClick: () => toast('Undone') },
+                })
+              }
+            >
+              With action
+            </Button>
+            <Button
+              variant="secondary"
+              size="small"
+              onClick={() =>
+                toast.promise(new Promise((resolve) => setTimeout(resolve, 1500)), {
+                  loading: 'Loading…',
+                  success: 'Loaded!',
+                  error: 'Failed to load',
+                })
+              }
+            >
+              Promise
+            </Button>
+            <Button variant="secondary" size="small" onClick={() => toast.dismiss()}>
+              Dismiss all
+            </Button>
+          </S.DebugRow>
+        </S.DebugPanel>
+
         <S.DashboardGrid>
           <S.MainColumn>
             {continueLearning && <ContinueLearningCard data={continueLearning} />}
@@ -166,7 +220,7 @@ export const HomeScreen: React.FC = () => {
                           progress={progressMap.get(course._id)}
                           isFavorited={favoriteSet.has(course._id)}
                           onToggleFavorite={toggleFavorite}
-                          onClick={() => router.push(`/course/${course.slug ?? course._id}`)}
+                          onClick={() => router.push(ROUTES.course(course.slug, course._id))}
                         />
                       ))}
                     </S.CourseGrid>
@@ -187,7 +241,7 @@ export const HomeScreen: React.FC = () => {
                           key={`${item.courseId}-${item.moduleIndex}-${item.lessonIndex}`}
                           onClick={() =>
                             router.push(
-                              `/course/${item.courseSlug ?? item.courseId}/lesson/${item.moduleIndex}/${item.lessonIndex}`,
+                              ROUTES.lesson(item.courseSlug, item.courseId, item.moduleIndex, item.lessonIndex),
                             )
                           }
                         >
@@ -215,7 +269,7 @@ export const HomeScreen: React.FC = () => {
                 {reviewsDue && reviewsDue.length > 0 && (
                   <S.QuizCardRow>
                     <S.QuizCardCount $color="warning">{reviewsDue.length}</S.QuizCardCount>
-                    <S.QuizCardText>review{reviewsDue.length !== 1 ? 's' : ''} due</S.QuizCardText>
+                    <S.QuizCardText>{plural(reviewsDue.length, 'review')} due</S.QuizCardText>
                   </S.QuizCardRow>
                 )}
                 {unattemptedQuizzes && unattemptedQuizzes.length > 0 && (
@@ -224,6 +278,18 @@ export const HomeScreen: React.FC = () => {
                     <S.QuizCardText>not yet taken</S.QuizCardText>
                   </S.QuizCardRow>
                 )}
+              </S.QuizCard>
+            )}
+
+            {insightsDue && insightsDue.count > 0 && (
+              <S.QuizCard onClick={() => router.push('/insights')}>
+                <S.QuizCardLabel>Insights</S.QuizCardLabel>
+                <S.QuizCardRow>
+                  <S.QuizCardCount $color="accent">{insightsDue.count}</S.QuizCardCount>
+                  <S.QuizCardText>
+                    {plural(insightsDue.count, 'insight')} due
+                  </S.QuizCardText>
+                </S.QuizCardRow>
               </S.QuizCard>
             )}
           </S.SideColumn>
