@@ -12,6 +12,7 @@ export const ModuleQuizScreen = () => {
   const router = useRouter();
   const searchParams = useSearchParams();
   const isReviewMode = searchParams.get('review') === 'true';
+  const fromQuizzes = searchParams.get('from') === 'quizzes';
 
   const courseSlug = params.slug as string;
   const moduleIndex = Number(params.moduleIndex);
@@ -53,11 +54,13 @@ export const ModuleQuizScreen = () => {
         moduleIndex={moduleIndex}
         courseBasePath={courseBasePath}
         isReviewMode={isReviewMode}
+        fromQuizzes={fromQuizzes}
         isGenerating={quiz.isGenerating}
         isResetting={quiz.isResetting}
         onRetake={quiz.handleRetake}
         onNextModule={() => router.push(`${courseBasePath}/lesson/${moduleIndex + 1}/0`)}
         onBackToCourses={() => router.push('/')}
+        onBackToReviews={() => router.push('/quizzes')}
         onDevReset={quiz.handleDevReset}
         hasNextModule={moduleIndex < modules.length - 1}
       />
@@ -82,6 +85,18 @@ export const ModuleQuizScreen = () => {
         onNext={quiz.handleNext}
         onDevReset={quiz.handleDevReset}
       />
+    );
+  }
+
+  // ── Loading quiz content ───────────────────────────────
+
+  if (quiz.isLoadingContent) {
+    return (
+      <S.Container>
+        <S.Content>
+          <TextLoader />
+        </S.Content>
+      </S.Container>
     );
   }
 

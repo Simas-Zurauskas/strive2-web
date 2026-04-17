@@ -110,8 +110,10 @@ export const QuizzesScreen: React.FC = () => {
 
   const handleQuizClick = (item: QuizItem) => {
     const slug = item.courseSlug ?? item.courseId;
-    const reviewParam = item.type === 'review' ? '?review=true' : '';
-    router.push(`/course/${slug}/quiz/${item.moduleIndex}${reviewParam}`);
+    const params = new URLSearchParams();
+    if (item.type === 'review') params.set('review', 'true');
+    params.set('from', 'quizzes');
+    router.push(`/course/${slug}/quiz/${item.moduleIndex}?${params.toString()}`);
   };
 
   return (

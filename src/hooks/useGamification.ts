@@ -5,8 +5,6 @@ import {
   getGamificationProfile,
   getGamificationStats,
   getQuizTrends,
-  getMasteryOverview,
-  getMasteryCourses,
   postStreakFreeze,
 } from '@/api/routes/gamification';
 import { QKeys } from '@/types';
@@ -29,19 +27,6 @@ export const useQuizTrends = () =>
   useQuery({
     queryKey: [QKeys.GAMIFICATION_QUIZ_TRENDS],
     queryFn: getQuizTrends,
-  });
-
-export const useMasteryCourses = () =>
-  useQuery({
-    queryKey: [QKeys.GAMIFICATION_MASTERY_COURSES],
-    queryFn: getMasteryCourses,
-  });
-
-export const useMasteryOverview = (courseId: string | undefined) =>
-  useQuery({
-    queryKey: [QKeys.GAMIFICATION_MASTERY_OVERVIEW, courseId],
-    queryFn: () => getMasteryOverview(courseId!),
-    enabled: !!courseId,
   });
 
 export const useStreakFreeze = () => {

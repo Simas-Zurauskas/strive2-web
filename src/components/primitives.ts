@@ -8,7 +8,7 @@ export const PageLayout = styled.div`
   color: ${(p) => p.theme.colors.foreground};
   padding: 2rem;
   width: 100%;
-  max-width: 820px;
+  max-width: 860px;
   margin: 0 auto;
 
   ${(p) => p.theme.media.tablet} {

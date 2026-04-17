@@ -1,7 +1,9 @@
 import { useMemo } from 'react';
 import Highcharts from 'highcharts';
 import HighchartsReact from 'highcharts-react-official';
+import Skeleton from 'react-loading-skeleton';
 import { useTheme } from 'styled-components';
+import { themeColors } from '@/theme';
 import * as S from './XpChart.styles';
 
 interface XpDayEntry {
@@ -11,14 +13,18 @@ interface XpDayEntry {
 }
 
 interface XpChartProps {
-  data: XpDayEntry[];
+  data?: XpDayEntry[];
+  loading?: boolean;
 }
 
-export const XpChart: React.FC<XpChartProps> = ({ data }) => {
-  const theme = useTheme();
+const CHART_HEIGHT = 200;
 
-  // Only show last 30 days
-  const last30 = useMemo(() => data.slice(-30), [data]);
+export const XpChart: React.FC<XpChartProps> = ({ data, loading }) => {
+  const theme = useTheme();
+  const scheme = theme.scheme === 'dark' ? 'dark' : 'light';
+  const c = themeColors[scheme];
+
+  const last30 = useMemo(() => (data ?? []).slice(-30), [data]);
 
   const options: Highcharts.Options = useMemo(() => {
     const categories = last30.map((d) => {
@@ -29,7 +35,7 @@ export const XpChart: React.FC<XpChartProps> = ({ data }) => {
     return {
       chart: {
         type: 'column',
-        height: 200,
+        height: CHART_HEIGHT,
         backgroundColor: 'transparent',
         style: { fontFamily: 'inherit' },
         spacing: [8, 0, 8, 0],
@@ -41,8 +47,8 @@ export const XpChart: React.FC<XpChartProps> = ({ data }) => {
         align: 'right',
         verticalAlign: 'top',
         floating: true,
-        itemStyle: { color: theme.colors.muted, fontSize: '0.625rem', fontWeight: '500' },
-        itemHoverStyle: { color: theme.colors.foreground },
+        itemStyle: { color: c.muted, fontSize: '0.625rem', fontWeight: '500' },
+        itemHoverStyle: { color: c.foreground },
         symbolHeight: 8,
         symbolWidth: 8,
         symbolRadius: 2,
@@ -51,15 +57,15 @@ export const XpChart: React.FC<XpChartProps> = ({ data }) => {
         categories,
         labels: {
           step: Math.ceil(last30.length / 6),
-          style: { color: theme.colors.muted, fontSize: '0.5625rem' },
+          style: { color: c.muted, fontSize: '0.5625rem' },
         },
-        lineColor: theme.colors.border,
+        lineColor: c.surfaceBorder,
         tickLength: 0,
       },
       yAxis: {
         title: { text: undefined },
-        gridLineColor: theme.colors.border,
-        labels: { style: { color: theme.colors.muted, fontSize: '0.5625rem' } },
+        gridLineColor: c.surfaceBorder,
+        labels: { style: { color: c.muted, fontSize: '0.5625rem' } },
         min: 0,
       },
       plotOptions: {
@@ -74,46 +80,69 @@ export const XpChart: React.FC<XpChartProps> = ({ data }) => {
       tooltip: {
         shared: true,
         useHTML: true,
-        backgroundColor: theme.colors.surface,
-        borderColor: theme.colors.border,
-        style: { color: theme.colors.foreground, fontSize: '0.75rem' },
-        headerFormat: '<b>{point.key}</b><br/>',
-        pointFormat: '<span style="color:{series.color}">\u25CF</span> {series.name}: <b>{point.y}</b> XP<br/>',
-        footerFormat: '<b>Total: {point.total}</b> XP',
+        backgroundColor: 'transparent',
+        borderWidth: 0,
+        shadow: false,
+        padding: 0,
+        outside: true,
+        formatter: function () {
+          const points = this.points ?? [];
+          const total = points.reduce((s, p) => s + (p.y ?? 0), 0);
+          if (total === 0) return false;
+          const header = `<div style="font-weight:600;font-size:0.8125rem;margin-bottom:8px">${this.x}</div>`;
+          const rows = points
+            .filter((p) => (p.y ?? 0) > 0)
+            .map(
+              (p) =>
+                `<div style="display:flex;align-items:center;gap:8px;padding:2px 0">` +
+                `<span style="width:8px;height:8px;border-radius:50%;background:${p.color};flex-shrink:0"></span>` +
+                `<span style="color:${c.muted};flex:1">${p.series.name}</span>` +
+                `<span style="font-weight:600;font-variant-numeric:tabular-nums">${p.y} XP</span>` +
+                `</div>`,
+            )
+            .join('');
+          const footer =
+            `<div style="border-top:1px solid ${c.surfaceBorder};margin-top:8px;padding-top:8px;display:flex;justify-content:space-between;font-weight:600">` +
+            `<span>Total</span><span>${total} XP</span></div>`;
+          return `<div style="background:${c.surface};border:1px solid ${c.surfaceBorder};border-radius:12px;padding:12px 14px;min-width:160px;` +
+            `box-shadow:0 4px 24px rgba(0,0,0,${scheme === 'dark' ? '0.5' : '0.15'}),0 1px 4px rgba(0,0,0,${scheme === 'dark' ? '0.3' : '0.08'});` +
+            `color:${c.foreground};font-size:0.75rem;line-height:1.5">` +
+            header + rows + footer + '</div>';
+        },
       },
       series: [
         {
           name: 'Lessons',
           type: 'column',
           data: last30.map((d) => d.sources.lesson_complete),
-          color: theme.colors.accent,
+          color: c.accent,
         },
         {
           name: 'Quizzes',
           type: 'column',
           data: last30.map((d) => d.sources.quiz_score),
-          color: theme.colors.tertiary,
+          color: c.tertiary,
         },
         {
           name: 'Exercises',
           type: 'column',
           data: last30.map((d) => d.sources.exercise_pass),
-          color: theme.colors.success,
+          color: c.success,
         },
         {
           name: 'Reviews',
           type: 'column',
           data: last30.map((d) => d.sources.review_complete),
-          color: theme.colors.warning,
+          color: c.warning,
         },
       ],
     };
-  }, [last30, theme]);
+  }, [last30, c, scheme]);
 
-  if (last30.length === 0) return null;
+  const showSkeleton = loading && last30.length === 0;
 
-  const startDate = last30[0].date;
-  const endDate = last30[last30.length - 1].date;
+  const startDate = last30[0]?.date;
+  const endDate = last30[last30.length - 1]?.date;
   const fmt = (d: string) => {
     const date = new Date(d + 'T00:00:00');
     return date.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
@@ -122,12 +151,27 @@ export const XpChart: React.FC<XpChartProps> = ({ data }) => {
   return (
     <S.Section>
       <S.Header>
-        <S.Title>XP — Last 30 Days</S.Title>
-        <S.RangeLabel>
-          {fmt(startDate)} — {fmt(endDate)}
-        </S.RangeLabel>
+        {showSkeleton ? (
+          <>
+            <S.Title><Skeleton width={140} /></S.Title>
+            <S.RangeLabel><Skeleton width={100} /></S.RangeLabel>
+          </>
+        ) : (
+          <>
+            <S.Title>XP — Last 30 Days</S.Title>
+            {startDate && endDate && (
+              <S.RangeLabel>{fmt(startDate)} — {fmt(endDate)}</S.RangeLabel>
+            )}
+          </>
+        )}
       </S.Header>
-      <HighchartsReact highcharts={Highcharts} options={options} />
+      <div style={{ height: CHART_HEIGHT }}>
+        {showSkeleton ? (
+          <Skeleton height={CHART_HEIGHT} borderRadius={8} />
+        ) : last30.length > 0 ? (
+          <HighchartsReact highcharts={Highcharts} options={options} />
+        ) : null}
+      </div>
     </S.Section>
   );
 };

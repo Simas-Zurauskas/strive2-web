@@ -1,5 +1,5 @@
 import { ArrowRight, Trash2 } from 'lucide-react';
-import { Eyebrow } from '@/components';
+import { Button, Eyebrow } from '@/components';
 import { DEV_MODE } from '@/conf/env';
 import * as S from '../ModuleQuizScreen.styles';
 import type { CourseModule, ModuleQuizQuestion } from '@/api/types';
@@ -89,10 +89,10 @@ export const QuizQuestion = ({
         </S.QuestionCard>
 
         {selectedOption !== null && (
-          <S.NextButton onClick={onNext} disabled={isSubmitting}>
+          <Button onClick={onNext} loading={isSubmitting} style={{ alignSelf: 'flex-start' }}>
             {currentQuestion < totalQuestions - 1 ? 'Next Question' : 'See Results'}{' '}
             <ArrowRight size={14} />
-          </S.NextButton>
+          </Button>
         )}
       </S.Content>
     </S.Container>
