@@ -142,7 +142,7 @@ export const useLessonStream = ({
               queryClient.invalidateQueries({ queryKey: [QKeys.COURSE, courseId] });
               queryClient.invalidateQueries({ queryKey: [QKeys.LESSON_CONTENT, courseId, moduleIndex, lessonIndex] });
               queryClient.invalidateQueries({ queryKey: [QKeys.GENERATED_LESSONS, courseId] });
-              toast.error(toastMessage(event.message, TOASTS.GENERATION_FAILED));
+              toast.error(toastMessage({ dynamic: event.message, fallback: TOASTS.GENERATION_FAILED }));
               break;
           }
         },

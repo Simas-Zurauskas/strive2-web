@@ -355,7 +355,7 @@ export const ScoreDisplay = styled.div`
   }
 `;
 
-const tierColor = (tier: QuizMasteryTier, colors: { success: string; accent: string; error: string }) =>
+const tierColor = ({ tier, colors }: { tier: QuizMasteryTier; colors: { success: string; accent: string; error: string } }) =>
   tier === 'mastered' ? colors.success : tier === 'passed' ? colors.accent : colors.error;
 
 export const TierIconHero = styled.span<{ $tier: QuizMasteryTier }>`
@@ -366,8 +366,8 @@ export const TierIconHero = styled.span<{ $tier: QuizMasteryTier }>`
   height: 56px;
   border-radius: 50%;
   margin-bottom: 0.25rem;
-  background: ${(p) => `${tierColor(p.$tier, p.theme.colors)}18`};
-  color: ${(p) => tierColor(p.$tier, p.theme.colors)};
+  background: ${(p) => `${tierColor({ tier: p.$tier, colors: p.theme.colors })}18`};
+  color: ${(p) => tierColor({ tier: p.$tier, colors: p.theme.colors })};
 `;
 
 export const TierIconInline = styled.span<{ $tier: QuizMasteryTier }>`
@@ -378,8 +378,8 @@ export const TierIconInline = styled.span<{ $tier: QuizMasteryTier }>`
   height: 32px;
   border-radius: 50%;
   flex-shrink: 0;
-  background: ${(p) => `${tierColor(p.$tier, p.theme.colors)}18`};
-  color: ${(p) => tierColor(p.$tier, p.theme.colors)};
+  background: ${(p) => `${tierColor({ tier: p.$tier, colors: p.theme.colors })}18`};
+  color: ${(p) => tierColor({ tier: p.$tier, colors: p.theme.colors })};
 `;
 
 export const MasteryBadge = styled.span<{ $tier: QuizMasteryTier }>`

@@ -124,3 +124,38 @@ export const ThemeToggle = styled.button`
   }
 `;
 
+export const ThemeSwitch = styled.div`
+  height: 32px;
+  display: inline-flex;
+  align-items: stretch;
+  padding: 3px;
+  border-radius: 9999px;
+  border: 1px solid ${(p) => p.theme.colors.border};
+  background: transparent;
+`;
+
+export const ThemeOption = styled.button<{ $active: boolean }>`
+  width: 24px;
+  height: 24px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 50%;
+  border: none;
+  background: ${(p) => (p.$active ? p.theme.colors.accent : 'transparent')};
+  color: ${(p) => (p.$active ? p.theme.colors.surface : p.theme.colors.muted)};
+  cursor: pointer;
+  transition:
+    background 0.15s,
+    color 0.15s;
+
+  &:hover {
+    color: ${(p) => (p.$active ? p.theme.colors.surface : p.theme.colors.foreground)};
+  }
+
+  svg {
+    width: 14px;
+    height: 14px;
+  }
+`;
+

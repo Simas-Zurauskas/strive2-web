@@ -7,10 +7,13 @@ export const Container = styled.div`
   gap: 0.5rem;
 `;
 
-const colorForRating = (
-  rating: InsightRating,
-  colors: { error: string; warning: string; accent: string; success: string },
-) => {
+const colorForRating = ({
+  rating,
+  colors,
+}: {
+  rating: InsightRating;
+  colors: { error: string; warning: string; accent: string; success: string };
+}) => {
   switch (rating) {
     case 1: return colors.error;
     case 2: return colors.warning;
@@ -26,9 +29,9 @@ export const RateButton = styled.button<{ $rating: InsightRating }>`
   gap: 0.25rem;
   padding: 0.75rem 0.5rem;
   border-radius: 8px;
-  border: 1px solid ${(p) => colorForRating(p.$rating, p.theme.colors)}55;
-  background: ${(p) => colorForRating(p.$rating, p.theme.colors)}10;
-  color: ${(p) => colorForRating(p.$rating, p.theme.colors)};
+  border: 1px solid ${(p) => colorForRating({ rating: p.$rating, colors: p.theme.colors })}55;
+  background: ${(p) => colorForRating({ rating: p.$rating, colors: p.theme.colors })}10;
+  color: ${(p) => colorForRating({ rating: p.$rating, colors: p.theme.colors })};
   font-family: inherit;
   font-weight: 600;
   font-size: 0.875rem;
@@ -36,7 +39,7 @@ export const RateButton = styled.button<{ $rating: InsightRating }>`
   transition: transform 0.1s ease, background 0.15s;
 
   &:hover {
-    background: ${(p) => colorForRating(p.$rating, p.theme.colors)}22;
+    background: ${(p) => colorForRating({ rating: p.$rating, colors: p.theme.colors })}22;
   }
 
   &:active {

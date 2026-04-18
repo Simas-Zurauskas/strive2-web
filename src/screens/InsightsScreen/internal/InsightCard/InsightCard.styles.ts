@@ -283,10 +283,13 @@ export const TypedSubmit = styled.button`
 
 // ── Verdict panel (AI-graded typed recall) ───────────
 
-const verdictColor = (
-  verdict: GradeVerdict | null,
-  colors: { success: string; accent: string; error: string; muted: string },
-): string => {
+const verdictColor = ({
+  verdict,
+  colors,
+}: {
+  verdict: GradeVerdict | null;
+  colors: { success: string; accent: string; error: string; muted: string };
+}): string => {
   switch (verdict) {
     case 'correct': return colors.success;
     case 'partial': return colors.accent;
@@ -301,8 +304,8 @@ export const VerdictPanel = styled.div<{ $verdict: GradeVerdict | null }>`
   gap: 0.375rem;
   padding: 0.75rem 1rem;
   border-radius: 8px;
-  border: 1px solid ${(p) => `${verdictColor(p.$verdict, p.theme.colors)}33`};
-  background: ${(p) => `${verdictColor(p.$verdict, p.theme.colors)}0D`};
+  border: 1px solid ${(p) => `${verdictColor({ verdict: p.$verdict, colors: p.theme.colors })}33`};
+  background: ${(p) => `${verdictColor({ verdict: p.$verdict, colors: p.theme.colors })}0D`};
 `;
 
 export const VerdictHeader = styled.div`
@@ -332,8 +335,8 @@ export const VerdictPill = styled.span<{ $verdict: GradeVerdict }>`
   letter-spacing: 0.04em;
   text-transform: uppercase;
   flex-shrink: 0;
-  background: ${(p) => `${verdictColor(p.$verdict, p.theme.colors)}22`};
-  color: ${(p) => verdictColor(p.$verdict, p.theme.colors)};
+  background: ${(p) => `${verdictColor({ verdict: p.$verdict, colors: p.theme.colors })}22`};
+  color: ${(p) => verdictColor({ verdict: p.$verdict, colors: p.theme.colors })};
 `;
 
 export const GradingSpinner = styled.span`

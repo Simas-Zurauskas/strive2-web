@@ -78,14 +78,14 @@ export const useUpsertProgress = () => {
 
 // ── Module quiz hooks ──────────────────────────────────
 
-export const useModuleQuizContent = (courseId: string | null, moduleIndex: number | null) =>
+export const useModuleQuizContent = ({ courseId, moduleIndex }: { courseId: string | null; moduleIndex: number | null }) =>
   useQuery({
     queryKey: [QKeys.MODULE_QUIZ_CONTENT, courseId, moduleIndex],
     queryFn: () => getModuleQuizContent({ courseId: courseId!, moduleIndex: moduleIndex! }),
     enabled: !!courseId && moduleIndex !== null,
   });
 
-export const useModuleQuizProgress = (courseId: string | null, moduleIndex: number | null) =>
+export const useModuleQuizProgress = ({ courseId, moduleIndex }: { courseId: string | null; moduleIndex: number | null }) =>
   useQuery({
     queryKey: [QKeys.MODULE_QUIZ_PROGRESS, courseId, moduleIndex],
     queryFn: () => getModuleQuizProgress({ courseId: courseId!, moduleIndex: moduleIndex! }),

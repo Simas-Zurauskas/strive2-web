@@ -117,7 +117,7 @@ export const CourseSidebar = ({
   const totalLessons = modules.reduce((sum, m) => sum + (m.lessons?.length ?? 0), 0);
   const completedCount = progressData?.stats?.completed ?? 0;
 
-  const getDotState = (mi: number, li: number): LessonDotState => {
+  const getDotState = ({ mi, li }: { mi: number; li: number }): LessonDotState => {
     const key = `${mi}-${li}`;
     const progress = progressMap.get(key);
 
@@ -165,7 +165,7 @@ export const CourseSidebar = ({
         <S.MetaRow>
           {depthLabel && <Badge variant="gold">{depthLabel}</Badge>}
           <S.MetaText>
-            {modules.length} {plural(modules.length, 'module')} &middot; {totalLessons} {plural(totalLessons, 'lesson')}
+            {modules.length} {plural({ count: modules.length, singular: 'module' })} &middot; {totalLessons} {plural({ count: totalLessons, singular: 'lesson' })}
           </S.MetaText>
         </S.MetaRow>
         <S.ProgressHeader>
@@ -179,7 +179,7 @@ export const CourseSidebar = ({
         {reviewsDueCount > 0 && (
           <S.ReviewsDueBanner>
             <S.ReviewDot />
-            {reviewsDueCount} {plural(reviewsDueCount, 'review')} due
+            {reviewsDueCount} {plural({ count: reviewsDueCount, singular: 'review' })} due
           </S.ReviewsDueBanner>
         )}
       </S.Header>
@@ -214,7 +214,7 @@ export const CourseSidebar = ({
                       currentLessonIndex !== undefined &&
                       mi === currentModuleIndex &&
                       li === currentLessonIndex;
-                    const dotState = getDotState(mi, li);
+                    const dotState = getDotState({ mi, li });
                     const isBookmarked = progressMap.get(`${mi}-${li}`)?.bookmarked;
 
                     return (

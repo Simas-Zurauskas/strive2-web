@@ -344,10 +344,13 @@ export const QuizRow = styled.button<{ $locked: boolean }>`
   `}
 `;
 
-const quizIconColor = (
-  variant: QuizIconVariant,
-  colors: { success: string; accent: string; error: string; tertiary: string; muted: string },
-) => {
+const quizIconColor = ({
+  variant,
+  colors,
+}: {
+  variant: QuizIconVariant;
+  colors: { success: string; accent: string; error: string; tertiary: string; muted: string };
+}) => {
   switch (variant) {
     case 'mastered':
       return colors.success;
@@ -373,8 +376,8 @@ export const QuizIcon = styled.span<{ $variant: QuizIconVariant }>`
   background: ${(p) =>
     p.$variant === 'locked'
       ? p.theme.colors.surfaceBorder
-      : `${quizIconColor(p.$variant, p.theme.colors)}18`};
-  color: ${(p) => quizIconColor(p.$variant, p.theme.colors)};
+      : `${quizIconColor({ variant: p.$variant, colors: p.theme.colors })}18`};
+  color: ${(p) => quizIconColor({ variant: p.$variant, colors: p.theme.colors })};
 `;
 
 export const QuizLabel = styled.span`

@@ -50,11 +50,15 @@ function computeBridgedWeekdays(activeSet: Set<string>): Set<string> {
   return bridged;
 }
 
-function buildStreakCalendar(
-  activeDates: string[] | undefined,
-  xpLog: { date: string; xp: number }[] | undefined,
-  registeredAt: string | undefined,
-): (CalendarCell | null)[] {
+function buildStreakCalendar({
+  activeDates,
+  xpLog,
+  registeredAt,
+}: {
+  activeDates: string[] | undefined;
+  xpLog: { date: string; xp: number }[] | undefined;
+  registeredAt: string | undefined;
+}): (CalendarCell | null)[] {
   const today = new Date();
   const todayStr = today.toISOString().slice(0, 10);
   const todayDow = (today.getDay() + 6) % 7; // 0=Mon ... 6=Sun
@@ -104,7 +108,7 @@ function getNextMilestone(profile: { currentStreak: number; level: number; total
   for (const target of streakTargets) {
     if (profile.currentStreak < target) {
       const remaining = target - profile.currentStreak;
-      return `${remaining} ${plural(remaining, 'day')} to ${target}-day streak`;
+      return `${remaining} ${plural({ count: remaining, singular: 'day' })} to ${target}-day streak`;
     }
   }
 
@@ -140,7 +144,7 @@ export const GamificationCard = () => {
   }, [progressSummary, courses]);
 
   const calendarCells = useMemo(() => {
-    const cells = buildStreakCalendar(profile?.activeDates, profile?.xpLog, user?.createdAt);
+    const cells = buildStreakCalendar({ activeDates: profile?.activeDates, xpLog: profile?.xpLog, registeredAt: user?.createdAt });
     while (cells.length > 7 && cells.slice(0, 7).every((d) => d === null)) {
       cells.splice(0, 7);
     }
@@ -205,10 +209,10 @@ export const GamificationCard = () => {
                 $weekend={cell.weekend}
                 title={
                   cell.xp > 0
-                    ? `${formatDate(cell.date, 'cell')} — ${cell.xp} XP`
+                    ? `${formatDate({ input: cell.date, format: 'cell' })} — ${cell.xp} XP`
                     : cell.bridged
-                      ? `${formatDate(cell.date, 'cell')} — No activity (between active days)`
-                      : `${formatDate(cell.date, 'cell')} — No activity`
+                      ? `${formatDate({ input: cell.date, format: 'cell' })} — No activity (between active days)`
+                      : `${formatDate({ input: cell.date, format: 'cell' })} — No activity`
                 }
               />
             ),

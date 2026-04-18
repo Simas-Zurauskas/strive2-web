@@ -41,4 +41,4 @@ export const TOASTS = {
 } as const;
 
 // Helper for dynamic messages with a fallback
-export const toastMessage = (dynamic: string | null | undefined, fallback: string) => dynamic || fallback;
+export const toastMessage = ({ dynamic, fallback }: { dynamic: string | null | undefined; fallback: string }) => dynamic || fallback;

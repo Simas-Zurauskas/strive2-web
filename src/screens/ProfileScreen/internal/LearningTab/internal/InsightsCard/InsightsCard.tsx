@@ -44,7 +44,7 @@ const RATING_LABELS: Record<number, string> = {
 
 const CHART_HEIGHT = 200;
 
-const formatDelta = (current: number, previous: number): { text: string; positive: boolean; neutral: boolean } => {
+const formatDelta = ({ current, previous }: { current: number; previous: number }): { text: string; positive: boolean; neutral: boolean } => {
   if (previous === 0 && current === 0) return { text: '—', positive: false, neutral: true };
   if (previous === 0) return { text: `+${current}`, positive: true, neutral: false };
   const pct = Math.round(((current - previous) / previous) * 100);
@@ -89,7 +89,7 @@ export const InsightsCard: React.FC = () => {
     };
 
     const history = data?.recentHistory ?? [];
-    const categories = history.map((h) => formatDate(h.date));
+    const categories = history.map((h) => formatDate({ input: h.date }));
     const reviewPoints = history.map((h) => ({
       y: h.reviews,
       color: colorForRating(h.avgRating),
@@ -299,7 +299,7 @@ export const InsightsCard: React.FC = () => {
     );
   }
 
-  const delta = formatDelta(reviewedThisWeek, reviewedLastWeek);
+  const delta = formatDelta({ current: reviewedThisWeek, previous: reviewedLastWeek });
   const hasHistory = (data?.recentHistory?.length ?? 0) > 0;
 
   return (

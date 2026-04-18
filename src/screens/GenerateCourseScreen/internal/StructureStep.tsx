@@ -36,7 +36,7 @@ export const StructureStep = ({ courseId, modules, onStructureModified, onAccept
           modules, adjust scope, or ask why something was included. When you&apos;re happy with it, accept to start learning.
         </S.Subtitle>
         <Badge variant="default">
-          {modules.length} {plural(modules.length, 'module')} &middot; {totalLessons} {plural(totalLessons, 'lesson')}
+          {modules.length} {plural({ count: modules.length, singular: 'module' })} &middot; {totalLessons} {plural({ count: totalLessons, singular: 'lesson' })}
         </Badge>
       </S.Header>
 

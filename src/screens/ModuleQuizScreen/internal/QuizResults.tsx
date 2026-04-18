@@ -75,7 +75,7 @@ export const QuizResults = ({
           </S.MasteryBadge>
           {results.reviewIntervalDays > 0 && (
             <S.NextReviewInfo>
-              Next review in {results.reviewIntervalDays} {plural(results.reviewIntervalDays, 'day')} or sooner as you progress
+              Next review in {results.reviewIntervalDays} {plural({ count: results.reviewIntervalDays, singular: 'day' })} or sooner as you progress
             </S.NextReviewInfo>
           )}
         </S.ResultsHeader>

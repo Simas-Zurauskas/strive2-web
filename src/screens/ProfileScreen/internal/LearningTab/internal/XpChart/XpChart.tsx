@@ -23,7 +23,7 @@ export const XpChart: React.FC<XpChartProps> = ({ data, loading }) => {
   const last30 = useMemo(() => (data ?? []).slice(-30), [data]);
 
   const options: Highcharts.Options = useMemo(() => {
-    const categories = last30.map((d) => formatDate(d.date));
+    const categories = last30.map((d) => formatDate({ input: d.date }));
 
     return {
       chart: {
@@ -164,7 +164,7 @@ export const XpChart: React.FC<XpChartProps> = ({ data, loading }) => {
           <>
             <S.Title>XP — Last 30 Days</S.Title>
             {startDate && endDate && (
-              <S.RangeLabel>{formatDate(startDate)} — {formatDate(endDate)}</S.RangeLabel>
+              <S.RangeLabel>{formatDate({ input: startDate })} — {formatDate({ input: endDate })}</S.RangeLabel>
             )}
           </>
         )}

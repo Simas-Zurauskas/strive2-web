@@ -269,7 +269,7 @@ export const HomeScreen: React.FC = () => {
                 {reviewsDue && reviewsDue.length > 0 && (
                   <S.QuizCardRow>
                     <S.QuizCardCount $color="warning">{reviewsDue.length}</S.QuizCardCount>
-                    <S.QuizCardText>{plural(reviewsDue.length, 'review')} due</S.QuizCardText>
+                    <S.QuizCardText>{plural({ count: reviewsDue.length, singular: 'review' })} due</S.QuizCardText>
                   </S.QuizCardRow>
                 )}
                 {unattemptedQuizzes && unattemptedQuizzes.length > 0 && (
@@ -287,7 +287,7 @@ export const HomeScreen: React.FC = () => {
                 <S.QuizCardRow>
                   <S.QuizCardCount $color="accent">{insightsDue.count}</S.QuizCardCount>
                   <S.QuizCardText>
-                    {plural(insightsDue.count, 'insight')} due
+                    {plural({ count: insightsDue.count, singular: 'insight' })} due
                   </S.QuizCardText>
                 </S.QuizCardRow>
               </S.QuizCard>

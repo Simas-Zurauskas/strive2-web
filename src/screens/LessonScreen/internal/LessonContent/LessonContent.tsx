@@ -71,12 +71,12 @@ export const LessonContent = ({
 
   // Poll when generating: WS match OR reload fallback (activeJobId set but no WS state yet)
   const shouldPoll = isThisLessonGeneratingWs || (!generatingLesson && isGenerationRunning);
-  const { data: lessonContent, isLoading: isLoadingContent } = useLessonContent(
+  const { data: lessonContent, isLoading: isLoadingContent } = useLessonContent({
     courseId,
     moduleIndex,
     lessonIndex,
-    shouldPoll,
-  );
+    isGenerating: shouldPoll,
+  });
   const hasContent = !!lessonContent?.blocks?.length;
 
   // Check if previous lesson is generated (required before generating this one)
@@ -87,13 +87,13 @@ export const LessonContent = ({
       ? { mi: moduleIndex, li: lessonIndex - 1 }
       : { mi: moduleIndex - 1, li: (modules[moduleIndex - 1]?.lessons?.length ?? 1) - 1 };
 
-  const { data: prevLessonContent } = useLessonContent(
+  const { data: prevLessonContent } = useLessonContent({
     courseId,
-    prevCoords?.mi ?? 0,
-    prevCoords?.li ?? 0,
-    false,
-    !isFirstLesson && !hasContent,
-  );
+    moduleIndex: prevCoords?.mi ?? 0,
+    lessonIndex: prevCoords?.li ?? 0,
+    isGenerating: false,
+    enabled: !isFirstLesson && !hasContent,
+  });
   const isPrevLessonGenerated = isFirstLesson || !!prevLessonContent?.blocks?.length;
 
   const stream = useLessonStream({

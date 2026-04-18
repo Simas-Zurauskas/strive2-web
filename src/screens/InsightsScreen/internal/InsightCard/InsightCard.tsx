@@ -10,7 +10,7 @@ import type { GradeResult, InsightQueueItem, InsightRating } from '@/api/types';
 
 interface InsightCardProps {
   insight: InsightQueueItem;
-  onRate: (rating: InsightRating, typedMatch?: number | null) => void;
+  onRate: (args: { rating: InsightRating; typedMatch?: number | null }) => void;
   onSkip: () => void;
   onToggleMode: () => void;
   isRating?: boolean;
@@ -99,7 +99,7 @@ export const InsightCard = ({
   };
 
   const handleRate = (rating: InsightRating) => {
-    onRate(rating, grade?.score ?? null);
+    onRate({ rating, typedMatch: grade?.score ?? null });
   };
 
   const lessonHref = insight.courseSlug
