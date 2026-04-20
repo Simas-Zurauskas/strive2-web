@@ -26,7 +26,7 @@ const TOOL_CONFIG: Record<string, { label: string; activeLabel: string }> = {
   modify_structure: { label: 'Modified structure', activeLabel: 'Modifying structure' },
 };
 
-const getToolDisplay = (toolName: string, isActive: boolean) => {
+const getToolDisplay = ({ toolName, isActive }: { toolName: string; isActive: boolean }) => {
   const config = TOOL_CONFIG[toolName];
   if (!config) return isActive ? `Running ${toolName}` : toolName;
   return isActive ? config.activeLabel : config.label;
@@ -51,12 +51,12 @@ const summariseTools = (tools: ToolInvocation[]) => {
     toolName,
     count,
     isActive: hasActive,
-    label: getToolDisplay(toolName, hasActive) + (count > 1 ? ` (${count})` : ''),
+    label: getToolDisplay({ toolName, isActive: hasActive }) + (count > 1 ? ` (${count})` : ''),
   }));
 };
 
 /** Reveals text character-by-character at a steady rate for smooth streaming. */
-const useTypewriter = (fullText: string, active: boolean, charsPerFrame = 2) => {
+const useTypewriter = ({ fullText, active, charsPerFrame = 2 }: { fullText: string; active: boolean; charsPerFrame?: number }) => {
   const [displayed, setDisplayed] = useState(fullText);
   const indexRef = useRef(fullText.length);
   const rafRef = useRef(0);
@@ -90,7 +90,7 @@ export const ChatMessage = memo(({ message, isStreaming = false }: ChatMessagePr
   const isUser = message.role === 'user';
   const tools = message.toolInvocations ?? [];
   const toolSummary = tools.length > 0 ? summariseTools(tools) : [];
-  const displayContent = useTypewriter(message.content, isStreaming);
+  const displayContent = useTypewriter({ fullText: message.content, active: isStreaming });
 
   const hasContent = isUser ? !!message.content : !!displayContent;
 

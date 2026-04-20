@@ -69,7 +69,7 @@ export const ProfileScreen: React.FC = () => {
             )}
           </S.ProfileEmail>
           <S.ProfileMeta>
-            Member since {formatDate(new Date(user.createdAt), 'long')}
+            Member since {formatDate({ input: new Date(user.createdAt), format: 'long' })}
           </S.ProfileMeta>
         </S.ProfileInfo>
       </S.ProfileHeader>

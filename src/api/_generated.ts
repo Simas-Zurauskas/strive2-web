@@ -4,6 +4,70 @@
  */
 
 export interface paths {
+    "/api/auth/change-password": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Change the password for the authenticated user
+         * @description Requires an existing password (CREDENTIALS provider). Bumps tokenVersion to invalidate other sessions; the caller must re-authenticate.
+         */
+        post: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path?: never;
+                cookie?: never;
+            };
+            requestBody: {
+                content: {
+                    "application/json": {
+                        newPassword: string;
+                    };
+                };
+            };
+            responses: {
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": {
+                            data: {
+                                message?: string;
+                            };
+                        };
+                    };
+                };
+                400: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ApiError"];
+                    };
+                };
+                401: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ApiError"];
+                    };
+                };
+            };
+        };
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/auth/delete-account": {
         parameters: {
             query?: never;
@@ -52,6 +116,55 @@ export interface paths {
                 };
             };
         };
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/auth/forgot-password": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Request a password reset link
+         * @description Always responds 200 with a generic message regardless of whether the email exists, to prevent account enumeration.
+         */
+        post: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path?: never;
+                cookie?: never;
+            };
+            requestBody: {
+                content: {
+                    "application/json": {
+                        /** Format: email */
+                        email: string;
+                    };
+                };
+            };
+            responses: {
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": {
+                            data: {
+                                message?: string;
+                            };
+                        };
+                    };
+                };
+            };
+        };
+        delete?: never;
         options?: never;
         head?: never;
         patch?: never;
@@ -137,6 +250,48 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/auth/logout": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Invalidate the caller's bearer token by rotating tokenVersion
+         * @description Increments the user's `tokenVersion` on the server, which causes the `protect` middleware to reject any JWT minted under the previous version. The client should clear its session cookie alongside calling this endpoint. Idempotent in effect (further calls will 401 because the bearer is no longer valid).
+         */
+        post: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path?: never;
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": {
+                            data: {
+                                message: string;
+                            };
+                        };
+                    };
+                };
+            };
+        };
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/auth/resend-verification": {
         parameters: {
             query?: never;
@@ -176,14 +331,7 @@ export interface paths {
                         };
                     };
                 };
-                400: {
-                    headers: {
-                        [name: string]: unknown;
-                    };
-                    content: {
-                        "application/json": components["schemas"]["ApiError"];
-                    };
-                };
+                /** @description Invalid email or password. Returned identically whether the email is unknown or the password is wrong — the endpoint intentionally does not disclose which. */
                 401: {
                     headers: {
                         [name: string]: unknown;
@@ -218,6 +366,134 @@ export interface paths {
                 cookie?: never;
             };
             requestBody?: never;
+            responses: {
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": {
+                            data: {
+                                message?: string;
+                            };
+                        };
+                    };
+                };
+                400: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ApiError"];
+                    };
+                };
+                401: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ApiError"];
+                    };
+                };
+            };
+        };
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/auth/reset-password": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Reset a password using a token from the reset email */
+        post: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path?: never;
+                cookie?: never;
+            };
+            requestBody: {
+                content: {
+                    "application/json": {
+                        /** Format: email */
+                        email: string;
+                        token: string;
+                        newPassword: string;
+                    };
+                };
+            };
+            responses: {
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": {
+                            data: {
+                                message?: string;
+                            };
+                        };
+                    };
+                };
+                400: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ApiError"];
+                    };
+                };
+                410: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ApiError"];
+                    };
+                };
+            };
+        };
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/auth/set-password": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Set a password on a Google-only account
+         * @description Adds a password (and the CREDENTIALS provider) to an authenticated user that does not yet have one. Bumps tokenVersion, so the caller must re-authenticate after success.
+         */
+        post: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path?: never;
+                cookie?: never;
+            };
+            requestBody: {
+                content: {
+                    "application/json": {
+                        newPassword: string;
+                    };
+                };
+            };
             responses: {
                 200: {
                     headers: {
@@ -1892,10 +2168,19 @@ export interface paths {
             path?: never;
             cookie?: never;
         };
-        /** Get the user's daily insight queue (due items + fresh items, interleaved across courses) */
+        /**
+         * Get the user's daily insight queue (due items + fresh items, interleaved across courses)
+         * @description When `currentCourseId` is supplied (e.g. the learner is reviewing from
+         *     inside a specific lesson) the active course's items are placed first
+         *     in both the due and fresh slices; cross-course items still follow.
+         *     Without the param the queue is a cross-course interleave as before.
+         */
         get: {
             parameters: {
-                query?: never;
+                query?: {
+                    /** @description Mongo ObjectId of the course the learner is currently studying. Items from this course are surfaced first. */
+                    currentCourseId?: string;
+                };
                 header?: never;
                 path?: never;
                 cookie?: never;
@@ -1911,6 +2196,13 @@ export interface paths {
                             data: components["schemas"]["InsightQueue"];
                         };
                     };
+                };
+                /** @description Invalid currentCourseId (not an ObjectId). */
+                400: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content?: never;
                 };
             };
         };
@@ -2190,7 +2482,7 @@ export type webhooks = Record<string, never>;
 export interface components {
     schemas: {
         /** @enum {string} */
-        ErrorCode: "CUSTOM_ERROR" | "EMAIL_NOT_VERIFIED" | "EMAIL_ALREADY_VERIFIED" | "EMAIL_VERIFICATION_EXPIRED" | "EMAIL_VERIFICATION_INVALID";
+        ErrorCode: "CUSTOM_ERROR" | "EMAIL_NOT_VERIFIED" | "EMAIL_ALREADY_VERIFIED" | "EMAIL_VERIFICATION_EXPIRED" | "EMAIL_VERIFICATION_INVALID" | "PASSWORD_RESET_INVALID" | "PASSWORD_RESET_EXPIRED" | "PASSWORD_ALREADY_SET" | "PASSWORD_NOT_SET";
         /** @enum {string} */
         AuthProviderType: "GOOGLE" | "CREDENTIALS";
         /** @enum {string} */
@@ -2200,7 +2492,7 @@ export interface components {
         /** @enum {string} */
         CourseStatus: "creating" | "ready" | "archived";
         /** @enum {string} */
-        CourseDomain: "programming" | "stem" | "humanities" | "language" | "creative" | "other";
+        CourseDomain: "programming" | "stem" | "humanities" | "language" | "creative" | "business" | "practical" | "life-skills" | "other";
         /** @enum {string} */
         JobStatusEnum: "pending" | "processing" | "completed" | "failed";
         /** @enum {string} */

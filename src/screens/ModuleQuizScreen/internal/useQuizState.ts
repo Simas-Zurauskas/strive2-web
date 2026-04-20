@@ -13,9 +13,9 @@ import {
 import { celebrateModuleComplete } from '@/lib/celebrations';
 import type { ModuleQuizQuestion, QuizAttemptResult } from '@/api/types';
 
-export const useQuizState = (courseSlug: string, moduleIndex: number) => {
-  const { data: quizContent, refetch: refetchQuiz, isLoading: isLoadingContent } = useModuleQuizContent(courseSlug, moduleIndex);
-  const { data: quizProgress, isLoading: isLoadingProgress } = useModuleQuizProgress(courseSlug, moduleIndex);
+export const useQuizState = ({ courseSlug, moduleIndex }: { courseSlug: string; moduleIndex: number }) => {
+  const { data: quizContent, refetch: refetchQuiz, isLoading: isLoadingContent } = useModuleQuizContent({ courseId: courseSlug, moduleIndex });
+  const { data: quizProgress, isLoading: isLoadingProgress } = useModuleQuizProgress({ courseId: courseSlug, moduleIndex });
   const generateQuiz = useGenerateModuleQuiz();
   const submitAttempt = useSubmitQuizAttempt();
   const { trackJob, isJobRunningForCourse } = useJobManager();

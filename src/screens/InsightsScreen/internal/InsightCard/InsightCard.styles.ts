@@ -30,6 +30,14 @@ export const SourceRow = styled.div`
   color: ${(p) => p.theme.colors.muted};
 `;
 
+export const SourceInfo = styled.div`
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  min-width: 0;
+  flex-wrap: wrap;
+`;
+
 export const SourceLink = styled.a`
   color: inherit;
   text-decoration: none;
@@ -219,13 +227,20 @@ export const RevealLabel = styled.span`
   gap: 0.375rem;
 `;
 
-// ── Footer (tags + Skip escape hatch) ───────────────
+// ── Footer (kind chip + state badges + Skip escape hatch) ───────────────
 
 export const FooterRow = styled.div`
   display: flex;
   align-items: center;
   justify-content: space-between;
   gap: 1rem;
+  flex-wrap: wrap;
+`;
+
+export const FooterBadges = styled.div`
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
   flex-wrap: wrap;
 `;
 
@@ -283,10 +298,13 @@ export const TypedSubmit = styled.button`
 
 // ── Verdict panel (AI-graded typed recall) ───────────
 
-const verdictColor = (
-  verdict: GradeVerdict | null,
-  colors: { success: string; accent: string; error: string; muted: string },
-): string => {
+const verdictColor = ({
+  verdict,
+  colors,
+}: {
+  verdict: GradeVerdict | null;
+  colors: { success: string; accent: string; error: string; muted: string };
+}): string => {
   switch (verdict) {
     case 'correct': return colors.success;
     case 'partial': return colors.accent;
@@ -301,8 +319,8 @@ export const VerdictPanel = styled.div<{ $verdict: GradeVerdict | null }>`
   gap: 0.375rem;
   padding: 0.75rem 1rem;
   border-radius: 8px;
-  border: 1px solid ${(p) => `${verdictColor(p.$verdict, p.theme.colors)}33`};
-  background: ${(p) => `${verdictColor(p.$verdict, p.theme.colors)}0D`};
+  border: 1px solid ${(p) => `${verdictColor({ verdict: p.$verdict, colors: p.theme.colors })}33`};
+  background: ${(p) => `${verdictColor({ verdict: p.$verdict, colors: p.theme.colors })}0D`};
 `;
 
 export const VerdictHeader = styled.div`
@@ -332,8 +350,8 @@ export const VerdictPill = styled.span<{ $verdict: GradeVerdict }>`
   letter-spacing: 0.04em;
   text-transform: uppercase;
   flex-shrink: 0;
-  background: ${(p) => `${verdictColor(p.$verdict, p.theme.colors)}22`};
-  color: ${(p) => verdictColor(p.$verdict, p.theme.colors)};
+  background: ${(p) => `${verdictColor({ verdict: p.$verdict, colors: p.theme.colors })}22`};
+  color: ${(p) => verdictColor({ verdict: p.$verdict, colors: p.theme.colors })};
 `;
 
 export const GradingSpinner = styled.span`
@@ -361,20 +379,3 @@ export const VerdictFeedback = styled.p`
   margin: 0;
 `;
 
-// ── Tags ─────────────────────────────────────────────
-
-export const TagRow = styled.div`
-  display: flex;
-  flex-wrap: wrap;
-  gap: 0.375rem;
-`;
-
-export const Tag = styled.span`
-  padding: 0.1875rem 0.5rem;
-  border-radius: 9999px;
-  font-size: 0.6875rem;
-  font-weight: 500;
-  border: 1px solid ${(p) => p.theme.colors.border};
-  background: transparent;
-  color: ${(p) => p.theme.colors.tertiary};
-`;

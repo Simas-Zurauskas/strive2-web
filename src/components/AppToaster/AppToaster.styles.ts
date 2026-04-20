@@ -139,26 +139,6 @@ export const ToasterGlobalStyle = createGlobalStyle`
     color: ${(p) => p.theme.colors.tertiary};
   }
 
-  /* ── Close button ───────────────────────────── */
-
-  [data-sonner-toast][data-styled='true'] [data-close-button] {
-    width: 20px;
-    height: 20px;
-    border-radius: 999px;
-    background: ${(p) => p.theme.colors.surface};
-    border: 1px solid ${(p) => p.theme.colors.surfaceBorder};
-    color: ${(p) => p.theme.colors.muted};
-    transition:
-      border-color 0.15s,
-      color 0.15s,
-      background 0.15s;
-  }
-
-  [data-sonner-toast][data-styled='true'] [data-close-button]:hover {
-    border-color: ${(p) => p.theme.colors.tertiary};
-    color: ${(p) => p.theme.colors.foreground};
-  }
-
   /* ── Loader colour ──────────────────────────── */
 
   [data-sonner-toast][data-styled='true'] [data-icon] .sonner-loader {

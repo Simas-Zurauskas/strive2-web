@@ -13,7 +13,7 @@ const formatTime = (seconds: number): string => {
   return `${m}m`;
 };
 
-const formatDelta = (current: number, previous: number): { text: string; positive: boolean; neutral: boolean } => {
+const formatDelta = ({ current, previous }: { current: number; previous: number }): { text: string; positive: boolean; neutral: boolean } => {
   if (previous === 0 && current === 0) return { text: '—', positive: false, neutral: true };
   if (previous === 0) return { text: `+${current}`, positive: true, neutral: false };
   const pct = Math.round(((current - previous) / previous) * 100);
@@ -23,15 +23,15 @@ const formatDelta = (current: number, previous: number): { text: string; positiv
 
 export const WeeklySummary: React.FC<WeeklySummaryProps> = ({ thisWeek, lastWeek }) => {
   const metrics = [
-    { label: 'XP Earned', value: thisWeek.xp.toLocaleString(), delta: formatDelta(thisWeek.xp, lastWeek.xp) },
+    { label: 'XP Earned', value: thisWeek.xp.toLocaleString(), delta: formatDelta({ current: thisWeek.xp, previous: lastWeek.xp }) },
     {
       label: 'Time Spent',
       value: formatTime(thisWeek.timeSeconds),
-      delta: formatDelta(thisWeek.timeSeconds, lastWeek.timeSeconds),
+      delta: formatDelta({ current: thisWeek.timeSeconds, previous: lastWeek.timeSeconds }),
     },
-    { label: 'Lessons', value: String(thisWeek.lessons), delta: formatDelta(thisWeek.lessons, lastWeek.lessons) },
-    { label: 'Quizzes', value: String(thisWeek.quizzes), delta: formatDelta(thisWeek.quizzes, lastWeek.quizzes) },
-    { label: 'Insights', value: String(thisWeek.insights), delta: formatDelta(thisWeek.insights, lastWeek.insights) },
+    { label: 'Lessons', value: String(thisWeek.lessons), delta: formatDelta({ current: thisWeek.lessons, previous: lastWeek.lessons }) },
+    { label: 'Quizzes', value: String(thisWeek.quizzes), delta: formatDelta({ current: thisWeek.quizzes, previous: lastWeek.quizzes }) },
+    { label: 'Insights', value: String(thisWeek.insights), delta: formatDelta({ current: thisWeek.insights, previous: lastWeek.insights }) },
   ];
 
   return (

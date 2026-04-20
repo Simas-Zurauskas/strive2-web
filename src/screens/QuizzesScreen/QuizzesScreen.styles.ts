@@ -82,10 +82,13 @@ export const QuizRow = styled.div`
 // QuizzesScreen only surfaces post-attempt states, so it never emits 'locked',
 // but types the prop with the shared superset so a future "locked course" filter
 // doesn't require another definition.
-const iconColor = (
-  variant: QuizIconVariant,
-  colors: { success: string; accent: string; error: string; tertiary: string; muted: string },
-) => {
+const iconColor = ({
+  variant,
+  colors,
+}: {
+  variant: QuizIconVariant;
+  colors: { success: string; accent: string; error: string; tertiary: string; muted: string };
+}) => {
   switch (variant) {
     case 'mastered':
       return colors.success;
@@ -108,8 +111,8 @@ export const QuizIconWrap = styled.span<{ $variant: QuizIconVariant }>`
   height: 32px;
   border-radius: 50%;
   flex-shrink: 0;
-  background: ${(p) => `${iconColor(p.$variant, p.theme.colors)}18`};
-  color: ${(p) => iconColor(p.$variant, p.theme.colors)};
+  background: ${(p) => `${iconColor({ variant: p.$variant, colors: p.theme.colors })}18`};
+  color: ${(p) => iconColor({ variant: p.$variant, colors: p.theme.colors })};
 `;
 
 export const QuizContent = styled.div`

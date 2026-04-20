@@ -2,6 +2,7 @@
 
 import { ArrowUpRight, Keyboard, Loader2, MousePointerClick } from 'lucide-react';
 import { useEffect, useRef, useState } from 'react';
+import { Badge } from '@/components/Badge/Badge';
 import { useGradeInsightAnswer } from '@/hooks';
 import { InlineCode } from './InlineCode';
 import * as S from './InsightCard.styles';
@@ -10,7 +11,7 @@ import type { GradeResult, InsightQueueItem, InsightRating } from '@/api/types';
 
 interface InsightCardProps {
   insight: InsightQueueItem;
-  onRate: (rating: InsightRating, typedMatch?: number | null) => void;
+  onRate: (args: { rating: InsightRating; typedMatch?: number | null }) => void;
   onSkip: () => void;
   onToggleMode: () => void;
   isRating?: boolean;
@@ -99,7 +100,7 @@ export const InsightCard = ({
   };
 
   const handleRate = (rating: InsightRating) => {
-    onRate(rating, grade?.score ?? null);
+    onRate({ rating, typedMatch: grade?.score ?? null });
   };
 
   const lessonHref = insight.courseSlug
@@ -111,19 +112,21 @@ export const InsightCard = ({
   return (
     <S.Card>
       <S.SourceRow>
-        <S.SourceLink
-          href={lessonHref}
-          target="_blank"
-          rel="noopener noreferrer"
-          title={`${insight.courseName} · ${insight.lessonName}`}
-        >
-          {insight.courseName} · {insight.lessonName}
-          <ArrowUpRight size={12} strokeWidth={2} />
-        </S.SourceLink>
+        <S.SourceInfo>
+          {/* Course-name chip is always rendered so cross-course cards are
+              visually marked even when no currentCourseId is scoped. */}
+          <Badge variant="default">{insight.courseName}</Badge>
+          <S.SourceLink
+            href={lessonHref}
+            target="_blank"
+            rel="noopener noreferrer"
+            title={`${insight.courseName} · ${insight.lessonName}`}
+          >
+            {insight.lessonName}
+            <ArrowUpRight size={12} strokeWidth={2} />
+          </S.SourceLink>
+        </S.SourceInfo>
         <S.SourceBadges>
-          <S.Badge $variant="kind">{kindLabel}</S.Badge>
-          {insight.isNew && <S.Badge $variant="new">New</S.Badge>}
-          {!insight.isNew && insight.box >= 2 && <S.Badge $variant="box">Box {insight.box}</S.Badge>}
           {/* Mode is a preference, not an action — segmented control is clearer
               than a generic toggle button and always shows both options. */}
           <S.ModeToggle role="group" aria-label="Interaction mode">
@@ -222,26 +225,18 @@ export const InsightCard = ({
         </>
       )}
 
-      {/* Footer — tags on the left, Skip as an unobtrusive escape hatch on the right.
-          Skip hides post-reveal since the user should rate at that point. */}
-      {(insight.conceptTags.length > 0 || !revealed) && (
-        <S.FooterRow>
-          {insight.conceptTags.length > 0 ? (
-            <S.TagRow>
-              {insight.conceptTags.map((t) => (
-                <S.Tag key={t}>{t}</S.Tag>
-              ))}
-            </S.TagRow>
-          ) : (
-            <span />
-          )}
-          {!revealed && (
-            <S.SkipLink type="button" onClick={onSkip} title="Skip — come back tomorrow">
-              Skip for now →
-            </S.SkipLink>
-          )}
-        </S.FooterRow>
-      )}
+      <S.FooterRow>
+        <S.FooterBadges>
+          <S.Badge $variant="kind">{kindLabel}</S.Badge>
+          {insight.isNew && <S.Badge $variant="new">New</S.Badge>}
+          {!insight.isNew && insight.box >= 2 && <S.Badge $variant="box">Box {insight.box}</S.Badge>}
+        </S.FooterBadges>
+        {!revealed && (
+          <S.SkipLink type="button" onClick={onSkip} title="Skip — come back tomorrow">
+            Skip for now →
+          </S.SkipLink>
+        )}
+      </S.FooterRow>
     </S.Card>
   );
 };

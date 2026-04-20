@@ -10,7 +10,7 @@ import { AppToaster } from '@/components';
 import { JobManagerProvider } from '@/hooks/useJobManager';
 import { SocketProvider } from '@/hooks/useSocket';
 import { ColorScheme } from '@/theme';
-import { StyledRegistry } from './comps';
+import { StyledRegistry, ThemeSessionSync } from './comps';
 
 const defaultOptions: DefaultOptions = {
   queries: {
@@ -53,6 +53,7 @@ const Registry = ({ children }: { children: React.ReactNode }) => {
           disableTransitionOnChange
           themes={['light', 'dark', 'system'] satisfies ColorScheme[]}
         >
+          <ThemeSessionSync />
           <StyledRegistry>
             <SocketProvider>
               <JobManagerProvider>

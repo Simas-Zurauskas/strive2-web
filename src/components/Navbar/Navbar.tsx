@@ -37,6 +37,20 @@ const MoonIcon = () => (
   </svg>
 );
 
+const QuestionIcon = () => (
+  <svg
+    viewBox="0 0 24 24"
+    fill="none"
+    stroke="currentColor"
+    strokeWidth="2.25"
+    strokeLinecap="round"
+    strokeLinejoin="round"
+  >
+    <path d="M8.5 8a3.5 3.5 0 0 1 7 0c0 2-3.5 2.5-3.5 5" />
+    <path d="M12 18.5h.01" />
+  </svg>
+);
+
 const useHideOnScroll = () => {
   const [hidden, setHidden] = useState(false);
   const lastScrollY = useRef(typeof window !== 'undefined' ? window.scrollY : 0);
@@ -88,10 +102,6 @@ export const Navbar = () => {
   const { resolvedTheme, setTheme } = useTheme();
   const hidden = useHideOnScroll();
 
-  const toggleTheme = () => {
-    setTheme(resolvedTheme === 'dark' ? 'light' : 'dark');
-  };
-
   return (
     <S.Nav $hidden={hidden}>
       <S.LeftCluster>
@@ -121,11 +131,28 @@ export const Navbar = () => {
       </S.LeftCluster>
 
       <S.Right>
-        <S.ThemeToggle
-          onClick={toggleTheme}
-          title={resolvedTheme === 'dark' ? 'Switch to light mode' : 'Switch to dark mode'}
-        >
-          {resolvedTheme === 'dark' ? <SunIcon /> : <MoonIcon />}
+        <S.ThemeSwitch role="group" aria-label="Theme">
+          <S.ThemeOption
+            type="button"
+            $active={resolvedTheme === 'light'}
+            onClick={() => setTheme('light')}
+            title="Light mode"
+            aria-pressed={resolvedTheme === 'light'}
+          >
+            <SunIcon />
+          </S.ThemeOption>
+          <S.ThemeOption
+            type="button"
+            $active={resolvedTheme === 'dark'}
+            onClick={() => setTheme('dark')}
+            title="Dark mode"
+            aria-pressed={resolvedTheme === 'dark'}
+          >
+            <MoonIcon />
+          </S.ThemeOption>
+        </S.ThemeSwitch>
+        <S.ThemeToggle onClick={() => router.push('/faq')} title="FAQ">
+          <QuestionIcon />
         </S.ThemeToggle>
         <S.ThemeToggle onClick={() => router.push('/profile')} title={user?.email ?? 'Profile'}>
           <User />

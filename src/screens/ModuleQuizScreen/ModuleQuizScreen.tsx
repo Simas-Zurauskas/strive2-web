@@ -20,7 +20,7 @@ export const ModuleQuizScreen = () => {
   const { data: course } = useCourse(courseSlug);
   const courseBasePath = `/course/${course?.slug ?? courseSlug}`;
 
-  const quiz = useQuizState(courseSlug, moduleIndex);
+  const quiz = useQuizState({ courseSlug, moduleIndex });
 
   const mod = course?.structure?.modules?.[moduleIndex];
   const modules = course?.structure?.modules ?? [];

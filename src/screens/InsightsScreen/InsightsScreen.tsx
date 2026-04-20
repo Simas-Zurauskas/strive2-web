@@ -75,7 +75,7 @@ export const InsightsScreen = () => {
     setMode({ insightId: currentRaw.insightId, mode: preferredMode });
   }, [currentRaw, preferredMode, modeOverrides, setMode]);
 
-  const handleRate = (rating: InsightRating, typedMatch?: number | null) => {
+  const handleRate = ({ rating, typedMatch }: { rating: InsightRating; typedMatch?: number | null }) => {
     if (!current) return;
     const id = current.insightId;
     rate(

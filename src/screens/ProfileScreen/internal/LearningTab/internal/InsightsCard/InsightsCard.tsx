@@ -44,7 +44,7 @@ const RATING_LABELS: Record<number, string> = {
 
 const CHART_HEIGHT = 200;
 
-const formatDelta = (current: number, previous: number): { text: string; positive: boolean; neutral: boolean } => {
+const formatDelta = ({ current, previous }: { current: number; previous: number }): { text: string; positive: boolean; neutral: boolean } => {
   if (previous === 0 && current === 0) return { text: '—', positive: false, neutral: true };
   if (previous === 0) return { text: `+${current}`, positive: true, neutral: false };
   const pct = Math.round(((current - previous) / previous) * 100);
@@ -53,10 +53,11 @@ const formatDelta = (current: number, previous: number): { text: string; positiv
 };
 
 const fmtRatingLabel = (rating: number): string => {
-  // 1..4 scale. Round to nearest Anki button for a readable tooltip.
+  // 1..4 scale. Bucket matches the column-color thresholds so the label and
+  // the tinted bar always agree (e.g. 2.5 reads "Hard", not "Good").
   if (rating <= 0) return '—';
-  const nearest = Math.min(4, Math.max(1, Math.round(rating))) as 1 | 2 | 3 | 4;
-  return `${RATING_LABELS[nearest]} (${rating.toFixed(1)})`;
+  const bucket = rating < 2 ? 1 : rating < 3 ? 2 : rating < 3.5 ? 3 : 4;
+  return `${RATING_LABELS[bucket]} (${rating.toFixed(1)})`;
 };
 
 export const InsightsCard: React.FC = () => {
@@ -65,16 +66,19 @@ export const InsightsCard: React.FC = () => {
   const c = themeColors[scheme];
   const { data, isLoading } = useInsightStats();
 
-  // Leitner tier palette — muted → accent → success gradient.
+  // Leitner tier palette — cohesive earth-tone ramp, monotonically darker and
+  // more saturated from New → Mastered. Hand-picked rather than pulled from
+  // theme tokens because no existing token set gives a clean 5-stop sequence
+  // without clashing hues (amber/bright-green against the brand's muted greens).
   const tiers: BoxInfo[] = useMemo(
     () => [
-      { box: 0, label: BOX_LABELS[0], color: c.muted },
-      { box: 1, label: BOX_LABELS[1], color: c.tertiary },
-      { box: 2, label: BOX_LABELS[2], color: c.accentHover },
-      { box: 3, label: BOX_LABELS[3], color: c.accent },
-      { box: 4, label: BOX_LABELS[4], color: c.success },
+      { box: 0, label: BOX_LABELS[0], color: '#d6cfc3' }, // warm bone
+      { box: 1, label: BOX_LABELS[1], color: '#c4a265' }, // muted gold
+      { box: 2, label: BOX_LABELS[2], color: '#8a9562' }, // olive-sage
+      { box: 3, label: BOX_LABELS[3], color: '#4a8a72' }, // sage green
+      { box: 4, label: BOX_LABELS[4], color: '#2c5545' }, // deep forest
     ],
-    [c],
+    [],
   );
 
   const options: Highcharts.Options = useMemo(() => {
@@ -89,7 +93,7 @@ export const InsightsCard: React.FC = () => {
     };
 
     const history = data?.recentHistory ?? [];
-    const categories = history.map((h) => formatDate(h.date));
+    const categories = history.map((h) => formatDate({ input: h.date }));
     const reviewPoints = history.map((h) => ({
       y: h.reviews,
       color: colorForRating(h.avgRating),
@@ -299,7 +303,7 @@ export const InsightsCard: React.FC = () => {
     );
   }
 
-  const delta = formatDelta(reviewedThisWeek, reviewedLastWeek);
+  const delta = formatDelta({ current: reviewedThisWeek, previous: reviewedLastWeek });
   const hasHistory = (data?.recentHistory?.length ?? 0) > 0;
 
   return (

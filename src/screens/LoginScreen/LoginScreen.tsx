@@ -13,6 +13,7 @@ import {
   AuthForm,
   AuthFormError,
   AuthFormFooter,
+  AuthFormHelperRow,
   AuthFormTitle,
   AuthSubmitBtn,
   GoogleBtn,
@@ -97,6 +98,10 @@ export const LoginScreen = () => {
             onBlur={handleBlur}
             error={touched.password ? errors.password : undefined}
           />
+
+          <AuthFormHelperRow>
+            <Link href="/forgot-password">Forgot password?</Link>
+          </AuthFormHelperRow>
 
           {apiError && <AuthFormError>{apiError}</AuthFormError>}
 

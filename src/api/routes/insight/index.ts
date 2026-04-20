@@ -7,10 +7,11 @@ import type { InsightMode, InsightRating } from '@/api/types';
 type GetInsightQueueResponse =
   paths['/api/insight/queue']['get']['responses']['200']['content']['application/json'];
 
-export const getInsightQueue = () => {
+export const getInsightQueue = (params: { currentCourseId?: string } = {}) => {
   return client<GetInsightQueueResponse>({
     url: '/insight/queue',
     method: 'GET',
+    params: params.currentCourseId ? { currentCourseId: params.currentCourseId } : undefined,
   }).then((res) => res.data.data);
 };
 

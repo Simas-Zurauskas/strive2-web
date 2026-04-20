@@ -46,34 +46,6 @@ export const DebugRow = styled.div`
   gap: 0.5rem;
 `;
 
-// ── Dashboard grid ──────────────────────────────────
-
-export const DashboardGrid = styled.div`
-  display: grid;
-  grid-template-columns: 1fr 320px;
-  gap: 1.5rem;
-  align-items: start;
-
-  ${(p) => p.theme.media.desktop} {
-    grid-template-columns: 1fr;
-  }
-`;
-
-export const MainColumn = styled.div`
-  display: flex;
-  flex-direction: column;
-  gap: 1.5rem;
-  min-width: 0;
-`;
-
-export const SideColumn = styled.div`
-  display: flex;
-  flex-direction: column;
-  gap: 1.5rem;
-  min-width: 0;
-  overflow: hidden;
-`;
-
 // ── Filter bar ──────────────────────────────────────
 
 export const FilterBar = styled.div`
@@ -181,50 +153,5 @@ export const EmptyText = styled.p`
   text-align: center;
   padding: 2rem 0;
   margin: 0;
-`;
-
-export const QuizCard = styled.button`
-  display: flex;
-  flex-direction: column;
-  gap: 0.5rem;
-  padding: 1.25rem 1.5rem;
-  background: ${(p) => p.theme.colors.surface};
-  border: 1px solid ${(p) => p.theme.colors.surfaceBorder};
-  border-radius: 10px;
-  cursor: pointer;
-  font-family: inherit;
-  text-align: left;
-  width: 100%;
-  transition: border-color 0.15s;
-
-  &:hover {
-    border-color: ${(p) => p.theme.colors.accent};
-  }
-`;
-
-export const QuizCardLabel = styled.span`
-  font-size: 0.6875rem;
-  font-weight: 600;
-  text-transform: uppercase;
-  letter-spacing: 0.05em;
-  color: ${(p) => p.theme.colors.muted};
-`;
-
-export const QuizCardRow = styled.div`
-  display: flex;
-  align-items: baseline;
-  gap: 0.5rem;
-`;
-
-export const QuizCardCount = styled.span<{ $color: 'warning' | 'accent' }>`
-  font-size: 1.5rem;
-  font-weight: 700;
-  letter-spacing: -0.02em;
-  color: ${(p) => p.theme.colors[p.$color]};
-`;
-
-export const QuizCardText = styled.span`
-  font-size: 0.875rem;
-  color: ${(p) => p.theme.colors.muted};
 `;
 

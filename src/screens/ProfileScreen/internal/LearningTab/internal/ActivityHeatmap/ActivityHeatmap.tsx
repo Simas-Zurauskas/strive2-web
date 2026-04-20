@@ -115,7 +115,7 @@ export const ActivityHeatmap: React.FC<ActivityHeatmapProps> = ({ data, activeDa
       <S.Header>
         <S.Title>{isLoading ? <Skeleton width={80} /> : 'Activity'}</S.Title>
         <S.Stat>
-          {isLoading ? <Skeleton width={80} /> : `${activeDays} active ${plural(activeDays, 'day')}`}
+          {isLoading ? <Skeleton width={80} /> : `${activeDays} active ${plural({ count: activeDays, singular: 'day' })}`}
         </S.Stat>
       </S.Header>
       <S.CalendarWrap $loading={isLoading}>

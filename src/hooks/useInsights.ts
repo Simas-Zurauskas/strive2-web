@@ -15,10 +15,21 @@ import type { InsightMode, InsightRating } from '@/api/types';
 
 // ── Queries ──────────────────────────────────────────────
 
-export const useInsightQueue = () =>
+/**
+ * Daily insight queue. When `currentCourseId` is passed (e.g. from an
+ * in-lesson review surface), the active course's items are placed first by
+ * the server in both the due and fresh slices. Global surfaces (the
+ * Insights tab) omit the param and get the cross-course interleave.
+ *
+ * Different `currentCourseId`s are cached separately so a learner switching
+ * between courses doesn't see the previous course's order.
+ */
+export const useInsightQueue = ({
+  currentCourseId,
+}: { currentCourseId?: string } = {}) =>
   useQuery({
-    queryKey: [QKeys.INSIGHT_QUEUE],
-    queryFn: getInsightQueue,
+    queryKey: [QKeys.INSIGHT_QUEUE, currentCourseId ?? null],
+    queryFn: () => getInsightQueue({ currentCourseId }),
     staleTime: 0,
     refetchOnWindowFocus: true,
   });
@@ -70,17 +81,16 @@ export const useSkipInsight = () => {
   });
 };
 
-export const useSetInsightMode = () => {
-  const queryClient = useQueryClient();
-
-  return useMutation({
+export const useSetInsightMode = () =>
+  useMutation({
     mutationFn: (params: { insightId: string; mode: InsightMode }) => setInsightMode(params),
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: [QKeys.INSIGHT_QUEUE] });
-    },
+    // Don't invalidate INSIGHT_QUEUE — same reason as rate. A refetch mid-session
+    // re-picks the fresh pool and reshuffles the card under the user's finger;
+    // in combination with the auto-setMode effect in InsightsScreen, this
+    // produced a loop that remounted the card on every advance. The client
+    // renders the override via modeOverrides; server state is already persisted.
     meta: { errorMessage: 'Failed to change mode' },
   });
-};
 
 export const useGradeInsightAnswer = () => {
   return useMutation({

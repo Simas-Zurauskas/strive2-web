@@ -1,3 +1,4 @@
+import { signOut as nextAuthSignOut } from 'next-auth/react';
 import { useState } from 'react';
 import { toast } from 'sonner';
 import { deleteAccount } from '@/api/routes/auth';
@@ -5,6 +6,7 @@ import { Button, InlineLink } from '@/components';
 import { TOASTS } from '@/constants/toasts';
 import { useAuth } from '@/hooks';
 import * as S from './AccountTab.styles';
+import { PasswordModal } from './internal/PasswordModal';
 
 const formatProvider = (provider: string) => {
   if (provider === 'GOOGLE') return 'Google';
@@ -18,6 +20,7 @@ export const AccountTab: React.FC = () => {
   const [deleting, setDeleting] = useState(false);
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
   const [deletePassword, setDeletePassword] = useState('');
+  const [passwordModalOpen, setPasswordModalOpen] = useState(false);
 
   const hasCredentials = user?.authProviders?.some((p) => p.provider === 'CREDENTIALS');
 
@@ -30,7 +33,9 @@ export const AccountTab: React.FC = () => {
     setDeleting(true);
     try {
       await deleteAccount({ password: deletePassword });
-      await signOut();
+      // User row is gone, so our signOut() wrapper's /logout call would 401.
+      // Use raw nextAuthSignOut to just clear the NextAuth session.
+      await nextAuthSignOut();
     } catch (err: unknown) {
       const message = err instanceof Error ? err.message : 'Failed to delete account';
       toast.error(message);
@@ -52,7 +57,27 @@ export const AccountTab: React.FC = () => {
             ))}
           </S.Value>
         </S.InfoRow>
+        <S.InfoRow>
+          <S.Label>
+            {hasCredentials ? 'Password' : 'Set a password to also sign in with email'}
+          </S.Label>
+          <Button variant="secondary" size="small" onClick={() => setPasswordModalOpen(true)}>
+            {hasCredentials ? 'Change password' : 'Set password'}
+          </Button>
+        </S.InfoRow>
+        <S.InfoRow>
+          <S.Label>Sign out of your account</S.Label>
+          <Button variant="secondary" size="small" onClick={() => signOut()}>
+            Logout
+          </Button>
+        </S.InfoRow>
       </S.Section>
+
+      <PasswordModal
+        open={passwordModalOpen}
+        mode={hasCredentials ? 'change' : 'set'}
+        onClose={() => setPasswordModalOpen(false)}
+      />
 
       <S.Section>
         <S.SectionTitle>Legal</S.SectionTitle>
@@ -63,15 +88,6 @@ export const AccountTab: React.FC = () => {
         <S.InfoRow>
           <S.Label>Privacy Policy</S.Label>
           <InlineLink href="/privacy" newTab>View</InlineLink>
-        </S.InfoRow>
-      </S.Section>
-
-      <S.Section>
-        <S.InfoRow>
-          <S.Label>Sign out of your account</S.Label>
-          <Button variant="secondary" size="small" onClick={() => signOut()}>
-            Logout
-          </Button>
         </S.InfoRow>
       </S.Section>
 

@@ -24,7 +24,7 @@ interface UseWizardHandlersParams {
   setDepth: (d: CourseDepth | null) => void;
   course: Course | undefined;
   mutations: ReturnType<typeof useWizardMutations>;
-  confirmOverwrite: (message: string, action: () => void, title?: string, confirmLabel?: string) => void;
+  confirmOverwrite: (args: { message: string; action: () => void; title?: string; confirmLabel?: string }) => void;
 }
 
 export const useWizardHandlers = ({
@@ -132,9 +132,10 @@ export const useWizardHandlers = ({
 
       const hasDownstream = !!(clarifyData || depthPreviews || structureData);
       if (hasDownstream) {
-        confirmOverwrite('Changing the goal will regenerate your questions and clear all later steps.', () =>
-          executeGoalSubmit(goalValue),
-        );
+        confirmOverwrite({
+          message: 'Changing the goal will regenerate your questions and clear all later steps.',
+          action: () => executeGoalSubmit(goalValue),
+        });
         return;
       }
 
@@ -187,9 +188,10 @@ export const useWizardHandlers = ({
 
       const hasDownstream = !!(depthPreviews || structureData);
       if (hasDownstream) {
-        confirmOverwrite('Changing your answers will regenerate depth options and clear the course structure.', () =>
-          executeClarifySubmit(answersValue),
-        );
+        confirmOverwrite({
+          message: 'Changing your answers will regenerate depth options and clear the course structure.',
+          action: () => executeClarifySubmit(answersValue),
+        });
         return;
       }
       executeClarifySubmit(answersValue);
@@ -235,9 +237,10 @@ export const useWizardHandlers = ({
       }
 
       if (structureData) {
-        confirmOverwrite('Changing the depth will regenerate the course structure.', () =>
-          executeDepthConfirm(depthValue),
-        );
+        confirmOverwrite({
+          message: 'Changing the depth will regenerate the course structure.',
+          action: () => executeDepthConfirm(depthValue),
+        });
         return;
       }
       executeDepthConfirm(depthValue);
@@ -290,12 +293,12 @@ export const useWizardHandlers = ({
       if (!navigableSteps.includes(targetStep)) return;
 
       if (isStepDirtyRef.current) {
-        confirmOverwrite(
-          'You have unsaved changes that will be discarded.',
-          () => navigateToStep(targetStep),
-          'Discard changes?',
-          'Discard',
-        );
+        confirmOverwrite({
+          message: 'You have unsaved changes that will be discarded.',
+          action: () => navigateToStep(targetStep),
+          title: 'Discard changes?',
+          confirmLabel: 'Discard',
+        });
         return;
       }
 

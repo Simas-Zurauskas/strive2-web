@@ -61,12 +61,17 @@ const GenerateCourseWizard = ({ resumeCourse }: { resumeCourse: Course | null })
     onConfirm: () => void;
   } | null>(null);
 
-  const confirmOverwrite = (
-    message: string,
-    action: () => void,
+  const confirmOverwrite = ({
+    message,
+    action,
     title = 'Regenerate later steps?',
     confirmLabel = 'Continue',
-  ) => {
+  }: {
+    message: string;
+    action: () => void;
+    title?: string;
+    confirmLabel?: string;
+  }) => {
     setOverwriteDialog({ title, message, confirmLabel, onConfirm: action });
   };
 

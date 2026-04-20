@@ -99,7 +99,7 @@ export const CourseOverviewScreen = () => {
   const totalLessons = modules.reduce((sum, m) => sum + (m.lessons?.length ?? 0), 0);
   const depthLabel = course?.depth?.replace('_', ' ');
 
-  const getLessonStatus = (mi: number, li: number): LessonProgressStatus | 'default' => {
+  const getLessonStatus = ({ mi, li }: { mi: number; li: number }): LessonProgressStatus | 'default' => {
     const status = progressMap.get(`${mi}-${li}`);
     if (status === 'completed') return 'completed';
     if (status === 'in_progress') return 'in_progress';
@@ -125,7 +125,7 @@ export const CourseOverviewScreen = () => {
         <S.MetaRow>
           {depthLabel && <Badge variant="gold">{depthLabel}</Badge>}
           <Badge variant="default">
-            {modules.length} {plural(modules.length, 'module')} &middot; {totalLessons} {plural(totalLessons, 'lesson')}
+            {modules.length} {plural({ count: modules.length, singular: 'module' })} &middot; {totalLessons} {plural({ count: totalLessons, singular: 'lesson' })}
           </Badge>
         </S.MetaRow>
       </S.Header>
@@ -215,7 +215,7 @@ export const CourseOverviewScreen = () => {
             <S.ModuleDescription>{mod.description}</S.ModuleDescription>
             <S.LessonList>
               {mod.lessons?.map((lesson, li) => {
-                const status = getLessonStatus(mi, li);
+                const status = getLessonStatus({ mi, li });
                 return (
                   <S.LessonItem key={li} $status={status} onClick={() => navigateToLesson(mi, li)}>
                     <S.LessonStatus $status={status}>

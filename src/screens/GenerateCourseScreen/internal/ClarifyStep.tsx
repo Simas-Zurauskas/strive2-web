@@ -2,7 +2,7 @@
 
 import { useEffect, useMemo, useState } from 'react';
 import { ClarifyQuestion } from '@/api/types';
-import { RadioGroup, CheckboxGroup, Input, Button, Card, Eyebrow } from '@/components';
+import { RadioGroup, CheckboxGroup, Textarea, Button, Card, Eyebrow } from '@/components';
 import * as S from './ClarifyStep.styles';
 
 type AnswerValue = string | string[];
@@ -48,7 +48,7 @@ export const ClarifyStep = ({
     onDirtyChange?.(JSON.stringify(answers) !== JSON.stringify(initialAnswers));
   }, [answers, initialAnswers, onDirtyChange]);
 
-  const updateAnswer = (questionId: string, value: AnswerValue) => {
+  const updateAnswer = ({ questionId, value }: { questionId: string; value: AnswerValue }) => {
     setAnswers((prev) => ({ ...prev, [questionId]: value }));
   };
 
@@ -76,7 +76,7 @@ export const ClarifyStep = ({
             name={q.id}
             options={q.options.map((opt) => ({ value: opt, label: opt }))}
             value={(answers[q.id] as string) || ''}
-            onChange={(value) => updateAnswer(q.id, value)}
+            onChange={(value) => updateAnswer({ questionId: q.id, value })}
             allowOther
           />
         ) : null;
@@ -87,7 +87,7 @@ export const ClarifyStep = ({
             name={q.id}
             options={q.options.map((opt) => ({ value: opt, label: opt }))}
             value={(answers[q.id] as string[]) || []}
-            onChange={(value) => updateAnswer(q.id, value)}
+            onChange={(value) => updateAnswer({ questionId: q.id, value })}
             allowOther
           />
         ) : null;
@@ -95,11 +95,12 @@ export const ClarifyStep = ({
       case 'text':
       default:
         return (
-          <Input
+          <Textarea
             name={q.id}
             placeholder="Your answer..."
             value={(answers[q.id] as string) || ''}
-            onChange={(e) => updateAnswer(q.id, e.target.value)}
+            rows={4}
+            onChange={(e) => updateAnswer({ questionId: q.id, value: e.target.value })}
           />
         );
     }

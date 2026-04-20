@@ -195,7 +195,7 @@ export const JobManagerProvider = ({ children }: { children: React.ReactNode }) 
         }
       } else if (event.status === 'failed') {
         if (entry) clearTimeout(entry.timer);
-        toast.error(toastMessage(event.error, TOASTS.GENERATION_FAILED_RETRY));
+        toast.error(toastMessage({ dynamic: event.error, fallback: TOASTS.GENERATION_FAILED_RETRY }));
       }
       if (entry) callbacksRef.current.delete(event.jobId);
 

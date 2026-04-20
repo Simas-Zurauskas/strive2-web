@@ -5,7 +5,7 @@ type Format = 'short' | 'long' | 'cell';
 const parse = (input: Date | string) =>
   typeof input === 'string' ? new Date(input.includes('T') ? input : `${input}T00:00:00`) : input;
 
-export const formatDate = (input: Date | string, format: Format = 'short') => {
+export const formatDate = ({ input, format = 'short' }: { input: Date | string; format?: Format }) => {
   const date = parse(input);
   switch (format) {
     case 'long':

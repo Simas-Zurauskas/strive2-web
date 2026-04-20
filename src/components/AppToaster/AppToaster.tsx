@@ -14,7 +14,6 @@ export const AppToaster = () => {
         position="bottom-right"
         theme={(resolvedTheme as 'light' | 'dark') ?? 'light'}
         richColors
-        closeButton
         expand
         visibleToasts={10}
         duration={4500}

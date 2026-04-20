@@ -59,7 +59,7 @@ export const QuizLanding = ({
                   : 'Needs Review'}
             </S.MasteryBadge>
             <span style={{ color: 'inherit', opacity: 0.5 }}>
-              ({quizProgress.attempts.length} {plural(quizProgress.attempts.length, 'attempt')})
+              ({quizProgress.attempts.length} {plural({ count: quizProgress.attempts.length, singular: 'attempt' })})
             </span>
           </S.PreviousAttempt>
         );
