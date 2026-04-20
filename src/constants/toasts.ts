@@ -29,6 +29,14 @@ export const TOASTS = {
   RESEND_ERROR: 'Failed to resend. Please try again.',
   SESSION_EXPIRED: 'Session expired. Please sign in and resend from your profile.',
   PASSWORD_REQUIRED: 'Please enter your password to confirm.',
+  PASSWORD_CHANGED: 'Password updated. Please sign in again.',
+  PASSWORD_SET: 'Password set. You can now sign in with email and password.',
+  PASSWORD_CHANGE_ERROR: 'Failed to change password. Please try again.',
+  RESET_LINK_SENT: 'If an account exists for that email, a reset link has been sent.',
+  RESET_LINK_INVALID: 'This reset link is invalid or has been used.',
+  RESET_LINK_EXPIRED: 'This reset link has expired. Please request a new one.',
+  RESET_PASSWORD_SUCCESS: 'Password reset. Please sign in with your new password.',
+  FORGOT_PASSWORD_ERROR: 'Could not send reset link. Please try again.',
 
   // ── Job management ───────────────────────────────────
   JOB_TIMEOUT: 'This is taking too long. Please try again.',

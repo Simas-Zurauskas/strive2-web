@@ -30,6 +30,14 @@ export const SourceRow = styled.div`
   color: ${(p) => p.theme.colors.muted};
 `;
 
+export const SourceInfo = styled.div`
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  min-width: 0;
+  flex-wrap: wrap;
+`;
+
 export const SourceLink = styled.a`
   color: inherit;
   text-decoration: none;
@@ -219,13 +227,20 @@ export const RevealLabel = styled.span`
   gap: 0.375rem;
 `;
 
-// ── Footer (tags + Skip escape hatch) ───────────────
+// ── Footer (kind chip + state badges + Skip escape hatch) ───────────────
 
 export const FooterRow = styled.div`
   display: flex;
   align-items: center;
   justify-content: space-between;
   gap: 1rem;
+  flex-wrap: wrap;
+`;
+
+export const FooterBadges = styled.div`
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
   flex-wrap: wrap;
 `;
 
@@ -364,20 +379,3 @@ export const VerdictFeedback = styled.p`
   margin: 0;
 `;
 
-// ── Tags ─────────────────────────────────────────────
-
-export const TagRow = styled.div`
-  display: flex;
-  flex-wrap: wrap;
-  gap: 0.375rem;
-`;
-
-export const Tag = styled.span`
-  padding: 0.1875rem 0.5rem;
-  border-radius: 9999px;
-  font-size: 0.6875rem;
-  font-weight: 500;
-  border: 1px solid ${(p) => p.theme.colors.border};
-  background: transparent;
-  color: ${(p) => p.theme.colors.tertiary};
-`;

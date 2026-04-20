@@ -32,6 +32,23 @@ export const FormFooter = styled.p`
   }
 `;
 
+export const FormHelperRow = styled.div`
+  display: flex;
+  justify-content: flex-end;
+  margin-top: -0.5rem;
+  font-size: 0.8125rem;
+
+  a {
+    color: ${(p) => p.theme.colors.accent};
+    text-decoration: none;
+    opacity: 0.85;
+
+    &:hover {
+      opacity: 1;
+    }
+  }
+`;
+
 export const SubmitBtn = styled.button<{ $loading?: boolean }>`
   padding: 0.75rem;
   border: none;

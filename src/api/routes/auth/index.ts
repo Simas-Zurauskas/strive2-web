@@ -73,3 +73,51 @@ export const logout = () => {
     method: 'POST',
   }).then((res) => res.data.data);
 };
+
+// ── Password recovery (public) ──────────────────────────────
+
+type ForgotPasswordBody = paths['/api/auth/forgot-password']['post']['requestBody']['content']['application/json'];
+type ForgotPasswordResponse = paths['/api/auth/forgot-password']['post']['responses']['200']['content']['application/json'];
+
+export const forgotPassword = (params: ForgotPasswordBody) => {
+  return client<ForgotPasswordResponse>({
+    url: '/auth/forgot-password',
+    method: 'POST',
+    data: params,
+  }).then((res) => res.data.data);
+};
+
+type ResetPasswordBody = paths['/api/auth/reset-password']['post']['requestBody']['content']['application/json'];
+type ResetPasswordResponse = paths['/api/auth/reset-password']['post']['responses']['200']['content']['application/json'];
+
+export const resetPassword = (params: ResetPasswordBody) => {
+  return client<ResetPasswordResponse>({
+    url: '/auth/reset-password',
+    method: 'POST',
+    data: params,
+  }).then((res) => res.data.data);
+};
+
+// ── Password management (authenticated) ─────────────────────
+
+type SetPasswordBody = paths['/api/auth/set-password']['post']['requestBody']['content']['application/json'];
+type SetPasswordResponse = paths['/api/auth/set-password']['post']['responses']['200']['content']['application/json'];
+
+export const setPassword = (params: SetPasswordBody) => {
+  return client<SetPasswordResponse>({
+    url: '/auth/set-password',
+    method: 'POST',
+    data: params,
+  }).then((res) => res.data.data);
+};
+
+type ChangePasswordBody = paths['/api/auth/change-password']['post']['requestBody']['content']['application/json'];
+type ChangePasswordResponse = paths['/api/auth/change-password']['post']['responses']['200']['content']['application/json'];
+
+export const changePassword = (params: ChangePasswordBody) => {
+  return client<ChangePasswordResponse>({
+    url: '/auth/change-password',
+    method: 'POST',
+    data: params,
+  }).then((res) => res.data.data);
+};

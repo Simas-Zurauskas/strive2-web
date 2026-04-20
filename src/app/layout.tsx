@@ -1,4 +1,4 @@
-import { Inter, Newsreader } from 'next/font/google';
+import { Inter, Newsreader, Instrument_Serif, Averia_Serif_Libre } from 'next/font/google';
 import Registry from './_registry';
 import type { Metadata } from 'next';
 import 'katex/dist/katex.min.css';
@@ -8,10 +8,16 @@ const inter = Inter({
   subsets: ['latin'],
 });
 
-const newsreader = Newsreader({
+// const newsreader = Newsreader({
+//   variable: '--font-heading-serif',
+//   subsets: ['latin'],
+//   weight: ['400', '500', '600', '700'],
+//   style: ['normal', 'italic'],
+// });
+const newsreader = Instrument_Serif({
   variable: '--font-heading-serif',
   subsets: ['latin'],
-  weight: ['400', '500', '600', '700'],
+  weight: ['400'],
   style: ['normal', 'italic'],
 });
 

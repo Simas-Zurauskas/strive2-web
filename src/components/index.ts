@@ -15,6 +15,7 @@ export {
   AuthFormTitle,
   AuthFormError,
   AuthFormFooter,
+  AuthFormHelperRow,
   AuthSubmitBtn,
   AuthDivider,
   GoogleBtn,

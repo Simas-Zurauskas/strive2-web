@@ -2,7 +2,7 @@
 
 import { useEffect, useMemo, useState } from 'react';
 import { ClarifyQuestion } from '@/api/types';
-import { RadioGroup, CheckboxGroup, Input, Button, Card, Eyebrow } from '@/components';
+import { RadioGroup, CheckboxGroup, Textarea, Button, Card, Eyebrow } from '@/components';
 import * as S from './ClarifyStep.styles';
 
 type AnswerValue = string | string[];
@@ -95,10 +95,11 @@ export const ClarifyStep = ({
       case 'text':
       default:
         return (
-          <Input
+          <Textarea
             name={q.id}
             placeholder="Your answer..."
             value={(answers[q.id] as string) || ''}
+            rows={4}
             onChange={(e) => updateAnswer({ questionId: q.id, value: e.target.value })}
           />
         );

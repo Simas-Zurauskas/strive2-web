@@ -8,19 +8,18 @@ import { ROUTES } from '@/constants/routes';
 import {
   useCourses,
   useContinueLearning,
-  useReviewsDue,
-  useUnattemptedQuizzes,
   useProgressSummary,
   useFavoriteCourseIds,
   useToggleFavoriteCourse,
   useBookmarkedLessons,
-  useInsightsDueCount,
 } from '@/hooks';
 import { useJobManager } from '@/hooks/useJobManager';
-import { plural } from '@/lib/strings';
 import * as S from './HomeScreen.styles';
+import { BentoGrid, BentoSlot } from './internal/BentoGrid';
 import { ContinueLearningCard } from './internal/ContinueLearningCard/ContinueLearningCard';
 import { GamificationCard } from './internal/GamificationCard/GamificationCard';
+import { InsightsCard } from './internal/InsightsCard/InsightsCard';
+import { QuizzesCard } from './internal/QuizzesCard/QuizzesCard';
 
 type TopTab = 'courses' | 'bookmarks';
 
@@ -29,9 +28,6 @@ export const HomeScreen: React.FC = () => {
   const { data: courses, isLoading } = useCourses();
   const { data: continueLearning } = useContinueLearning();
   const { data: progressSummary } = useProgressSummary();
-  const { data: reviewsDue } = useReviewsDue();
-  const { data: unattemptedQuizzes } = useUnattemptedQuizzes();
-  const { data: insightsDue } = useInsightsDueCount();
   const { data: favoriteCourseIds } = useFavoriteCourseIds();
   const { mutate: toggleFavorite } = useToggleFavoriteCourse();
   const { isJobRunningForCourse } = useJobManager();
@@ -98,6 +94,17 @@ export const HomeScreen: React.FC = () => {
     return (
       <S.Layout>
         <S.Container>
+          <BentoGrid>
+            <BentoSlot cols={6} rows={2}>
+              <GamificationCard />
+            </BentoSlot>
+            <BentoSlot cols={6}>
+              <QuizzesCard />
+            </BentoSlot>
+            <BentoSlot cols={6}>
+              <InsightsCard />
+            </BentoSlot>
+          </BentoGrid>
           <S.EmptyState>
             <S.EmptyText>No courses yet. Create your first course to get started.</S.EmptyText>
             <Button variant="primary" onClick={() => router.push('/courses/new')}>
@@ -112,6 +119,115 @@ export const HomeScreen: React.FC = () => {
   return (
     <S.Layout>
       <S.Container>
+        <BentoGrid>
+          {continueLearning && (
+            <BentoSlot cols={12}>
+              <ContinueLearningCard data={continueLearning} />
+            </BentoSlot>
+          )}
+          <BentoSlot cols={6} rows={2}>
+            <GamificationCard />
+          </BentoSlot>
+          <BentoSlot cols={6}>
+            <QuizzesCard />
+          </BentoSlot>
+          <BentoSlot cols={6}>
+            <InsightsCard />
+          </BentoSlot>
+        </BentoGrid>
+
+        {draftCourses.length > 0 && (
+          <div>
+            <SectionLabel>Drafts</SectionLabel>
+            <S.DraftGrid>
+              {draftCourses.map((course) => (
+                <CourseCard
+                  key={course._id}
+                  course={course}
+                  isGenerating={isJobRunningForCourse(course._id)}
+                  onClick={() => router.push(`/courses/new?courseId=${course._id}`)}
+                />
+              ))}
+            </S.DraftGrid>
+          </div>
+        )}
+
+        <div>
+          <TopTabs>
+            <TopTab $active={topTab === 'courses'} onClick={() => setTopTab('courses')}>
+              Courses
+            </TopTab>
+            <TopTab $active={topTab === 'bookmarks'} onClick={() => setTopTab('bookmarks')}>
+              Bookmarks
+            </TopTab>
+          </TopTabs>
+
+          {topTab === 'courses' && (
+            <>
+              <S.FilterBar>
+                <FilterTabs>
+                  {(['active', 'completed', 'archived', 'all'] as const).map((tab) => (
+                    <FilterTab key={tab} $active={filter === tab} onClick={() => setFilter(tab)}>
+                      {tab.charAt(0).toUpperCase() + tab.slice(1)}
+                    </FilterTab>
+                  ))}
+                </FilterTabs>
+                <S.SortToggle onClick={() => setSort((s) => (s === 'recent' ? 'alphabetical' : 'recent'))}>
+                  {sort === 'recent' ? 'Recent' : 'A\u2013Z'}
+                </S.SortToggle>
+              </S.FilterBar>
+
+              {readyCourses.length === 0 ? (
+                <S.EmptyText>No courses match this filter.</S.EmptyText>
+              ) : (
+                <S.CourseGrid>
+                  {readyCourses.map((course) => (
+                    <CourseCard
+                      key={course._id}
+                      course={course}
+                      isGenerating={isJobRunningForCourse(course._id)}
+                      progress={progressMap.get(course._id)}
+                      isFavorited={favoriteSet.has(course._id)}
+                      onToggleFavorite={toggleFavorite}
+                      onClick={() => router.push(ROUTES.course(course.slug, course._id))}
+                    />
+                  ))}
+                </S.CourseGrid>
+              )}
+            </>
+          )}
+
+          {topTab === 'bookmarks' && (
+            <>
+              {!bookmarkedLessons || bookmarkedLessons.length === 0 ? (
+                <S.EmptyText>
+                  No bookmarked lessons yet. Bookmark lessons to save them here for quick access.
+                </S.EmptyText>
+              ) : (
+                <S.BookmarkList>
+                  {bookmarkedLessons.map((item) => (
+                    <S.BookmarkItem
+                      key={`${item.courseId}-${item.moduleIndex}-${item.lessonIndex}`}
+                      onClick={() =>
+                        router.push(
+                          ROUTES.lesson(item.courseSlug, item.courseId, item.moduleIndex, item.lessonIndex),
+                        )
+                      }
+                    >
+                      <S.BookmarkContent>
+                        <S.BookmarkCourse>{item.courseName}</S.BookmarkCourse>
+                        <S.BookmarkLesson>
+                          {item.moduleName} &middot; {item.lessonName}
+                        </S.BookmarkLesson>
+                      </S.BookmarkContent>
+                    </S.BookmarkItem>
+                  ))}
+                </S.BookmarkList>
+              )}
+            </>
+          )}
+        </div>
+
         <S.DebugPanel>
           <S.DebugLabel>Sonner debug</S.DebugLabel>
           <S.DebugRow>
@@ -160,140 +276,6 @@ export const HomeScreen: React.FC = () => {
             </Button>
           </S.DebugRow>
         </S.DebugPanel>
-
-        <S.DashboardGrid>
-          <S.MainColumn>
-            {continueLearning && <ContinueLearningCard data={continueLearning} />}
-
-            {/* ── Drafts ──────────────────────────────── */}
-            {draftCourses.length > 0 && (
-              <div>
-                <SectionLabel>Drafts</SectionLabel>
-                <S.DraftGrid>
-                  {draftCourses.map((course) => (
-                    <CourseCard
-                      key={course._id}
-                      course={course}
-                      isGenerating={isJobRunningForCourse(course._id)}
-                      onClick={() => router.push(`/courses/new?courseId=${course._id}`)}
-                    />
-                  ))}
-                </S.DraftGrid>
-              </div>
-            )}
-
-            {/* ── Top tabs: Courses / Bookmarks ─────── */}
-            <div>
-              <TopTabs>
-                <TopTab $active={topTab === 'courses'} onClick={() => setTopTab('courses')}>
-                  Courses
-                </TopTab>
-                <TopTab $active={topTab === 'bookmarks'} onClick={() => setTopTab('bookmarks')}>
-                  Bookmarks
-                </TopTab>
-              </TopTabs>
-
-              {topTab === 'courses' && (
-                <>
-                  <S.FilterBar>
-                    <FilterTabs>
-                      {(['active', 'completed', 'archived', 'all'] as const).map((tab) => (
-                        <FilterTab key={tab} $active={filter === tab} onClick={() => setFilter(tab)}>
-                          {tab.charAt(0).toUpperCase() + tab.slice(1)}
-                        </FilterTab>
-                      ))}
-                    </FilterTabs>
-                    <S.SortToggle onClick={() => setSort((s) => (s === 'recent' ? 'alphabetical' : 'recent'))}>
-                      {sort === 'recent' ? 'Recent' : 'A\u2013Z'}
-                    </S.SortToggle>
-                  </S.FilterBar>
-
-                  {readyCourses.length === 0 ? (
-                    <S.EmptyText>No courses match this filter.</S.EmptyText>
-                  ) : (
-                    <S.CourseGrid>
-                      {readyCourses.map((course) => (
-                        <CourseCard
-                          key={course._id}
-                          course={course}
-                          isGenerating={isJobRunningForCourse(course._id)}
-                          progress={progressMap.get(course._id)}
-                          isFavorited={favoriteSet.has(course._id)}
-                          onToggleFavorite={toggleFavorite}
-                          onClick={() => router.push(ROUTES.course(course.slug, course._id))}
-                        />
-                      ))}
-                    </S.CourseGrid>
-                  )}
-                </>
-              )}
-
-              {topTab === 'bookmarks' && (
-                <>
-                  {!bookmarkedLessons || bookmarkedLessons.length === 0 ? (
-                    <S.EmptyText>
-                      No bookmarked lessons yet. Bookmark lessons to save them here for quick access.
-                    </S.EmptyText>
-                  ) : (
-                    <S.BookmarkList>
-                      {bookmarkedLessons.map((item) => (
-                        <S.BookmarkItem
-                          key={`${item.courseId}-${item.moduleIndex}-${item.lessonIndex}`}
-                          onClick={() =>
-                            router.push(
-                              ROUTES.lesson(item.courseSlug, item.courseId, item.moduleIndex, item.lessonIndex),
-                            )
-                          }
-                        >
-                          <S.BookmarkContent>
-                            <S.BookmarkCourse>{item.courseName}</S.BookmarkCourse>
-                            <S.BookmarkLesson>
-                              {item.moduleName} &middot; {item.lessonName}
-                            </S.BookmarkLesson>
-                          </S.BookmarkContent>
-                        </S.BookmarkItem>
-                      ))}
-                    </S.BookmarkList>
-                  )}
-                </>
-              )}
-            </div>
-          </S.MainColumn>
-
-          <S.SideColumn>
-            <GamificationCard />
-
-            {((reviewsDue && reviewsDue.length > 0) || (unattemptedQuizzes && unattemptedQuizzes.length > 0)) && (
-              <S.QuizCard onClick={() => router.push('/quizzes')}>
-                <S.QuizCardLabel>Quizzes</S.QuizCardLabel>
-                {reviewsDue && reviewsDue.length > 0 && (
-                  <S.QuizCardRow>
-                    <S.QuizCardCount $color="warning">{reviewsDue.length}</S.QuizCardCount>
-                    <S.QuizCardText>{plural({ count: reviewsDue.length, singular: 'review' })} due</S.QuizCardText>
-                  </S.QuizCardRow>
-                )}
-                {unattemptedQuizzes && unattemptedQuizzes.length > 0 && (
-                  <S.QuizCardRow>
-                    <S.QuizCardCount $color="accent">{unattemptedQuizzes.length}</S.QuizCardCount>
-                    <S.QuizCardText>not yet taken</S.QuizCardText>
-                  </S.QuizCardRow>
-                )}
-              </S.QuizCard>
-            )}
-
-            {insightsDue && insightsDue.count > 0 && (
-              <S.QuizCard onClick={() => router.push('/insights')}>
-                <S.QuizCardLabel>Insights</S.QuizCardLabel>
-                <S.QuizCardRow>
-                  <S.QuizCardCount $color="accent">{insightsDue.count}</S.QuizCardCount>
-                  <S.QuizCardText>
-                    {plural({ count: insightsDue.count, singular: 'insight' })} due
-                  </S.QuizCardText>
-                </S.QuizCardRow>
-              </S.QuizCard>
-            )}
-          </S.SideColumn>
-        </S.DashboardGrid>
       </S.Container>
     </S.Layout>
   );

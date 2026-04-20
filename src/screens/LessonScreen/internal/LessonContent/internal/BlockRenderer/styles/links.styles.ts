@@ -56,3 +56,10 @@ export const LinkDescription = styled.span`
   color: ${(p) => p.theme.colors.muted};
   line-height: 1.4;
 `;
+
+export const LinksEmptyState = styled.div`
+  padding: 1rem 1.25rem;
+  font-size: 0.8125rem;
+  color: ${(p) => p.theme.colors.muted};
+  line-height: 1.5;
+`;
