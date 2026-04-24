@@ -3,7 +3,6 @@
 import { useMutation } from '@tanstack/react-query';
 import { useRouter } from 'next/navigation';
 import { startPortal } from '@/api/routes/billing';
-import type { BillingPlan, BillingSummary, CreditLedgerEntry, PlanKey, SubscriptionStatus } from '@/api/types';
 import { Button } from '@/components/Button';
 import { TopupControl } from '@/components/TopupControl';
 import { ROUTES } from '@/constants/routes';
@@ -11,6 +10,7 @@ import { useBillingLedger, useBillingPlans, useBillingSummary } from '@/hooks/us
 import { percentAllowanceRemaining } from '@/lib/allowance';
 import { formatDate } from '@/lib/formatDate';
 import * as S from './BillingPanel.styles';
+import type { BillingPlan, BillingSummary, CreditLedgerEntry, PlanKey, SubscriptionStatus } from '@/api/types';
 
 const statusTone = (status: SubscriptionStatus): 'active' | 'warning' | 'canceled' => {
   if (status === 'active') return 'active';
@@ -112,12 +112,17 @@ const computeRenewalState = ({
 }): RenewalState => {
   const { plan, status, cancelAtPeriodEnd, pendingPlan, credits } = summary;
   const isPaid = plan !== 'free';
-  const dateLabel = credits.periodEnd
-    ? formatDate({ input: credits.periodEnd, format: 'long' })
-    : null;
+  const dateLabel = credits.periodEnd ? formatDate({ input: credits.periodEnd, format: 'long' }) : null;
   const days = daysUntil(credits.periodEnd);
   const inLabel = days === null ? '' : days === 0 ? 'today' : days === 1 ? 'tomorrow' : `in ${days} days`;
-  const dateBlock = dateLabel ? <><strong>{dateLabel}</strong>{inLabel ? ` (${inLabel})` : ''}</> : '';
+  const dateBlock = dateLabel ? (
+    <>
+      <strong>{dateLabel}</strong>
+      {inLabel ? ` (${inLabel})` : ''}
+    </>
+  ) : (
+    ''
+  );
 
   // Past-due trumps everything — call attention to fix payment first.
   if (status === 'past_due') {
@@ -125,7 +130,12 @@ const computeRenewalState = ({
       tone: 'warning',
       icon: '!',
       headline: 'Payment failed — fix card to keep your plan',
-      detail: <>Stripe will keep retrying for a few days. After that your subscription downgrades to Free. Open the billing portal to update your card.</>,
+      detail: (
+        <>
+          Stripe will keep retrying for a few days. After that your subscription downgrades to Free. Open the billing
+          portal to update your card.
+        </>
+      ),
     };
   }
 
@@ -134,7 +144,12 @@ const computeRenewalState = ({
       tone: 'warning',
       icon: '×',
       headline: `Subscription ends ${inLabel || 'soon'}`,
-      detail: <>You'll keep <strong>{summary.displayName}</strong> until {dateBlock}, then drop to Free. Reactivate from the billing portal to keep your subscription running.</>,
+      detail: (
+        <>
+          You'll keep <strong>{summary.displayName}</strong> until {dateBlock}, then drop to Free. Reactivate from the
+          billing portal to keep your subscription running.
+        </>
+      ),
     };
   }
 
@@ -146,7 +161,21 @@ const computeRenewalState = ({
       tone: 'info',
       icon: '⇄',
       headline: `Switching to ${targetName} on renewal`,
-      detail: <>You stay on <strong>{summary.displayName}</strong> until {dateBlock}. Then your plan becomes <strong>{targetName}</strong>{targetPrice ? <> at <strong>{targetPrice}</strong></> : ''}.</>,
+      detail: (
+        <>
+          You stay on <strong>{summary.displayName}</strong> until {dateBlock}. Then your plan becomes{' '}
+          <strong>{targetName}</strong>
+          {targetPrice ? (
+            <>
+              {' '}
+              at <strong>{targetPrice}</strong>
+            </>
+          ) : (
+            ''
+          )}
+          .
+        </>
+      ),
     };
   }
 
@@ -157,7 +186,20 @@ const computeRenewalState = ({
       tone: 'positive',
       icon: '↻',
       headline: `Auto-renews ${inLabel || 'soon'}`,
-      detail: <>Your card will be charged{renewalPrice ? <> <strong>{renewalPrice}</strong></> : ''} on {dateBlock} and your allowance refreshes for the new period. Cancel any time from the billing portal.</>,
+      detail: (
+        <>
+          Your card will be charged
+          {renewalPrice ? (
+            <>
+              {' '}
+              <strong>{renewalPrice}</strong>
+            </>
+          ) : (
+            ''
+          )}{' '}
+          on {dateBlock} and your allowance refreshes for the new period. Cancel any time from the billing portal.
+        </>
+      ),
     };
   }
 
@@ -186,7 +228,9 @@ export const BillingPanel: React.FC<BillingPanelProps> = ({ ledgerLimit = 20 }) 
   const portalMutation = useMutation({
     mutationFn: startPortal,
     meta: { errorMessage: 'Could not open Stripe portal.' },
-    onSuccess: ({ url }) => { window.location.href = url; },
+    onSuccess: ({ url }) => {
+      window.location.href = url;
+    },
   });
 
   if (summaryLoading || !summary) {
@@ -214,9 +258,7 @@ export const BillingPanel: React.FC<BillingPanelProps> = ({ ledgerLimit = 20 }) 
   // original USD-equivalent via the current rate (a minor inaccuracy we
   // accept; the ledger retains the exact amount paid).
   const topupRate = catalog?.topupRate?.creditsPerUsd ?? 0;
-  const bonusUsdLabel = topupRate > 0 && credits.bonus > 0
-    ? `$${(credits.bonus / topupRate).toFixed(2)}`
-    : null;
+  const bonusUsdLabel = topupRate > 0 && credits.bonus > 0 ? `$${(credits.bonus / topupRate).toFixed(2)}` : null;
 
   return (
     <S.Wrap>
@@ -230,7 +272,9 @@ export const BillingPanel: React.FC<BillingPanelProps> = ({ ledgerLimit = 20 }) 
 
         {/* What happens next — unmissable on every billing view. */}
         <S.RenewalCard $tone={renewal.tone} role="status">
-          <S.RenewalIcon $tone={renewal.tone} aria-hidden="true">{renewal.icon}</S.RenewalIcon>
+          <S.RenewalIcon $tone={renewal.tone} aria-hidden="true">
+            {renewal.icon}
+          </S.RenewalIcon>
           <S.RenewalBody>
             <S.RenewalHeadline>{renewal.headline}</S.RenewalHeadline>
             <S.RenewalDetail>{renewal.detail}</S.RenewalDetail>
@@ -240,14 +284,18 @@ export const BillingPanel: React.FC<BillingPanelProps> = ({ ledgerLimit = 20 }) 
         <S.CreditBar>
           <S.CreditBarHeader>
             <span>Allowance this period</span>
-            <span><strong>{Math.round(pctRemaining)}%</strong> remaining</span>
+            <span>
+              <strong>{Math.round(pctRemaining)}%</strong> remaining
+            </span>
           </S.CreditBarHeader>
           <S.BarTrack>
             <S.BarFill $pct={pctRemaining} />
           </S.BarTrack>
           {credits.bonus > 0 && bonusUsdLabel && (
             <S.CreditSub>
-              <span>Plus <strong>{bonusUsdLabel}</strong> top-up allowance (never expires)</span>
+              <span>
+                Plus <strong>{bonusUsdLabel}</strong> top-up allowance
+              </span>
             </S.CreditSub>
           )}
         </S.CreditBar>
@@ -257,24 +305,22 @@ export const BillingPanel: React.FC<BillingPanelProps> = ({ ledgerLimit = 20 }) 
               its CTAs route the actual switch through Stripe Portal — but we
               still want them to SEE the tier comparison side-by-side without
               leaving the app first. */}
-          <Button onClick={() => router.push(ROUTES.pricing())}>
-            {isPaid ? 'Change plan' : 'See plans'}
-          </Button>
+          <Button onClick={() => router.push(ROUTES.pricing())}>{isPaid ? 'Change plan' : 'See plans'}</Button>
           {/* Manage = card / cancel / invoices via Stripe Portal. Only paid
               users have a Stripe customer + subscription to manage. */}
           {isPaid && (
-            <Button
-              variant="secondary"
-              onClick={() => portalMutation.mutate()}
-              loading={portalMutation.isPending}
-            >
+            <Button variant="secondary" onClick={() => portalMutation.mutate()} loading={portalMutation.isPending}>
               Manage billing
             </Button>
           )}
         </S.Actions>
 
         <S.TopupSection>
-          <S.TopupLabel>Need more? Top up any amount</S.TopupLabel>
+          <S.TopupHeader>
+            <S.TopupBadge aria-hidden="true">+</S.TopupBadge>
+            <S.TopupLabel>Top up extra allowance</S.TopupLabel>
+            <S.TopupHint>never expires</S.TopupHint>
+          </S.TopupHeader>
           <TopupControl />
         </S.TopupSection>
       </S.PlanCard>
@@ -282,15 +328,13 @@ export const BillingPanel: React.FC<BillingPanelProps> = ({ ledgerLimit = 20 }) 
       <S.LedgerSection>
         <S.SectionHeader>Recent activity</S.SectionHeader>
         {ledgerLoading && <S.EmptyLedger>Loading…</S.EmptyLedger>}
-        {!ledgerLoading && ledger.length === 0 && (
-          <S.EmptyLedger>No activity yet.</S.EmptyLedger>
-        )}
+        {!ledgerLoading && ledger.length === 0 && <S.EmptyLedger>No activity yet.</S.EmptyLedger>}
         {ledger.length > 0 && (
           <S.LedgerTable>
             {ledger.map((row) => {
               const positive = row.delta > 0;
               const label = reasonLabel[row.reason] ?? row.reason;
-              const subLabel = row.actionType ? actionLabel(row.actionType) : row.notes ?? '';
+              const subLabel = row.actionType ? actionLabel(row.actionType) : (row.notes ?? '');
               // Raw credit numbers are intentionally not surfaced — the sign
               // arrow communicates direction, the reason + action tell the
               // user what happened. Aligns with the "hide credit numbers"

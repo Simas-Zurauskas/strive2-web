@@ -5,7 +5,6 @@ import { useMemo, useState } from 'react';
 import { startTopup } from '@/api/routes/billing';
 import { Button } from '@/components/Button';
 import { useBillingPlans } from '@/hooks/useBilling';
-import { formatAllowance } from '@/lib/allowance';
 import * as S from './TopupControl.styles';
 
 const QUICK_PICKS = [5, 10, 25, 50, 100] as const;
@@ -36,14 +35,9 @@ interface TopupControlProps {
  * `checkout.session.completed` webhook and land in `bonusBalance` (never
  * expire). Server re-validates the amount — this component is UX only.
  */
-export const TopupControl = ({
-  onRedirect,
-  defaultAmount = 25,
-  stacked = false,
-}: TopupControlProps) => {
+export const TopupControl = ({ onRedirect, defaultAmount = 25, stacked = false }: TopupControlProps) => {
   const { data: catalog } = useBillingPlans();
   const rate = catalog?.topupRate;
-  const creditsPerUsd = rate?.creditsPerUsd ?? 0;
   const minUsd = rate?.minUsd ?? 1;
   const maxUsd = rate?.maxUsd ?? 1;
 
@@ -92,9 +86,6 @@ export const TopupControl = ({
       setAmountStr(String(maxUsd));
     }
   };
-
-  const previewCredits = parsedAmount !== null && creditsPerUsd > 0 ? parsedAmount * creditsPerUsd : 0;
-  const previewAllowance = previewCredits > 0 ? formatAllowance(previewCredits) : null;
 
   return (
     <S.Wrap $stacked={stacked}>
@@ -149,21 +140,15 @@ export const TopupControl = ({
       <S.Footnote>
         {validity === 'below' && <S.HintError>Minimum is ${minUsd}.</S.HintError>}
         {validity === 'above' && <S.HintError>Maximum is ${maxUsd}.</S.HintError>}
-        {validity === 'ok' && previewAllowance && (
-          <S.HintPreview>
-            +{previewAllowance}× extra allowance · never expires
-          </S.HintPreview>
+        {validity === 'empty' && (
+          <S.HintMuted>
+            Enter an amount between ${minUsd} and ${maxUsd}.
+          </S.HintMuted>
         )}
-        {validity === 'empty' && <S.HintMuted>Enter an amount between ${minUsd} and ${maxUsd}.</S.HintMuted>}
       </S.Footnote>
 
       {stacked && (
-        <Button
-          variant="primary"
-          onClick={handleBuy}
-          disabled={!canBuy}
-          loading={topupMutation.isPending}
-        >
+        <Button variant="primary" onClick={handleBuy} disabled={!canBuy} loading={topupMutation.isPending}>
           Buy{parsedAmount !== null && validity === 'ok' ? ` $${parsedAmount}` : ''}
         </Button>
       )}

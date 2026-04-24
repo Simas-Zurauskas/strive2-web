@@ -217,10 +217,31 @@ export const Actions = styled.div`
 export const TopupSection = styled.div`
   display: flex;
   flex-direction: column;
-  gap: 0.5rem;
-  padding-top: 0.5rem;
-  border-top: 1px solid ${(p) => p.theme.colors.surfaceBorder};
+  gap: 0.6rem;
+  padding-top: 1rem;
   margin-top: 0.25rem;
+  border-top: 1px solid ${(p) => p.theme.colors.surfaceBorder};
+`;
+
+export const TopupHeader = styled.div`
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+`;
+
+export const TopupBadge = styled.span`
+  width: 18px;
+  height: 18px;
+  border-radius: 50%;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 0.8rem;
+  font-weight: 700;
+  line-height: 1;
+  flex-shrink: 0;
+  background: ${(p) => p.theme.colors.accentMuted};
+  color: ${(p) => p.theme.colors.accent};
 `;
 
 export const TopupLabel = styled.div`
@@ -228,6 +249,13 @@ export const TopupLabel = styled.div`
   font-weight: 600;
   color: ${(p) => p.theme.colors.foreground};
   letter-spacing: 0.01em;
+`;
+
+export const TopupHint = styled.span`
+  font-size: 0.8125rem;
+  font-weight: 400;
+  color: ${(p) => p.theme.colors.muted};
+  margin-left: 0.3rem;
 `;
 
 export const LedgerSection = styled.section`

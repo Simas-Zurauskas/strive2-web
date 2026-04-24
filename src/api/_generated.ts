@@ -2900,7 +2900,7 @@ export type webhooks = Record<string, never>;
 export interface components {
     schemas: {
         /** @enum {string} */
-        ErrorCode: "CUSTOM_ERROR" | "EMAIL_NOT_VERIFIED" | "EMAIL_ALREADY_VERIFIED" | "EMAIL_VERIFICATION_EXPIRED" | "EMAIL_VERIFICATION_INVALID" | "PASSWORD_RESET_INVALID" | "PASSWORD_RESET_EXPIRED" | "PASSWORD_ALREADY_SET" | "PASSWORD_NOT_SET" | "INSUFFICIENT_CREDITS" | "SUBSCRIPTION_ALREADY_EXISTS";
+        ErrorCode: "CUSTOM_ERROR" | "EMAIL_NOT_VERIFIED" | "EMAIL_ALREADY_VERIFIED" | "EMAIL_VERIFICATION_EXPIRED" | "EMAIL_VERIFICATION_INVALID" | "PASSWORD_RESET_INVALID" | "PASSWORD_RESET_EXPIRED" | "PASSWORD_ALREADY_SET" | "PASSWORD_NOT_SET" | "INSUFFICIENT_CREDITS" | "SUBSCRIPTION_ALREADY_EXISTS" | "TOO_MANY_ACTIVE_JOBS";
         /** @enum {string} */
         AuthProviderType: "GOOGLE" | "CREDENTIALS";
         /** @enum {string} */
@@ -2982,8 +2982,6 @@ export interface components {
             annualUsd: number;
             monthlyAllowance: number;
             maxConcurrentJobs: number;
-            allowImage: boolean;
-            allowLinks: boolean;
         };
         BillingTopupRate: {
             creditsPerUsd: number;

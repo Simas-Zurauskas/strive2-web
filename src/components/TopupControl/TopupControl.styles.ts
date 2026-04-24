@@ -106,17 +106,16 @@ export const QuickPick = styled.button<{ $selected: boolean }>`
 `;
 
 export const Footnote = styled.div`
-  min-height: 1.1rem;
   font-size: 0.8125rem;
   line-height: 1.1;
+
+  &:empty {
+    display: none;
+  }
 `;
 
 export const HintError = styled.span`
   color: ${(p) => p.theme.colors.error};
-`;
-
-export const HintPreview = styled.span`
-  color: ${(p) => p.theme.colors.foreground};
 `;
 
 export const HintMuted = styled.span`
