@@ -5,6 +5,8 @@ import { deleteAccount } from '@/api/routes/auth';
 import { Button, InlineLink } from '@/components';
 import { TOASTS } from '@/constants/toasts';
 import { useAuth } from '@/hooks';
+import { useBillingPlans, useBillingSummary } from '@/hooks/useBilling';
+import { formatDate } from '@/lib/formatDate';
 import * as S from './AccountTab.styles';
 import { PasswordModal } from './internal/PasswordModal';
 
@@ -16,6 +18,16 @@ const formatProvider = (provider: string) => {
 
 export const AccountTab: React.FC = () => {
   const { user, signOut } = useAuth();
+  const { data: billing } = useBillingSummary();
+  const { data: catalog } = useBillingPlans();
+
+  // Forfeit warning surfaces bonus balance as its USD-equivalent (what the
+  // user originally paid at the published top-up rate). Missing rate =
+  // fall back to a generic line without a dollar figure.
+  const topupRate = catalog?.topupRate?.creditsPerUsd ?? 0;
+  const bonusUsdLabel = topupRate > 0 && billing?.credits.bonus
+    ? `$${(billing.credits.bonus / topupRate).toFixed(2)}`
+    : null;
 
   const [deleting, setDeleting] = useState(false);
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
@@ -101,6 +113,35 @@ export const AccountTab: React.FC = () => {
           <S.DangerButton onClick={() => setShowDeleteConfirm(true)}>Delete Account</S.DangerButton>
         ) : (
           <>
+            {/* Surface every irreversible loss before they confirm. Industry
+                standard for subscription products is to forfeit everything
+                on deletion — the warning makes that explicit so no one
+                accidentally trashes paid value. */}
+            {billing && (
+              <S.ForfeitWarning>
+                <S.ForfeitTitle>This permanently destroys</S.ForfeitTitle>
+                <S.ForfeitList>
+                  {billing.plan !== 'free' && (
+                    <li>
+                      Your <strong>{billing.displayName}</strong> subscription will be cancelled
+                      {billing.credits.periodEnd && (
+                        <> (currently renews {formatDate({ input: billing.credits.periodEnd, format: 'long' })})</>
+                      )}. No refund.
+                    </li>
+                  )}
+                  {billing.credits.allowance > 0 && (
+                    <li>All remaining plan allowance this period.</li>
+                  )}
+                  {billing.credits.bonus > 0 && (
+                    <li>
+                      All purchased top-up allowance
+                      {bonusUsdLabel && <> (<strong>{bonusUsdLabel}</strong> remaining)</>}.
+                    </li>
+                  )}
+                  <li>All your courses, lessons, quizzes, and progress.</li>
+                </S.ForfeitList>
+              </S.ForfeitWarning>
+            )}
             {hasCredentials && (
               <S.PasswordInput
                 type="password"

@@ -62,3 +62,14 @@ export type RateInsightResult = components['schemas']['RateInsightResult'];
 export type InsightStats = components['schemas']['InsightStats'];
 export type GradeVerdict = components['schemas']['GradeVerdict'];
 export type GradeResult = components['schemas']['GradeResult'];
+
+// ── Billing / subscription types ───────────────────────
+export type PlanKey = components['schemas']['PlanKey'];
+export type SubscriptionStatus = components['schemas']['SubscriptionStatus'];
+export type UserSubscription = components['schemas']['UserSubscription'];
+export type UserCredits = components['schemas']['UserCredits'];
+export type BillingPlan = components['schemas']['BillingPlan'];
+export type BillingTopupRate = components['schemas']['BillingTopupRate'];
+export type BillingCatalog = components['schemas']['BillingCatalog'];
+export type BillingSummary = components['schemas']['BillingSummary'];
+export type CreditLedgerEntry = components['schemas']['CreditLedgerEntry'];

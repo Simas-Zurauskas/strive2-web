@@ -26,7 +26,7 @@ export const Dialog = styled.div`
   transform: translate(-50%, -50%);
   z-index: 101;
   width: 90%;
-  max-width: 400px;
+  max-width: 520px;
   background: ${(p) => p.theme.colors.surface};
   border: 1px solid ${(p) => p.theme.colors.surfaceBorder};
   border-radius: 12px;
@@ -67,4 +67,15 @@ export const Actions = styled.div`
   display: flex;
   justify-content: flex-end;
   gap: 0.75rem;
+  flex-wrap: wrap;
+
+  /* Narrow dialog → let buttons go full-width stacked so long labels
+     ("Confirm cancellation", "Keep current plan") never overflow. */
+  @media (max-width: 440px) {
+    flex-direction: column-reverse;
+
+    & > * {
+      width: 100%;
+    }
+  }
 `;

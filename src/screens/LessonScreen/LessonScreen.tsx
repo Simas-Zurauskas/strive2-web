@@ -6,7 +6,7 @@ import { useCallback, useEffect, useRef } from 'react';
 import { getAuthToken } from '@/api/client';
 import { upsertLessonProgress } from '@/api/routes/course';
 import { NEXT_PUBLIC_API_URL } from '@/conf/env';
-import { useJobManager } from '@/hooks';
+import { ROUTES } from '@/constants/routes';
 import { useCourseContext } from '@/screens/CourseShell';
 import { QKeys } from '@/types';
 import { LessonContent } from './internal';
@@ -57,6 +57,11 @@ export const LessonScreen = () => {
   const hasPrev = moduleIndex > 0 || lessonIndex > 0;
   const hasNext = moduleIndex < modules.length - 1 || lessonIndex < (currentModule?.lessons?.length ?? 0) - 1;
 
+  const openModuleQuiz = useCallback(
+    () => router.push(ROUTES.moduleQuiz(courseSlug, course?._id ?? '', moduleIndex)),
+    [router, courseSlug, course?._id, moduleIndex],
+  );
+
   // ── Auto-track progress ───────────────────────────────
 
   const timeRef = useRef(0);
@@ -102,16 +107,19 @@ export const LessonScreen = () => {
 
   // ── Not found ─────────────────────────────────────────
 
-  const { generatingLesson } = useJobManager();
   const courseObjectId = course?._id;
   const isGenerationRunning = !!course?.activeJobId;
 
-  // WebSocket tells us exactly which lesson is generating
+  // `course.activeLesson` is the authoritative source — it's stamped by
+  // generateLessonController and cleared by the job runner's finally, so
+  // it's correct the instant GET /course returns (including reload right
+  // after clicking Generate, before any content has landed in the DB).
+  // The WS `generatingLesson` state stays as a fast-path for sibling
+  // features (e.g. dashboard list) but the viewer reads the course
+  // field directly to avoid race gaps.
   const isThisLessonGenerating =
-    !!courseObjectId &&
-    generatingLesson?.courseId === courseObjectId &&
-    generatingLesson?.moduleIndex === moduleIndex &&
-    generatingLesson?.lessonIndex === lessonIndex;
+    course?.activeLesson?.moduleIndex === moduleIndex &&
+    course?.activeLesson?.lessonIndex === lessonIndex;
 
   if (!currentModule || !currentLesson) {
     return (
@@ -135,6 +143,7 @@ export const LessonScreen = () => {
       hasNext={hasNext}
       onPrev={prevLesson}
       onNext={nextLesson}
+      onOpenQuiz={openModuleQuiz}
       onOpenSidebar={() => setSidebarOpen(true)}
       sidebarOpen={sidebarOpen}
       isGenerationRunning={isGenerationRunning}

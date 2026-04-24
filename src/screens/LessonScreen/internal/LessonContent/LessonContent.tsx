@@ -3,7 +3,8 @@
 import { AnimatePresence, motion } from 'framer-motion';
 import { useState } from 'react';
 import { Button, Checkbox, TextLoader } from '@/components';
-import { useJobManager, useLessonContent } from '@/hooks';
+import { useJobManager, useLessonContent, useLessonStream } from '@/hooks';
+import { useBillingSummary } from '@/hooks/useBilling';
 import {
   BlockRenderer,
   FontScaler,
@@ -11,7 +12,6 @@ import {
   FONT_SCALE_KEY,
   LessonHero,
   NotesPanel,
-  useLessonStream,
   useLessonCompletion,
 } from './internal';
 import * as S from './LessonContent.styles';
@@ -39,6 +39,7 @@ interface LessonContentProps {
   hasNext: boolean;
   onPrev: () => void;
   onNext: () => void;
+  onOpenQuiz: () => void;
   onOpenSidebar: () => void;
   sidebarOpen: boolean;
   isGenerationRunning: boolean;
@@ -57,6 +58,7 @@ export const LessonContent = ({
   hasNext,
   onPrev,
   onNext,
+  onOpenQuiz,
   isGenerationRunning,
   isThisLessonGenerating: isThisLessonGeneratingWs,
   progressData,
@@ -102,8 +104,6 @@ export const LessonContent = ({
     moduleIndex,
     lessonIndex,
     isGenerationRunning,
-    hasContent,
-    lessonCompleted: !!(lessonContent as Record<string, unknown>)?.completed,
   });
 
   const completion = useLessonCompletion({
@@ -114,7 +114,16 @@ export const LessonContent = ({
     progressData,
     hasNext,
     onNext,
+    onOpenQuiz,
   });
+
+  // Gate the Create Lesson CTA on the user having any allowance left. Real
+  // cost is debited server-side post-hoc from measured provider spend —
+  // there's nothing to compute on the client. While the billing summary is
+  // loading we assume affordable (affordable = summary undefined) so the
+  // button doesn't flicker disabled on fresh mount.
+  const { data: billing } = useBillingSummary();
+  const affordable = billing ? billing.credits.total >= 1 : true;
 
   const isThisLessonGenerating = stream.isThisLessonGenerating || isThisLessonGeneratingWs;
   const heroImage = stream.streamImage || lessonContent?.heroImageUrl || null;
@@ -200,13 +209,15 @@ export const LessonContent = ({
                 });
               }}
             />
-            {stream.isActivelyGenerating && <S.StreamingIndicator>Creating lesson...</S.StreamingIndicator>}
-            {stream.streamPhase === 'finishing' && !stream.placeholders.length && (
-              <S.FinishingIndicator>Finishing up...</S.FinishingIndicator>
+            {isThisLessonGenerating && (
+              stream.streamPhase === 'finishing' ? (
+                <S.FinishingIndicator>Finishing touches...</S.FinishingIndicator>
+              ) : (
+                <S.StreamingIndicator>Creating lesson...</S.StreamingIndicator>
+              )
             )}
-            {!stream.isStreaming && isThisLessonGenerating && <S.StreamingIndicator>Creating lesson...</S.StreamingIndicator>}
           </>
-        ) : stream.isStreaming || stream.isStarting || isThisLessonGenerating ? (
+        ) : isThisLessonGenerating ? (
           <S.StreamingIndicator>Creating lesson...</S.StreamingIndicator>
         ) : (
           <S.Placeholder>
@@ -228,8 +239,12 @@ export const LessonContent = ({
                   />
                 </S.GenerateOptions>
 
-                <Button onClick={stream.handleGenerate} disabled={stream.isAnyLessonGenerating}>
-                  {stream.isAnyLessonGenerating ? 'Another lesson is being created...' : 'Create lesson'}
+                <Button onClick={stream.handleGenerate} disabled={stream.isAnyLessonGenerating || !affordable}>
+                  {stream.isAnyLessonGenerating
+                    ? 'Another lesson is being created...'
+                    : !affordable
+                    ? 'Out of allowance'
+                    : 'Create lesson'}
                 </Button>
               </>
             ) : (

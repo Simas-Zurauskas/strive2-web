@@ -11,7 +11,14 @@ interface AlertDialogProps {
   description: React.ReactNode;
   confirmLabel?: string;
   cancelLabel?: string;
-  variant?: 'danger' | 'default';
+  /**
+   * Visual tone of the confirm action.
+   *   - 'default'  → primary (positive affirmation, e.g. "save")
+   *   - 'danger'   → red filled (destructive, e.g. "cancel subscription")
+   *   - 'neutral'  → secondary outlined (intentional but not destructive,
+   *                   e.g. "downgrade to a lower plan")
+   */
+  variant?: 'default' | 'danger' | 'neutral';
   loading?: boolean;
   onConfirm: () => void;
   onCancel: () => void;
@@ -59,7 +66,15 @@ export const AlertDialog = ({
           <Button variant="secondary" onClick={onCancel} disabled={loading}>
             {cancelLabel}
           </Button>
-          <Button variant={variant === 'danger' ? 'danger' : 'primary'} onClick={onConfirm} loading={loading}>
+          <Button
+            variant={
+              variant === 'danger' ? 'danger'
+                : variant === 'neutral' ? 'secondary'
+                : 'primary'
+            }
+            onClick={onConfirm}
+            loading={loading}
+          >
             {confirmLabel}
           </Button>
         </S.Actions>

@@ -1,6 +1,7 @@
 'use client';
 
 import { useMutation } from '@tanstack/react-query';
+import { useRouter, useSearchParams } from 'next/navigation';
 import { useState } from 'react';
 import { toast } from 'sonner';
 import { resendVerificationAuthenticated } from '@/api/routes/auth';
@@ -9,13 +10,37 @@ import { TOASTS } from '@/constants/toasts';
 import { useAuth } from '@/hooks';
 import { formatDate } from '@/lib/formatDate';
 import { AccountTab } from './internal/AccountTab/AccountTab';
+import { BillingTab } from './internal/BillingTab/BillingTab';
 import { LearningTab } from './internal/LearningTab/LearningTab';
 import * as S from './ProfileScreen.styles';
 
+type ProfileTab = 'learning' | 'billing' | 'account';
+const VALID_TABS: ProfileTab[] = ['learning', 'billing', 'account'];
+
 export const ProfileScreen: React.FC = () => {
   const { user } = useAuth();
+  const searchParams = useSearchParams();
+  const router = useRouter();
 
-  const [activeTab, setActiveTab] = useState<'learning' | 'account'>('learning');
+  // URL is the source of truth for which tab is active so:
+  //   1. Direct deep links (/profile?tab=billing) work from anywhere (pill,
+  //      LowCreditBanner, OutOfCreditsModal, etc.)
+  //   2. Browser back/forward syncs the UI without extra state machinery.
+  //   3. Shareable URLs Just Work.
+  // Invalid/unknown tab values fall back to 'learning' rather than error.
+  const tabParam = searchParams.get('tab');
+  const activeTab: ProfileTab = (VALID_TABS as string[]).includes(tabParam ?? '')
+    ? (tabParam as ProfileTab)
+    : 'learning';
+
+  const setActiveTab = (tab: ProfileTab) => {
+    // `learning` is the default — drop the param for a clean URL.
+    // `scroll: false` keeps the user where they are on the page rather
+    // than jumping to top on every tab click.
+    const target = tab === 'learning' ? '/profile' : `/profile?tab=${tab}`;
+    router.replace(target, { scroll: false });
+  };
+
   const [imgError, setImgError] = useState(false);
 
   const getInitials = () => {
@@ -89,12 +114,16 @@ export const ProfileScreen: React.FC = () => {
         <TopTab $active={activeTab === 'learning'} onClick={() => setActiveTab('learning')}>
           Learning
         </TopTab>
+        <TopTab $active={activeTab === 'billing'} onClick={() => setActiveTab('billing')}>
+          Billing
+        </TopTab>
         <TopTab $active={activeTab === 'account'} onClick={() => setActiveTab('account')}>
           Account
         </TopTab>
       </TopTabs>
 
       {activeTab === 'learning' && <LearningTab />}
+      {activeTab === 'billing' && <BillingTab />}
       {activeTab === 'account' && <AccountTab />}
     </PageLayout>
   );

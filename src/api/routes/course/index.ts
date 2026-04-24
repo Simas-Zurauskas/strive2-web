@@ -1,6 +1,5 @@
 import { paths } from '@/api/_generated';
-import { client, getAuthToken } from '@/api/client';
-import { NEXT_PUBLIC_API_URL } from '@/conf/env';
+import { client } from '@/api/client';
 import type { LessonBlock } from '@/api/types';
 
 // ── Course CRUD ─────────────────────────────────────────
@@ -104,7 +103,13 @@ export const generateDepthPreviews = (courseId: string) => {
 type GenerateLessonResponse =
   paths['/api/course/{courseId}/generate-lesson']['post']['responses']['202']['content']['application/json'];
 
-export const generateLesson = (params: { courseId: string; moduleIndex: number; lessonIndex: number }) => {
+export const generateLesson = (params: {
+  courseId: string;
+  moduleIndex: number;
+  lessonIndex: number;
+  includeImage?: boolean;
+  includeLinks?: boolean;
+}) => {
   const { courseId, ...body } = params;
   return client<GenerateLessonResponse>({
     url: `/course/${courseId}/generate-lesson`,
@@ -113,7 +118,12 @@ export const generateLesson = (params: { courseId: string; moduleIndex: number; 
   }).then((res) => res.data.data);
 };
 
-// ── Lesson streaming ───────────────────────────────────
+// ── Lesson progress events ─────────────────────────────
+//
+// The agent's writer events arrive as the `event` field of Socket.io
+// `job:progress` messages. Shape mirrors what the LangGraph nodes emit so
+// the server is the single source of truth for event types — adding a new
+// agent event here does not require a server-side schema change.
 
 export interface PlaceholderBlock {
   id: string;
@@ -121,81 +131,12 @@ export interface PlaceholderBlock {
   order: number;
 }
 
-export type LessonStreamEvent =
+export type LessonProgressEvent =
   | { type: 'block'; block: LessonBlock }
-  | { type: 'blocks'; blocks: LessonBlock[] }
-  | { type: 'hero_image'; url: string }
+  | { type: 'hero_image'; url: string; s3Key?: string }
   | { type: 'content_ready'; placeholders: PlaceholderBlock[] }
-  | { type: 'complete' }
-  | { type: 'error'; message: string };
-
-export const streamLesson = async (
-  params: {
-    courseId: string;
-    moduleIndex: number;
-    lessonIndex: number;
-    includeImage?: boolean;
-    includeLinks?: boolean;
-    signal?: AbortSignal;
-    onEvent: (event: LessonStreamEvent) => void;
-  },
-): Promise<void> => {
-  const { courseId, onEvent, signal, ...body } = params;
-  const token = getAuthToken();
-
-  const response = await fetch(`${NEXT_PUBLIC_API_URL}/api/course/${courseId}/stream-lesson`, {
-    method: 'POST',
-    headers: {
-      'Content-Type': 'application/json',
-      ...(token && { Authorization: `Bearer ${token}` }),
-    },
-    body: JSON.stringify(body),
-    signal,
-  });
-
-  if (!response.ok) {
-    const text = await response.text();
-    let message = 'Generation failed';
-    try { message = JSON.parse(text).message ?? message; } catch { /* ignore */ }
-    onEvent({ type: 'error', message });
-    return;
-  }
-
-  const reader = response.body?.getReader();
-  if (!reader) {
-    onEvent({ type: 'error', message: 'No response stream' });
-    return;
-  }
-
-  const decoder = new TextDecoder();
-  let buffer = '';
-
-  while (true) {
-    const { done, value } = await reader.read();
-    if (done) break;
-
-    buffer += decoder.decode(value, { stream: true });
-
-    // Parse SSE lines: "data: {...}\n\n"
-    const lines = buffer.split('\n');
-    buffer = lines.pop() ?? ''; // keep incomplete line in buffer
-
-    for (const line of lines) {
-      const trimmed = line.trim();
-      if (!trimmed || !trimmed.startsWith('data: ')) continue;
-
-      const json = trimmed.slice(6); // strip "data: "
-      if (json === '[DONE]') continue;
-
-      try {
-        const event = JSON.parse(json) as LessonStreamEvent;
-        onEvent(event);
-      } catch {
-        // ignore malformed events
-      }
-    }
-  }
-};
+  | { type: 'insight'; insight: unknown }
+  | { type: 'insights_saved'; count: number };
 
 // ── Code execution ─────────────────────────────────────
 

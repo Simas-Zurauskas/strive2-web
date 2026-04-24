@@ -1,13 +1,13 @@
 'use client';
 
-import { AlertCircle, Check, CheckCircle, Circle, Lock, Minus, Sparkles, Trophy } from 'lucide-react';
+import { AlertCircle, CheckCircle, Lock, Sparkles, Trophy } from 'lucide-react';
 import { useRouter } from 'next/navigation';
 import { useMemo } from 'react';
-import { Badge, TextAction } from '@/components';
+import { Badge, LessonIndicator, TextAction, computeLessonIndicatorState } from '@/components';
 import { plural } from '@/lib/strings';
 import { useCourseContext } from '@/screens/CourseShell';
 import * as S from './CourseOverviewScreen.styles';
-import type { CourseQuizProgressItem, LessonProgressStatus } from '@/api/types';
+import type { CourseQuizProgressItem } from '@/api/types';
 import type { QuizIconVariant } from '@/types';
 
 const quizIconFor: Record<QuizIconVariant, typeof Trophy> = {
@@ -20,8 +20,16 @@ const quizIconFor: Record<QuizIconVariant, typeof Trophy> = {
 
 export const CourseOverviewScreen = () => {
   const router = useRouter();
-  const { courseBasePath, course, modules, progressData, navigateToLesson, onDeleteCourse, onArchiveCourse } =
+  const { courseBasePath, course, modules, progressData, generatedLessons, navigateToLesson, onDeleteCourse, onArchiveCourse } =
     useCourseContext();
+
+  const generatedSet = useMemo(() => {
+    const set = new Set<string>();
+    if (generatedLessons) {
+      for (const gl of generatedLessons) set.add(`${gl.moduleIndex}-${gl.lessonIndex}`);
+    }
+    return set;
+  }, [generatedLessons]);
 
   const progressMap = useMemo(() => {
     const map = new Map<string, string>();
@@ -99,12 +107,14 @@ export const CourseOverviewScreen = () => {
   const totalLessons = modules.reduce((sum, m) => sum + (m.lessons?.length ?? 0), 0);
   const depthLabel = course?.depth?.replace('_', ' ');
 
-  const getLessonStatus = ({ mi, li }: { mi: number; li: number }): LessonProgressStatus | 'default' => {
-    const status = progressMap.get(`${mi}-${li}`);
-    if (status === 'completed') return 'completed';
-    if (status === 'in_progress') return 'in_progress';
-    return 'default';
-  };
+  const getIndicatorState = ({ mi, li }: { mi: number; li: number }) =>
+    computeLessonIndicatorState({
+      moduleIndex: mi,
+      lessonIndex: li,
+      activeLesson: course?.activeLesson ?? null,
+      progressStatus: progressMap.get(`${mi}-${li}`),
+      isGenerated: generatedSet.has(`${mi}-${li}`),
+    });
 
   const getModuleProgress = (mi: number) => {
     const lessons = modules[mi]?.lessons ?? [];
@@ -215,18 +225,10 @@ export const CourseOverviewScreen = () => {
             <S.ModuleDescription>{mod.description}</S.ModuleDescription>
             <S.LessonList>
               {mod.lessons?.map((lesson, li) => {
-                const status = getLessonStatus({ mi, li });
+                const indicatorState = getIndicatorState({ mi, li });
                 return (
-                  <S.LessonItem key={li} $status={status} onClick={() => navigateToLesson(mi, li)}>
-                    <S.LessonStatus $status={status}>
-                      {status === 'completed' ? (
-                        <Check size={14} strokeWidth={3} />
-                      ) : status === 'in_progress' ? (
-                        <Minus size={14} strokeWidth={2.5} />
-                      ) : (
-                        <Circle size={6} />
-                      )}
-                    </S.LessonStatus>
+                  <S.LessonItem key={li} onClick={() => navigateToLesson(mi, li)}>
+                    <LessonIndicator state={indicatorState} size="md" />
                     <S.LessonContent>
                       <S.LessonName>{lesson.name}</S.LessonName>
                       <S.LessonDescription>{lesson.description}</S.LessonDescription>

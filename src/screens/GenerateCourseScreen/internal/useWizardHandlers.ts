@@ -5,7 +5,9 @@ import { TOASTS } from '@/constants/toasts';
 import { useJobManager } from '@/hooks/useJobManager';
 import { QKeys } from '@/types';
 import type { useWizardMutations } from './useWizardMutations';
-import type { Course, CourseDepth, DepthPreviewsResponse } from '@/api/types';
+import type { useDepthOverrideDialog } from './useDepthOverrideDialog';
+import type { Course, CourseDepth, ClientApiError, DepthPreviewsResponse } from '@/api/types';
+import type { DepthOverridePayload } from '@/components/DepthOverrideDialog';
 
 type Step = 1 | 2 | 3 | 4;
 
@@ -25,7 +27,21 @@ interface UseWizardHandlersParams {
   course: Course | undefined;
   mutations: ReturnType<typeof useWizardMutations>;
   confirmOverwrite: (args: { message: string; action: () => void; title?: string; confirmLabel?: string }) => void;
+  depthOverrideDialog: ReturnType<typeof useDepthOverrideDialog>;
 }
+
+/**
+ * Parse a ClientApiError body to decide whether it's the depth-override
+ * 409 from the backend gate. Returns the typed payload or null. Accepts
+ * both `code` and `errorCode` field shapes (see Registry.tsx comment).
+ */
+const parseDepthOverrideError = (err: unknown): DepthOverridePayload | null => {
+  const apiError = err as ClientApiError & { code?: string; [k: string]: unknown };
+  if (apiError?.status !== 409) return null;
+  const codeField = apiError.code ?? apiError.errorCode;
+  if (codeField !== 'DEPTH_OVERRIDE_REQUIRES_ACK') return null;
+  return apiError as unknown as DepthOverridePayload;
+};
 
 export const useWizardHandlers = ({
   courseId,
@@ -40,6 +56,7 @@ export const useWizardHandlers = ({
   course,
   mutations,
   confirmOverwrite,
+  depthOverrideDialog,
 }: UseWizardHandlersParams) => {
   const router = useRouter();
   const { trackJob, isJobRunningForCourse } = useJobManager();
@@ -217,16 +234,41 @@ export const useWizardHandlers = ({
   }, [courseId, structureMutation, trackJob, setStep]);
 
   const executeDepthConfirm = useCallback(
-    (depthValue: CourseDepth) => {
+    (depthValue: CourseDepth, options?: { acknowledged?: boolean }) => {
       if (!courseId) return;
+      const acknowledged = options?.acknowledged ?? false;
+      const previousDepth = (course?.depth as CourseDepth | null) ?? null;
+
       setDepth(depthValue);
 
+      // `depthOverrideAcknowledged` is a transport-only flag not yet surfaced
+      // in the OpenAPI codegen types (lands with the API deploy of Fix #1
+      // backend, then `yarn codegen`). Local cast until the generator picks
+      // it up. The backend strips the flag before persisting.
+      const data = {
+        depth: depthValue,
+        ...(acknowledged ? { depthOverrideAcknowledged: true } : {}),
+      } as { depth: CourseDepth; depthOverrideAcknowledged?: boolean };
+
       updateCourseMutation.mutate(
-        { id: courseId, data: { depth: depthValue } },
-        { onSuccess: () => triggerStructureGeneration() },
+        { id: courseId, data },
+        {
+          onSuccess: () => triggerStructureGeneration(),
+          onError: (err) => {
+            const gatePayload = parseDepthOverrideError(err);
+            if (!gatePayload) return; // non-gate errors fall through to global toast
+
+            // Revert the depth-selector UI so the user can see their old
+            // selection while the dialog is open. The retry will re-set it.
+            setDepth(previousDepth);
+            depthOverrideDialog.showDialog(gatePayload, () => {
+              executeDepthConfirm(depthValue, { acknowledged: true });
+            });
+          },
+        },
       );
     },
-    [courseId, updateCourseMutation, triggerStructureGeneration, setDepth],
+    [courseId, course, updateCourseMutation, triggerStructureGeneration, setDepth, depthOverrideDialog],
   );
 
   const handleDepthConfirm = useCallback(

@@ -6,6 +6,7 @@ import { usePathname, useRouter } from 'next/navigation';
 import { useTheme } from 'next-themes';
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { useAuth } from '@/hooks';
+import { CreditPill } from '@/components/CreditPill';
 import * as S from './Navbar.styles';
 
 const SCROLL_THRESHOLD = 10;
@@ -131,6 +132,10 @@ export const Navbar = () => {
       </S.LeftCluster>
 
       <S.Right>
+        {/* Credit balance pill — hidden until billing summary loads (unauthed
+            or loading users see nothing here, consistent with the other
+            account-scoped actions below). */}
+        {user && <CreditPill />}
         <S.ThemeSwitch role="group" aria-label="Theme">
           <S.ThemeOption
             type="button"

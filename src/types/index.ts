@@ -23,4 +23,9 @@ export enum QKeys {
   INSIGHT_QUEUE = 'insightQueue',
   INSIGHT_STATS = 'insightStats',
   INSIGHT_DUE_COUNT = 'insightDueCount',
+  USAGE_HISTORY = 'usageHistory',
+  USAGE_SUMMARY = 'usageSummary',
+  BILLING_PLANS = 'billingPlans',
+  BILLING_SUMMARY = 'billingSummary',
+  BILLING_LEDGER = 'billingLedger',
 }

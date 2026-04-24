@@ -684,6 +684,365 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/billing/cancel": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Cancel the active subscription at period end
+         * @description User retains full access until the current billing period ends, then drops to Free. No refund (consistent with the no-voluntary- refunds policy in ToS). Does not cancel bonus credit packs — those are one-off purchases.
+         */
+        post: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path?: never;
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": {
+                            data: {
+                                /** Format: date-time */
+                                periodEnd?: string | null;
+                            };
+                        };
+                    };
+                };
+            };
+        };
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/billing/downgrade": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Schedule a plan downgrade at current-period end (no charge today)
+         * @description The user keeps their current (higher) plan until the billing period ends, then switches to the target plan on renewal. No proration charge is issued. Target must be strictly lower than the current plan; downgrading to Free is handled by `/api/billing/cancel`.
+         */
+        post: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path?: never;
+                cookie?: never;
+            };
+            requestBody: {
+                content: {
+                    "application/json": {
+                        /** @enum {string} */
+                        plan: "starter" | "pro";
+                        /** @enum {string} */
+                        cadence: "monthly" | "annual";
+                    };
+                };
+            };
+            responses: {
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": {
+                            data: {
+                                scheduledPlan: string;
+                                /** Format: date-time */
+                                periodEnd?: string | null;
+                            };
+                        };
+                    };
+                };
+            };
+        };
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/billing/ledger": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Paginated credit ledger (billing history) for the authenticated user */
+        get: {
+            parameters: {
+                query?: {
+                    limit?: number;
+                    /** @description Ledger entry _id cursor from the previous page's last row. */
+                    before?: string;
+                };
+                header?: never;
+                path?: never;
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": {
+                            data: {
+                                rows: components["schemas"]["CreditLedgerEntry"][];
+                                nextCursor: string | null;
+                            };
+                        };
+                    };
+                };
+            };
+        };
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/billing/plans": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Public plan catalog (pricing, allowances, top-up rate)
+         * @description Returns everything the client needs to render the pricing page and the top-up widget. No auth required — the pricing page should be crawlable. Stripe price IDs are intentionally omitted; checkout is initiated by plan+cadence keys, which the server resolves server-side.
+         *     Per-action credit costs are no longer surfaced — user billing is real-cost metered (credits debited post-hoc from measured provider spend), so there are no flat per-action prices to publish.
+         */
+        get: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path?: never;
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": {
+                            data: components["schemas"]["BillingCatalog"];
+                        };
+                    };
+                };
+            };
+        };
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/billing/summary": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Current plan + credit balance + period info for the authenticated user */
+        get: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path?: never;
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": {
+                            data: components["schemas"]["BillingSummary"];
+                        };
+                    };
+                };
+            };
+        };
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/billing/checkout": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Start a subscription Checkout session */
+        post: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path?: never;
+                cookie?: never;
+            };
+            requestBody: {
+                content: {
+                    "application/json": {
+                        /** @enum {string} */
+                        plan: "starter" | "pro" | "studio";
+                        /** @enum {string} */
+                        cadence: "monthly" | "annual";
+                        /**
+                         * @description Set true when the caller already has an active paid subscription and is intentionally replacing it. The server skips the duplicate-subscription guard and the webhook cancels the old sub on checkout success.
+                         * @default false
+                         */
+                        replaceCurrentSubscription?: boolean;
+                    };
+                };
+            };
+            responses: {
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": {
+                            data: {
+                                url: string;
+                            };
+                        };
+                    };
+                };
+            };
+        };
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/billing/portal": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Create a Stripe Customer Portal session (self-serve subscription management) */
+        post: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path?: never;
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": {
+                            data: {
+                                url: string;
+                            };
+                        };
+                    };
+                };
+            };
+        };
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/billing/topup": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Start a variable-amount top-up Checkout session
+         * @description User picks a whole-dollar USD amount between the rate's `minUsd` and `maxUsd` (exposed on `/api/billing/plans`). Credits granted on webhook receipt are `amountUsd × creditsPerUsd`, landing in the bonus balance (never expire, consumed after allowance).
+         */
+        post: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path?: never;
+                cookie?: never;
+            };
+            requestBody: {
+                content: {
+                    "application/json": {
+                        /** @description Whole-dollar USD amount to top up. */
+                        amountUsd: number;
+                    };
+                };
+            };
+            responses: {
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": {
+                            data: {
+                                url: string;
+                            };
+                        };
+                    };
+                };
+            };
+        };
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/course/{courseId}/chat": {
         parameters: {
             query?: never;
@@ -915,6 +1274,8 @@ export interface paths {
                         answers?: Record<string, never>;
                         depth?: components["schemas"]["CourseDepth"];
                         status?: components["schemas"]["CourseStatus"];
+                        /** @description Transport-only flag. Set to true on retry after a 409 DEPTH_OVERRIDE_REQUIRES_ACK response to confirm the learner has seen the course-magnitude modal and chooses to proceed with the selected depth. Never persisted. */
+                        depthOverrideAcknowledged?: boolean;
                     };
                 };
             };
@@ -935,6 +1296,27 @@ export interface paths {
                         [name: string]: unknown;
                     };
                     content?: never;
+                };
+                /** @description Depth selection produces a larger course than the learner's answers suggest they will finish. Client should render the magnitude (lessonCountRange, estimatedHoursRange, softnessCues, finishPressureCues) in a confirmation dialog and retry the PATCH with depthOverrideAcknowledged: true on user confirm. */
+                409: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": {
+                            /** @enum {string} */
+                            code: "DEPTH_OVERRIDE_REQUIRES_ACK";
+                            message: string;
+                            recommended?: components["schemas"]["CourseDepth"] | null;
+                            selectedDepth?: components["schemas"]["CourseDepth"];
+                            /** @description [min, max] estimated total lesson count for the selected depth, derived from the lesson-count hints (soft or normal band per the learner's softness signal). */
+                            lessonCountRange?: number[];
+                            /** @description [min, max] estimated total learner-facing hours for the selected depth. Derived from lessonCountRange × ~25 minutes per lesson, rounded up. */
+                            estimatedHoursRange?: number[];
+                            softnessCues?: string[];
+                            finishPressureCues?: string[];
+                        };
+                    };
                 };
             };
         };
@@ -1057,6 +1439,10 @@ export interface paths {
                     "application/json": {
                         moduleIndex: number;
                         lessonIndex: number;
+                        /** @default true */
+                        includeImage?: boolean;
+                        /** @default true */
+                        includeLinks?: boolean;
                     };
                 };
             };
@@ -1862,51 +2248,6 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
-    "/api/course/{courseId}/stream-lesson": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        get?: never;
-        put?: never;
-        /** Generate and stream lesson content via SSE (block-by-block) */
-        post: {
-            parameters: {
-                query?: never;
-                header?: never;
-                path: {
-                    courseId: string;
-                };
-                cookie?: never;
-            };
-            requestBody: {
-                content: {
-                    "application/json": {
-                        moduleIndex: number;
-                        lessonIndex: number;
-                    };
-                };
-            };
-            responses: {
-                /** @description SSE stream of lesson generation events */
-                200: {
-                    headers: {
-                        [name: string]: unknown;
-                    };
-                    content: {
-                        "text/event-stream": string;
-                    };
-                };
-            };
-        };
-        delete?: never;
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
-    };
     "/api/course/{courseId}/module-quiz/{moduleIndex}/submit": {
         parameters: {
             query?: never;
@@ -2477,12 +2818,89 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/usage/history": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Paginated list of the caller's paid-action events, newest first */
+        get: {
+            parameters: {
+                query?: {
+                    limit?: number;
+                    offset?: number;
+                };
+                header?: never;
+                path?: never;
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": {
+                            data: components["schemas"]["UsageHistory"];
+                        };
+                    };
+                };
+            };
+        };
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/usage/summary": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Aggregated paid-action spend for the caller (microcents) */
+        get: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path?: never;
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": {
+                            data: components["schemas"]["UsageSummary"];
+                        };
+                    };
+                };
+            };
+        };
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
 }
 export type webhooks = Record<string, never>;
 export interface components {
     schemas: {
         /** @enum {string} */
-        ErrorCode: "CUSTOM_ERROR" | "EMAIL_NOT_VERIFIED" | "EMAIL_ALREADY_VERIFIED" | "EMAIL_VERIFICATION_EXPIRED" | "EMAIL_VERIFICATION_INVALID" | "PASSWORD_RESET_INVALID" | "PASSWORD_RESET_EXPIRED" | "PASSWORD_ALREADY_SET" | "PASSWORD_NOT_SET";
+        ErrorCode: "CUSTOM_ERROR" | "EMAIL_NOT_VERIFIED" | "EMAIL_ALREADY_VERIFIED" | "EMAIL_VERIFICATION_EXPIRED" | "EMAIL_VERIFICATION_INVALID" | "PASSWORD_RESET_INVALID" | "PASSWORD_RESET_EXPIRED" | "PASSWORD_ALREADY_SET" | "PASSWORD_NOT_SET" | "INSUFFICIENT_CREDITS" | "SUBSCRIPTION_ALREADY_EXISTS";
         /** @enum {string} */
         AuthProviderType: "GOOGLE" | "CREDENTIALS";
         /** @enum {string} */
@@ -2505,13 +2923,42 @@ export interface components {
         BlockType: "intro" | "section" | "code" | "mermaid" | "callout" | "quiz" | "exercise" | "summary" | "links" | "image";
         /** @enum {string} */
         ReviewReason: "time" | "progression";
+        /** @enum {string} */
+        UsageService: "anthropic" | "bfl" | "tavily" | "jina" | "judge0";
         ApiError: {
             message: string;
             errorCode?: components["schemas"]["ErrorCode"];
+            meta?: {
+                [key: string]: unknown;
+            };
+            requestId?: string;
         };
         AuthProvider: {
             provider: components["schemas"]["AuthProviderType"];
             providerId?: string;
+        };
+        /** @enum {string} */
+        PlanKey: "free" | "starter" | "pro" | "studio";
+        /** @enum {string} */
+        SubscriptionStatus: "active" | "past_due" | "canceling" | "canceled";
+        UserSubscription: {
+            plan: components["schemas"]["PlanKey"];
+            status: components["schemas"]["SubscriptionStatus"];
+            cancelAtPeriodEnd: boolean;
+            pendingPlan?: components["schemas"]["PlanKey"];
+            /** Format: date-time */
+            currentPeriodStart?: string;
+            /** Format: date-time */
+            currentPeriodEnd?: string;
+        };
+        UserCredits: {
+            allowanceBalance: number;
+            allowanceGranted: number;
+            bonusBalance: number;
+            /** Format: date-time */
+            periodStart: string;
+            /** Format: date-time */
+            periodEnd: string;
         };
         AuthorisedUser: {
             _id: string;
@@ -2520,10 +2967,67 @@ export interface components {
             image?: string;
             emailVerified: boolean;
             authProviders: components["schemas"]["AuthProvider"][];
+            subscription: components["schemas"]["UserSubscription"];
+            credits: components["schemas"]["UserCredits"];
             /** Format: date-time */
             createdAt: string;
             /** Format: date-time */
             updatedAt: string;
+        };
+        BillingPlan: {
+            key: components["schemas"]["PlanKey"];
+            displayName: string;
+            monthlyUsd: number;
+            annualMonthlyUsd: number;
+            annualUsd: number;
+            monthlyAllowance: number;
+            maxConcurrentJobs: number;
+            allowImage: boolean;
+            allowLinks: boolean;
+        };
+        BillingTopupRate: {
+            creditsPerUsd: number;
+            minUsd: number;
+            maxUsd: number;
+        };
+        BillingCatalog: {
+            plans: components["schemas"]["BillingPlan"][];
+            topupRate: components["schemas"]["BillingTopupRate"];
+        };
+        BillingSummary: {
+            plan: components["schemas"]["PlanKey"];
+            displayName: string;
+            status: components["schemas"]["SubscriptionStatus"];
+            cancelAtPeriodEnd: boolean;
+            pendingPlan?: components["schemas"]["PlanKey"] | null;
+            credits: {
+                allowance: number;
+                bonus: number;
+                total: number;
+                allowanceGranted: number;
+                /** Format: date-time */
+                periodStart: string;
+                /** Format: date-time */
+                periodEnd: string;
+            };
+        };
+        CreditLedgerEntry: {
+            _id: string;
+            userId: string;
+            /** Format: date-time */
+            timestamp: string;
+            delta: number;
+            allowanceDelta: number;
+            bonusDelta: number;
+            balanceBefore: number;
+            balanceAfter: number;
+            bonusBefore: number;
+            bonusAfter: number;
+            /** @enum {string} */
+            reason: "signup_grant" | "period_reset" | "plan_upgrade_bonus" | "topup_purchase" | "debit_action" | "refund_job_failed" | "refund_job_canceled" | "refund_cross_period" | "admin_grant" | "admin_clawback";
+            actionType?: string;
+            jobId?: string;
+            notes?: string;
         };
         ClarifyQuestion: {
             id: string;
@@ -2793,6 +3297,10 @@ export interface components {
             pendingFeedback?: string;
             currentStep?: number;
             activeJobId?: string;
+            activeLesson?: {
+                moduleIndex: number;
+                lessonIndex: number;
+            } | null;
             /** Format: date-time */
             createdAt: string;
             /** Format: date-time */
@@ -2878,6 +3386,37 @@ export interface components {
                 reviews: number;
                 avgRating: number;
             }[];
+        };
+        UsageEvent: {
+            id: string;
+            /** Format: date-time */
+            timestamp: string;
+            service: components["schemas"]["UsageService"];
+            action: string;
+            costMicroCents: number;
+            metadata: {
+                [key: string]: unknown;
+            };
+        };
+        UsageHistory: {
+            events: components["schemas"]["UsageEvent"][];
+            total: number;
+            limit: number;
+            offset: number;
+            hasMore: boolean;
+        };
+        UsageCostBucket: {
+            costMicroCents: number;
+        };
+        UsageServiceTotal: {
+            service: components["schemas"]["UsageService"];
+            costMicroCents: number;
+        };
+        UsageSummary: {
+            today: components["schemas"]["UsageCostBucket"];
+            thisMonth: components["schemas"]["UsageCostBucket"];
+            allTime: components["schemas"]["UsageCostBucket"];
+            byService: components["schemas"]["UsageServiceTotal"][];
         };
     };
     responses: never;

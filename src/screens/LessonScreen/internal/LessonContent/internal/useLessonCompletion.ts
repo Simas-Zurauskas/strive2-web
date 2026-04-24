@@ -18,6 +18,7 @@ interface UseLessonCompletionParams {
   progressData?: CourseProgressResponse;
   hasNext: boolean;
   onNext: () => void;
+  onOpenQuiz: () => void;
 }
 
 export const useLessonCompletion = ({
@@ -28,6 +29,7 @@ export const useLessonCompletion = ({
   progressData,
   hasNext,
   onNext,
+  onOpenQuiz,
 }: UseLessonCompletionParams) => {
   const upsertProgress = useUpsertProgress();
 
@@ -58,9 +60,11 @@ export const useLessonCompletion = ({
           if (isCourseComplete) {
             celebrateCourseComplete();
             toast.success(TOASTS.COURSE_COMPLETE);
+            setTimeout(onOpenQuiz, 800);
           } else if (isModuleComplete) {
             celebrateModuleComplete();
             toast(`Module ${moduleIndex + 1} complete! Take the quiz to test your knowledge.`);
+            setTimeout(onOpenQuiz, 800);
           } else {
             celebrateLessonComplete();
             if (hasNext) setTimeout(onNext, 800);
@@ -68,7 +72,7 @@ export const useLessonCompletion = ({
         },
       },
     );
-  }, [courseId, moduleIndex, lessonIndex, modules, progressData, upsertProgress, hasNext, onNext]);
+  }, [courseId, moduleIndex, lessonIndex, modules, progressData, upsertProgress, hasNext, onNext, onOpenQuiz]);
 
   const handleToggleBookmark = useCallback(() => {
     upsertProgress.mutate({

@@ -2,7 +2,7 @@
 
 import { usePathname, useRouter } from 'next/navigation';
 import { useEffect, useRef } from 'react';
-import { Navbar, Footer, TextLoader } from '@/components';
+import { Navbar, Footer, LowCreditBanner, TextLoader } from '@/components';
 import { ROUTES } from '@/constants/routes';
 import { useAuth } from '@/hooks';
 
@@ -49,6 +49,12 @@ export default function SignedInLayout({ children }: { children: React.ReactNode
     <>
       <Navbar />
       <main style={{ paddingTop: '56px', minHeight: 'calc(100vh - 56px)', display: 'flex', flexDirection: 'column' }}>
+        {/* Credit banner rides above all protected content so users see low-balance
+            state without having to hit the billing page. Hidden by the component
+            itself when the balance is healthy. */}
+        <div style={{ padding: '0.75rem 1.25rem 0' }}>
+          <LowCreditBanner />
+        </div>
         {children}
         <Footer />
       </main>
