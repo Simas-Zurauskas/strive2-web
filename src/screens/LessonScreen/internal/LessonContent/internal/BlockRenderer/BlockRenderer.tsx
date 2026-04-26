@@ -15,19 +15,13 @@ import {
 } from './blocks';
 import { LessonMarkdown } from './LessonMarkdown';
 import * as S from './styles';
-import type { ExerciseAttempt, LessonBlock, QuizResponse } from '@/api/types';
+import type { ExerciseAttempt, LessonBlock, LessonPlaceholderBlock, QuizResponse } from '@/api/types';
 
 // ── Types ──────────────────────────────────────────────
 
-interface PlaceholderBlock {
-  id: string;
-  type: 'quiz' | 'exercise';
-  order: number;
-}
-
 interface BlockRendererProps {
   blocks: LessonBlock[];
-  placeholders?: PlaceholderBlock[];
+  placeholders?: LessonPlaceholderBlock[];
   progressData?: {
     quizResponses: QuizResponse[];
     exerciseAttempts: ExerciseAttempt[];
@@ -45,7 +39,7 @@ export const BlockRenderer = ({
   onQuizAnswer,
   onExerciseAttempt,
 }: BlockRendererProps) => {
-  type RenderItem = { kind: 'block'; block: LessonBlock } | { kind: 'placeholder'; placeholder: PlaceholderBlock };
+  type RenderItem = { kind: 'block'; block: LessonBlock } | { kind: 'placeholder'; placeholder: LessonPlaceholderBlock };
   const items: RenderItem[] = [
     ...blocks.map((block) => ({ kind: 'block' as const, block })),
     ...placeholders.map((placeholder) => ({ kind: 'placeholder' as const, placeholder })),

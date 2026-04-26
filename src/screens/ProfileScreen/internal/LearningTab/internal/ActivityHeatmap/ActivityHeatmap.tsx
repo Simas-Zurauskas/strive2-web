@@ -5,7 +5,7 @@ import { useTheme } from 'styled-components';
 import { plural } from '@/lib/strings';
 import { themeColors } from '@/theme';
 import * as S from './ActivityHeatmap.styles';
-import type { XpDayEntry } from '@/api/routes/gamification';
+import type { XpDayEntry } from '@/api/types';
 
 interface ActivityHeatmapProps {
   data?: XpDayEntry[];

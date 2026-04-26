@@ -7,6 +7,16 @@ export const ROUTES = {
   signup: () => '/signup',
   checkEmail: () => '/signup/check-email',
 
+  pricing: () => '/pricing',
+  // Billing lives under Profile as a tab; the querystring drives which tab
+  // opens so deep links / nav from elsewhere in the app land the user on
+  // the right view without a second click. Stripe post-checkout returns
+  // redirect straight here with `&checkout=subscription|topup` appended —
+  // the Billing tab picks up the flag and shows a welcome toast, no
+  // dedicated success page needed.
+  billing: () => '/profile?tab=billing',
+  profile: () => '/profile',
+
   course: (slugOrId: string | null | undefined, fallbackId: string) =>
     `/course/${slugOrId ?? fallbackId}`,
 

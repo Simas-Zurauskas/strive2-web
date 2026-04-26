@@ -3,15 +3,24 @@
 import { AnimatePresence, motion } from 'framer-motion';
 import { useState } from 'react';
 import { Button, Checkbox, TextLoader } from '@/components';
-import { useJobManager, useLessonContent } from '@/hooks';
+import {
+  useJobManager,
+  useLessonContent,
+  useLessonStream,
+  useRegenerateHero,
+  useRegenerateLinks,
+} from '@/hooks';
+import { useBillingSummary } from '@/hooks/useBilling';
 import {
   BlockRenderer,
   FontScaler,
   getSavedScale,
   FONT_SCALE_KEY,
   LessonHero,
+  LinksBlockSkeleton,
+  LinksEmptyPlaceholder,
+  NarrationPlayer,
   NotesPanel,
-  useLessonStream,
   useLessonCompletion,
 } from './internal';
 import * as S from './LessonContent.styles';
@@ -39,6 +48,7 @@ interface LessonContentProps {
   hasNext: boolean;
   onPrev: () => void;
   onNext: () => void;
+  onOpenQuiz: () => void;
   onOpenSidebar: () => void;
   sidebarOpen: boolean;
   isGenerationRunning: boolean;
@@ -57,6 +67,7 @@ export const LessonContent = ({
   hasNext,
   onPrev,
   onNext,
+  onOpenQuiz,
   isGenerationRunning,
   isThisLessonGenerating: isThisLessonGeneratingWs,
   progressData,
@@ -102,8 +113,6 @@ export const LessonContent = ({
     moduleIndex,
     lessonIndex,
     isGenerationRunning,
-    hasContent,
-    lessonCompleted: !!(lessonContent as Record<string, unknown>)?.completed,
   });
 
   const completion = useLessonCompletion({
@@ -114,17 +123,51 @@ export const LessonContent = ({
     progressData,
     hasNext,
     onNext,
+    onOpenQuiz,
   });
 
+  // Gate the Create Lesson CTA on the user having any allowance left. Real
+  // cost is debited server-side post-hoc from measured provider spend —
+  // there's nothing to compute on the client. While the billing summary is
+  // loading we assume affordable (affordable = summary undefined) so the
+  // button doesn't flicker disabled on fresh mount.
+  const { data: billing } = useBillingSummary();
+  const affordable = billing ? billing.credits.total >= 1 : true;
+
+  const regenerateHero = useRegenerateHero();
+  const regenerateLinks = useRegenerateLinks();
   const isThisLessonGenerating = stream.isThisLessonGenerating || isThisLessonGeneratingWs;
   const heroImage = stream.streamImage || lessonContent?.heroImageUrl || null;
   const showHeroSkeleton =
     ((stream.isStreaming || stream.isStarting) && stream.includeImage) ||
-    (isThisLessonGenerating && !stream.isStreaming && (lessonContent?.includeHeroImage ?? true) && !lessonContent?.heroImageUrl);
+    (isThisLessonGenerating && !stream.isStreaming && (lessonContent?.includeHeroImage ?? true) && !lessonContent?.heroImageUrl) ||
+    regenerateHero.isRegenerating;
+  // Offer the on-demand "Generate hero image" button only when the lesson is
+  // fully loaded, has no image, and no other generation for this course is
+  // running. The server enforces the one-active-job-per-course rule anyway,
+  // but gating the UI avoids a click that we know will fail.
+  const canRegenerateHero =
+    hasContent &&
+    !heroImage &&
+    !isThisLessonGenerating &&
+    !isGenerationRunning &&
+    !regenerateHero.isRegenerating;
 
   // Determine what to render — stream takes priority over saved content during streaming
   const showStreamContent = stream.isStreaming && stream.streamBlocks.length > 0;
   const blocks = hasContent ? lessonContent.blocks : showStreamContent ? stream.streamBlocks : null;
+
+  // Post-hoc links regen: if the lesson was generated without a curated-links
+  // block, we show a placeholder at the end of the lesson offering to
+  // generate one on demand. Swapped for a skeleton while the regen job runs.
+  const hasLinksBlock = !!blocks?.some((b) => b.type === 'links');
+  const showLinksPlaceholder =
+    hasContent &&
+    !hasLinksBlock &&
+    !isThisLessonGenerating &&
+    !regenerateLinks.isRegenerating;
+  const showLinksSkeleton = regenerateLinks.isRegenerating && !hasLinksBlock;
+  const canRegenerateLinks = hasContent && !isThisLessonGenerating && !isGenerationRunning;
 
   const eyebrowText = `Module ${String(moduleIndex + 1).padStart(2, '0')} \u00B7 Lesson ${String(lessonIndex + 1).padStart(2, '0')}`;
 
@@ -162,8 +205,23 @@ export const LessonContent = ({
         hasContent={hasContent}
         isGenerating={isThisLessonGenerating}
         showSkeleton={showHeroSkeleton}
+        canRegenerateHero={canRegenerateHero}
         onToggleBookmark={completion.handleToggleBookmark}
+        onRegenerateHero={() =>
+          regenerateHero.regenerate({ courseId, moduleIndex, lessonIndex })
+        }
       />
+
+      {hasContent && !isThisLessonGenerating && (
+        <NarrationPlayer
+          courseId={courseId}
+          moduleIndex={moduleIndex}
+          lessonIndex={lessonIndex}
+          audioUrl={lessonContent?.audioUrl ?? null}
+          audioVoice={lessonContent?.audioVoice ?? null}
+          hasContent={hasContent}
+        />
+      )}
 
       {blocks && <FontScaler scale={fontScale} onChange={handleFontScale} />}
 
@@ -200,13 +258,24 @@ export const LessonContent = ({
                 });
               }}
             />
-            {stream.isActivelyGenerating && <S.StreamingIndicator>Creating lesson...</S.StreamingIndicator>}
-            {stream.streamPhase === 'finishing' && !stream.placeholders.length && (
-              <S.FinishingIndicator>Finishing up...</S.FinishingIndicator>
+            {showLinksSkeleton && <LinksBlockSkeleton />}
+            {showLinksPlaceholder && (
+              <LinksEmptyPlaceholder
+                disabled={!canRegenerateLinks}
+                onGenerate={() =>
+                  regenerateLinks.regenerate({ courseId, moduleIndex, lessonIndex })
+                }
+              />
             )}
-            {!stream.isStreaming && isThisLessonGenerating && <S.StreamingIndicator>Creating lesson...</S.StreamingIndicator>}
+            {isThisLessonGenerating && (
+              stream.streamPhase === 'finishing' ? (
+                <S.FinishingIndicator>Finishing touches...</S.FinishingIndicator>
+              ) : (
+                <S.StreamingIndicator>Creating lesson...</S.StreamingIndicator>
+              )
+            )}
           </>
-        ) : stream.isStreaming || stream.isStarting || isThisLessonGenerating ? (
+        ) : isThisLessonGenerating ? (
           <S.StreamingIndicator>Creating lesson...</S.StreamingIndicator>
         ) : (
           <S.Placeholder>
@@ -228,8 +297,12 @@ export const LessonContent = ({
                   />
                 </S.GenerateOptions>
 
-                <Button onClick={stream.handleGenerate} disabled={stream.isAnyLessonGenerating}>
-                  {stream.isAnyLessonGenerating ? 'Another lesson is being created...' : 'Create lesson'}
+                <Button onClick={stream.handleGenerate} disabled={stream.isAnyLessonGenerating || !affordable}>
+                  {stream.isAnyLessonGenerating
+                    ? 'Another lesson is being created...'
+                    : !affordable
+                    ? 'Out of allowance'
+                    : 'Create lesson'}
                 </Button>
               </>
             ) : (

@@ -3,7 +3,7 @@
 import styled from 'styled-components';
 import { SectionLabel, TextAction } from '@/components';
 import { thinScrollbar } from '@/theme';
-import type { LessonProgressStatus, QuizMasteryTier } from '@/api/types';
+import type { QuizMasteryTier } from '@/api/types';
 import type { QuizIconVariant } from '@/types';
 
 export const Container = styled.div`
@@ -254,7 +254,7 @@ export const LessonList = styled.div`
   flex-direction: column;
 `;
 
-export const LessonItem = styled.button<{ $status: LessonProgressStatus | 'default' }>`
+export const LessonItem = styled.button`
   display: flex;
   align-items: flex-start;
   gap: 0.75rem;
@@ -278,24 +278,6 @@ export const LessonItem = styled.button<{ $status: LessonProgressStatus | 'defau
     background: ${(p) => `${p.theme.colors.accent}06`};
     padding-left: calc(1.25rem + 4px);
   }
-`;
-
-export const LessonStatus = styled.span<{ $status: LessonProgressStatus | 'default' }>`
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  flex-shrink: 0;
-  margin-top: 2px;
-  color: ${(p) => {
-    switch (p.$status) {
-      case 'completed':
-        return p.theme.colors.success;
-      case 'in_progress':
-        return p.theme.colors.accent;
-      default:
-        return p.theme.colors.muted;
-    }
-  }};
 `;
 
 export const LessonContent = styled.div`

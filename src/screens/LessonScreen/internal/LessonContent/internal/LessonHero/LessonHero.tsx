@@ -1,6 +1,6 @@
 'use client';
 
-import { Star } from 'lucide-react';
+import { ImagePlus, Star } from 'lucide-react';
 import { useState } from 'react';
 import Skeleton from 'react-loading-skeleton';
 import * as S from './LessonHero.styles';
@@ -13,7 +13,9 @@ interface LessonHeroProps {
   hasContent: boolean;
   isGenerating: boolean;
   showSkeleton: boolean;
+  canRegenerateHero: boolean;
   onToggleBookmark: () => void;
+  onRegenerateHero: () => void;
 }
 
 export const LessonHero = ({
@@ -24,7 +26,9 @@ export const LessonHero = ({
   hasContent,
   isGenerating,
   showSkeleton,
+  canRegenerateHero,
   onToggleBookmark,
+  onRegenerateHero,
 }: LessonHeroProps) => {
   const [imageLoaded, setImageLoaded] = useState(false);
 
@@ -58,6 +62,12 @@ export const LessonHero = ({
             {isGenerating && <S.GeneratingDot />}
           </S.EyebrowRow>
           <S.Title>{lessonName}</S.Title>
+          {canRegenerateHero && (
+            <S.GenerateButton onClick={onRegenerateHero} type="button">
+              <ImagePlus size={14} />
+              Generate hero image
+            </S.GenerateButton>
+          )}
         </S.TitleArea>
         {hasContent && (
           <S.BookmarkButtonInline

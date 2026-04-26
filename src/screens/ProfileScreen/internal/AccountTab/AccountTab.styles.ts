@@ -130,3 +130,39 @@ export const PasswordInput = styled.input`
     opacity: 0.6;
   }
 `;
+
+// ── Forfeit warning shown before delete confirmation ────
+
+export const ForfeitWarning = styled.div`
+  background: ${(p) => p.theme.colorsLib.amber}12;
+  border: 1px solid ${(p) => p.theme.colorsLib.amber}50;
+  border-radius: 8px;
+  padding: 0.875rem 1rem;
+  margin-bottom: 1rem;
+`;
+
+export const ForfeitTitle = styled.div`
+  font-size: 0.8125rem;
+  font-weight: 600;
+  color: ${(p) => p.theme.colors.warning};
+  margin-bottom: 0.5rem;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+`;
+
+export const ForfeitList = styled.ul`
+  margin: 0;
+  padding-left: 1.1rem;
+  font-size: 0.875rem;
+  color: ${(p) => p.theme.colors.foreground};
+  line-height: 1.55;
+
+  li {
+    margin: 0.15rem 0;
+  }
+
+  strong {
+    font-weight: 600;
+    font-variant-numeric: tabular-nums;
+  }
+`;

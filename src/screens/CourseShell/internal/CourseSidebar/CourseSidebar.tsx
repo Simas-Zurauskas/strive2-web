@@ -2,24 +2,20 @@
 
 import {
   AlertCircle,
-  Check,
   CheckCircle,
   ChevronRight,
-  Circle,
   Lock,
-  Minus,
   Sparkles,
   Star,
   Trophy,
 } from 'lucide-react';
 import { useRouter } from 'next/navigation';
 import { useEffect, useMemo, useRef } from 'react';
-import { Badge } from '@/components';
+import { Badge, LessonIndicator, computeLessonIndicatorState } from '@/components';
 import { plural } from '@/lib/strings';
 import * as S from './CourseSidebar.styles';
-import type { LessonDotState } from './CourseSidebar.styles';
 import type { CourseProgressResponse } from '@/api/routes/course';
-import type { CourseQuizProgressItem } from '@/api/types';
+import type { Course, CourseQuizProgressItem } from '@/api/types';
 import type { QuizIconVariant } from '@/types';
 
 const quizIconFor: Record<QuizIconVariant, typeof Trophy> = {
@@ -47,6 +43,7 @@ interface CourseSidebarProps {
   onCollapse: () => void;
   progressData?: CourseProgressResponse;
   generatedLessons?: { moduleIndex: number; lessonIndex: number }[];
+  activeLesson?: Course['activeLesson'];
   expandedModules: Set<number> | null;
   onExpandedChange: (expanded: Set<number>) => void;
 }
@@ -62,6 +59,7 @@ export const CourseSidebar = ({
   onCollapse: _onCollapse,
   progressData,
   generatedLessons,
+  activeLesson,
   expandedModules: expandedModulesProp,
   onExpandedChange,
 }: CourseSidebarProps) => {
@@ -117,15 +115,14 @@ export const CourseSidebar = ({
   const totalLessons = modules.reduce((sum, m) => sum + (m.lessons?.length ?? 0), 0);
   const completedCount = progressData?.stats?.completed ?? 0;
 
-  const getDotState = ({ mi, li }: { mi: number; li: number }): LessonDotState => {
-    const key = `${mi}-${li}`;
-    const progress = progressMap.get(key);
-
-    if (progress?.status === 'completed') return 'completed';
-    if (progress?.status === 'in_progress' && generatedSet.has(key)) return 'in_progress';
-    if (generatedSet.has(key)) return 'not_started';
-    return 'not_generated';
-  };
+  const getIndicatorState = ({ mi, li }: { mi: number; li: number }) =>
+    computeLessonIndicatorState({
+      moduleIndex: mi,
+      lessonIndex: li,
+      activeLesson,
+      progressStatus: progressMap.get(`${mi}-${li}`)?.status,
+      isGenerated: generatedSet.has(`${mi}-${li}`),
+    });
 
   const getModuleProgress = (mi: number) => {
     const lessons = modules[mi]?.lessons ?? [];
@@ -214,7 +211,7 @@ export const CourseSidebar = ({
                       currentLessonIndex !== undefined &&
                       mi === currentModuleIndex &&
                       li === currentLessonIndex;
-                    const dotState = getDotState({ mi, li });
+                    const indicatorState = getIndicatorState({ mi, li });
                     const isBookmarked = progressMap.get(`${mi}-${li}`)?.bookmarked;
 
                     return (
@@ -224,15 +221,7 @@ export const CourseSidebar = ({
                         $active={isActive}
                         onClick={() => onNavigate(mi, li)}
                       >
-                        <S.LessonIndicator $state={dotState}>
-                          {dotState === 'completed' ? (
-                            <Check size={12} strokeWidth={3} />
-                          ) : dotState === 'in_progress' ? (
-                            <Minus size={12} strokeWidth={2.5} />
-                          ) : (
-                            <Circle size={6} />
-                          )}
-                        </S.LessonIndicator>
+                        <LessonIndicator state={indicatorState} size="sm" />
                         <S.LessonName>{lesson.name}</S.LessonName>
                         {isBookmarked && (
                           <S.BookmarkIcon>

@@ -219,6 +219,7 @@ export const CourseShell = ({ children }: CourseShellProps) => {
             onCollapse={() => setSidebarOpen(false)}
             progressData={progressData ?? undefined}
             generatedLessons={generatedLessons ?? undefined}
+            activeLesson={course?.activeLesson ?? null}
             expandedModules={expandedModules}
             onExpandedChange={setExpandedModules}
           />

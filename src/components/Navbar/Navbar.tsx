@@ -4,11 +4,18 @@ import { User } from 'lucide-react';
 import Link from 'next/link';
 import { usePathname, useRouter } from 'next/navigation';
 import { useTheme } from 'next-themes';
-import { useCallback, useEffect, useRef, useState } from 'react';
+import { useCallback, useEffect, useLayoutEffect, useRef, useState } from 'react';
 import { useAuth } from '@/hooks';
+import { CreditPill } from '@/components/CreditPill';
 import * as S from './Navbar.styles';
 
 const SCROLL_THRESHOLD = 10;
+
+// --navbar-offset drives the sidebar's coordinated top/height transition.
+// Writing it in a layout effect keeps it in the same paint as the navbar's
+// own transform update; a plain useEffect can land one frame later and
+// produce a visible desync between navbar and sidebar motion.
+const useIsomorphicLayoutEffect = typeof window !== 'undefined' ? useLayoutEffect : useEffect;
 
 const SunIcon = () => (
   <svg
@@ -88,7 +95,7 @@ const useHideOnScroll = () => {
     return () => window.removeEventListener('scroll', onScroll);
   }, [onScroll]);
 
-  useEffect(() => {
+  useIsomorphicLayoutEffect(() => {
     document.documentElement.style.setProperty('--navbar-offset', hidden ? '0px' : '56px');
   }, [hidden]);
 
@@ -131,6 +138,10 @@ export const Navbar = () => {
       </S.LeftCluster>
 
       <S.Right>
+        {/* Credit balance pill — hidden until billing summary loads (unauthed
+            or loading users see nothing here, consistent with the other
+            account-scoped actions below). */}
+        {user && <CreditPill />}
         <S.ThemeSwitch role="group" aria-label="Theme">
           <S.ThemeOption
             type="button"

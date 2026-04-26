@@ -4,9 +4,11 @@ import { useRouter, useSearchParams } from 'next/navigation';
 import { useEffect, useMemo, useState } from 'react';
 import { Course, CourseDepth } from '@/api/types';
 import { Stepper, AlertDialog, TextLoader } from '@/components';
+import { DepthOverrideDialog } from '@/components/DepthOverrideDialog';
 import { useCourse } from '@/hooks/useCourses';
 import * as S from './GenerateCourseScreen.styles';
 import { GoalStep, ClarifyStep, DepthStep, StructureStep, useWizardMutations, useWizardHandlers } from './internal';
+import { useDepthOverrideDialog } from './internal/useDepthOverrideDialog';
 
 type Step = 1 | 2 | 3 | 4;
 
@@ -82,6 +84,7 @@ const GenerateCourseWizard = ({ resumeCourse }: { resumeCourse: Course | null })
   const courseQuery = useCourse(courseId);
   const course = courseQuery.data;
   const mutations = useWizardMutations(courseId);
+  const depthOverrideDialog = useDepthOverrideDialog();
 
   const handlers = useWizardHandlers({
     courseId,
@@ -99,6 +102,7 @@ const GenerateCourseWizard = ({ resumeCourse }: { resumeCourse: Course | null })
     course,
     mutations,
     confirmOverwrite,
+    depthOverrideDialog,
   });
 
   const courseName = course?.name || null;
@@ -263,6 +267,14 @@ const GenerateCourseWizard = ({ resumeCourse }: { resumeCourse: Course | null })
           action?.();
         }}
         onCancel={() => setOverwriteDialog(null)}
+      />
+
+      <DepthOverrideDialog
+        open={depthOverrideDialog.open}
+        payload={depthOverrideDialog.payload}
+        loading={handlers.updateCourseMutation.isPending}
+        onConfirm={depthOverrideDialog.onConfirm}
+        onCancel={depthOverrideDialog.onCancel}
       />
     </S.Layout>
   );

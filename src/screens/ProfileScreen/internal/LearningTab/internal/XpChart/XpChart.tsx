@@ -6,7 +6,7 @@ import { useTheme } from 'styled-components';
 import { formatDate } from '@/lib/formatDate';
 import { themeColors } from '@/theme';
 import * as S from './XpChart.styles';
-import type { XpDayEntry } from '@/api/routes/gamification';
+import type { XpDayEntry } from '@/api/types';
 
 interface XpChartProps {
   data?: XpDayEntry[];

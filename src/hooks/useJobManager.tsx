@@ -5,7 +5,7 @@ import { usePathname, useRouter } from 'next/navigation';
 import { createContext, useCallback, useContext, useEffect, useRef, useState } from 'react';
 import { toast } from 'sonner';
 import { getJobStatus } from '@/api/routes/course';
-import { Course } from '@/api/types';
+import { Course, JobStartedEvent, JobStatusEvent } from '@/api/types';
 import { TOASTS, toastMessage } from '@/constants/toasts';
 import { QKeys } from '@/types';
 import { useSocket } from './useSocket';
@@ -28,24 +28,6 @@ interface JobManagerContextValue {
   isJobRunningForCourse: (courseId: string) => boolean;
   generatingLesson: GeneratingLesson | null;
   setGeneratingLesson: (lesson: GeneratingLesson | null) => void;
-}
-
-interface JobStartedEvent {
-  jobId: string;
-  courseId: string;
-  type: string;
-  moduleIndex?: number;
-  lessonIndex?: number;
-}
-
-interface JobStatusEvent {
-  jobId: string;
-  status: 'completed' | 'failed';
-  error?: string | null;
-  courseId: string;
-  type: string;
-  moduleIndex?: number;
-  lessonIndex?: number;
 }
 
 const JobManagerContext = createContext<JobManagerContextValue | null>(null);
@@ -157,6 +139,20 @@ export const JobManagerProvider = ({ children }: { children: React.ReactNode }) 
       setActiveCourseIds((prev) => new Set(prev).add(event.courseId));
       if (event.type === 'generate_lesson' && event.moduleIndex != null && event.lessonIndex != null) {
         setGeneratingLesson({ courseId: event.courseId, moduleIndex: event.moduleIndex, lessonIndex: event.lessonIndex });
+
+        // Optimistically stamp activeJobId + activeLesson into the course
+        // cache so sidebar/overview indicators flip to 'generating'
+        // instantly, without waiting for the next /course refetch.
+        // Mirrors the server's generateLessonController write. Paired
+        // with handleStatus below which clears both on completion.
+        const lessonStamp = { moduleIndex: event.moduleIndex, lessonIndex: event.lessonIndex };
+        queryClient.setQueriesData<Course>(
+          { queryKey: [QKeys.COURSE], predicate: (q) => (q.state.data as Course | undefined)?._id === event.courseId },
+          (old) => (old ? { ...old, activeJobId: event.jobId, activeLesson: lessonStamp } : old!),
+        );
+        queryClient.setQueryData<Course[]>([QKeys.COURSES], (old) =>
+          old?.map((c) => (c._id === event.courseId ? { ...c, activeJobId: event.jobId, activeLesson: lessonStamp } : c)),
+        );
       }
     };
 
@@ -211,15 +207,20 @@ export const JobManagerProvider = ({ children }: { children: React.ReactNode }) 
         return next;
       });
 
-      // Optimistically clear activeJobId in cache, then refetch.
+      // Optimistically clear activeJobId + activeLesson in cache, then
+      // refetch. Mirrors what jobRunner.processJob's finally writes on
+      // the server. Missing the activeLesson clear previously let the
+      // LessonStream provider's rehydration effect re-seed an `active`
+      // stream from the stale cache after it had just been cleared by
+      // handleStatus, leaving the generating indicator stuck.
       // Course cache is keyed by slug (from URL), but WS events use ObjectId.
       // Use setQueriesData with predicate to match by _id inside the cached data.
       queryClient.setQueriesData<Course>(
         { queryKey: [QKeys.COURSE], predicate: (q) => (q.state.data as Course | undefined)?._id === event.courseId },
-        (old) => old ? { ...old, activeJobId: undefined } : old!,
+        (old) => (old ? { ...old, activeJobId: undefined, activeLesson: null } : old!),
       );
       queryClient.setQueryData<Course[]>([QKeys.COURSES], (old) =>
-        old?.map((c) => (c._id === event.courseId ? { ...c, activeJobId: undefined } : c)),
+        old?.map((c) => (c._id === event.courseId ? { ...c, activeJobId: undefined, activeLesson: null } : c)),
       );
       queryClient.invalidateQueries({ queryKey: [QKeys.COURSE] });
       queryClient.invalidateQueries({ queryKey: [QKeys.COURSES] });
@@ -229,6 +230,13 @@ export const JobManagerProvider = ({ children }: { children: React.ReactNode }) 
         if (event.type === 'generate_lesson') {
           queryClient.invalidateQueries({ queryKey: [QKeys.LESSON_CONTENT] });
           queryClient.invalidateQueries({ queryKey: [QKeys.GENERATED_LESSONS] });
+        }
+        if (event.type === 'regenerate_hero' || event.type === 'regenerate_links') {
+          queryClient.invalidateQueries({ queryKey: [QKeys.LESSON_CONTENT] });
+        }
+        if (event.type === 'lesson_narration') {
+          // Refetch the lesson so the freshly-set audioUrl flows in.
+          queryClient.invalidateQueries({ queryKey: [QKeys.LESSON_CONTENT] });
         }
         if (event.type === 'generate_module_quiz') {
           queryClient.invalidateQueries({ queryKey: [QKeys.MODULE_QUIZ_CONTENT] });
@@ -244,25 +252,17 @@ export const JobManagerProvider = ({ children }: { children: React.ReactNode }) 
     };
   }, [socket, queryClient, cleanupJob, router, findCourseSlug]);
 
-  // Stable ref for reconnect handler to avoid re-registering on every activeCourseIds change
-  const activeCourseIdsRef = useRef(activeCourseIds);
-  useEffect(() => {
-    activeCourseIdsRef.current = activeCourseIds;
-  }, [activeCourseIds]);
-
-  // On socket reconnect, reconcile local tracking with server state
+  // On socket reconnect, reconcile with server state unconditionally. The
+  // old guard bailed when `activeCourseIdsRef` was empty, which meant a
+  // freshly-reloaded tab never re-synced even though the server could have
+  // had an `activeJobId` set from a stream that was just torn down by the
+  // reload. Always invalidating lets the lesson indicator settle correctly.
   useEffect(() => {
     if (!socket) return;
 
     const handleConnect = async () => {
-      const tracked = activeCourseIdsRef.current;
-      if (tracked.size === 0) return;
-
-      // Refetch courses to get current activeJobId values
       queryClient.invalidateQueries({ queryKey: [QKeys.COURSES] });
-      for (const courseId of tracked) {
-        queryClient.invalidateQueries({ queryKey: [QKeys.COURSE, courseId] });
-      }
+      queryClient.invalidateQueries({ queryKey: [QKeys.COURSE] });
 
       // Check if any tracked jobs completed while disconnected and fire their callbacks
       for (const [jobId, entry] of callbacksRef.current) {

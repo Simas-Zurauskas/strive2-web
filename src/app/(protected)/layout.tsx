@@ -2,7 +2,7 @@
 
 import { usePathname, useRouter } from 'next/navigation';
 import { useEffect, useRef } from 'react';
-import { Navbar, Footer, TextLoader } from '@/components';
+import { Navbar, Footer, LowCreditBanner, TextLoader } from '@/components';
 import { ROUTES } from '@/constants/routes';
 import { useAuth } from '@/hooks';
 
@@ -49,6 +49,7 @@ export default function SignedInLayout({ children }: { children: React.ReactNode
     <>
       <Navbar />
       <main style={{ paddingTop: '56px', minHeight: 'calc(100vh - 56px)', display: 'flex', flexDirection: 'column' }}>
+        <LowCreditBanner />
         {children}
         <Footer />
       </main>

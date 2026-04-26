@@ -1,5 +1,5 @@
 import * as S from './WeeklySummary.styles';
-import type { WeeklySummaryPeriod } from '@/api/routes/gamification';
+import type { WeeklySummaryPeriod } from '@/api/types';
 
 interface WeeklySummaryProps {
   thisWeek: WeeklySummaryPeriod;

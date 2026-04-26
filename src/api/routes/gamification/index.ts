@@ -15,42 +15,11 @@ export const getGamificationProfile = () => {
 
 // ── Gamification stats ────────────────────────────────────
 
-export interface XpSourceBreakdown {
-  lesson_complete: number;
-  quiz_score: number;
-  exercise_pass: number;
-  review_complete: number;
-  insight_review: number;
-  insight_mastery: number;
-}
-
-export interface XpDayEntry {
-  date: string;
-  xp: number;
-  sources: XpSourceBreakdown;
-}
-
-export interface WeeklySummaryPeriod {
-  xp: number;
-  timeSeconds: number;
-  lessons: number;
-  quizzes: number;
-  insights: number;
-}
-
-export interface GamificationStatsData {
-  xpByDay: XpDayEntry[];
-  xpByWeek: { week: string; xp: number }[];
-  totalTimeLearned: number;
-  lessonsThisWeek: number;
-  weeklySummary: {
-    thisWeek: WeeklySummaryPeriod;
-    lastWeek: WeeklySummaryPeriod;
-  };
-}
+type GamificationStatsResponse =
+  paths['/api/gamification/stats']['get']['responses']['200']['content']['application/json'];
 
 export const getGamificationStats = () => {
-  return client<{ data: GamificationStatsData }>({
+  return client<GamificationStatsResponse>({
     url: '/gamification/stats',
     method: 'GET',
   }).then((res) => res.data.data);
@@ -58,21 +27,11 @@ export const getGamificationStats = () => {
 
 // ── Quiz trends ──────────────────────────────────────────
 
-export interface QuizTrendsData {
-  attempts: {
-    date: string;
-    score: number;
-    courseId: string;
-    courseName: string;
-    moduleName: string;
-    moduleIndex: number;
-  }[];
-  averageScore: number;
-  recentTrend: number;
-}
+type QuizTrendsResponse =
+  paths['/api/gamification/quiz-trends']['get']['responses']['200']['content']['application/json'];
 
 export const getQuizTrends = () => {
-  return client<{ data: QuizTrendsData }>({
+  return client<QuizTrendsResponse>({
     url: '/gamification/quiz-trends',
     method: 'GET',
   }).then((res) => res.data.data);

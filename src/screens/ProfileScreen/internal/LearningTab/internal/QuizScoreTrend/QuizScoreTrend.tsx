@@ -4,10 +4,10 @@ import { useMemo } from 'react';
 import { useTheme } from 'styled-components';
 import { themeColors } from '@/theme';
 import * as S from './QuizScoreTrend.styles';
-import type { QuizTrendsData } from '@/api/routes/gamification';
+import type { QuizTrendsResult } from '@/api/types';
 
 interface QuizScoreTrendProps {
-  data: QuizTrendsData;
+  data: QuizTrendsResult;
 }
 
 export const QuizScoreTrend: React.FC<QuizScoreTrendProps> = ({ data }) => {

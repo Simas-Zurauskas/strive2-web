@@ -39,3 +39,12 @@ export { InlineLink } from './InlineLink';
 
 // Domain
 export { CourseCard } from './CourseCard';
+export { LessonIndicator, computeLessonIndicatorState } from './LessonIndicator';
+export type { LessonIndicatorState } from './LessonIndicator';
+
+// Billing
+export { BillingPanel } from './BillingPanel';
+export { CreditPill } from './CreditPill';
+export { OutOfCreditsModal } from './OutOfCreditsModal';
+export { LowCreditBanner } from './LowCreditBanner';
+export { TopupControl } from './TopupControl';

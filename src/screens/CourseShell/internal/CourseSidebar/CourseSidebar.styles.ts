@@ -1,6 +1,6 @@
 import styled from 'styled-components';
 import { thinScrollbar } from '@/theme';
-import type { LessonProgressStatus, QuizMasteryTier } from '@/api/types';
+import type { QuizMasteryTier } from '@/api/types';
 import type { QuizIconVariant } from '@/types';
 
 export const Container = styled.nav`
@@ -217,31 +217,6 @@ export const LessonItem = styled.button<{ $active: boolean }>`
     color: ${(p) => p.theme.colors.foreground};
     background: ${(p) => p.theme.colors.background};
   }
-`;
-
-// ── Lesson indicators ────────────────────────────────
-
-export type LessonDotState = LessonProgressStatus | 'not_generated';
-
-export const LessonIndicator = styled.span<{ $state: LessonDotState }>`
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  flex-shrink: 0;
-  margin-top: 3px;
-  color: ${(p) => {
-    switch (p.$state) {
-      case 'completed':
-        return p.theme.colors.success;
-      case 'in_progress':
-        return p.theme.colors.accent;
-      case 'not_started':
-        return p.theme.colors.muted;
-      default:
-        return p.theme.colors.border;
-    }
-  }};
-  opacity: ${(p) => (p.$state === 'not_generated' ? 0.4 : 1)};
 `;
 
 export const LessonName = styled.span`
