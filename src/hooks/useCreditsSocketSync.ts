@@ -2,18 +2,9 @@
 
 import { useQueryClient } from '@tanstack/react-query';
 import { useEffect } from 'react';
-import type { AuthorisedUser, BillingSummary } from '@/api/types';
+import type { AuthorisedUser, BillingSummary, CreditsUpdatedEvent } from '@/api/types';
 import { QKeys } from '@/types';
 import { useSocket } from './useSocket';
-
-interface CreditsUpdatedPayload {
-  allowance: number;
-  bonus: number;
-  total: number;
-  delta: number;
-  reason: string;
-  actionType?: string;
-}
 
 /**
  * Subscribe to the backend's `credits:updated` socket event and keep the
@@ -36,7 +27,7 @@ export const useCreditsSocketSync = () => {
   useEffect(() => {
     if (!socket) return;
 
-    const handler = (payload: CreditsUpdatedPayload) => {
+    const handler = (payload: CreditsUpdatedEvent) => {
       // Patch billing summary immediately so the credit pill animates
       // without waiting for the refetch. The shape mirrors BillingSummary.
       queryClient.setQueryData<BillingSummary | undefined>(

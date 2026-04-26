@@ -621,6 +621,51 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/auth/me/preferences": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        /** Update the authenticated user's preferences (narration voice / rate, etc.) */
+        patch: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path?: never;
+                cookie?: never;
+            };
+            requestBody: {
+                content: {
+                    "application/json": {
+                        /** @description Empty string clears the preference and falls back to the catalog default. */
+                        narrationVoice?: string;
+                        narrationRate?: number;
+                    };
+                };
+            };
+            responses: {
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": {
+                            data: components["schemas"]["AuthorisedUser"];
+                        };
+                    };
+                };
+            };
+        };
+        trace?: never;
+    };
     "/api/auth/verify-email": {
         parameters: {
             query?: never;
@@ -750,10 +795,12 @@ export interface paths {
             requestBody: {
                 content: {
                     "application/json": {
-                        /** @enum {string} */
+                        /**
+                         * @description Downgrade target — must be strictly lower than the current plan. Excludes studio (top tier) and free (handled via cancel).
+                         * @enum {string}
+                         */
                         plan: "starter" | "pro";
-                        /** @enum {string} */
-                        cadence: "monthly" | "annual";
+                        cadence: components["schemas"]["BillingCadence"];
                     };
                 };
             };
@@ -765,7 +812,7 @@ export interface paths {
                     content: {
                         "application/json": {
                             data: {
-                                scheduledPlan: string;
+                                scheduledPlan: components["schemas"]["PlanKey"];
                                 /** Format: date-time */
                                 periodEnd?: string | null;
                             };
@@ -922,10 +969,12 @@ export interface paths {
             requestBody: {
                 content: {
                     "application/json": {
-                        /** @enum {string} */
+                        /**
+                         * @description Paid plan to subscribe to — free is excluded (handled via cancel).
+                         * @enum {string}
+                         */
                         plan: "starter" | "pro" | "studio";
-                        /** @enum {string} */
-                        cadence: "monthly" | "annual";
+                        cadence: components["schemas"]["BillingCadence"];
                         /**
                          * @description Set true when the caller already has an active paid subscription and is intentionally replacing it. The server skips the duplicate-subscription guard and the webhook cancels the old sub on checkout success.
                          * @default false
@@ -1065,11 +1114,7 @@ export interface paths {
             requestBody: {
                 content: {
                     "application/json": {
-                        messages: {
-                            /** @enum {string} */
-                            role?: "user" | "assistant";
-                            content?: string;
-                        }[];
+                        messages: components["schemas"]["ChatMessage"][];
                     };
                 };
             };
@@ -1320,6 +1365,87 @@ export interface paths {
                 };
             };
         };
+        trace?: never;
+    };
+    "/api/course/{courseId}/lesson/{moduleIndex}/{lessonIndex}/narration": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Generate audio narration for a lesson (Google Cloud TTS) */
+        post: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path: {
+                    courseId: string;
+                    moduleIndex: number;
+                    lessonIndex: number;
+                };
+                cookie?: never;
+            };
+            requestBody?: {
+                content: {
+                    "application/json": {
+                        /** @description Optional voice override. Falls back to the user's saved preference, then the catalog default. */
+                        voiceId?: string;
+                        /** @description Optional speaking rate override. */
+                        rate?: number;
+                    };
+                };
+            };
+            responses: {
+                202: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": {
+                            data: {
+                                jobId: string;
+                            };
+                        };
+                    };
+                };
+                /** @description Lesson has not been generated, or has no narratable content. */
+                400: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content?: never;
+                };
+            };
+        };
+        /** Clear the narration audio reference on a lesson (does not delete the S3 object — it may be reused via content-hash dedup) */
+        delete: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path: {
+                    courseId: string;
+                    moduleIndex: number;
+                    lessonIndex: number;
+                };
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description Narration cleared. */
+                204: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content?: never;
+                };
+            };
+        };
+        options?: never;
+        head?: never;
+        patch?: never;
         trace?: never;
     };
     "/api/course/execute-code": {
@@ -1573,17 +1699,7 @@ export interface paths {
                     };
                     content: {
                         "application/json": {
-                            data: {
-                                courseId: string;
-                                courseName: string;
-                                courseSlug: string | null;
-                                moduleIndex: number;
-                                lessonIndex: number;
-                                moduleName: string;
-                                lessonName: string;
-                                /** Format: date-time */
-                                bookmarkedAt: string;
-                            }[];
+                            data: components["schemas"]["BookmarkedLessonItem"][];
                         };
                     };
                 };
@@ -1623,13 +1739,7 @@ export interface paths {
                     content: {
                         "application/json": {
                             data: {
-                                messages: {
-                                    /** @enum {string} */
-                                    role?: "user" | "assistant";
-                                    content?: string;
-                                    /** Format: date-time */
-                                    createdAt?: string;
-                                }[];
+                                messages: components["schemas"]["ChatHistoryMessage"][];
                             };
                         };
                     };
@@ -2030,6 +2140,46 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/course/narration-voices": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** List the curated TTS voices users can pick for lesson narration. */
+        get: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path?: never;
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": {
+                            data: {
+                                defaultVoiceId: string;
+                                voices: components["schemas"]["NarrationVoice"][];
+                            };
+                        };
+                    };
+                };
+            };
+        };
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/course/progress-summary": {
         parameters: {
             query?: never;
@@ -2097,17 +2247,7 @@ export interface paths {
                     };
                     content: {
                         "application/json": {
-                            data: {
-                                courseId: string;
-                                courseSlug: string | null;
-                                courseName: string;
-                                moduleIndex: number;
-                                lessonIndex: number;
-                                moduleName: string;
-                                lessonName: string;
-                                /** Format: date-time */
-                                lastAccessedAt: string;
-                            }[];
+                            data: components["schemas"]["RecentActivityItem"][];
                         };
                     };
                 };
@@ -2181,13 +2321,7 @@ export interface paths {
                     };
                     content: {
                         "application/json": {
-                            data: {
-                                courseId: string;
-                                courseSlug?: string | null;
-                                courseName: string;
-                                moduleIndex: number;
-                                moduleName: string;
-                            }[];
+                            data: components["schemas"]["UnattemptedQuizItem"][];
                         };
                     };
                 };
@@ -2227,6 +2361,92 @@ export interface paths {
                     };
                 };
             };
+            responses: {
+                202: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": {
+                            data: {
+                                jobId: string;
+                            };
+                        };
+                    };
+                };
+            };
+        };
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/course/{courseId}/lesson/{moduleIndex}/{lessonIndex}/regenerate-hero": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Regenerate the hero image for a single already-generated lesson */
+        post: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path: {
+                    courseId: string;
+                    moduleIndex: number;
+                    lessonIndex: number;
+                };
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                202: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": {
+                            data: {
+                                jobId: string;
+                            };
+                        };
+                    };
+                };
+            };
+        };
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/course/{courseId}/lesson/{moduleIndex}/{lessonIndex}/regenerate-links": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Regenerate the curated-links block for a single already-generated lesson */
+        post: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path: {
+                    courseId: string;
+                    moduleIndex: number;
+                    lessonIndex: number;
+                };
+                cookie?: never;
+            };
+            requestBody?: never;
             responses: {
                 202: {
                     headers: {
@@ -2451,7 +2671,7 @@ export interface paths {
                     };
                     content: {
                         "application/json": {
-                            data: Record<string, never>;
+                            data: components["schemas"]["QuizTrendsResult"];
                         };
                     };
                 };
@@ -2698,11 +2918,7 @@ export interface paths {
             requestBody: {
                 content: {
                     "application/json": {
-                        /**
-                         * @description 1=Again, 2=Hard, 3=Good, 4=Easy
-                         * @enum {integer}
-                         */
-                        rating: 1 | 2 | 3 | 4;
+                        rating: components["schemas"]["InsightRating"];
                         /** @description Similarity score if answered via typed-recall mode */
                         typedMatch?: number | null;
                     };
@@ -2749,8 +2965,7 @@ export interface paths {
             requestBody: {
                 content: {
                     "application/json": {
-                        /** @enum {string} */
-                        mode: "tap-reveal" | "typed-recall";
+                        mode: components["schemas"]["InsightMode"];
                     };
                 };
             };
@@ -2762,8 +2977,7 @@ export interface paths {
                     content: {
                         "application/json": {
                             data: {
-                                /** @enum {string} */
-                                mode: "tap-reveal" | "typed-recall";
+                                mode: components["schemas"]["InsightMode"];
                             };
                         };
                     };
@@ -2831,6 +3045,8 @@ export interface paths {
                 query?: {
                     limit?: number;
                     offset?: number;
+                    sortBy?: "timestamp" | "costMicroCents" | "chargedMicroCents" | "service";
+                    sortDir?: "asc" | "desc";
                 };
                 header?: never;
                 path?: never;
@@ -2914,7 +3130,7 @@ export interface components {
         /** @enum {string} */
         JobStatusEnum: "pending" | "processing" | "completed" | "failed";
         /** @enum {string} */
-        JobType: "clarify" | "generate_structure" | "refine_structure" | "generate_lesson" | "generate_depth_previews" | "generate_module_quiz";
+        JobType: "clarify" | "generate_structure" | "refine_structure" | "generate_lesson" | "generate_depth_previews" | "generate_module_quiz" | "regenerate_hero" | "regenerate_links" | "lesson_narration";
         /** @enum {string} */
         LessonProgressStatus: "not_started" | "in_progress" | "completed";
         /** @enum {string} */
@@ -2924,7 +3140,7 @@ export interface components {
         /** @enum {string} */
         ReviewReason: "time" | "progression";
         /** @enum {string} */
-        UsageService: "anthropic" | "bfl" | "tavily" | "jina" | "judge0";
+        UsageService: "anthropic" | "bfl" | "tavily" | "jina" | "judge0" | "tts";
         ApiError: {
             message: string;
             errorCode?: components["schemas"]["ErrorCode"];
@@ -2941,6 +3157,10 @@ export interface components {
         PlanKey: "free" | "starter" | "pro" | "studio";
         /** @enum {string} */
         SubscriptionStatus: "active" | "past_due" | "canceling" | "canceled";
+        /** @enum {string} */
+        BillingCadence: "monthly" | "annual";
+        /** @enum {string} */
+        CreditLedgerReason: "signup_grant" | "period_reset" | "plan_upgrade_bonus" | "topup_purchase" | "debit_action" | "refund_job_failed" | "refund_job_canceled" | "refund_cross_period" | "refund_topup" | "dispute_clawback" | "admin_grant" | "admin_clawback";
         UserSubscription: {
             plan: components["schemas"]["PlanKey"];
             status: components["schemas"]["SubscriptionStatus"];
@@ -2969,6 +3189,7 @@ export interface components {
             authProviders: components["schemas"]["AuthProvider"][];
             subscription: components["schemas"]["UserSubscription"];
             credits: components["schemas"]["UserCredits"];
+            preferences: components["schemas"]["UserPreferences"];
             /** Format: date-time */
             createdAt: string;
             /** Format: date-time */
@@ -2977,6 +3198,7 @@ export interface components {
         BillingPlan: {
             key: components["schemas"]["PlanKey"];
             displayName: string;
+            description: string;
             monthlyUsd: number;
             annualMonthlyUsd: number;
             annualUsd: number;
@@ -3021,8 +3243,7 @@ export interface components {
             balanceAfter: number;
             bonusBefore: number;
             bonusAfter: number;
-            /** @enum {string} */
-            reason: "signup_grant" | "period_reset" | "plan_upgrade_bonus" | "topup_purchase" | "debit_action" | "refund_job_failed" | "refund_job_canceled" | "refund_cross_period" | "admin_grant" | "admin_clawback";
+            reason: components["schemas"]["CreditLedgerReason"];
             actionType?: string;
             jobId?: string;
             notes?: string;
@@ -3099,12 +3320,34 @@ export interface components {
             heroImageUrl?: string | null;
             includeHeroImage?: boolean;
             audioUrl?: string | null;
+            audioVoice?: string | null;
+            audioRate?: number | null;
+            audioContentHash?: string | null;
+            /** Format: date-time */
+            audioGeneratedAt?: string | null;
             summary?: string | null;
             version: number;
             /** Format: date-time */
             createdAt?: string;
             /** Format: date-time */
             updatedAt?: string;
+        };
+        NarrationVoice: {
+            id: string;
+            label: string;
+            locale: string;
+            /** @enum {string} */
+            gender: "male" | "female" | "neutral";
+            description: string;
+        };
+        NarrationVoicesResponse: {
+            defaultVoiceId: string;
+            voices: components["schemas"]["NarrationVoice"][];
+        };
+        UserPreferences: {
+            /** @description Empty string means "no preference" — server falls back to the catalog default. */
+            narrationVoice: string;
+            narrationRate: number;
         };
         QuizResponse: {
             blockId: string;
@@ -3226,6 +3469,157 @@ export interface components {
             nextReviewAt: string | null;
             reviewReason: components["schemas"]["ReviewReason"];
         };
+        UnattemptedQuizItem: {
+            courseId: string;
+            courseSlug: string | null;
+            courseName: string;
+            moduleIndex: number;
+            moduleName: string;
+        };
+        BookmarkedLessonItem: {
+            courseId: string;
+            courseName: string;
+            courseSlug: string | null;
+            moduleIndex: number;
+            lessonIndex: number;
+            moduleName: string;
+            lessonName: string;
+            /** Format: date-time */
+            bookmarkedAt: string;
+        };
+        RecentActivityItem: {
+            courseId: string;
+            courseSlug: string | null;
+            courseName: string;
+            moduleIndex: number;
+            lessonIndex: number;
+            moduleName: string;
+            lessonName: string;
+            /** Format: date-time */
+            lastAccessedAt: string;
+        };
+        /** @enum {string} */
+        ChatMessageRole: "user" | "assistant";
+        ChatMessage: {
+            role: components["schemas"]["ChatMessageRole"];
+            content: string;
+        };
+        ChatHistoryMessage: {
+            role: components["schemas"]["ChatMessageRole"];
+            content: string;
+            /** Format: date-time */
+            createdAt?: string;
+        };
+        JobStartedEvent: {
+            jobId: string;
+            courseId: string;
+            type: components["schemas"]["JobType"];
+            moduleIndex?: number;
+            lessonIndex?: number;
+        };
+        JobStatusEvent: {
+            jobId: string;
+            /**
+             * @description Terminal status only — progress updates use the job:progress channel.
+             * @enum {string}
+             */
+            status: "completed" | "failed";
+            error?: string | null;
+            courseId: string;
+            type: components["schemas"]["JobType"];
+            moduleIndex?: number;
+            lessonIndex?: number;
+        };
+        /** @enum {string} */
+        LessonPlaceholderType: "quiz" | "exercise";
+        LessonPlaceholderBlock: {
+            id: string;
+            type: components["schemas"]["LessonPlaceholderType"];
+            order: number;
+        };
+        GeneratedInsight: {
+            kind: components["schemas"]["InsightKind"];
+            prompt: string;
+            answer: string;
+            conceptTags: string[];
+            sourceBlockId: string;
+        };
+        LessonProgressBlockEvent: {
+            /**
+             * @description discriminator enum property added by openapi-typescript
+             * @enum {string}
+             */
+            type: "block";
+            block: components["schemas"]["LessonBlock"];
+        };
+        LessonProgressHeroImageEvent: {
+            /**
+             * @description discriminator enum property added by openapi-typescript
+             * @enum {string}
+             */
+            type: "hero_image";
+            url: string;
+            s3Key?: string;
+        };
+        LessonProgressContentReadyEvent: {
+            /**
+             * @description discriminator enum property added by openapi-typescript
+             * @enum {string}
+             */
+            type: "content_ready";
+            placeholders: components["schemas"]["LessonPlaceholderBlock"][];
+        };
+        LessonProgressInsightEvent: {
+            /**
+             * @description discriminator enum property added by openapi-typescript
+             * @enum {string}
+             */
+            type: "insight";
+            insight: components["schemas"]["GeneratedInsight"];
+        };
+        LessonProgressInsightsSavedEvent: {
+            /**
+             * @description discriminator enum property added by openapi-typescript
+             * @enum {string}
+             */
+            type: "insights_saved";
+            count: number;
+        };
+        LessonProgressNarrationStartedEvent: {
+            /**
+             * @description discriminator enum property added by openapi-typescript
+             * @enum {string}
+             */
+            type: "narration_started";
+        };
+        LessonProgressNarrationReadyEvent: {
+            /**
+             * @description discriminator enum property added by openapi-typescript
+             * @enum {string}
+             */
+            type: "narration_ready";
+            cached: boolean;
+            voiceId: string;
+        };
+        LessonProgressEvent: components["schemas"]["LessonProgressBlockEvent"] | components["schemas"]["LessonProgressHeroImageEvent"] | components["schemas"]["LessonProgressContentReadyEvent"] | components["schemas"]["LessonProgressInsightEvent"] | components["schemas"]["LessonProgressInsightsSavedEvent"] | components["schemas"]["LessonProgressNarrationStartedEvent"] | components["schemas"]["LessonProgressNarrationReadyEvent"];
+        JobProgressEvent: {
+            jobId: string;
+            courseId: string;
+            type: components["schemas"]["JobType"];
+            moduleIndex?: number;
+            lessonIndex?: number;
+            event: components["schemas"]["LessonProgressEvent"];
+        };
+        CreditsUpdatedEvent: {
+            allowance: number;
+            bonus: number;
+            total: number;
+            /** @description Signed delta that caused the update (for nudging UI toast/animation). */
+            delta: number;
+            reason: components["schemas"]["CreditLedgerReason"];
+            /** @description Present when reason is debit_action / refund_* — identifies which action spent or refunded. */
+            actionType?: string;
+        };
         /** @enum {string} */
         XpSource: "lesson_complete" | "quiz_score" | "exercise_pass" | "review_complete" | "insight_review" | "insight_mastery";
         /** @enum {string} */
@@ -3262,21 +3656,45 @@ export interface components {
             quizzes: number;
             insights: number;
         };
+        XpDaySources: {
+            lesson_complete: number;
+            quiz_score: number;
+            exercise_pass: number;
+            review_complete: number;
+            insight_review: number;
+            insight_mastery: number;
+        };
+        XpDayEntry: {
+            date: string;
+            xp: number;
+            sources: components["schemas"]["XpDaySources"];
+        };
+        XpWeekEntry: {
+            week: string;
+            xp: number;
+        };
         GamificationStats: {
-            xpByDay: {
-                date: string;
-                xp: number;
-            }[];
-            xpByWeek: {
-                week: string;
-                xp: number;
-            }[];
+            xpByDay: components["schemas"]["XpDayEntry"][];
+            xpByWeek: components["schemas"]["XpWeekEntry"][];
             totalTimeLearned: number;
             lessonsThisWeek: number;
-            weeklySummary?: {
+            weeklySummary: {
                 thisWeek: components["schemas"]["WeeklySummaryPeriod"];
                 lastWeek: components["schemas"]["WeeklySummaryPeriod"];
             };
+        };
+        QuizTrendsAttempt: {
+            date: string;
+            score: number;
+            courseId: string;
+            courseName: string;
+            moduleName: string;
+            moduleIndex: number;
+        };
+        QuizTrendsResult: {
+            attempts: components["schemas"]["QuizTrendsAttempt"][];
+            averageScore: number;
+            recentTrend: number;
         };
         Course: {
             _id: string;
@@ -3392,6 +3810,12 @@ export interface components {
             service: components["schemas"]["UsageService"];
             action: string;
             costMicroCents: number;
+            chargedMicroCents: number;
+            creditsCharged: number;
+            planAtTime: components["schemas"]["PlanKey"] | null;
+            /** @enum {string|null} */
+            source: "allowance" | "topup" | "mixed" | null;
+            userPaidUsd: number | null;
             metadata: {
                 [key: string]: unknown;
             };
@@ -3405,10 +3829,12 @@ export interface components {
         };
         UsageCostBucket: {
             costMicroCents: number;
+            chargedMicroCents: number;
         };
         UsageServiceTotal: {
             service: components["schemas"]["UsageService"];
             costMicroCents: number;
+            chargedMicroCents: number;
         };
         UsageSummary: {
             today: components["schemas"]["UsageCostBucket"];

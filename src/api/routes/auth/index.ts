@@ -12,6 +12,21 @@ export const getMe = () => {
   }).then((res) => res.data.data);
 };
 
+// ── Update preferences ──────────────────────────────────────
+
+type UpdatePreferencesBody =
+  paths['/api/auth/me/preferences']['patch']['requestBody']['content']['application/json'];
+type UpdatePreferencesResponse =
+  paths['/api/auth/me/preferences']['patch']['responses']['200']['content']['application/json'];
+
+export const updatePreferences = (params: UpdatePreferencesBody) => {
+  return client<UpdatePreferencesResponse>({
+    url: '/auth/me/preferences',
+    method: 'PATCH',
+    data: params,
+  }).then((res) => res.data.data);
+};
+
 // ── Email verification ──────────────────────────────────────
 
 type VerifyEmailBody = paths['/api/auth/verify-email']['post']['requestBody']['content']['application/json'];
@@ -62,10 +77,7 @@ export const deleteAccount = (params: DeleteAccountBody) => {
 
 // ── Logout (revoke bearer server-side) ──────────────────────
 
-// Inline type pending `yarn codegen` — the server endpoint was added after
-// the last OpenAPI regeneration. Swap to `paths['/api/auth/logout']['post']...`
-// once the generated file is refreshed.
-type LogoutResponse = { data: { message: string } };
+type LogoutResponse = paths['/api/auth/logout']['post']['responses']['200']['content']['application/json'];
 
 export const logout = () => {
   return client<LogoutResponse>({

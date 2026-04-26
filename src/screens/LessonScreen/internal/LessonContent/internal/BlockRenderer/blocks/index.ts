@@ -6,5 +6,6 @@ export { CalloutBlock } from './CalloutBlock';
 export { SummaryBlock } from './SummaryBlock';
 export { QuizBlock } from './QuizBlock';
 export { LinksBlock } from './LinksBlock';
+export { LinksEmptyPlaceholder, LinksBlockSkeleton } from './LinksSection';
 export { ExerciseBlock } from './ExerciseBlock';
 export { QuizSkeleton, ExerciseSkeleton } from './Skeletons';

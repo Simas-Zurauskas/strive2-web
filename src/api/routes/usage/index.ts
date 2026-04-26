@@ -9,11 +9,24 @@ type UsageHistoryResponse =
 export type UsageHistoryData = UsageHistoryResponse['data'];
 export type UsageEvent = UsageHistoryData['events'][number];
 
-export const getUsageHistory = ({ limit, offset }: { limit: number; offset: number }) => {
+export type UsageSortField = 'timestamp' | 'costMicroCents' | 'chargedMicroCents' | 'service';
+export type UsageSortDir = 'asc' | 'desc';
+
+export const getUsageHistory = ({
+  limit,
+  offset,
+  sortBy = 'timestamp',
+  sortDir = 'desc',
+}: {
+  limit: number;
+  offset: number;
+  sortBy?: UsageSortField;
+  sortDir?: UsageSortDir;
+}) => {
   return client<UsageHistoryResponse>({
     url: '/usage/history',
     method: 'GET',
-    params: { limit, offset },
+    params: { limit, offset, sortBy, sortDir },
   }).then((res) => res.data.data);
 };
 

@@ -11,6 +11,7 @@ import {
   useUsageHistory,
   useUsageSummary,
 } from '@/hooks/useUsage';
+import type { UsageSortDir, UsageSortField } from '@/api/routes/usage';
 import { QKeys } from '@/types';
 import { UsageHistoryList } from '../UsageTab/internal/UsageHistoryList/UsageHistoryList';
 import { UsageSummaryCards } from '../UsageTab/internal/UsageSummaryCards/UsageSummaryCards';
@@ -32,6 +33,21 @@ export const BillingTab: React.FC = () => {
   const checkoutToastShown = useRef(false);
   const [devExpanded, setDevExpanded] = useState(false);
   const [offset, setOffset] = useState(0);
+  const [sortBy, setSortBy] = useState<UsageSortField>('timestamp');
+  const [sortDir, setSortDir] = useState<UsageSortDir>('desc');
+
+  // Toggle direction when re-clicking the active column; switching columns
+  // resets to desc which is the most useful default for cost / time. Sort
+  // change resets pagination so the user lands on the new first page.
+  const handleSortChange = (next: UsageSortField) => {
+    if (next === sortBy) {
+      setSortDir((d) => (d === 'asc' ? 'desc' : 'asc'));
+    } else {
+      setSortBy(next);
+      setSortDir('desc');
+    }
+    setOffset(0);
+  };
 
   // Stripe Checkout redirects here with `?checkout=subscription|topup`.
   // The webhook has (almost certainly) already updated state by the time
@@ -65,7 +81,7 @@ export const BillingTab: React.FC = () => {
   // no point hitting the endpoints for end users.
   const showDev = DEV_MODE && devExpanded;
   const summary = useUsageSummary();
-  const history = useUsageHistory({ limit: USAGE_PAGE_SIZE, offset });
+  const history = useUsageHistory({ limit: USAGE_PAGE_SIZE, offset, sortBy, sortDir });
   const clearEvents = useDeleteAllUsageEvents();
 
   const handleClear = () => {
@@ -92,6 +108,9 @@ export const BillingTab: React.FC = () => {
                 offset={offset}
                 onPrev={() => setOffset((o) => Math.max(0, o - USAGE_PAGE_SIZE))}
                 onNext={() => setOffset((o) => o + USAGE_PAGE_SIZE)}
+                sortBy={sortBy}
+                sortDir={sortDir}
+                onSortChange={handleSortChange}
               />
               <S.DevTools>
                 <S.DevLabel>Dev tools</S.DevLabel>

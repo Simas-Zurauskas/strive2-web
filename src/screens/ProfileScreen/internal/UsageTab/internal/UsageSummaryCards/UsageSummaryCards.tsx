@@ -17,22 +17,43 @@ const SERVICE_LABELS: Record<string, string> = {
 };
 
 export const UsageSummaryCards: React.FC<Props> = ({ data, loading }) => {
+  // Each card shows two numbers: charged (what the user paid in credits-equivalent
+  // microcents) and vendor (what we paid the provider). They differ for the four
+  // marked-up services (judge0, tavily, jina, bfl); for anthropic-only periods
+  // they're equal and the vendor line is hidden.
   const cards = [
-    { label: 'Today', value: data?.today.costMicroCents ?? 0 },
-    { label: 'This month', value: data?.thisMonth.costMicroCents ?? 0 },
-    { label: 'All time', value: data?.allTime.costMicroCents ?? 0 },
+    {
+      label: 'Today',
+      charged: data?.today.chargedMicroCents ?? 0,
+      vendor: data?.today.costMicroCents ?? 0,
+    },
+    {
+      label: 'This month',
+      charged: data?.thisMonth.chargedMicroCents ?? 0,
+      vendor: data?.thisMonth.costMicroCents ?? 0,
+    },
+    {
+      label: 'All time',
+      charged: data?.allTime.chargedMicroCents ?? 0,
+      vendor: data?.allTime.costMicroCents ?? 0,
+    },
   ];
 
   const byService = (data?.byService ?? [])
-    .filter((s) => s.costMicroCents > 0)
-    .sort((a, b) => b.costMicroCents - a.costMicroCents);
+    .filter((s) => s.chargedMicroCents > 0 || s.costMicroCents > 0)
+    .sort((a, b) => b.chargedMicroCents - a.chargedMicroCents);
 
   return (
     <>
       <S.Grid>
         {cards.map((c) => (
           <S.Card key={c.label}>
-            <S.Value>{loading ? <Skeleton width={72} /> : formatMicroCents(c.value)}</S.Value>
+            <S.Value>{loading ? <Skeleton width={72} /> : formatMicroCents(c.charged)}</S.Value>
+            {!loading && c.vendor !== c.charged && (
+              <S.VendorValue title="Vendor cost (what we paid the provider)">
+                vendor {formatMicroCents(c.vendor)}
+              </S.VendorValue>
+            )}
             <S.Label>{c.label}</S.Label>
           </S.Card>
         ))}
@@ -45,7 +66,12 @@ export const UsageSummaryCards: React.FC<Props> = ({ data, loading }) => {
             {byService.map((s) => (
               <S.Chip key={s.service}>
                 <S.ChipService>{SERVICE_LABELS[s.service] ?? s.service}</S.ChipService>
-                <S.ChipValue>{formatMicroCents(s.costMicroCents)}</S.ChipValue>
+                <S.ChipValue>{formatMicroCents(s.chargedMicroCents)}</S.ChipValue>
+                {s.chargedMicroCents !== s.costMicroCents && (
+                  <S.ChipService title="Vendor cost (what we paid the provider)">
+                    / vendor {formatMicroCents(s.costMicroCents)}
+                  </S.ChipService>
+                )}
               </S.Chip>
             ))}
           </S.ChipRow>

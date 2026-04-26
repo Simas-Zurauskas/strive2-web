@@ -8,6 +8,7 @@ import { useAuth } from '@/hooks';
 import { useBillingPlans, useBillingSummary } from '@/hooks/useBilling';
 import { formatDate } from '@/lib/formatDate';
 import * as S from './AccountTab.styles';
+import { NarrationPreferences } from './internal/NarrationPreferences';
 import { PasswordModal } from './internal/PasswordModal';
 
 const formatProvider = (provider: string) => {
@@ -90,6 +91,8 @@ export const AccountTab: React.FC = () => {
         mode={hasCredentials ? 'change' : 'set'}
         onClose={() => setPasswordModalOpen(false)}
       />
+
+      <NarrationPreferences />
 
       <S.Section>
         <S.SectionTitle>Legal</S.SectionTitle>

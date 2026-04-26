@@ -53,17 +53,75 @@ export const Row = styled.div<{ $expandable: boolean }>`
     `}
 `;
 
+// Engineer-view row layout: Service · Action · Time · Vendor · Credits · Plan · You pay.
+// HeaderRow + every RowHeader use this exact template so columns line up.
+// Fixed widths on every column except Action are intentional — using `auto`
+// would let each grid pick its own column widths (since header text and row
+// content have different lengths) and the columns would visibly misalign.
+// On mobile the layout collapses to the legacy 3-column shape.
+const ENGINEER_GRID = `
+  72px
+  minmax(0, 1fr)
+  108px
+  92px
+  72px
+  88px
+  84px
+`;
+
 export const RowHeader = styled.div`
   display: grid;
-  grid-template-columns: auto 1fr auto auto;
+  grid-template-columns: ${ENGINEER_GRID};
   gap: 0.75rem;
   align-items: baseline;
 
   ${(p) => p.theme.media.mobile} {
-    grid-template-columns: auto 1fr auto;
+    grid-template-columns: auto minmax(0, 1fr) auto;
     grid-template-rows: auto auto;
     gap: 0.25rem 0.5rem;
   }
+`;
+
+export const HeaderRow = styled.div`
+  display: grid;
+  grid-template-columns: ${ENGINEER_GRID};
+  gap: 0.75rem;
+  align-items: baseline;
+  padding: 0 0.75rem 0.5rem;
+  border-bottom: 1px solid ${(p) => p.theme.colors.surfaceBorder};
+  margin-bottom: 0.5rem;
+
+  ${(p) => p.theme.media.mobile} {
+    display: none;
+  }
+`;
+
+export const HeaderCell = styled.button<{ $sortable?: boolean; $active?: boolean; $align?: 'left' | 'right' }>`
+  display: inline-flex;
+  align-items: center;
+  gap: 0.25rem;
+  background: transparent;
+  border: 0;
+  padding: 0;
+  font: inherit;
+  font-size: 0.6875rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  color: ${(p) => (p.$active ? p.theme.colors.foreground : p.theme.colors.muted)};
+  cursor: ${(p) => (p.$sortable ? 'pointer' : 'default')};
+  justify-content: ${(p) => (p.$align === 'right' ? 'flex-end' : 'flex-start')};
+
+  &:hover {
+    color: ${(p) => (p.$sortable ? p.theme.colors.foreground : p.theme.colors.muted)};
+  }
+`;
+
+export const SortChevron = styled.span<{ $dir: 'asc' | 'desc' }>`
+  font-size: 0.625rem;
+  line-height: 1;
+  transform: ${(p) => (p.$dir === 'asc' ? 'rotate(180deg)' : 'none')};
+  transition: transform 120ms ease;
 `;
 
 export const ServiceBadge = styled.span<{ $service: string }>`
@@ -110,13 +168,67 @@ export const Time = styled.span`
   font-variant-numeric: tabular-nums;
 `;
 
+// Right-aligned cost cells. width: 100% makes the span fill its fixed-width
+// grid track so text-align: right pushes the value to the column's right edge,
+// matching the header cell's flex-end alignment.
 export const Cost = styled.span`
+  display: block;
+  width: 100%;
   font-size: 0.8125rem;
   font-weight: 600;
   font-variant-numeric: tabular-nums;
   color: ${(p) => p.theme.colors.foreground};
-  min-width: 72px;
   text-align: right;
+`;
+
+export const VendorCost = styled.span`
+  display: block;
+  width: 100%;
+  font-size: 0.8125rem;
+  font-weight: 500;
+  font-variant-numeric: tabular-nums;
+  color: ${(p) => p.theme.colors.muted};
+  text-align: right;
+`;
+
+export const CreditsCell = styled.span`
+  display: block;
+  width: 100%;
+  font-size: 0.8125rem;
+  font-weight: 500;
+  font-variant-numeric: tabular-nums;
+  color: ${(p) => p.theme.colors.foreground};
+  text-align: right;
+`;
+
+// Pill is content-sized; sits at the left of its grid cell so the header
+// "PLAN" label (also left-aligned) lines up directly above it.
+export const PlanCell = styled.span<{ $kind: 'allowance' | 'topup' | 'mixed' | 'none' }>`
+  display: inline-block;
+  font-size: 0.6875rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  padding: 0.125rem 0.5rem;
+  border-radius: 4px;
+  text-align: center;
+  background: ${(p) => {
+    switch (p.$kind) {
+      case 'allowance':
+        return `${p.theme.colors.accent}1A`;
+      case 'topup':
+        return `${p.theme.colors.warning}22`;
+      case 'mixed':
+        return `${p.theme.colors.tertiary}22`;
+      default:
+        return 'transparent';
+    }
+  }};
+  color: ${(p) => (p.$kind === 'none' ? p.theme.colors.muted : p.theme.colors.foreground)};
+`;
+
+export const Muted = styled.span`
+  color: ${(p) => p.theme.colors.muted};
 `;
 
 export const Metadata = styled.div`

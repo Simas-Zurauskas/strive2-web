@@ -1,6 +1,5 @@
 import { paths } from '@/api/_generated';
 import { client } from '@/api/client';
-import type { LessonBlock } from '@/api/types';
 
 // ── Course CRUD ─────────────────────────────────────────
 
@@ -118,30 +117,73 @@ export const generateLesson = (params: {
   }).then((res) => res.data.data);
 };
 
-// ── Lesson progress events ─────────────────────────────
-//
-// The agent's writer events arrive as the `event` field of Socket.io
-// `job:progress` messages. Shape mirrors what the LangGraph nodes emit so
-// the server is the single source of truth for event types — adding a new
-// agent event here does not require a server-side schema change.
+// ── Hero / links regeneration ──────────────────────────
 
-export interface PlaceholderBlock {
-  id: string;
-  type: 'quiz' | 'exercise';
-  order: number;
-}
+type RegenerateHeroResponse =
+  paths['/api/course/{courseId}/lesson/{moduleIndex}/{lessonIndex}/regenerate-hero']['post']['responses']['202']['content']['application/json'];
 
-export type LessonProgressEvent =
-  | { type: 'block'; block: LessonBlock }
-  | { type: 'hero_image'; url: string; s3Key?: string }
-  | { type: 'content_ready'; placeholders: PlaceholderBlock[] }
-  | { type: 'insight'; insight: unknown }
-  | { type: 'insights_saved'; count: number };
+export const regenerateHero = (params: { courseId: string; moduleIndex: number; lessonIndex: number }) => {
+  return client<RegenerateHeroResponse>({
+    url: `/course/${params.courseId}/lesson/${params.moduleIndex}/${params.lessonIndex}/regenerate-hero`,
+    method: 'POST',
+  }).then((res) => res.data.data);
+};
+
+type RegenerateLinksResponse =
+  paths['/api/course/{courseId}/lesson/{moduleIndex}/{lessonIndex}/regenerate-links']['post']['responses']['202']['content']['application/json'];
+
+export const regenerateLinks = (params: { courseId: string; moduleIndex: number; lessonIndex: number }) => {
+  return client<RegenerateLinksResponse>({
+    url: `/course/${params.courseId}/lesson/${params.moduleIndex}/${params.lessonIndex}/regenerate-links`,
+    method: 'POST',
+  }).then((res) => res.data.data);
+};
+
+// ── Lesson narration (TTS) ─────────────────────────────
+
+type GenerateNarrationBody = NonNullable<
+  paths['/api/course/{courseId}/lesson/{moduleIndex}/{lessonIndex}/narration']['post']['requestBody']
+>['content']['application/json'];
+type GenerateNarrationResponse =
+  paths['/api/course/{courseId}/lesson/{moduleIndex}/{lessonIndex}/narration']['post']['responses']['202']['content']['application/json'];
+
+export const generateLessonNarration = (params: {
+  courseId: string;
+  moduleIndex: number;
+  lessonIndex: number;
+  body?: GenerateNarrationBody;
+}) => {
+  return client<GenerateNarrationResponse>({
+    url: `/course/${params.courseId}/lesson/${params.moduleIndex}/${params.lessonIndex}/narration`,
+    method: 'POST',
+    data: params.body ?? {},
+  }).then((res) => res.data.data);
+};
+
+export const deleteLessonNarration = (params: {
+  courseId: string;
+  moduleIndex: number;
+  lessonIndex: number;
+}) => {
+  return client({
+    url: `/course/${params.courseId}/lesson/${params.moduleIndex}/${params.lessonIndex}/narration`,
+    method: 'DELETE',
+  });
+};
+
+type NarrationVoicesResponse =
+  paths['/api/course/narration-voices']['get']['responses']['200']['content']['application/json'];
+
+export const getNarrationVoices = () => {
+  return client<NarrationVoicesResponse>({
+    url: '/course/narration-voices',
+    method: 'GET',
+  }).then((res) => res.data.data);
+};
 
 // ── Code execution ─────────────────────────────────────
 
-type ExecuteCodeResponse =
-  paths['/api/course/execute-code']['post']['responses']['200']['content']['application/json'];
+type ExecuteCodeResponse = paths['/api/course/execute-code']['post']['responses']['200']['content']['application/json'];
 
 export const executeCode = (params: { code: string; language: string; stdin?: string }) => {
   return client<ExecuteCodeResponse>({
@@ -153,12 +195,14 @@ export const executeCode = (params: { code: string; language: string; stdin?: st
 
 // ── Lesson content ─────────────────────────────────────
 
-type LessonContentResponse =
+export type LessonContentResponse =
   paths['/api/course/{courseId}/lesson-content/{moduleIndex}/{lessonIndex}']['get']['responses']['200']['content']['application/json'];
 
-export type { LessonContentResponse };
-
-export const getLessonContent = (params: { courseId: string; moduleIndex: number; lessonIndex: number }): Promise<LessonContentResponse['data'] | null> => {
+export const getLessonContent = (params: {
+  courseId: string;
+  moduleIndex: number;
+  lessonIndex: number;
+}): Promise<LessonContentResponse['data'] | null> => {
   return client<LessonContentResponse>({
     url: `/course/${params.courseId}/lesson-content/${params.moduleIndex}/${params.lessonIndex}`,
     method: 'GET',
@@ -186,8 +230,7 @@ export const getChatHistory = (courseId: string) => {
 
 // ── Job polling ─────────────────────────────────────────
 
-type JobStatusResponse =
-  paths['/api/course/job/{jobId}']['get']['responses']['200']['content']['application/json'];
+type JobStatusResponse = paths['/api/course/job/{jobId}']['get']['responses']['200']['content']['application/json'];
 
 export const getJobStatus = (jobId: string) => {
   return client<JobStatusResponse>({
@@ -215,9 +258,12 @@ export type ContinueLearningResponse = NonNullable<
 export type ProgressSummaryItem =
   paths['/api/course/progress-summary']['get']['responses']['200']['content']['application/json']['data'][number];
 
-export const upsertLessonProgress = (
-  params: { courseId: string; moduleIndex: number; lessonIndex: number; data: UpsertProgressBody },
-) => {
+export const upsertLessonProgress = (params: {
+  courseId: string;
+  moduleIndex: number;
+  lessonIndex: number;
+  data: UpsertProgressBody;
+}) => {
   return client<UpsertProgressResponse>({
     url: `/course/${params.courseId}/progress/${params.moduleIndex}/${params.lessonIndex}`,
     method: 'POST',
@@ -280,7 +326,10 @@ export const generateModuleQuiz = (params: { courseId: string; moduleIndex: numb
 type GetModuleQuizContentResponse =
   paths['/api/course/{courseId}/module-quiz/{moduleIndex}']['get']['responses']['200']['content']['application/json'];
 
-export const getModuleQuizContent = (params: { courseId: string; moduleIndex: number }): Promise<GetModuleQuizContentResponse['data'] | null> => {
+export const getModuleQuizContent = (params: {
+  courseId: string;
+  moduleIndex: number;
+}): Promise<GetModuleQuizContentResponse['data'] | null> => {
   return client<GetModuleQuizContentResponse>({
     url: `/course/${params.courseId}/module-quiz/${params.moduleIndex}`,
     method: 'GET',
@@ -295,9 +344,11 @@ export const getModuleQuizContent = (params: { courseId: string; moduleIndex: nu
 type SubmitQuizAttemptResponse =
   paths['/api/course/{courseId}/module-quiz/{moduleIndex}/submit']['post']['responses']['200']['content']['application/json'];
 
-export const submitQuizAttempt = (
-  params: { courseId: string; moduleIndex: number; responses: { questionId: string; selectedOption: number }[] },
-) => {
+export const submitQuizAttempt = (params: {
+  courseId: string;
+  moduleIndex: number;
+  responses: { questionId: string; selectedOption: number }[];
+}) => {
   return client<SubmitQuizAttemptResponse>({
     url: `/course/${params.courseId}/module-quiz/${params.moduleIndex}/submit`,
     method: 'POST',
@@ -340,8 +391,7 @@ export const resetModuleQuiz = (params: { courseId: string; moduleIndex: number 
 
 // ── Reviews due ──────────────────────────────────────────
 
-type ReviewsDueResponse =
-  paths['/api/course/reviews-due']['get']['responses']['200']['content']['application/json'];
+type ReviewsDueResponse = paths['/api/course/reviews-due']['get']['responses']['200']['content']['application/json'];
 
 export const getReviewsDue = () => {
   return client<ReviewsDueResponse>({
@@ -352,16 +402,11 @@ export const getReviewsDue = () => {
 
 // ── Unattempted quizzes ─────────────────────────────────
 
-export interface UnattemptedQuizItem {
-  courseId: string;
-  courseSlug: string | null;
-  courseName: string;
-  moduleIndex: number;
-  moduleName: string;
-}
+type UnattemptedQuizzesResponse =
+  paths['/api/course/unattempted-quiz-count']['get']['responses']['200']['content']['application/json'];
 
 export const getUnattemptedQuizzes = () => {
-  return client<{ data: UnattemptedQuizItem[] }>({
+  return client<UnattemptedQuizzesResponse>({
     url: '/course/unattempted-quiz-count',
     method: 'GET',
   }).then((res) => res.data.data);
@@ -369,15 +414,21 @@ export const getUnattemptedQuizzes = () => {
 
 // ── Favorites ──────────────────────────────────────────
 
+type FavoriteCourseIdsResponse =
+  paths['/api/course/favorites']['get']['responses']['200']['content']['application/json'];
+
 export const getFavoriteCourseIds = () => {
-  return client<{ data: string[] }>({
+  return client<FavoriteCourseIdsResponse>({
     url: '/course/favorites',
     method: 'GET',
   }).then((res) => res.data.data);
 };
 
+type ToggleFavoriteCourseResponse =
+  paths['/api/course/favorite/{courseId}']['post']['responses']['200']['content']['application/json'];
+
 export const toggleFavoriteCourse = (courseId: string) => {
-  return client<{ data: { favorited: boolean } }>({
+  return client<ToggleFavoriteCourseResponse>({
     url: `/course/favorite/${courseId}`,
     method: 'POST',
   }).then((res) => res.data.data);
@@ -385,19 +436,11 @@ export const toggleFavoriteCourse = (courseId: string) => {
 
 // ── Bookmarked lessons ─────────────────────────────────
 
-export interface BookmarkedLessonItem {
-  courseId: string;
-  courseName: string;
-  courseSlug: string | null;
-  moduleIndex: number;
-  lessonIndex: number;
-  moduleName: string;
-  lessonName: string;
-  bookmarkedAt: string;
-}
+type BookmarkedLessonsResponse =
+  paths['/api/course/bookmarked-lessons']['get']['responses']['200']['content']['application/json'];
 
 export const getBookmarkedLessons = () => {
-  return client<{ data: BookmarkedLessonItem[] }>({
+  return client<BookmarkedLessonsResponse>({
     url: '/course/bookmarked-lessons',
     method: 'GET',
   }).then((res) => res.data.data);
@@ -405,19 +448,11 @@ export const getBookmarkedLessons = () => {
 
 // ── Recent activity ────────────────────────────────
 
-export interface RecentActivityItem {
-  courseId: string;
-  courseSlug: string | null;
-  courseName: string;
-  moduleIndex: number;
-  lessonIndex: number;
-  moduleName: string;
-  lessonName: string;
-  lastAccessedAt: string;
-}
+type RecentActivityResponse =
+  paths['/api/course/recent-activity']['get']['responses']['200']['content']['application/json'];
 
 export const getRecentActivity = () => {
-  return client<{ data: RecentActivityItem[] }>({
+  return client<RecentActivityResponse>({
     url: '/course/recent-activity',
     method: 'GET',
   }).then((res) => res.data.data);

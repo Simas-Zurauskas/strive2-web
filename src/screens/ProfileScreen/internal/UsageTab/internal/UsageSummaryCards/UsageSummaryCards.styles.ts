@@ -26,6 +26,14 @@ export const Value = styled.div`
   color: ${(p) => p.theme.colors.foreground};
 `;
 
+export const VendorValue = styled.div`
+  font-size: 0.75rem;
+  font-weight: 500;
+  font-variant-numeric: tabular-nums;
+  color: ${(p) => p.theme.colors.muted};
+  margin-top: 0.125rem;
+`;
+
 export const Label = styled.div`
   font-size: 0.6875rem;
   color: ${(p) => p.theme.colors.muted};

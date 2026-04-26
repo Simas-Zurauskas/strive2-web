@@ -129,6 +129,18 @@ export const PlanName = styled.h3`
   margin: 0;
 `;
 
+export const PlanDescription = styled.p`
+  margin: 0;
+  font-size: 0.875rem;
+  line-height: 1.5;
+  color: ${(p) => p.theme.colors.muted};
+  /* Pin the block to the height of the longest description (~8 lines at the
+     narrow 4-column card width) so the price row below is vertically aligned
+     across cards. Below 4 columns the cards stack and the min-height becomes
+     harmless slack. */
+  min-height: 12em;
+`;
+
 export const PriceRow = styled.div`
   display: flex;
   align-items: baseline;
@@ -145,6 +157,7 @@ export const Price = styled.span`
 export const PriceMeta = styled.span`
   font-size: 0.8125rem;
   color: ${(p) => p.theme.colors.muted};
+  white-space: nowrap;
 `;
 
 export const AllowanceBlock = styled.div`

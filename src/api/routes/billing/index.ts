@@ -74,14 +74,10 @@ export const startPortal = () => {
 
 // ── Schedule downgrade (no charge, at period end) ────────────
 
-// Inline types until `yarn codegen` picks up the new endpoints.
-interface ScheduleDowngradeBody {
-  plan: 'starter' | 'pro';
-  cadence: 'monthly' | 'annual';
-}
-interface ScheduleDowngradeResponse {
-  data: { scheduledPlan: 'starter' | 'pro'; periodEnd: string | null };
-}
+type ScheduleDowngradeBody =
+  paths['/api/billing/downgrade']['post']['requestBody']['content']['application/json'];
+type ScheduleDowngradeResponse =
+  paths['/api/billing/downgrade']['post']['responses']['200']['content']['application/json'];
 
 export const scheduleDowngrade = (params: ScheduleDowngradeBody) => {
   return client<ScheduleDowngradeResponse>({
@@ -93,9 +89,8 @@ export const scheduleDowngrade = (params: ScheduleDowngradeBody) => {
 
 // ── Schedule cancellation (no refund, at period end) ─────────
 
-interface CancelSubscriptionResponse {
-  data: { periodEnd: string | null };
-}
+type CancelSubscriptionResponse =
+  paths['/api/billing/cancel']['post']['responses']['200']['content']['application/json'];
 
 export const cancelSubscription = () => {
   return client<CancelSubscriptionResponse>({

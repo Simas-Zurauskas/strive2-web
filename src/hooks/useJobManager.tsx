@@ -5,7 +5,7 @@ import { usePathname, useRouter } from 'next/navigation';
 import { createContext, useCallback, useContext, useEffect, useRef, useState } from 'react';
 import { toast } from 'sonner';
 import { getJobStatus } from '@/api/routes/course';
-import { Course } from '@/api/types';
+import { Course, JobStartedEvent, JobStatusEvent } from '@/api/types';
 import { TOASTS, toastMessage } from '@/constants/toasts';
 import { QKeys } from '@/types';
 import { useSocket } from './useSocket';
@@ -28,24 +28,6 @@ interface JobManagerContextValue {
   isJobRunningForCourse: (courseId: string) => boolean;
   generatingLesson: GeneratingLesson | null;
   setGeneratingLesson: (lesson: GeneratingLesson | null) => void;
-}
-
-interface JobStartedEvent {
-  jobId: string;
-  courseId: string;
-  type: string;
-  moduleIndex?: number;
-  lessonIndex?: number;
-}
-
-interface JobStatusEvent {
-  jobId: string;
-  status: 'completed' | 'failed';
-  error?: string | null;
-  courseId: string;
-  type: string;
-  moduleIndex?: number;
-  lessonIndex?: number;
 }
 
 const JobManagerContext = createContext<JobManagerContextValue | null>(null);
@@ -248,6 +230,13 @@ export const JobManagerProvider = ({ children }: { children: React.ReactNode }) 
         if (event.type === 'generate_lesson') {
           queryClient.invalidateQueries({ queryKey: [QKeys.LESSON_CONTENT] });
           queryClient.invalidateQueries({ queryKey: [QKeys.GENERATED_LESSONS] });
+        }
+        if (event.type === 'regenerate_hero' || event.type === 'regenerate_links') {
+          queryClient.invalidateQueries({ queryKey: [QKeys.LESSON_CONTENT] });
+        }
+        if (event.type === 'lesson_narration') {
+          // Refetch the lesson so the freshly-set audioUrl flows in.
+          queryClient.invalidateQueries({ queryKey: [QKeys.LESSON_CONTENT] });
         }
         if (event.type === 'generate_module_quiz') {
           queryClient.invalidateQueries({ queryKey: [QKeys.MODULE_QUIZ_CONTENT] });

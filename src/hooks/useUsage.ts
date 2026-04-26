@@ -1,13 +1,29 @@
 'use client';
 
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
-import { deleteAllUsageEvents, getUsageHistory, getUsageSummary } from '@/api/routes/usage';
+import {
+  deleteAllUsageEvents,
+  getUsageHistory,
+  getUsageSummary,
+  type UsageSortDir,
+  type UsageSortField,
+} from '@/api/routes/usage';
 import { QKeys } from '@/types';
 
-export const useUsageHistory = ({ limit, offset }: { limit: number; offset: number }) =>
+export const useUsageHistory = ({
+  limit,
+  offset,
+  sortBy = 'timestamp',
+  sortDir = 'desc',
+}: {
+  limit: number;
+  offset: number;
+  sortBy?: UsageSortField;
+  sortDir?: UsageSortDir;
+}) =>
   useQuery({
-    queryKey: [QKeys.USAGE_HISTORY, limit, offset],
-    queryFn: () => getUsageHistory({ limit, offset }),
+    queryKey: [QKeys.USAGE_HISTORY, limit, offset, sortBy, sortDir],
+    queryFn: () => getUsageHistory({ limit, offset, sortBy, sortDir }),
   });
 
 export const useUsageSummary = () =>

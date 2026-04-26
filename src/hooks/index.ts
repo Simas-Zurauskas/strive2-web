@@ -18,6 +18,7 @@ export {
   useBookmarkedLessons,
 } from './useProgress';
 export { useJobManager } from './useJobManager';
+export { useRegenerateHero, useRegenerateLinks } from './useRegenerateAsset';
 export { useLessonStream, LessonStreamProvider } from './useLessonStream';
 export { useSocket, SocketProvider } from './useSocket';
 export { useFavoriteCourseIds, useToggleFavoriteCourse } from './useFavorites';

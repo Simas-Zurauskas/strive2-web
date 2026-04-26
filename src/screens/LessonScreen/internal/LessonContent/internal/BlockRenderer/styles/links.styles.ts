@@ -63,3 +63,54 @@ export const LinksEmptyState = styled.div`
   color: ${(p) => p.theme.colors.muted};
   line-height: 1.5;
 `;
+
+export const LinksGenerateRow = styled.div`
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  padding: 1rem 1.25rem;
+  font-size: 0.8125rem;
+  color: ${(p) => p.theme.colors.muted};
+`;
+
+export const LinksGenerateButton = styled.button`
+  display: inline-flex;
+  align-items: center;
+  gap: 0.375rem;
+  padding: 0.375rem 0.75rem;
+  border-radius: 6px;
+  border: 1px dashed ${(p) => p.theme.colors.border};
+  background: transparent;
+  color: ${(p) => p.theme.colors.muted};
+  font-size: 0.8125rem;
+  cursor: pointer;
+  flex-shrink: 0;
+  transition:
+    color 0.15s,
+    border-color 0.15s,
+    background 0.15s;
+
+  &:hover:not(:disabled) {
+    color: ${(p) => p.theme.colors.tertiary};
+    border-color: ${(p) => p.theme.colors.tertiary};
+    background: ${(p) => `${p.theme.colors.tertiary}10`};
+  }
+
+  &:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+  }
+`;
+
+export const LinksSkeletonRow = styled.div`
+  display: flex;
+  flex-direction: column;
+  gap: 0.375rem;
+  padding: 0.875rem 1.25rem;
+  border-bottom: 1px solid ${(p) => p.theme.colors.border};
+
+  &:last-child {
+    border-bottom: none;
+  }
+`;

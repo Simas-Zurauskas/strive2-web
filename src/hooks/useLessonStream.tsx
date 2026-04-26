@@ -3,12 +3,20 @@
 import { useQueryClient } from '@tanstack/react-query';
 import { createContext, useCallback, useContext, useEffect, useState } from 'react';
 import { toast } from 'sonner';
-import { generateLesson, PlaceholderBlock, LessonProgressEvent } from '@/api/routes/course';
+import { generateLesson } from '@/api/routes/course';
 import { TOASTS, toastMessage } from '@/constants/toasts';
 import { QKeys } from '@/types';
 import { useJobManager } from './useJobManager';
 import { useSocket } from './useSocket';
-import type { Course, LessonBlock } from '@/api/types';
+import type {
+  Course,
+  LessonBlock,
+  LessonPlaceholderBlock,
+  LessonProgressEvent,
+  JobProgressEvent,
+  JobStartedEvent,
+  JobStatusEvent,
+} from '@/api/types';
 
 type StreamPhase = 'idle' | 'streaming' | 'finishing';
 
@@ -22,7 +30,7 @@ interface ActiveStream {
   blocks: LessonBlock[];
   image: string | null;
   isStarting: boolean;
-  placeholders: PlaceholderBlock[];
+  placeholders: LessonPlaceholderBlock[];
 }
 
 interface StartStreamParams {
@@ -41,33 +49,6 @@ interface LessonStreamContextValue {
   includeLinks: boolean;
   setIncludeImage: (value: boolean) => void;
   setIncludeLinks: (value: boolean) => void;
-}
-
-interface JobProgressEvent {
-  jobId: string;
-  courseId: string;
-  type: string;
-  moduleIndex?: number;
-  lessonIndex?: number;
-  event: LessonProgressEvent;
-}
-
-interface JobStartedEvent {
-  jobId: string;
-  courseId: string;
-  type: string;
-  moduleIndex?: number;
-  lessonIndex?: number;
-}
-
-interface JobStatusEvent {
-  jobId: string;
-  status: 'completed' | 'failed';
-  courseId: string;
-  type: string;
-  moduleIndex?: number;
-  lessonIndex?: number;
-  error?: string | null;
 }
 
 const LessonStreamContext = createContext<LessonStreamContextValue | null>(null);

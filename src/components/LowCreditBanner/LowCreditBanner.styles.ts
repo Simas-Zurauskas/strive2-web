@@ -8,6 +8,7 @@ export const BannerEl = styled.div<{ $tone: BannerTone }>`
   align-items: center;
   justify-content: space-between;
   gap: 1rem;
+  margin: 0.75rem 1.25rem 0;
   padding: 0.7rem 1rem;
   border-radius: 8px;
   border: 1px solid transparent;

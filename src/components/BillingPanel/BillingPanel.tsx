@@ -35,6 +35,8 @@ const reasonLabel: Record<CreditLedgerEntry['reason'], string> = {
   refund_job_failed: 'Refund (failed job)',
   refund_job_canceled: 'Refund (canceled)',
   refund_cross_period: 'Refund (cross-period)',
+  refund_topup: 'Refund (top-up)',
+  dispute_clawback: 'Dispute clawback',
   admin_grant: 'Admin grant',
   admin_clawback: 'Admin adjustment',
 };

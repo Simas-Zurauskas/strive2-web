@@ -272,6 +272,7 @@ export const PricingScreen: React.FC = () => {
               <S.Card key={plan.key} $highlighted={isPro}>
                 {isPro && <S.HighlightRibbon>Most popular</S.HighlightRibbon>}
                 <S.PlanName>{plan.displayName}</S.PlanName>
+                <S.PlanDescription>{plan.description}</S.PlanDescription>
 
                 <S.PriceRow>
                   {isFree ? (
@@ -279,9 +280,7 @@ export const PricingScreen: React.FC = () => {
                   ) : (
                     <>
                       <S.Price>${priceMonthly.toFixed(2)}</S.Price>
-                      <S.PriceMeta>
-                        / month{cadence === 'annual' ? ' (billed annually)' : ''}
-                      </S.PriceMeta>
+                      <S.PriceMeta>/ month</S.PriceMeta>
                     </>
                   )}
                 </S.PriceRow>
@@ -291,7 +290,7 @@ export const PricingScreen: React.FC = () => {
                     {isFree ? allowanceLabel : <>{allowanceLabel}<S.AllowanceMultiplier>×</S.AllowanceMultiplier></>}
                   </S.AllowanceNumber>
                   <S.AllowanceUnit>
-                    {isFree ? 'allowance / month' : 'monthly allowance'}
+                    {isFree ? 'Baseline usage / month' : 'Baseline usage'}
                   </S.AllowanceUnit>
                 </S.AllowanceBlock>
 

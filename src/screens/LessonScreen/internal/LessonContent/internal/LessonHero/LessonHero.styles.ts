@@ -154,6 +154,36 @@ export const Title = styled.h1`
   }
 `;
 
+export const GenerateButton = styled.button`
+  display: inline-flex;
+  align-items: center;
+  gap: 0.375rem;
+  align-self: flex-start;
+  margin-top: 0.25rem;
+  padding: 0.375rem 0.75rem;
+  border-radius: 6px;
+  border: 1px dashed ${(p) => p.theme.colors.border};
+  background: transparent;
+  color: ${(p) => p.theme.colors.muted};
+  font-size: 0.8125rem;
+  cursor: pointer;
+  transition:
+    color 0.15s,
+    border-color 0.15s,
+    background 0.15s;
+
+  &:hover:not(:disabled) {
+    color: ${(p) => p.theme.colors.tertiary};
+    border-color: ${(p) => p.theme.colors.tertiary};
+    background: ${(p) => `${p.theme.colors.tertiary}10`};
+  }
+
+  &:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+  }
+`;
+
 export const GeneratingDot = styled.div`
   width: 8px;
   height: 8px;
