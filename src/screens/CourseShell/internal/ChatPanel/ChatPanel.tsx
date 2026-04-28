@@ -1,5 +1,15 @@
 'use client';
 
+/**
+ * Lesson-screen mentor panel. Currently a placeholder: the shared <Chat>
+ * is rendered in disabled mode with a curated set of suggested prompts.
+ * Real backend wiring (useChat + transport) will go here in a follow-up,
+ * mirroring the GenerateCourseScreen ChatPanel pattern.
+ */
+
+import { ChevronRight } from 'lucide-react';
+import { useState } from 'react';
+import { Chat } from '@/components/Chat';
 import * as S from './ChatPanel.styles';
 
 interface ChatPanelProps {
@@ -7,39 +17,42 @@ interface ChatPanelProps {
   onClose: () => void;
 }
 
+const PLACEHOLDER_PROMPTS = [
+  'Explain this concept differently',
+  'Quiz me on this lesson',
+  'Give me a real-world example',
+];
+
 export const ChatPanel = ({ contextLabel, onClose }: ChatPanelProps) => {
+  const [inputValue, setInputValue] = useState('');
+
   return (
     <S.Container>
       <S.Header>
-        <S.MentorAvatar>AI</S.MentorAvatar>
-        <S.HeaderInfo>
-          <S.Title>AI Mentor</S.Title>
-          <S.StatusBadge>Ready</S.StatusBadge>
-        </S.HeaderInfo>
-        <S.CloseButton onClick={onClose} aria-label="Close chat">
-          &times;
-        </S.CloseButton>
+        <S.CollapseButton
+          onClick={onClose}
+          aria-label="Collapse mentor panel"
+          title="Collapse (⌘\)"
+        >
+          <ChevronRight size={18} />
+        </S.CollapseButton>
+        <S.HeaderText>
+          <S.HeaderEyebrow>Mentor</S.HeaderEyebrow>
+          {contextLabel && <S.HeaderContext>{contextLabel}</S.HeaderContext>}
+        </S.HeaderText>
       </S.Header>
 
-      <S.Messages>
-        <S.ContextBadge>{contextLabel ?? 'Course'}</S.ContextBadge>
-        <S.PlaceholderMessage>
-          Ask me anything about this lesson. I can explain concepts, give examples, or help you work through exercises.
-        </S.PlaceholderMessage>
-        <S.SuggestedPrompts>
-          <S.PromptChip disabled>Explain the key concepts</S.PromptChip>
-          <S.PromptChip disabled>Give me an example</S.PromptChip>
-          <S.PromptChip disabled>Quiz me on this</S.PromptChip>
-        </S.SuggestedPrompts>
-      </S.Messages>
-
-      <S.InputArea>
-        <S.Input
-          type="text"
-          placeholder="Ask the mentor..."
+      <S.Body>
+        <Chat
+          messages={[]}
+          inputValue={inputValue}
+          onInputChange={setInputValue}
+          onSubmit={() => {}}
+          suggestedPrompts={PLACEHOLDER_PROMPTS}
+          placeholder="Coming soon..."
           disabled
         />
-      </S.InputArea>
+      </S.Body>
     </S.Container>
   );
 };

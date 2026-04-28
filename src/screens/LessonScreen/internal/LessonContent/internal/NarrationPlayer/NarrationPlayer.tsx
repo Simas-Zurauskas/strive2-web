@@ -5,11 +5,7 @@ import { AnimatePresence } from 'framer-motion';
 import { Headphones, Pause, Play, Volume2 } from 'lucide-react';
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { toast } from 'sonner';
-import {
-  deleteLessonNarration,
-  generateLessonNarration,
-  getNarrationVoices,
-} from '@/api/routes/course';
+import { deleteLessonNarration, generateLessonNarration, getNarrationVoices } from '@/api/routes/course';
 import { DropdownMenu } from '@/components';
 import { TOASTS, toastMessage } from '@/constants/toasts';
 import { useAuth, useJobManager } from '@/hooks';
@@ -135,8 +131,7 @@ export const NarrationPlayer = ({
   const generateMutation = useMutation({
     // Always uses the user's saved preference — no per-lesson override
     // from the player UI. Profile is the single source of truth for voice.
-    mutationFn: () =>
-      generateLessonNarration({ courseId, moduleIndex, lessonIndex, body: {} }),
+    mutationFn: () => generateLessonNarration({ courseId, moduleIndex, lessonIndex, body: {} }),
     onSuccess: ({ jobId }) => {
       setPendingJobId(jobId);
       trackJob({ jobId, courseId, type: 'lesson_narration' });
@@ -184,18 +179,31 @@ export const NarrationPlayer = ({
     el.playbackRate = playbackRate;
   }, [playbackRate]);
 
+  // Sync duration + restore saved position. We can't rely solely on the JSX
+  // onLoadedMetadata or a listener attached in this effect: when the user
+  // navigates away and back, the audio file is HTTP-cached, the element
+  // remounts, and the loadedmetadata event can fire before any listener is
+  // attached. Without this, `duration` stays 0 — the scrub bar's max is 0,
+  // so clicks on the track go nowhere.
   useEffect(() => {
     const el = audioRef.current;
     if (!el || !audioUrl) return;
-    const saved = parseFloat(localStorage.getItem(positionKey) ?? 'NaN');
-    if (Number.isFinite(saved) && saved > 0) {
-      const onMeta = () => {
-        if (saved < (el.duration || 0) - 1) el.currentTime = saved;
-        el.removeEventListener('loadedmetadata', onMeta);
-      };
-      el.addEventListener('loadedmetadata', onMeta);
-      return () => el.removeEventListener('loadedmetadata', onMeta);
+    const apply = () => {
+      if (Number.isFinite(el.duration) && el.duration > 0) {
+        setDuration(el.duration);
+      }
+      const saved = parseFloat(localStorage.getItem(positionKey) ?? 'NaN');
+      if (Number.isFinite(saved) && saved > 0 && saved < (el.duration || 0) - 1) {
+        el.currentTime = saved;
+        setCurrentTime(saved);
+      }
+    };
+    if (el.readyState >= 1) {
+      apply();
+      return;
     }
+    el.addEventListener('loadedmetadata', apply);
+    return () => el.removeEventListener('loadedmetadata', apply);
   }, [audioUrl, positionKey]);
 
   // ── Handlers ────────────────────────────────────────
@@ -259,11 +267,7 @@ export const NarrationPlayer = ({
   // ── Empty state: prompt to generate ────────────────
   if (!audioUrl && !isGenerating) {
     return (
-      <S.EmptyContainer
-        initial={{ opacity: 0, y: 4 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ duration: 0.25 }}
-      >
+      <S.EmptyContainer initial={{ opacity: 0, y: 4 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.25 }}>
         <S.EmptyIcon>
           <Headphones size={16} />
         </S.EmptyIcon>
@@ -271,11 +275,7 @@ export const NarrationPlayer = ({
           <S.EmptyEyebrow>Audio narration</S.EmptyEyebrow>
           <S.EmptyTitle>Listen to this lesson</S.EmptyTitle>
         </S.EmptyBody>
-        <S.PrimaryButton
-          onClick={handleGenerate}
-          disabled={generateMutation.isPending}
-          type="button"
-        >
+        <S.PrimaryButton onClick={handleGenerate} disabled={generateMutation.isPending} type="button">
           {generateMutation.isPending ? 'Starting…' : 'Generate'}
         </S.PrimaryButton>
       </S.EmptyContainer>
@@ -285,18 +285,16 @@ export const NarrationPlayer = ({
   // ── Generating state ────────────────────────────────
   if (isGenerating) {
     return (
-      <S.EmptyContainer
-        initial={{ opacity: 0, y: 4 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ duration: 0.25 }}
-      >
+      <S.EmptyContainer initial={{ opacity: 0, y: 4 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.25 }}>
         <S.EmptyIcon>
           <Volume2 size={16} />
         </S.EmptyIcon>
         <S.EmptyBody>
           <S.EmptyEyebrow>Generating narration</S.EmptyEyebrow>
           <S.GeneratingDots>
-            <span /><span /><span />
+            <span />
+            <span />
+            <span />
           </S.GeneratingDots>
         </S.EmptyBody>
       </S.EmptyContainer>
@@ -313,54 +311,54 @@ export const NarrationPlayer = ({
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.25 }}
         >
-        <audio
-          ref={audioRef}
-          src={audioUrl ?? undefined}
-          preload="metadata"
-          onLoadedMetadata={(e) => setDuration(e.currentTarget.duration)}
-          onTimeUpdate={(e) => {
-            const t = e.currentTarget.currentTime;
-            setCurrentTime(t);
-            const sec = Math.floor(t);
-            if (sec % 5 === 0) localStorage.setItem(positionKey, String(t));
-          }}
-          onPlay={() => setIsPlaying(true)}
-          onPause={() => setIsPlaying(false)}
-          onEnded={() => {
-            setIsPlaying(false);
-            localStorage.removeItem(positionKey);
-          }}
-        />
-        <S.PlayButton
-          onClick={handlePlayPause}
-          aria-label={isPlaying ? 'Pause narration' : 'Play narration'}
-          $playing={isPlaying}
-        >
-          {isPlaying ? <Pause size={14} /> : <Play size={14} />}
-        </S.PlayButton>
-        <S.PlayerBody>
-          <S.PlayerEyebrow>
-            {currentVoiceLabel ? `Narrating · ${currentVoiceLabel}` : 'Narration'}
-          </S.PlayerEyebrow>
-          <S.ScrubRow>
-            <S.Scrub
-              type="range"
-              min={0}
-              max={duration || 0}
-              step={0.5}
-              value={currentTime}
-              onChange={handleScrub}
-              aria-label="Seek narration"
-              $progress={duration > 0 ? (currentTime / duration) * 100 : 0}
-            />
-            <S.Time>
-              {formatTime(currentTime)} <span>/</span> {formatTime(duration)}
-            </S.Time>
-          </S.ScrubRow>
-        </S.PlayerBody>
-        <S.RateButton onClick={handleRateClick} aria-label="Playback speed" type="button">
-          {playbackRate}×
-        </S.RateButton>
+          <audio
+            ref={audioRef}
+            src={audioUrl ?? undefined}
+            preload="metadata"
+            onLoadedMetadata={(e) => setDuration(e.currentTarget.duration)}
+            onTimeUpdate={(e) => {
+              const t = e.currentTarget.currentTime;
+              setCurrentTime(t);
+              const sec = Math.floor(t);
+              if (sec % 5 === 0) localStorage.setItem(positionKey, String(t));
+            }}
+            onPlay={() => setIsPlaying(true)}
+            onPause={() => setIsPlaying(false)}
+            onEnded={() => {
+              setIsPlaying(false);
+              localStorage.removeItem(positionKey);
+            }}
+          />
+          <S.PlayButton
+            onClick={handlePlayPause}
+            aria-label={isPlaying ? 'Pause narration' : 'Play narration'}
+            $playing={isPlaying}
+          >
+            {isPlaying ? <Pause size={14} /> : <Play size={14} />}
+          </S.PlayButton>
+          <S.PlayerBody>
+            <S.PlayerEyebrow>
+              {currentVoiceLabel ? `Narrating · ${currentVoiceLabel}` : 'Narration'}
+            </S.PlayerEyebrow>
+            <S.ScrubRow>
+              <S.Scrub
+                type="range"
+                min={0}
+                max={duration || 0}
+                step={0.5}
+                value={currentTime}
+                onChange={handleScrub}
+                aria-label="Seek narration"
+                $progress={duration > 0 ? (currentTime / duration) * 100 : 0}
+              />
+              <S.Time>
+                {formatTime(currentTime)} <span>/</span> {formatTime(duration)}
+              </S.Time>
+            </S.ScrubRow>
+          </S.PlayerBody>
+          <S.RateButton onClick={handleRateClick} aria-label="Playback speed" type="button">
+            {playbackRate}×
+          </S.RateButton>
           <DropdownMenu
             items={[
               {
@@ -373,14 +371,10 @@ export const NarrationPlayer = ({
         </S.PlayerContainer>
       </AnimatePresence>
       {voiceMismatch && (
-        <S.MismatchBanner
-          initial={{ opacity: 0, y: -4 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.2 }}
-        >
+        <S.MismatchBanner initial={{ opacity: 0, y: -4 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.2 }}>
           <S.MismatchText>
-            You changed your voice to <strong>{userPrefVoiceLabel}</strong>. This lesson is still
-            on {currentVoiceLabel}.
+            You changed your voice to <strong>{userPrefVoiceLabel}</strong>. This lesson is still on {currentVoiceLabel}
+            .
           </S.MismatchText>
           <S.MismatchAction
             onClick={handleApplyNewVoice}

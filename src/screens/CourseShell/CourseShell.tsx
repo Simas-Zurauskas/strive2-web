@@ -9,6 +9,7 @@
  * through a route-group layout rather than a `page.tsx`.
  */
 import { useMutation, useQueryClient } from '@tanstack/react-query';
+import { AnimatePresence } from 'framer-motion';
 import { Menu, MessageCircle } from 'lucide-react';
 import { useParams, useRouter } from 'next/navigation';
 import { useCallback, useEffect, useMemo, useState } from 'react';
@@ -23,6 +24,13 @@ import { QKeys } from '@/types';
 import { CourseContextProvider } from './CourseContext';
 import * as S from './CourseShell.styles';
 import { CourseSidebar, ChatPanel } from './internal';
+import {
+  leftPanelVariants,
+  rightPanelVariants,
+  slotVariants,
+  tabEnterTransition,
+  tabExitTransition,
+} from './panelMotion';
 import type { CourseContextValue } from './CourseContext';
 import type { CourseStatus } from '@/api/types';
 
@@ -30,6 +38,23 @@ const DESKTOP_MQ = `(min-width: ${breakpoints.desktop + 1}px)`;
 
 // Persists across remounts (route param changes remount page components, but layout stays)
 let persistedExpandedModules: Set<number> | null = null;
+
+// Persist panel-open states across page reloads, course switches, and
+// lesson navigation. Plain "true"/"false" strings for forward-compat with
+// other primitive flags we may want to colocate here.
+const CHAT_OPEN_STORAGE_KEY = 'strive.lessonScreen.chatOpen';
+const SIDEBAR_OPEN_STORAGE_KEY = 'strive.lessonScreen.sidebarOpen';
+
+const readStoredBool = (key: string, fallback: boolean): boolean => {
+  if (typeof window === 'undefined') return fallback;
+  try {
+    const v = window.localStorage.getItem(key);
+    if (v === null) return fallback;
+    return v === 'true';
+  } catch {
+    return fallback;
+  }
+};
 
 const useIsDesktop = () => {
   const [isDesktop, setIsDesktop] = useState(() =>
@@ -94,10 +119,14 @@ export const CourseShell = ({ children }: CourseShellProps) => {
   });
 
   // ── UI state ─────────────────────────────────────────
-  const [sidebarOpen, setSidebarOpen] = useState(() =>
-    typeof window !== 'undefined' ? window.matchMedia(DESKTOP_MQ).matches : true,
-  );
-  const [chatOpen, setChatOpen] = useState(false);
+  // Sidebar default: open on desktop, closed on mobile. Persisted choice
+  // overrides the responsive default.
+  const [sidebarOpen, setSidebarOpen] = useState(() => {
+    const isDesktopMount =
+      typeof window !== 'undefined' ? window.matchMedia(DESKTOP_MQ).matches : true;
+    return readStoredBool(SIDEBAR_OPEN_STORAGE_KEY, isDesktopMount);
+  });
+  const [chatOpen, setChatOpen] = useState(() => readStoredBool(CHAT_OPEN_STORAGE_KEY, false));
   const [expandedModules, setExpandedModulesState] = useState<Set<number> | null>(
     () => persistedExpandedModules,
   );
@@ -106,9 +135,39 @@ export const CourseShell = ({ children }: CourseShellProps) => {
     setExpandedModulesState(val);
   }, []);
 
+  // ── Persist panel states to localStorage ─────────────
   useEffect(() => {
-    setSidebarOpen(isDesktop);
-  }, [isDesktop]);
+    try {
+      window.localStorage.setItem(CHAT_OPEN_STORAGE_KEY, String(chatOpen));
+    } catch {
+      // localStorage can throw in private mode / quota exceeded — non-fatal.
+    }
+  }, [chatOpen]);
+
+  useEffect(() => {
+    try {
+      window.localStorage.setItem(SIDEBAR_OPEN_STORAGE_KEY, String(sidebarOpen));
+    } catch {
+      // non-fatal.
+    }
+  }, [sidebarOpen]);
+
+  // ── Keyboard shortcuts ───────────────────────────────
+  // ⌘\ / Ctrl+\           → toggle chat (right panel)
+  // ⌘⇧\ / Ctrl+Shift+\   → toggle sidebar (left panel)
+  useEffect(() => {
+    const onKeyDown = (e: KeyboardEvent) => {
+      if (e.key !== '\\' || (!e.metaKey && !e.ctrlKey) || e.altKey) return;
+      e.preventDefault();
+      if (e.shiftKey) {
+        setSidebarOpen((prev) => !prev);
+      } else {
+        setChatOpen((prev) => !prev);
+      }
+    };
+    window.addEventListener('keydown', onKeyDown);
+    return () => window.removeEventListener('keydown', onKeyDown);
+  }, []);
 
   const modules = useMemo(() => course?.structure?.modules ?? [], [course?.structure?.modules]);
 
@@ -206,8 +265,21 @@ export const CourseShell = ({ children }: CourseShellProps) => {
         {/* Backdrop for mobile overlays */}
         {showBackdrop && <S.Backdrop onClick={closeOverlays} />}
 
-        {/* Left sidebar */}
-        <S.SidebarSlot $open={sidebarOpen}>
+        {/* Left sidebar — mirror of the right chat panel:
+            SidebarSlot is empty grid placeholder animating width.
+            SidebarPanelFixed is the visible panel with bottom-anchored
+            geometry (no twitch). translateX animates open/close. */}
+        <S.SidebarSlot
+          initial={false}
+          variants={slotVariants}
+          animate={sidebarOpen ? 'open' : 'closed'}
+        />
+        <S.SidebarPanelFixed
+          initial={false}
+          variants={leftPanelVariants}
+          animate={sidebarOpen ? 'open' : 'closed'}
+          aria-hidden={!sidebarOpen}
+        >
           <CourseSidebar
             courseBasePath={courseBasePath}
             courseName={course.name}
@@ -223,22 +295,90 @@ export const CourseShell = ({ children }: CourseShellProps) => {
             expandedModules={expandedModules}
             onExpandedChange={setExpandedModules}
           />
-        </S.SidebarSlot>
+        </S.SidebarPanelFixed>
 
         {/* Center content */}
         <S.ContentSlot>{children}</S.ContentSlot>
 
-        {/* Right chat panel */}
-        <S.ChatSlot $open={chatOpen}>
+        {/* Right chat panel.
+            ChatSlot is an empty grid placeholder — it animates width to
+            push lesson content as it opens/closes (so the layout reflows),
+            but renders nothing.
+            ChatPanelFixed is the actual visible panel. position:fixed with
+            top:var(--navbar-offset) and bottom:0 anchors its bottom edge
+            to viewport bottom by CSS — no interpolated math, no wobble for
+            the chat composer. translateX handles open/close and the
+            parallax (panel travels further than the slot collapses, so it
+            "leads" the exit). The left sidebar will mirror this with
+            leftPanelVariants. */}
+        <S.ChatSlot
+          initial={false}
+          variants={slotVariants}
+          animate={chatOpen ? 'open' : 'closed'}
+        />
+        <S.ChatPanelFixed
+          initial={false}
+          variants={rightPanelVariants}
+          animate={chatOpen ? 'open' : 'closed'}
+          aria-hidden={!chatOpen}
+        >
           <ChatPanel contextLabel={chatContextLabel} onClose={() => setChatOpen(false)} />
-        </S.ChatSlot>
+        </S.ChatPanelFixed>
 
-        {/* Desktop floating chat toggle */}
-        {!chatOpen && (
-          <S.ChatToggle onClick={() => setChatOpen(true)} aria-label="Open AI chat">
-            <MessageCircle size={22} />
-          </S.ChatToggle>
-        )}
+        {/* Desktop sidebar edge tab — mirror of the chat tab on the
+            left edge. Travels in -x (leftward) on entry/exit. */}
+        <AnimatePresence initial={false}>
+          {!sidebarOpen && (
+            <S.SidebarEdgeTab
+              key="sidebar-edge-tab"
+              style={{ y: '-50%' }}
+              initial={{ x: -60, opacity: 0 }}
+              animate={{
+                x: 0,
+                opacity: 1,
+                transition: tabEnterTransition,
+              }}
+              exit={{
+                x: -60,
+                opacity: 0,
+                transition: tabExitTransition,
+              }}
+              onClick={() => setSidebarOpen(true)}
+              aria-label="Open lessons panel"
+              title="Lessons (⌘⇧\)"
+            >
+              <S.SidebarEdgeTabLabel>Lessons</S.SidebarEdgeTabLabel>
+            </S.SidebarEdgeTab>
+          )}
+        </AnimatePresence>
+
+        {/* Desktop chat edge tab — same easing language as the panel:
+            ease-in exit when the chat opens, delayed ease-out entry on
+            close so the panel is mostly gone before it returns. */}
+        <AnimatePresence initial={false}>
+          {!chatOpen && (
+            <S.ChatEdgeTab
+              key="chat-edge-tab"
+              style={{ y: '-50%' }}
+              initial={{ x: 60, opacity: 0 }}
+              animate={{
+                x: 0,
+                opacity: 1,
+                transition: tabEnterTransition,
+              }}
+              exit={{
+                x: 60,
+                opacity: 0,
+                transition: tabExitTransition,
+              }}
+              onClick={() => setChatOpen(true)}
+              aria-label="Open AI mentor"
+              title="Mentor (⌘\)"
+            >
+              <S.ChatEdgeTabLabel>Mentor</S.ChatEdgeTabLabel>
+            </S.ChatEdgeTab>
+          )}
+        </AnimatePresence>
 
         <AlertDialog
           open={showDeleteDialog}

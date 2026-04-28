@@ -16,7 +16,8 @@ export const MessageBubble = styled.div<{ $isUser: boolean }>`
   max-width: min(85%, 480px);
   padding: 0.75rem 1rem;
   border-radius: 1.25rem;
-  ${(p) => (p.$isUser ? 'border-top-right-radius: 0.375rem;' : 'border-top-left-radius: 0.375rem;')}
+  ${(p) =>
+    p.$isUser ? 'border-top-right-radius: 0.375rem;' : 'border-top-left-radius: 0.375rem;'}
   font-size: 0.875rem;
   line-height: 1.55;
   background: ${(p) => (p.$isUser ? p.theme.colors.accent : p.theme.colors.surface)};
@@ -44,7 +45,8 @@ export const MessageBubble = styled.div<{ $isUser: boolean }>`
 
   code {
     font-size: 0.8125rem;
-    background: ${(p) => (p.$isUser ? 'rgba(255, 255, 255, 0.15)' : p.theme.colors.background)};
+    background: ${(p) =>
+      p.$isUser ? 'rgba(255, 255, 255, 0.15)' : p.theme.colors.background};
     padding: 0.125rem 0.375rem;
     border-radius: 0.25rem;
   }

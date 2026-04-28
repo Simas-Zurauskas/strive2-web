@@ -3,6 +3,7 @@
 import {
   AlertCircle,
   CheckCircle,
+  ChevronLeft,
   ChevronRight,
   Lock,
   Sparkles,
@@ -56,7 +57,7 @@ export const CourseSidebar = ({
   currentModuleIndex,
   currentLessonIndex,
   onNavigate,
-  onCollapse: _onCollapse,
+  onCollapse,
   progressData,
   generatedLessons,
   activeLesson,
@@ -158,27 +159,36 @@ export const CourseSidebar = ({
   return (
     <S.Container>
       <S.Header>
-        <S.CourseNameLink onClick={() => router.push(courseBasePath)}>{courseName || 'Course'}</S.CourseNameLink>
-        <S.MetaRow>
-          {depthLabel && <Badge variant="gold">{depthLabel}</Badge>}
-          <S.MetaText>
-            {modules.length} {plural({ count: modules.length, singular: 'module' })} &middot; {totalLessons} {plural({ count: totalLessons, singular: 'lesson' })}
-          </S.MetaText>
-        </S.MetaRow>
-        <S.ProgressHeader>
-          <S.ProgressPercent>
-            {totalLessons > 0 ? Math.round((completedCount / totalLessons) * 100) : 0}% Complete
-          </S.ProgressPercent>
-          <S.ProgressBarTrack>
-            <S.ProgressBarFill $percent={totalLessons > 0 ? Math.round((completedCount / totalLessons) * 100) : 0} />
-          </S.ProgressBarTrack>
-        </S.ProgressHeader>
-        {reviewsDueCount > 0 && (
-          <S.ReviewsDueBanner>
-            <S.ReviewDot />
-            {reviewsDueCount} {plural({ count: reviewsDueCount, singular: 'review' })} due
-          </S.ReviewsDueBanner>
-        )}
+        <S.HeaderContent>
+          <S.CourseNameLink onClick={() => router.push(courseBasePath)}>{courseName || 'Course'}</S.CourseNameLink>
+          <S.MetaRow>
+            {depthLabel && <Badge variant="gold">{depthLabel}</Badge>}
+            <S.MetaText>
+              {modules.length} {plural({ count: modules.length, singular: 'module' })} &middot; {totalLessons} {plural({ count: totalLessons, singular: 'lesson' })}
+            </S.MetaText>
+          </S.MetaRow>
+          <S.ProgressHeader>
+            <S.ProgressPercent>
+              {totalLessons > 0 ? Math.round((completedCount / totalLessons) * 100) : 0}% Complete
+            </S.ProgressPercent>
+            <S.ProgressBarTrack>
+              <S.ProgressBarFill $percent={totalLessons > 0 ? Math.round((completedCount / totalLessons) * 100) : 0} />
+            </S.ProgressBarTrack>
+          </S.ProgressHeader>
+          {reviewsDueCount > 0 && (
+            <S.ReviewsDueBanner>
+              <S.ReviewDot />
+              {reviewsDueCount} {plural({ count: reviewsDueCount, singular: 'review' })} due
+            </S.ReviewsDueBanner>
+          )}
+        </S.HeaderContent>
+        <S.CollapseButton
+          onClick={onCollapse}
+          aria-label="Collapse lessons panel"
+          title="Collapse (⌘⇧\)"
+        >
+          <ChevronLeft size={18} />
+        </S.CollapseButton>
       </S.Header>
 
       <S.Tree>

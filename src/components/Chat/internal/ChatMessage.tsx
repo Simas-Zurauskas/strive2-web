@@ -1,22 +1,12 @@
 'use client';
 
-import _ from 'lodash';
 import { memo, useEffect, useRef, useState } from 'react';
-import { Markdown } from '@/components';
+import { Markdown } from '@/components/Markdown';
 import * as S from './ChatMessage.styles';
-
-interface ToolInvocation {
-  toolName: string;
-  state: string;
-}
+import type { ChatMessageData, ToolInvocation } from '../types';
 
 interface ChatMessageProps {
-  message: {
-    id: string;
-    role: string;
-    content: string;
-    toolInvocations?: ToolInvocation[];
-  };
+  message: ChatMessageData;
   isStreaming?: boolean;
 }
 
@@ -56,12 +46,19 @@ const summariseTools = (tools: ToolInvocation[]) => {
 };
 
 /** Reveals text character-by-character at a steady rate for smooth streaming. */
-const useTypewriter = ({ fullText, active, charsPerFrame = 2 }: { fullText: string; active: boolean; charsPerFrame?: number }) => {
+const useTypewriter = ({
+  fullText,
+  active,
+  charsPerFrame = 2,
+}: {
+  fullText: string;
+  active: boolean;
+  charsPerFrame?: number;
+}) => {
   const [displayed, setDisplayed] = useState(fullText);
   const indexRef = useRef(fullText.length);
   const rafRef = useRef(0);
 
-  // When not active, return fullText directly — no effect needed
   useEffect(() => {
     if (active) {
       const tick = () => {
@@ -74,7 +71,6 @@ const useTypewriter = ({ fullText, active, charsPerFrame = 2 }: { fullText: stri
       rafRef.current = requestAnimationFrame(tick);
       return () => cancelAnimationFrame(rafRef.current);
     }
-    // When streaming stops, sync index for next time
     indexRef.current = fullText.length;
   }, [fullText, active, charsPerFrame]);
 
@@ -86,36 +82,38 @@ const MemoizedMarkdown = memo(
   (prev, next) => prev.content === next.content,
 );
 
-export const ChatMessage = memo(({ message, isStreaming = false }: ChatMessageProps) => {
-  const isUser = message.role === 'user';
-  const tools = message.toolInvocations ?? [];
-  const toolSummary = tools.length > 0 ? summariseTools(tools) : [];
-  const displayContent = useTypewriter({ fullText: message.content, active: isStreaming });
+export const ChatMessage = memo(
+  ({ message, isStreaming = false }: ChatMessageProps) => {
+    const isUser = message.role === 'user';
+    const tools = message.toolInvocations ?? [];
+    const toolSummary = tools.length > 0 ? summariseTools(tools) : [];
+    const displayContent = useTypewriter({ fullText: message.content, active: isStreaming });
 
-  const hasContent = isUser ? !!message.content : !!displayContent;
+    const hasContent = isUser ? !!message.content : !!displayContent;
 
-  return (
-    <S.MessageWrapper $isUser={isUser}>
-      {hasContent && (
-        <S.MessageBubble $isUser={isUser}>
-          {isUser ? message.content : <MemoizedMarkdown content={displayContent} />}
-        </S.MessageBubble>
-      )}
-      {toolSummary.length > 0 && (
-        <S.ToolRow>
-          {toolSummary.map((t) => (
-            <S.ToolBadge key={t.toolName} $isActive={t.isActive}>
-              {t.label}
-              {t.isActive && <S.ToolSpinner />}
-            </S.ToolBadge>
-          ))}
-        </S.ToolRow>
-      )}
-    </S.MessageWrapper>
-  );
-}, (prev, next) =>
-  prev.message.id === next.message.id &&
-  prev.message.content === next.message.content &&
-  prev.isStreaming === next.isStreaming &&
-  prev.message.toolInvocations === next.message.toolInvocations,
+    return (
+      <S.MessageWrapper $isUser={isUser}>
+        {hasContent && (
+          <S.MessageBubble $isUser={isUser}>
+            {isUser ? message.content : <MemoizedMarkdown content={displayContent} />}
+          </S.MessageBubble>
+        )}
+        {toolSummary.length > 0 && (
+          <S.ToolRow>
+            {toolSummary.map((t) => (
+              <S.ToolBadge key={t.toolName} $isActive={t.isActive}>
+                {t.label}
+                {t.isActive && <S.ToolSpinner />}
+              </S.ToolBadge>
+            ))}
+          </S.ToolRow>
+        )}
+      </S.MessageWrapper>
+    );
+  },
+  (prev, next) =>
+    prev.message.id === next.message.id &&
+    prev.message.content === next.message.content &&
+    prev.isStreaming === next.isStreaming &&
+    prev.message.toolInvocations === next.message.toolInvocations,
 );
