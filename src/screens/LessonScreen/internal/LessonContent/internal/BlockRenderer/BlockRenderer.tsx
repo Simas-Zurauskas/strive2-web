@@ -14,7 +14,7 @@ import {
   ExerciseSkeleton,
 } from './blocks';
 import { LessonMarkdown } from './LessonMarkdown';
-import * as S from './styles';
+import * as S from './styles/shared.styles';
 import type { ExerciseAttempt, LessonBlock, LessonPlaceholderBlock, QuizResponse } from '@/api/types';
 
 // ── Types ──────────────────────────────────────────────

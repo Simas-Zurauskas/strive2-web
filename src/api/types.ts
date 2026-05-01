@@ -122,6 +122,8 @@ export type UsageHistory = components['schemas']['UsageHistory'];
 export type UsageCostBucket = components['schemas']['UsageCostBucket'];
 export type UsageServiceTotal = components['schemas']['UsageServiceTotal'];
 export type UsageSummary = components['schemas']['UsageSummary'];
+export type UsageSortField = components['schemas']['UsageSortField'];
+export type UsageSortDir = components['schemas']['UsageSortDir'];
 
 // ── Socket.io event payload types ──────────────────────
 //

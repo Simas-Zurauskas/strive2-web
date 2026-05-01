@@ -23,15 +23,14 @@ export const VerifyEmailScreen = () => {
     calledRef.current = true;
 
     const token = searchParams.get('token');
-    const email = searchParams.get('email');
 
-    if (!token || !email) {
+    if (!token) {
       setStatus('error'); // eslint-disable-line react-hooks/set-state-in-effect -- async verification flow
       setMessage('Invalid verification link.');
       return;
     }
 
-    verifyEmail({ token, email })
+    verifyEmail({ token })
       .then(() => {
         setStatus('success');
         setMessage('Your email has been verified.');

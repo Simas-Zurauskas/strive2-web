@@ -322,7 +322,14 @@ export const CourseShell = ({ children }: CourseShellProps) => {
           animate={chatOpen ? 'open' : 'closed'}
           aria-hidden={!chatOpen}
         >
-          <ChatPanel contextLabel={chatContextLabel} onClose={() => setChatOpen(false)} />
+          <ChatPanel
+          key={`${moduleIndex}-${lessonIndex}`}
+          contextLabel={chatContextLabel}
+          courseSlug={courseSlug}
+          moduleIndex={moduleIndex}
+          lessonIndex={lessonIndex}
+          onClose={() => setChatOpen(false)}
+        />
         </S.ChatPanelFixed>
 
         {/* Desktop sidebar edge tab — mirror of the chat tab on the

@@ -1,7 +1,7 @@
 import { Info, Lightbulb, TriangleAlert, OctagonAlert } from 'lucide-react';
 import { useTheme } from 'styled-components';
 import { LessonMarkdown } from '../LessonMarkdown';
-import * as S from '../styles';
+import * as S from '../styles/callout.styles';
 
 const VARIANTS = {
   info: { label: 'Note', icon: Info, colorKey: 'muted' },

@@ -5,8 +5,8 @@ import Link from 'next/link';
 import { usePathname, useRouter } from 'next/navigation';
 import { useTheme } from 'next-themes';
 import { useEffect, useLayoutEffect, useRef, useState } from 'react';
-import { useAuth } from '@/hooks';
 import { CreditPill } from '@/components/CreditPill';
+import { useAuth } from '@/hooks';
 import * as S from './Navbar.styles';
 
 const SCROLL_THRESHOLD = 10;
@@ -63,9 +63,12 @@ const useHideOnScroll = () => {
   const lastScrollY = useRef(typeof window !== 'undefined' ? window.scrollY : 0);
   const pathname = usePathname();
 
-  // Reset navbar visibility on route change
+  // Reset navbar visibility on route change. The setState-in-effect
+  // is intentional — `hidden` is local navbar state, not derivable
+  // from pathname alone (it also changes on scroll), and resetting it
+  // when pathname changes is the desired behavior.
   useEffect(() => {
-    setHidden(false);
+    setHidden(false); // eslint-disable-line react-hooks/set-state-in-effect -- reset on route change is the intent
     lastScrollY.current = 0;
   }, [pathname]);
 

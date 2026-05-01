@@ -33,6 +33,39 @@ const staticDescriptions: Record<CourseDepth, string> = {
 
 const depthKeys: CourseDepth[] = ['overview', 'comprehensive', 'deep_dive'];
 
+/**
+ * Render a `[min, max]` numeric range with a unit, collapsing the range
+ * when both ends are equal and pluralising correctly. Returns null when
+ * the input is missing or malformed — caller skips rendering the scope
+ * line entirely on legacy courses where the backend hasn't backfilled
+ * the field. Defensive: tuples that aren't `[finite, finite]` short-circuit.
+ */
+const formatRange = (range: [number, number] | undefined | null, unit: string): string | null => {
+  if (!Array.isArray(range) || range.length !== 2) return null;
+  const [min, max] = range;
+  if (!Number.isFinite(min) || !Number.isFinite(max)) return null;
+  if (min === max) return `~${min} ${min === 1 ? unit : `${unit}s`}`;
+  return `~${min}–${max} ${unit}s`;
+};
+
+/**
+ * Build the scope line shown under each card label. Combines lesson count
+ * and estimated hours when both are present; falls back to whichever is
+ * available; returns null if neither are. The numbers come from the
+ * backend's `(depth, isSoft)` lesson-count hint table — same source the
+ * gate dialog uses, so cards and dialog stay numerically consistent.
+ */
+const formatCardScope = (preview: {
+  lessonCountRange?: [number, number];
+  estimatedHoursRange?: [number, number];
+} | undefined): string | null => {
+  if (!preview) return null;
+  const lessons = formatRange(preview.lessonCountRange, 'lesson');
+  const hours = formatRange(preview.estimatedHoursRange, 'hour');
+  if (lessons && hours) return `${lessons} · ${hours}`;
+  return lessons ?? hours;
+};
+
 export const DepthStep = ({
   depthPreviews,
   previewsLoading,
@@ -98,11 +131,20 @@ export const DepthStep = ({
           : depthKeys.map((key) => {
               const preview = depthPreviews?.[key];
               const isRecommended = key === recommended;
+              const scope = formatCardScope(
+                preview as
+                  | {
+                      lessonCountRange?: [number, number];
+                      estimatedHoursRange?: [number, number];
+                    }
+                  | undefined,
+              );
               return (
                 <S.DepthCard key={key} $selected={depth === key} onClick={() => setDepth(key)}>
                   <S.CardHeader>
                     <S.CardLabel>{depthLabels[key]}</S.CardLabel>
                     {isRecommended && <Badge variant="gold">Recommended</Badge>}
+                    {scope && <S.CardScope>{scope}</S.CardScope>}
                   </S.CardHeader>
                   <S.CardSummary>{preview?.summary ?? staticDescriptions[key]}</S.CardSummary>
                   {preview?.bullets && (

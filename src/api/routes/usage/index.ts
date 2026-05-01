@@ -1,16 +1,17 @@
 import { paths } from '@/api/_generated';
 import { client } from '@/api/client';
+import type { UsageSortField, UsageSortDir } from '@/api/types';
 
 // ── Usage history ─────────────────────────────────────────
 
 type UsageHistoryResponse =
   paths['/api/usage/history']['get']['responses']['200']['content']['application/json'];
 
+// Route-internal sub-shape, exported so the Usage tab can type its
+// in-memory slice without re-deriving the path here. Not lifted to
+// @/api/types because it's purely a derivative of the path response,
+// not a top-level API contract.
 export type UsageHistoryData = UsageHistoryResponse['data'];
-export type UsageEvent = UsageHistoryData['events'][number];
-
-export type UsageSortField = 'timestamp' | 'costMicroCents' | 'chargedMicroCents' | 'service';
-export type UsageSortDir = 'asc' | 'desc';
 
 export const getUsageHistory = ({
   limit,

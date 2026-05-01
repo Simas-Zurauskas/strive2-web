@@ -15,11 +15,22 @@ const spin = keyframes`
 // fit. Just the internal layout: a scrolling region above, a sticky
 // composer below.
 
-export const Wrapper = styled.div`
+export const Wrapper = styled.div<{ $scrollSettled: boolean }>`
   height: 100%;
   min-height: 0;
   display: grid;
   grid-template-rows: 1fr auto;
+
+  /* Hide visually until use-stick-to-bottom has run its initial
+     scroll-to-bottom, which is scheduled inside requestAnimationFrame
+     (one frame AFTER first paint). Without this, on mount with
+     existing messages the user briefly sees the top of the
+     conversation, then the lib's rAF fires and content jumps to the
+     bottom — that's the visible "blip". \`visibility: hidden\` keeps
+     the element in layout (so the lib can measure heights + scroll),
+     it just isn't painted; flipping to \`visible\` after the second
+     rAF reveals an already-scrolled state. */
+  visibility: ${(p) => (p.$scrollSettled ? 'visible' : 'hidden')};
 `;
 
 // ── Scroll area + messages ────────────────────────────
@@ -29,15 +40,25 @@ export const ScrollArea = styled.div`
   overflow: hidden;
   min-height: 0;
 
-  > div {
+  /* use-stick-to-bottom renders TWO nested divs: an outer wrapper and
+     an inner ref={scrollRef} that the library sets \`overflow: auto\` on
+     at mount. The inner div is the actual scroller, so the scrollbar
+     styling AND \`overscroll-behavior: contain\` must land there — not
+     on the outer wrapper. Without \`contain\`, hitting the chat's top/
+     bottom chains the wheel scroll to the lesson page underneath. */
+  > div > div {
     ${thinScrollbar}
+    overscroll-behavior: contain;
   }
 `;
 
 export const Messages = styled.div`
   display: flex;
   flex-direction: column;
-  gap: 0.75rem;
+  /* 1.25rem — assistant messages no longer have a bubble's visual
+     padding to lean on, so the inter-message gap has to do the work
+     of separating an AI reply from the next user bubble. */
+  gap: 1.25rem;
   padding: 1rem;
 `;
 
@@ -223,4 +244,114 @@ export const ErrorText = styled.p`
   font-size: 0.75rem;
   color: ${(p) => p.theme.colors.error};
   animation: ${fadeIn} 0.3s ease-out;
+`;
+
+// ── Attachment composer additions ─────────────────────
+
+export const AttachButton = styled.button`
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 36px;
+  height: 36px;
+  min-width: 36px;
+  min-height: 36px;
+  border: 1px solid ${(p) => p.theme.colors.border};
+  border-radius: 50%;
+  background: ${(p) => p.theme.colors.background};
+  color: ${(p) => p.theme.colors.muted};
+  cursor: pointer;
+  padding: 0;
+  transition:
+    border-color 0.15s ease,
+    color 0.15s ease,
+    background 0.15s ease;
+
+  &:hover:not(:disabled) {
+    border-color: ${(p) => p.theme.colors.muted};
+    color: ${(p) => p.theme.colors.foreground};
+  }
+
+  &:disabled {
+    opacity: 0.4;
+    cursor: not-allowed;
+  }
+`;
+
+export const AttachmentChip = styled.div`
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.375rem 0.625rem;
+  border: 1px solid ${(p) => p.theme.colors.surfaceBorder};
+  border-radius: 8px;
+  background: ${(p) => p.theme.colors.background};
+  font-size: 0.75rem;
+  color: ${(p) => p.theme.colors.muted};
+  animation: ${fadeIn} 0.2s ease-out;
+  align-self: flex-start;
+  max-width: 100%;
+  min-width: 0;
+`;
+
+export const AttachmentChipLabel = styled.span`
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  min-width: 0;
+  flex: 1;
+`;
+
+export const AttachmentChipClose = styled.button`
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 16px;
+  height: 16px;
+  border: none;
+  background: transparent;
+  color: ${(p) => p.theme.colors.muted};
+  cursor: pointer;
+  padding: 0;
+  border-radius: 4px;
+
+  &:hover {
+    color: ${(p) => p.theme.colors.foreground};
+    background: ${(p) => p.theme.colors.surface};
+  }
+`;
+
+export const AttachLoading = styled.span`
+  display: inline-flex;
+  animation: ${spin} 0.8s linear infinite;
+`;
+
+export const StopButton = styled.button`
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 36px;
+  height: 36px;
+  min-width: 36px;
+  min-height: 36px;
+  border: none;
+  border-radius: 50%;
+  background: ${(p) => p.theme.colors.foreground};
+  color: ${(p) => p.theme.colors.background};
+  cursor: pointer;
+  padding: 0;
+  transition:
+    background 0.2s ease,
+    transform 0.15s ease;
+
+  &:hover:not(:disabled) {
+    transform: scale(1.05);
+  }
+
+  &:active:not(:disabled) {
+    transform: scale(0.95);
+  }
 `;

@@ -1,4 +1,4 @@
-import * as S from '../styles';
+import * as S from '../styles/links.styles';
 
 export const LinksBlock = ({ metadata }: { metadata: Record<string, unknown> | null }) => {
   const links = (metadata?.links as Array<{ title: string; url: string; description: string }>) ?? [];

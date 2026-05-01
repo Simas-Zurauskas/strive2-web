@@ -11,7 +11,7 @@ import {
   useUsageHistory,
   useUsageSummary,
 } from '@/hooks/useUsage';
-import type { UsageSortDir, UsageSortField } from '@/api/routes/usage';
+import type { UsageSortDir, UsageSortField } from '@/api/types';
 import { QKeys } from '@/types';
 import { UsageHistoryList } from '../UsageTab/internal/UsageHistoryList/UsageHistoryList';
 import { UsageSummaryCards } from '../UsageTab/internal/UsageSummaryCards/UsageSummaryCards';

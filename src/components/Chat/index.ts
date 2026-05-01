@@ -1,3 +1,3 @@
 export { Chat } from './Chat';
-export type { ChatProps } from './Chat';
-export type { ChatMessageData, ToolInvocation } from './types';
+export type { AttachmentChipData, ChatProps } from './Chat';
+export type { ChatMessageAttachment, ChatMessageData, ToolInvocation } from './types';

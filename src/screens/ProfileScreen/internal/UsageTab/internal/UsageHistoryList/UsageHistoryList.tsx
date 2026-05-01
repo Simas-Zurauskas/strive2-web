@@ -3,8 +3,8 @@ import Skeleton from 'react-loading-skeleton';
 import { Button } from '@/components';
 import { formatMicroCents } from '@/lib/formatCost';
 import * as S from './UsageHistoryList.styles';
-import type { UsageHistoryData, UsageEvent } from '@/api/routes/usage';
-import type { UsageSortDir, UsageSortField } from '@/api/routes/usage';
+import type { UsageHistoryData } from '@/api/routes/usage';
+import type { UsageEvent, UsageSortDir, UsageSortField } from '@/api/types';
 
 interface Props {
   data?: UsageHistoryData;

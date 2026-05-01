@@ -6,7 +6,8 @@ import { useEffect, useRef, useState } from 'react';
 import { executeCode } from '@/api/routes/course';
 import { Button } from '@/components';
 import { LessonMarkdown } from '../LessonMarkdown';
-import * as S from '../styles';
+import { parseExerciseMetadata } from './blockMetadata';
+import * as S from '../styles/exercise.styles';
 
 export const ExerciseBlock = ({
   blockId,
@@ -19,9 +20,7 @@ export const ExerciseBlock = ({
   metadata: Record<string, unknown> | null;
   onAttempt?: (attempt: { blockId: string; code: string; passed: boolean }) => void;
 }) => {
-  const language = (metadata?.language as string) ?? '';
-  const starterCode = (metadata?.starterCode as string) ?? '';
-  const expectedOutput = (metadata?.expectedOutput as string) ?? '';
+  const { language, starterCode, expectedOutput = '' } = parseExerciseMetadata(metadata);
   const hasEditor = !!language && !!starterCode;
   const { resolvedTheme } = useTheme();
 

@@ -27,6 +27,21 @@ export interface DepthOverridePayload {
   estimatedHoursRange?: [number, number];
   softnessCues?: string[];
   finishPressureCues?: string[];
+  /**
+   * Optional. LLM-emitted overcommit-risk level (the gate's primary cost
+   * signal on courses generated after this field was added). The dialog
+   * doesn't surface the level directly — it's used in conjunction with
+   * `overcommitRationale` for the explanatory copy. Absent on legacy
+   * courses where the gate fired on phrase-regex cost signals alone.
+   */
+  overcommitRisk?: 'low' | 'moderate' | 'high';
+  /**
+   * Optional. One-sentence rationale from the LLM. When present, the
+   * dialog shows this verbatim INSTEAD of the phrase-cue bullets — the
+   * model's holistic reasoning is more informative than the matched
+   * allowlist phrases. Falls back to bullets when absent.
+   */
+  overcommitRationale?: string;
 }
 
 interface DepthOverrideDialogProps {
@@ -76,15 +91,22 @@ export const DepthOverrideDialog = ({
           This selection may produce a larger course than your answers suggest.
         </S.Magnitude>
       )}
-      {cues.length > 0 && (
-        <>
-          <S.CuesIntro>Your answers suggest:</S.CuesIntro>
-          <S.CuesList>
-            {cues.map((cue, i) => (
-              <li key={i}>{cue}</li>
-            ))}
-          </S.CuesList>
-        </>
+      {payload?.overcommitRationale ? (
+        // Prefer the LLM rationale when present — one explanatory sentence
+        // grounded in the learner's actual answers reads better than a
+        // bulleted list of allowlist-matched phrases.
+        <S.CuesIntro>Why we&rsquo;re asking: {payload.overcommitRationale}</S.CuesIntro>
+      ) : (
+        cues.length > 0 && (
+          <>
+            <S.CuesIntro>Your answers suggest:</S.CuesIntro>
+            <S.CuesList>
+              {cues.map((cue, i) => (
+                <li key={i}>{cue}</li>
+              ))}
+            </S.CuesList>
+          </>
+        )
       )}
       <S.Question>Continue with this depth?</S.Question>
     </>

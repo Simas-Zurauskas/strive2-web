@@ -4,7 +4,7 @@ import { useTheme } from 'next-themes';
 import { useState, useEffect } from 'react';
 import { Prism as SyntaxHighlighter } from 'react-syntax-highlighter';
 import { oneLight, oneDark } from 'react-syntax-highlighter/dist/cjs/styles/prism';
-import * as S from '../styles';
+import * as S from '../styles/code.styles';
 
 export const CodeBlock = ({ content, metadata }: { content: string; metadata: Record<string, unknown> | null }) => {
   const [copied, setCopied] = useState(false);

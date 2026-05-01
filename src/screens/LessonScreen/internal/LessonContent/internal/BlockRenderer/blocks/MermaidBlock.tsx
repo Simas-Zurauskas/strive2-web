@@ -5,7 +5,12 @@ import { useTheme } from 'next-themes';
 import { useEffect, useRef, useState } from 'react';
 import { getMermaidThemeVars } from './mermaidTheme';
 import { useMermaidZoomPan } from './useMermaidZoomPan';
-import * as S from '../styles';
+// MermaidBlock falls back to a code-block render path when mermaid
+// rendering fails or isn't applicable; pull those four code-styled
+// elements as named imports so the primary `S` namespace stays the
+// mermaid-specific surface.
+import { CodeContainer, CodeHeader, CodeLanguage, CodePre } from '../styles/code.styles';
+import * as S from '../styles/mermaid.styles';
 
 const cleanMermaidContent = (raw: string): string => {
   let cleaned = raw.trim();
@@ -154,13 +159,13 @@ export const MermaidBlock = ({ content }: { content: string }) => {
 
   if (renderState === 'error') {
     return (
-      <S.CodeContainer>
-        <S.CodeHeader>
-          <S.CodeLanguage>diagram (render failed)</S.CodeLanguage>
-        </S.CodeHeader>
-        <S.CodePre>
+      <CodeContainer>
+        <CodeHeader>
+          <CodeLanguage>diagram (render failed)</CodeLanguage>
+        </CodeHeader>
+        <CodePre>
           <code>{cleaned}</code>
-        </S.CodePre>
+        </CodePre>
         {errorMsg && (
           <div
             style={{
@@ -173,7 +178,7 @@ export const MermaidBlock = ({ content }: { content: string }) => {
             {errorMsg}
           </div>
         )}
-      </S.CodeContainer>
+      </CodeContainer>
     );
   }
 
