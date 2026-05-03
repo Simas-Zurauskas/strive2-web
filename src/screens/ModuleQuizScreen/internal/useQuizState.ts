@@ -31,6 +31,16 @@ export const useQuizState = ({ courseSlug, moduleIndex }: { courseSlug: string; 
 
   const isGeneratingRef = useRef(false);
 
+  // The trackJob registration outlives this hook because JobManager is
+  // a global singleton — the `onComplete` callback can fire after the
+  // user navigates away from the quiz screen. Use a mounted-ref guard
+  // to skip setState calls in that window. (The ref-only writes are
+  // safe to keep — they don't trigger renders.)
+  const isMountedRef = useRef(true);
+  useEffect(() => () => {
+    isMountedRef.current = false;
+  }, []);
+
   const questions: ModuleQuizQuestion[] = quizContent?.questions ?? [];
   const totalQuestions = questions.length;
   const question = questions[currentQuestion];
@@ -58,6 +68,7 @@ export const useQuizState = ({ courseSlug, moduleIndex }: { courseSlug: string; 
               onComplete: async () => {
                 await refetchQuiz();
                 isGeneratingRef.current = false;
+                if (!isMountedRef.current) return;
                 setIsGenerating(false);
                 setQuizStarted(true);
               },
@@ -97,12 +108,14 @@ export const useQuizState = ({ courseSlug, moduleIndex }: { courseSlug: string; 
         onComplete: async () => {
           await refetchQuiz();
           isGeneratingRef.current = false;
+          if (!isMountedRef.current) return;
           setIsGenerating(false);
           setQuizStarted(true);
         },
       });
     } catch {
       isGeneratingRef.current = false;
+      if (!isMountedRef.current) return;
       setIsGenerating(false);
     }
   }, [courseSlug, moduleIndex, generateQuiz, refetchQuiz, trackJob]);

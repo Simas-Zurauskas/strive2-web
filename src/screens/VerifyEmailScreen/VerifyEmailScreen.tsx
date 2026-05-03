@@ -6,6 +6,9 @@ import { useSession } from 'next-auth/react';
 import { useEffect, useRef, useState } from 'react';
 import { verifyEmail } from '@/api/routes/auth';
 import { AuthForm, AuthFormFooter, AuthFormTitle, AuthSubmitBtn } from '@/components';
+import { safeRedirect } from '@/lib/safeRedirect';
+
+const REDIRECT_STORAGE_KEY = 'pendingPostAuthRedirect';
 
 type Status = 'verifying' | 'success' | 'error' | 'expired' | 'already-verified';
 
@@ -23,15 +26,14 @@ export const VerifyEmailScreen = () => {
     calledRef.current = true;
 
     const token = searchParams.get('token');
-    const email = searchParams.get('email');
 
-    if (!token || !email) {
+    if (!token) {
       setStatus('error'); // eslint-disable-line react-hooks/set-state-in-effect -- async verification flow
       setMessage('Invalid verification link.');
       return;
     }
 
-    verifyEmail({ token, email })
+    verifyEmail({ token })
       .then(() => {
         setStatus('success');
         setMessage('Your email has been verified.');
@@ -52,11 +54,28 @@ export const VerifyEmailScreen = () => {
       });
   }, [searchParams]);
 
+  // Pop the stashed redirect from the original /signup or /login entry point
+  // (set by SignUpScreen before navigating to /signup/check-email). We always
+  // clear it after reading so a stale value can't redirect a future flow.
+  const popPendingRedirect = (): string | null => {
+    if (typeof window === 'undefined') return null;
+    const stored = sessionStorage.getItem(REDIRECT_STORAGE_KEY);
+    sessionStorage.removeItem(REDIRECT_STORAGE_KEY);
+    if (!stored) return null;
+    const safe = safeRedirect(stored, '/');
+    return safe === '/' ? null : safe;
+  };
+
   const handleContinue = () => {
+    const stashed = popPendingRedirect();
     if (isAuthenticated) {
-      router.push('/');
+      router.push(stashed ?? '/');
     } else {
-      router.push('/login');
+      // Forward the redirect into the login screen so it survives one more hop.
+      const target = stashed
+        ? `/login?redirect=${encodeURIComponent(stashed)}`
+        : '/login';
+      router.push(target);
     }
   };
 

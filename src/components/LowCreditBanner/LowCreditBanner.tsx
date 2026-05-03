@@ -3,8 +3,8 @@
 import { useEffect, useState } from 'react';
 import { ROUTES } from '@/constants/routes';
 import { useBillingSummary } from '@/hooks/useBilling';
-import type { PlanKey } from '@/api/types';
 import * as S from './LowCreditBanner.styles';
+import type { PlanKey } from '@/api/types';
 
 const daysUntil = (date: string | Date | null | undefined): number => {
   if (!date) return 0;
@@ -33,9 +33,11 @@ export const LowCreditBanner = () => {
   // Reset dismiss when the balance changes — a new period grant (0 → full)
   // should NOT stay dismissed forever; nor should a top-up that lifts the
   // user out of the warning zone. Effect keys off total so any movement
-  // re-evaluates.
+  // re-evaluates. The setState-in-effect is intentional: the parent
+  // doesn't know the dismissal lives here, so we can't lift it out, and
+  // a `key`-based remount would require parent coupling we don't want.
   useEffect(() => {
-    setDismissed(false);
+    setDismissed(false); // eslint-disable-line react-hooks/set-state-in-effect -- reset on balance change is the intent
   }, [summary?.credits.total]);
 
   if (!summary) return null;
@@ -53,7 +55,7 @@ export const LowCreditBanner = () => {
     return (
       <S.BannerEl $tone="danger" role="alert">
         <S.Message>
-          <strong>You're out of allowance.</strong>{resetText}
+          <strong>You&rsquo;re out of allowance.</strong>{resetText}
         </S.Message>
         <S.ActionLink href={upgradeTarget}>{upgradeLabel} →</S.ActionLink>
       </S.BannerEl>

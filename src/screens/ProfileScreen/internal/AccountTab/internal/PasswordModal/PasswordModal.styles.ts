@@ -75,3 +75,62 @@ export const Actions = styled.div`
   gap: 0.75rem;
   margin-top: 0.5rem;
 `;
+
+export const ResendRow = styled.div`
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.75rem;
+  margin-top: -0.25rem;
+`;
+
+// Dedicated OTP input. We don't reuse <Input/> because the wrapping component
+// has caused subtle autofill leaks (password manager pasting the just-typed
+// password into a generic text field). Here we get full control of every
+// hint the browser uses to decide what to autofill: type=text + numeric
+// inputMode + autoComplete="one-time-code" + the 1Password / LastPass /
+// Bitwarden ignore attributes.
+export const CodeField = styled.input`
+  padding: 0.875rem 1rem;
+  border: 1px solid ${(p) => p.theme.colors.border};
+  border-radius: 8px;
+  background: ${(p) => p.theme.colors.background};
+  color: ${(p) => p.theme.colors.foreground};
+  font-family: 'SF Mono', Menlo, monospace;
+  font-size: 1.125rem;
+  letter-spacing: 0.4em;
+  text-align: center;
+  outline: none;
+  transition: border-color 0.15s;
+
+  &:focus {
+    border-color: ${(p) => p.theme.colors.accent};
+    box-shadow: 0 0 0 3px ${(p) => p.theme.colorsLib.primary}10;
+  }
+
+  &::placeholder {
+    opacity: 0.4;
+    letter-spacing: normal;
+  }
+`;
+
+export const ResendButton = styled.button`
+  background: none;
+  border: none;
+  padding: 0;
+  font-size: 0.8125rem;
+  color: ${(p) => p.theme.colors.muted};
+  cursor: pointer;
+  text-decoration: underline;
+  text-underline-offset: 3px;
+
+  &:disabled {
+    cursor: default;
+    opacity: 0.5;
+    text-decoration: none;
+  }
+
+  &:hover:not(:disabled) {
+    color: ${(p) => p.theme.colors.foreground};
+  }
+`;

@@ -686,9 +686,8 @@ export interface paths {
             requestBody: {
                 content: {
                     "application/json": {
+                        /** @description The verification token from the user's email link. Hashed server-side and looked up directly against `User.emailVerificationToken`. No `email` field is required — the hash is the sole identifier. */
                         token: string;
-                        /** Format: email */
-                        email: string;
                     };
                 };
             };
@@ -1175,6 +1174,112 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/course/{courseId}/mentor/chat": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Stream a chat message for the course-scoped mentor (compass) */
+        post: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path: {
+                    courseId: string;
+                };
+                cookie?: never;
+            };
+            requestBody: {
+                content: {
+                    "application/json": {
+                        messages: components["schemas"]["ChatMessage"][];
+                    };
+                };
+            };
+            responses: {
+                /** @description SSE stream of chat response */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content?: never;
+                };
+            };
+        };
+        /** Delete the course-mentor (compass) chat session for a learner */
+        delete: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path: {
+                    courseId: string;
+                };
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": {
+                            data: components["schemas"]["OkResponse"];
+                        };
+                    };
+                };
+            };
+        };
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/course/{courseId}/lesson/{moduleIndex}/{lessonIndex}/mentor/chat": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post?: never;
+        /** Delete the lesson-mentor chat session for a learner */
+        delete: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path: {
+                    courseId: string;
+                    moduleIndex: number;
+                    lessonIndex: number;
+                };
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": {
+                            data: components["schemas"]["OkResponse"];
+                        };
+                    };
+                };
+            };
+        };
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/course": {
         parameters: {
             query?: never;
@@ -1319,6 +1424,8 @@ export interface paths {
                         answers?: Record<string, never>;
                         depth?: components["schemas"]["CourseDepth"];
                         status?: components["schemas"]["CourseStatus"];
+                        /** @description User-selected goalType from the ClarifyStep chip. Marks the choice as user-confirmed and causes the next clarify job to skip the auto-classifier. */
+                        goalType?: components["schemas"]["GoalType"];
                         /** @description Transport-only flag. Set to true on retry after a 409 DEPTH_OVERRIDE_REQUIRES_ACK response to confirm the learner has seen the course-magnitude modal and chooses to proceed with the selected depth. Never persisted. */
                         depthOverrideAcknowledged?: boolean;
                     };
@@ -1360,6 +1467,13 @@ export interface paths {
                             estimatedHoursRange?: number[];
                             softnessCues?: string[];
                             finishPressureCues?: string[];
+                            /**
+                             * @description Optional. The LLM-emitted overcommit-risk level read from the course's depth-previews. Present when the gate fires on a course generated after this field was added; absent on legacy courses where the gate triggered on phrase-regex cost signals alone.
+                             * @enum {string}
+                             */
+                            overcommitRisk?: "low" | "moderate" | "high";
+                            /** @description Optional. One-sentence rationale for `overcommitRisk`, surfaced in the dialog so the learner can see the model's reasoning rather than only allowlist-matched phrases. Absent when `overcommitRisk` is absent. */
+                            overcommitRationale?: string;
                         };
                     };
                 };
@@ -1801,6 +1915,45 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/course/{courseId}/mentor/chat/history": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Fetch the course-mentor (compass) chat session for a learner */
+        get: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path: {
+                    courseId: string;
+                };
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": {
+                            data: components["schemas"]["CourseMentorHistoryResponse"];
+                        };
+                    };
+                };
+            };
+        };
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/course/{courseId}/progress": {
         parameters: {
             query?: never;
@@ -1999,6 +2152,47 @@ export interface paths {
                     content: {
                         "application/json": {
                             data: components["schemas"]["JobStatus"];
+                        };
+                    };
+                };
+            };
+        };
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/course/{courseId}/lesson/{moduleIndex}/{lessonIndex}/mentor/chat/history": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Fetch the lesson-mentor chat session for a learner */
+        get: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path: {
+                    courseId: string;
+                    moduleIndex: number;
+                    lessonIndex: number;
+                };
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": {
+                            data: components["schemas"]["LessonChatHistoryResponse"];
                         };
                     };
                 };
@@ -2329,6 +2523,57 @@ export interface paths {
         };
         put?: never;
         post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/course/{courseId}/lesson/{moduleIndex}/{lessonIndex}/mentor/attachment": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Upload a file to the lesson-mentor chat session
+         * @description Multipart upload (field name `file`). Server extracts text, dedupes by sha256 against the session, enforces session caps (5 files / 120K tokens), and persists on the LessonMentorChat doc. The response carries metadata only — never the extracted text.
+         */
+        post: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path: {
+                    courseId: string;
+                    moduleIndex: number;
+                    lessonIndex: number;
+                };
+                cookie?: never;
+            };
+            requestBody: {
+                content: {
+                    "multipart/form-data": {
+                        /** Format: binary */
+                        file: string;
+                    };
+                };
+            };
+            responses: {
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": {
+                            data: components["schemas"]["MentorAttachmentResponse"];
+                        };
+                    };
+                };
+            };
+        };
         delete?: never;
         options?: never;
         head?: never;
@@ -3045,8 +3290,8 @@ export interface paths {
                 query?: {
                     limit?: number;
                     offset?: number;
-                    sortBy?: "timestamp" | "costMicroCents" | "chargedMicroCents" | "service";
-                    sortDir?: "asc" | "desc";
+                    sortBy?: components["schemas"]["UsageSortField"];
+                    sortDir?: components["schemas"]["UsageSortDir"];
                 };
                 header?: never;
                 path?: never;
@@ -3126,7 +3371,11 @@ export interface components {
         /** @enum {string} */
         CourseStatus: "creating" | "ready" | "archived";
         /** @enum {string} */
-        CourseDomain: "programming" | "stem" | "humanities" | "language" | "creative" | "business" | "practical" | "life-skills" | "other";
+        CourseDomain: "programming" | "stem" | "humanities" | "language" | "creative" | "business" | "practical" | "practical-ai" | "life-skills" | "other";
+        /** @enum {string} */
+        GoalType: "master" | "monetize" | "pass" | "build" | "fluency";
+        /** @enum {string} */
+        GoalTypeConfidence: "high" | "medium" | "low";
         /** @enum {string} */
         JobStatusEnum: "pending" | "processing" | "completed" | "failed";
         /** @enum {string} */
@@ -3140,7 +3389,7 @@ export interface components {
         /** @enum {string} */
         ReviewReason: "time" | "progression";
         /** @enum {string} */
-        UsageService: "anthropic" | "bfl" | "tavily" | "jina" | "judge0" | "tts";
+        UsageService: "anthropic" | "openai" | "pinecone" | "bfl" | "tavily" | "jina" | "judge0" | "tts";
         ApiError: {
             message: string;
             errorCode?: components["schemas"]["ErrorCode"];
@@ -3257,6 +3506,8 @@ export interface components {
         ClarifyResponse: {
             courseName: string;
             questions: components["schemas"]["ClarifyQuestion"][];
+            /** @description Chip label noun phrase produced by the goalType classifier (e.g. 'your YouTube channel', 'the CPA exam'). The verb (e.g. 'monetize', 'pass') is a static client-side map keyed off course.goalType. */
+            goalTypeNoun?: string;
         };
         CourseAnswer: {
             questionId: string;
@@ -3285,6 +3536,10 @@ export interface components {
         DepthPreview: {
             summary: string;
             bullets: string[];
+            /** @description Optional. [min, max] estimated total lesson count for this tier, derived from the (depth, isSoft) lesson-count hints. Computed server-side at depth-previews generation time, or backfilled at read time on legacy courses. Absent on courses persisted before this field was added. */
+            lessonCountRange?: number[];
+            /** @description Optional. [min, max] estimated total learner-facing hours for this tier. Derived from lessonCountRange × ~25 minutes per lesson, rounded up, with a floor of 1 hour. Absent on legacy courses. */
+            estimatedHoursRange?: number[];
         };
         DepthPreviewsResponse: {
             overview: components["schemas"]["DepthPreview"];
@@ -3292,6 +3547,13 @@ export interface components {
             deep_dive: components["schemas"]["DepthPreview"];
             recommended: components["schemas"]["CourseDepth"];
             recommendationReason: string;
+            /**
+             * @description Optional. LLM-emitted holistic judgment of how likely the learner is to over-commit if they pick a depth above `recommended`. Drives the depth-override gate as the primary cost signal — `high` triggers a confirmation dialog when combined with an expansion signal. Absent on courses persisted before this field was added; the gate falls back to phrase-regex softness/finish-pressure detection in that case.
+             * @enum {string}
+             */
+            overcommitRisk?: "low" | "moderate" | "high";
+            /** @description Optional. One-sentence rationale for `overcommitRisk`, referencing specific answer content (e.g. "Mentioned 'just want to learn the basics'"). Surfaced verbatim in the 409 confirmation dialog and gate-fire logs. Absent when `overcommitRisk` is absent. */
+            overcommitRationale?: string;
         };
         JobStatus: {
             status: components["schemas"]["JobStatusEnum"];
@@ -3704,6 +3966,8 @@ export interface components {
             status: components["schemas"]["CourseStatus"];
             goal: string;
             domain?: components["schemas"]["CourseDomain"] | null;
+            goalType?: components["schemas"]["GoalType"] | null;
+            goalTypeConfidence?: components["schemas"]["GoalTypeConfidence"] | null;
             clarifyData?: components["schemas"]["ClarifyResponse"];
             answers?: Record<string, never>;
             depth?: components["schemas"]["CourseDepth"];
@@ -3841,6 +4105,63 @@ export interface components {
             thisMonth: components["schemas"]["UsageCostBucket"];
             allTime: components["schemas"]["UsageCostBucket"];
             byService: components["schemas"]["UsageServiceTotal"][];
+        };
+        OkResponse: {
+            ok: boolean;
+        };
+        /** @enum {string} */
+        UsageSortField: "timestamp" | "costMicroCents" | "chargedMicroCents" | "service";
+        /** @enum {string} */
+        UsageSortDir: "asc" | "desc";
+        LessonChatHistoryAttachmentRef: {
+            attachmentId: string;
+        };
+        LessonChatHistoryMessage: {
+            role: string;
+            content: string;
+            /** Format: date-time */
+            createdAt?: string;
+            attachments?: components["schemas"]["LessonChatHistoryAttachmentRef"][];
+        };
+        LessonChatAttachmentMeta: {
+            id: string;
+            filename: string;
+            /** @enum {string} */
+            kind: "pdf" | "text";
+            approxTokens: number;
+        };
+        LessonChatHistoryResponse: {
+            messages: components["schemas"]["LessonChatHistoryMessage"][];
+            /** @description Lookup by attachment id. The full extracted text is server-only — only metadata reaches the client. */
+            attachmentsById: {
+                [key: string]: components["schemas"]["LessonChatAttachmentMeta"];
+            };
+            suggestedPrompts: string[];
+            /** @description True once the lesson content has been generated and persisted. */
+            lessonGenerated: boolean;
+        };
+        CourseMentorHistoryMessage: {
+            role: string;
+            content: string;
+            /** Format: date-time */
+            createdAt?: string;
+        };
+        CourseMentorHistoryResponse: {
+            messages: components["schemas"]["CourseMentorHistoryMessage"][];
+            suggestedPrompts: string[];
+            /** @description True once the course structure exists and is in 'ready' status. Drives the panel's empty state. */
+            courseGenerated: boolean;
+            /** @description True if at least one lesson in the course has had its content generated. */
+            hasAnyLessonContent: boolean;
+        };
+        MentorAttachmentResponse: {
+            id: string;
+            filename: string;
+            /** @enum {string} */
+            kind: "pdf" | "text";
+            approxTokens: number;
+            /** @description True when this exact file (sha256 match) was already on the session. */
+            dedupedFromExisting: boolean;
         };
     };
     responses: never;

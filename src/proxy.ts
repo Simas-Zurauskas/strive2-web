@@ -4,11 +4,19 @@ import { NEXTAUTH_SECRET } from '@/conf/env.server';
 
 const PUBLIC_ROUTES = ['/login', '/signup'];
 const OPEN_ROUTES = ['/verify-email', '/signup/check-email', '/forgot-password', '/reset-password']; // accessible regardless of auth state
+// Path prefixes that are open (auth-state-agnostic). The help center is
+// indexable for SEO and serves as a pre-signup conversion surface, so the
+// whole /help/* tree must render without redirecting unauthenticated visitors.
+const OPEN_PATH_PREFIXES = ['/help'];
 
 export async function proxy(request: NextRequest) {
   const { pathname } = request.nextUrl;
 
   if (OPEN_ROUTES.includes(pathname)) {
+    return NextResponse.next();
+  }
+
+  if (OPEN_PATH_PREFIXES.some((prefix) => pathname === prefix || pathname.startsWith(`${prefix}/`))) {
     return NextResponse.next();
   }
 

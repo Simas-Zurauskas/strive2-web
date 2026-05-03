@@ -1,14 +1,14 @@
 'use client';
 
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
+import { useSession } from 'next-auth/react';
 import {
   deleteAllUsageEvents,
   getUsageHistory,
   getUsageSummary,
-  type UsageSortDir,
-  type UsageSortField,
 } from '@/api/routes/usage';
 import { QKeys } from '@/types';
+import type { UsageSortDir, UsageSortField } from '@/api/types';
 
 export const useUsageHistory = ({
   limit,
@@ -20,17 +20,23 @@ export const useUsageHistory = ({
   offset: number;
   sortBy?: UsageSortField;
   sortDir?: UsageSortDir;
-}) =>
-  useQuery({
+}) => {
+  const { status } = useSession();
+  return useQuery({
     queryKey: [QKeys.USAGE_HISTORY, limit, offset, sortBy, sortDir],
     queryFn: () => getUsageHistory({ limit, offset, sortBy, sortDir }),
+    enabled: status === 'authenticated',
   });
+};
 
-export const useUsageSummary = () =>
-  useQuery({
+export const useUsageSummary = () => {
+  const { status } = useSession();
+  return useQuery({
     queryKey: [QKeys.USAGE_SUMMARY],
     queryFn: getUsageSummary,
+    enabled: status === 'authenticated',
   });
+};
 
 // Dev-only mutation — the endpoint 404s in non-dev environments, and the
 // UI that exposes this button is guarded by `DEV_MODE`.

@@ -1,5 +1,6 @@
 import { paths } from '@/api/_generated';
 import { client } from '@/api/client';
+import { NEXT_PUBLIC_API_URL } from '@/conf/env';
 
 // ── Course CRUD ─────────────────────────────────────────
 
@@ -226,6 +227,56 @@ export const getChatHistory = (courseId: string) => {
     url: `/course/${courseId}/chat/history`,
     method: 'GET',
   }).then((res) => res.data.data);
+};
+
+// ── Mentor chat (lesson-scoped tutor) ──────────────────
+
+type LessonChatHistoryResponse =
+  paths['/api/course/{courseId}/lesson/{moduleIndex}/{lessonIndex}/mentor/chat/history']['get']['responses']['200']['content']['application/json'];
+
+interface LessonChatLocation {
+  courseId: string;
+  moduleIndex: number;
+  lessonIndex: number;
+}
+
+export const getLessonChatHistory = ({ courseId, moduleIndex, lessonIndex }: LessonChatLocation) => {
+  return client<LessonChatHistoryResponse>({
+    url: `/course/${courseId}/lesson/${moduleIndex}/${lessonIndex}/mentor/chat/history`,
+    method: 'GET',
+  }).then((res) => res.data.data);
+};
+
+export const lessonMentorChatUrl = ({ courseId, moduleIndex, lessonIndex }: LessonChatLocation) =>
+  `${NEXT_PUBLIC_API_URL}/api/course/${courseId}/lesson/${moduleIndex}/${lessonIndex}/mentor/chat`;
+
+export const clearLessonChat = ({ courseId, moduleIndex, lessonIndex }: LessonChatLocation) => {
+  return client({
+    url: `/course/${courseId}/lesson/${moduleIndex}/${lessonIndex}/mentor/chat`,
+    method: 'DELETE',
+  });
+};
+
+// ── Mentor chat (course-scoped compass) ────────────────
+
+type CourseMentorHistoryResponse =
+  paths['/api/course/{courseId}/mentor/chat/history']['get']['responses']['200']['content']['application/json'];
+
+export const getCourseMentorHistory = (courseId: string) => {
+  return client<CourseMentorHistoryResponse>({
+    url: `/course/${courseId}/mentor/chat/history`,
+    method: 'GET',
+  }).then((res) => res.data.data);
+};
+
+export const courseMentorChatUrl = (courseId: string) =>
+  `${NEXT_PUBLIC_API_URL}/api/course/${courseId}/mentor/chat`;
+
+export const clearCourseMentor = (courseId: string) => {
+  return client({
+    url: `/course/${courseId}/mentor/chat`,
+    method: 'DELETE',
+  });
 };
 
 // ── Job polling ─────────────────────────────────────────

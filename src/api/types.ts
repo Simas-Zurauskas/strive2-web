@@ -8,6 +8,8 @@ export type QuestionType = components['schemas']['QuestionType'];
 export type CourseDepth = components['schemas']['CourseDepth'];
 export type CourseStatus = components['schemas']['CourseStatus'];
 export type CourseDomain = components['schemas']['CourseDomain'];
+export type GoalType = components['schemas']['GoalType'];
+export type GoalTypeConfidence = components['schemas']['GoalTypeConfidence'];
 export type JobStatusEnum = components['schemas']['JobStatusEnum'];
 export type JobType = components['schemas']['JobType'];
 export type LessonProgressStatus = components['schemas']['LessonProgressStatus'];
@@ -122,6 +124,8 @@ export type UsageHistory = components['schemas']['UsageHistory'];
 export type UsageCostBucket = components['schemas']['UsageCostBucket'];
 export type UsageServiceTotal = components['schemas']['UsageServiceTotal'];
 export type UsageSummary = components['schemas']['UsageSummary'];
+export type UsageSortField = components['schemas']['UsageSortField'];
+export type UsageSortDir = components['schemas']['UsageSortDir'];
 
 // ── Socket.io event payload types ──────────────────────
 //

@@ -5,6 +5,7 @@ export {
   resetPasswordSchema,
   setPasswordSchema,
   changePasswordSchema,
+  securityActionCodeSchema,
 } from './auth';
 export type {
   SignInValues,
@@ -13,6 +14,7 @@ export type {
   ResetPasswordValues,
   SetPasswordValues,
   ChangePasswordValues,
+  SecurityActionCodeValues,
 } from './auth';
 
 export { generateCourseSchema, goalInputSchema } from './course';

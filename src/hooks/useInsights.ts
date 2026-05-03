@@ -1,6 +1,7 @@
 'use client';
 
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
+import { useSession } from 'next-auth/react';
 import {
   getInsightQueue,
   getInsightStats,
@@ -26,27 +27,36 @@ import type { InsightMode, InsightRating } from '@/api/types';
  */
 export const useInsightQueue = ({
   currentCourseId,
-}: { currentCourseId?: string } = {}) =>
-  useQuery({
+}: { currentCourseId?: string } = {}) => {
+  const { status } = useSession();
+  return useQuery({
     queryKey: [QKeys.INSIGHT_QUEUE, currentCourseId ?? null],
     queryFn: () => getInsightQueue({ currentCourseId }),
+    enabled: status === 'authenticated',
     staleTime: 0,
     refetchOnWindowFocus: true,
   });
+};
 
-export const useInsightStats = () =>
-  useQuery({
+export const useInsightStats = () => {
+  const { status } = useSession();
+  return useQuery({
     queryKey: [QKeys.INSIGHT_STATS],
     queryFn: getInsightStats,
+    enabled: status === 'authenticated',
   });
+};
 
-export const useInsightsDueCount = () =>
-  useQuery({
+export const useInsightsDueCount = () => {
+  const { status } = useSession();
+  return useQuery({
     queryKey: [QKeys.INSIGHT_DUE_COUNT],
     queryFn: getInsightsDueCount,
+    enabled: status === 'authenticated',
     // Dashboard widget — don't hammer it.
     staleTime: 30_000,
   });
+};
 
 // ── Mutations ────────────────────────────────────────────
 

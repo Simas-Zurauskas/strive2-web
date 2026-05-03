@@ -1,5 +1,5 @@
 import { LessonMarkdown } from '../LessonMarkdown';
-import * as S from '../styles';
+import * as S from '../styles/summary.styles';
 
 export const SummaryBlock = ({ content }: { content: string }) => {
   const items = content

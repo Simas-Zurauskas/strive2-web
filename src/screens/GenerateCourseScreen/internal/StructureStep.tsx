@@ -6,17 +6,36 @@ import { Card, Button, Badge, Eyebrow } from '@/components';
 import { useJobManager } from '@/hooks/useJobManager';
 import { plural } from '@/lib/strings';
 import { ChatPanel } from './ChatPanel';
+import { DepthContextChip } from './DepthContextChip';
 import * as S from './StructureStep.styles';
 
 interface StructureStepProps {
   courseId: string;
   modules: CourseModule[];
+  /** Depth the learner picked at Step 3. Optional for legacy/in-flight cases. */
+  selectedDepth?: string | null;
+  /** Depth the recommender suggested. Absent on legacy courses (pre-depthPreviews). */
+  recommendedDepth?: string | null;
+  /** LLM-emitted overcommit risk; drives the chip's amber-strong variant. */
+  overcommitRisk?: 'low' | 'moderate' | 'high';
+  /** LLM-emitted undercommit risk; same role as overcommitRisk for the down-pick case. */
+  undercommitRisk?: 'low' | 'moderate' | 'high';
   onStructureModified: () => void;
   onAccept: () => void;
   onBack: () => void;
 }
 
-export const StructureStep = ({ courseId, modules, onStructureModified, onAccept, onBack }: StructureStepProps) => {
+export const StructureStep = ({
+  courseId,
+  modules,
+  selectedDepth,
+  recommendedDepth,
+  overcommitRisk,
+  undercommitRisk,
+  onStructureModified,
+  onAccept,
+  onBack,
+}: StructureStepProps) => {
   const totalLessons = useMemo(() => modules.reduce((sum, m) => sum + m.lessons.length, 0), [modules]);
   const [isModifying, setIsModifying] = useState(false);
   const { isJobRunningForCourse } = useJobManager();
@@ -42,6 +61,13 @@ export const StructureStep = ({ courseId, modules, onStructureModified, onAccept
 
       <S.TwoColumn>
         <S.StructureColumn>
+          <DepthContextChip
+            courseId={courseId}
+            selectedDepth={selectedDepth}
+            recommendedDepth={recommendedDepth}
+            overcommitRisk={overcommitRisk}
+            undercommitRisk={undercommitRisk}
+          />
           <S.ModulesWrapper>
             {showOverlay && (
               <S.ModifyingOverlay>

@@ -4,9 +4,9 @@ import { toast } from 'sonner';
 import { TOASTS } from '@/constants/toasts';
 import { useJobManager } from '@/hooks/useJobManager';
 import { QKeys } from '@/types';
-import type { useWizardMutations } from './useWizardMutations';
 import type { useDepthOverrideDialog } from './useDepthOverrideDialog';
-import type { Course, CourseDepth, ClientApiError, DepthPreviewsResponse } from '@/api/types';
+import type { useWizardMutations } from './useWizardMutations';
+import type { Course, CourseDepth, ClientApiError, DepthPreviewsResponse, GoalType } from '@/api/types';
 import type { DepthOverridePayload } from '@/components/DepthOverrideDialog';
 
 type Step = 1 | 2 | 3 | 4;
@@ -31,15 +31,24 @@ interface UseWizardHandlersParams {
 }
 
 /**
- * Parse a ClientApiError body to decide whether it's the depth-override
- * 409 from the backend gate. Returns the typed payload or null. Accepts
- * both `code` and `errorCode` field shapes (see Registry.tsx comment).
+ * Parse a ClientApiError body to decide whether it's a depth-gate 409 from
+ * the backend. The bidirectional gate emits one of two codes:
+ *   - DEPTH_OVERRIDE_REQUIRES_ACK    — overcommit (selected too big)
+ *   - DEPTH_UNDERCOMMIT_REQUIRES_ACK — undercommit (selected too small)
+ * Returns the typed discriminated payload or null. Accepts both `code` and
+ * `errorCode` field shapes (see Registry.tsx comment).
  */
+const DEPTH_GATE_CODES = [
+  'DEPTH_OVERRIDE_REQUIRES_ACK',
+  'DEPTH_UNDERCOMMIT_REQUIRES_ACK',
+] as const;
+
 const parseDepthOverrideError = (err: unknown): DepthOverridePayload | null => {
   const apiError = err as ClientApiError & { code?: string; [k: string]: unknown };
   if (apiError?.status !== 409) return null;
   const codeField = apiError.code ?? apiError.errorCode;
-  if (codeField !== 'DEPTH_OVERRIDE_REQUIRES_ACK') return null;
+  if (typeof codeField !== 'string') return null;
+  if (!(DEPTH_GATE_CODES as readonly string[]).includes(codeField)) return null;
   return apiError as unknown as DepthOverridePayload;
 };
 
@@ -159,6 +168,86 @@ export const useWizardHandlers = ({
       executeGoalSubmit(goalValue);
     },
     [course, clarifyData, depthPreviews, structureData, executeGoalSubmit, confirmOverwrite, setStep],
+  );
+
+  // ── Goal type ─────────────────────────────────────────
+  //
+  // Triggered by the chip on the ClarifyStep header. Cascade mirrors the
+  // goal-overwrite flow: PATCH /course/{id} with the new goalType (the
+  // backend marks confidence='high' so the next clarify job uses the
+  // user-picked value instead of re-classifying), then re-submit a
+  // clarify job to regenerate questions tilted to the new goalType.
+  // Downstream (depthPreviews / structure / answers) is cleared by the
+  // clarify job itself — same cascade as a goal-text change.
+
+  const executeGoalTypeSwitch = useCallback(
+    (newGoalType: GoalType) => {
+      if (!courseId) return;
+      setAnswers({} as Record<string, string | string[]>);
+      setDepth(null);
+
+      queryClient.setQueryData<Course>([QKeys.COURSE, courseId], (old) =>
+        old
+          ? {
+              ...old,
+              goalType: newGoalType,
+              clarifyData: undefined,
+              depthPreviews: undefined,
+              structure: undefined,
+              depth: undefined,
+              answers: undefined,
+            }
+          : old,
+      );
+
+      updateCourseMutation.mutate(
+        { id: courseId, data: { goalType: newGoalType } },
+        {
+          onSuccess: () => {
+            clarifyMutation.mutate(courseId, {
+              onSuccess: (clarifyResult) => {
+                trackJob({
+                  jobId: clarifyResult.jobId,
+                  courseId,
+                  type: 'clarify',
+                });
+              },
+            });
+          },
+        },
+      );
+    },
+    [
+      courseId,
+      queryClient,
+      updateCourseMutation,
+      clarifyMutation,
+      trackJob,
+      setAnswers,
+      setDepth,
+    ],
+  );
+
+  const handleGoalTypeSwitch = useCallback(
+    (newGoalType: GoalType) => {
+      if (!course) return;
+      if (newGoalType === course.goalType) return;
+
+      // Always confirm — the cascade clears the user's existing answers
+      // even when no depth/structure exists yet, since the clarify
+      // questions themselves regenerate.
+      const hasStructureDownstream = !!(depthPreviews || structureData);
+      const message = hasStructureDownstream
+        ? 'Switching will regenerate the clarifying questions and clear your depth options and course structure. Continue?'
+        : 'Switching will regenerate the clarifying questions and clear your current answers. Continue?';
+
+      confirmOverwrite({
+        title: 'Switch course type?',
+        message,
+        action: () => executeGoalTypeSwitch(newGoalType),
+      });
+    },
+    [course, depthPreviews, structureData, executeGoalTypeSwitch, confirmOverwrite],
   );
 
   // ── Clarify ───────────────────────────────────────────
@@ -356,6 +445,7 @@ export const useWizardHandlers = ({
     isJobRunning,
     handleDirtyChange,
     handleGoalSubmit,
+    handleGoalTypeSwitch,
     handleClarifySubmit,
     handleDepthConfirm,
     handleStructureModified,

@@ -4,21 +4,14 @@ import type { QuizMasteryTier } from '@/api/types';
 import type { QuizIconVariant } from '@/types';
 
 export const Container = styled.nav`
-  width: 420px;
-  height: calc(100dvh - var(--navbar-offset, 56px));
-  position: sticky;
-  top: var(--navbar-offset, 56px);
+  width: 100%;
+  height: 100%;
   display: flex;
   flex-direction: column;
   background: ${(p) => p.theme.colors.surface};
   border-right: 1px solid ${(p) => p.theme.colors.surfaceBorder};
-  transition:
-    top 0.3s ease,
-    height 0.3s ease;
 
   ${(p) => p.theme.media.desktop} {
-    position: static;
-    height: 100%;
     border-right: none;
   }
 `;
@@ -27,11 +20,48 @@ export const Container = styled.nav`
 
 export const Header = styled.div`
   display: flex;
-  flex-direction: column;
-  gap: 0.75rem;
+  flex-direction: row;
+  align-items: flex-start;
+  gap: 0.5rem;
   padding: 1.25rem 1.25rem;
   border-bottom: 1px solid ${(p) => p.theme.colors.surfaceBorder};
   flex-shrink: 0;
+`;
+
+export const HeaderContent = styled.div`
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+  flex: 1;
+  min-width: 0;
+`;
+
+export const CollapseButton = styled.button`
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 28px;
+  height: 28px;
+  border-radius: 6px;
+  border: none;
+  background: transparent;
+  color: ${(p) => p.theme.colors.muted};
+  cursor: pointer;
+  flex-shrink: 0;
+  margin-top: -2px;
+  transition:
+    background 0.15s,
+    color 0.15s;
+
+  &:hover {
+    background: ${(p) => p.theme.colors.background};
+    color: ${(p) => p.theme.colors.foreground};
+  }
+
+  &:focus-visible {
+    outline: 2px solid ${(p) => p.theme.colors.accent};
+    outline-offset: 2px;
+  }
 `;
 
 export const CourseName = styled.span`

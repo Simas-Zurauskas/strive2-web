@@ -19,3 +19,11 @@ if (!_apiUrl) {
 export const NEXT_PUBLIC_API_URL = _apiUrl;
 
 export const DEV_MODE = process.env.NEXT_PUBLIC_DEV_MODE === 'true';
+
+/**
+ * Absolute origin used for canonical URLs, sitemap entries, and OpenGraph
+ * metadata. Defaults to `http://localhost:3000` in dev; set
+ * `NEXT_PUBLIC_SITE_URL` (no trailing slash) in production.
+ */
+export const NEXT_PUBLIC_SITE_URL =
+  process.env.NEXT_PUBLIC_SITE_URL?.replace(/\/$/, '') ?? 'http://localhost:3000';

@@ -5,6 +5,26 @@ import GoogleProvider from 'next-auth/providers/google';
 import { NEXT_PUBLIC_API_URL } from '@/conf/env';
 import { GOOGLE_CLIENT_ID, GOOGLE_CLIENT_SECRET, NEXTAUTH_SECRET } from '@/conf/env.server';
 
+// Decode a JWT's payload without verifying its signature. Used only to
+// peek at `exp` for sliding-refresh decisions — never to authenticate.
+// Returns null on any parse failure so the caller treats it as "unknown,
+// don't refresh yet" rather than crashing.
+const peekJwtExp = (token: string): number | null => {
+  try {
+    const parts = token.split('.');
+    if (parts.length !== 3) return null;
+    const payload = JSON.parse(Buffer.from(parts[1], 'base64').toString('utf-8'));
+    return typeof payload?.exp === 'number' ? payload.exp : null;
+  } catch {
+    return null;
+  }
+};
+
+// Sliding-refresh threshold. JWTs are issued for 7 days server-side; we
+// refresh when they're within 24 hours of expiring. This gives us room
+// to absorb a brief network outage without forcing the user to re-login.
+const REFRESH_BEFORE_EXPIRY_SECONDS = 24 * 60 * 60;
+
 export const authOptions: NextAuthOptions = {
   providers: [
     GoogleProvider({
@@ -45,7 +65,16 @@ export const authOptions: NextAuthOptions = {
     }),
   ],
   callbacks: {
-    async jwt({ token, user, account }) {
+    async jwt({ token, user, account, trigger, session }) {
+      // Client-driven session.update({ token }) — used after a password
+      // change/set so the caller swaps in the fresh JWT minted under the
+      // new tokenVersion without dropping the session. Runs first so the
+      // refresh and login branches below can't clobber the new value.
+      if (trigger === 'update' && typeof session?.token === 'string' && session.token) {
+        token.token = session.token;
+        return token;
+      }
+
       // Credentials flow: token comes from the authorize return
       if (user) {
         token.token = user.token;
@@ -61,6 +90,35 @@ export const authOptions: NextAuthOptions = {
         } catch (error) {
           console.error('Failed to authenticate with Google:', error);
           token.error = 'GoogleAuthFailed';
+        }
+      }
+
+      // Sliding-refresh: when the access JWT is within 24h of expiring,
+      // swap in a fresh one via /api/auth/refresh. The endpoint re-checks
+      // tokenVersion against the DB so a revoked token (post-logout,
+      // post-password-change) refuses to refresh and the next request
+      // forces a re-login. Triggered by NextAuth on every session.update()
+      // and on every server-side getServerSession (and on session reads).
+      const accessToken = typeof token.token === 'string' ? token.token : null;
+      if (accessToken && !user && !account) {
+        const exp = peekJwtExp(accessToken);
+        const nowSec = Math.floor(Date.now() / 1000);
+        if (exp !== null && exp - nowSec < REFRESH_BEFORE_EXPIRY_SECONDS && exp - nowSec > 0) {
+          try {
+            const response = await axios.post<{ data: { token: string } }>(
+              `${NEXT_PUBLIC_API_URL}/api/auth/refresh`,
+              {},
+              { headers: { Authorization: `Bearer ${accessToken}` } },
+            );
+            token.token = response.data.data.token;
+          } catch (error) {
+            // Refresh failed (token revoked, user deleted, network blip).
+            // Clear the token so the next session read shows the user as
+            // signed-out; useAuth will route them to /login.
+            console.error('Refresh failed:', axios.isAxiosError(error) ? error.response?.data : error);
+            token.token = '';
+            token.error = 'RefreshFailed';
+          }
         }
       }
 

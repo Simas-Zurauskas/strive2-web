@@ -1,19 +1,43 @@
 'use client';
 
 import { useEffect, useMemo, useState } from 'react';
-import { ClarifyQuestion } from '@/api/types';
+import { ClarifyQuestion, GoalType } from '@/api/types';
 import { RadioGroup, CheckboxGroup, Textarea, Button, Card, Eyebrow } from '@/components';
 import * as S from './ClarifyStep.styles';
 
 type AnswerValue = string | string[];
 
+// Verb labels per goalType. Kept here on the client (not on the server) so
+// copy edits don't require a backend deploy. The classifier returns the
+// goal-specific NOUN; the verb is a fixed map per goalType.
+const GOAL_TYPE_VERBS: Record<GoalType, string> = {
+  master: 'deeply learn',
+  monetize: 'monetize',
+  pass: 'pass',
+  build: 'build',
+  fluency: 'become fluent in',
+};
+
+const GOAL_TYPE_LABELS: Record<GoalType, string> = {
+  master: 'Master',
+  monetize: 'Monetize',
+  pass: 'Pass',
+  build: 'Build',
+  fluency: 'Fluency',
+};
+
+const GOAL_TYPE_OPTIONS: GoalType[] = ['master', 'monetize', 'pass', 'build', 'fluency'];
+
 interface ClarifyStepProps {
   questions: ClarifyQuestion[];
   initialAnswers: Record<string, AnswerValue>;
   hasExistingData: boolean;
+  goalType: GoalType | null;
+  goalTypeNoun?: string;
   onSubmit: (answers: Record<string, AnswerValue>) => void;
   onBack: () => void;
   onDirtyChange?: (isDirty: boolean) => void;
+  onGoalTypeChange?: (next: GoalType) => void;
 }
 
 const isAnswered = (value: AnswerValue | undefined): boolean => {
@@ -26,9 +50,12 @@ export const ClarifyStep = ({
   questions,
   initialAnswers,
   hasExistingData,
+  goalType,
+  goalTypeNoun,
   onSubmit,
   onBack,
   onDirtyChange,
+  onGoalTypeChange,
 }: ClarifyStepProps) => {
   const [answers, setAnswers] = useState<Record<string, AnswerValue>>(initialAnswers);
   const [currentIndex, setCurrentIndex] = useState(0);
@@ -106,9 +133,34 @@ export const ClarifyStep = ({
     }
   };
 
+  // Active goalType — null on pre-feature courses falls through to `master`
+  // for label rendering; the chip row stays interactive so the user can
+  // still pick.
+  const effectiveGoalType: GoalType = goalType ?? 'master';
+  const verb = GOAL_TYPE_VERBS[effectiveGoalType];
+  const noun = goalTypeNoun?.trim() || 'this topic';
+
   return (
     <S.Container>
       <S.Header>
+        <S.GoalTypeBlock>
+          <S.GoalTypeLabel>
+            Designed as a course to <strong>{verb}</strong> <strong>{noun}</strong>.
+          </S.GoalTypeLabel>
+          <S.GoalTypeChips>
+            {GOAL_TYPE_OPTIONS.map((t) => (
+              <S.GoalTypeChip
+                key={t}
+                type="button"
+                $active={t === effectiveGoalType}
+                disabled={!onGoalTypeChange || t === effectiveGoalType}
+                onClick={() => onGoalTypeChange?.(t)}
+              >
+                {GOAL_TYPE_LABELS[t]}
+              </S.GoalTypeChip>
+            ))}
+          </S.GoalTypeChips>
+        </S.GoalTypeBlock>
         <Eyebrow>Questions</Eyebrow>
         <S.Title>A few questions to personalize your course</S.Title>
         <S.Subtitle>Your answers shape the topics, focus areas, and difficulty of your curriculum.</S.Subtitle>

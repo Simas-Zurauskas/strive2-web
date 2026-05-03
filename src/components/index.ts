@@ -26,11 +26,15 @@ export { AlertDialog } from './AlertDialog';
 export { AppToaster } from './AppToaster';
 export { Stepper } from './Stepper';
 export { TextLoader } from './TextLoader';
+export { Accordion, AccordionItem } from './Accordion';
+export { KbChatPanel } from './KbChatPanel';
 
 // Data Display
 export { Badge } from './Badge';
 export { Card } from './Card';
 export { Markdown } from './Markdown';
+export { Chat } from './Chat';
+export type { ChatProps, ChatMessageData, ToolInvocation } from './Chat';
 
 // Navigation
 export { Navbar } from './Navbar';

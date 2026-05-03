@@ -4,9 +4,9 @@ import { User } from 'lucide-react';
 import Link from 'next/link';
 import { usePathname, useRouter } from 'next/navigation';
 import { useTheme } from 'next-themes';
-import { useCallback, useEffect, useLayoutEffect, useRef, useState } from 'react';
-import { useAuth } from '@/hooks';
+import { useEffect, useLayoutEffect, useRef, useState } from 'react';
 import { CreditPill } from '@/components/CreditPill';
+import { useAuth } from '@/hooks';
 import * as S from './Navbar.styles';
 
 const SCROLL_THRESHOLD = 10;
@@ -63,37 +63,42 @@ const useHideOnScroll = () => {
   const lastScrollY = useRef(typeof window !== 'undefined' ? window.scrollY : 0);
   const pathname = usePathname();
 
-  // Reset navbar visibility on route change
+  // Reset navbar visibility on route change. The setState-in-effect
+  // is intentional — `hidden` is local navbar state, not derivable
+  // from pathname alone (it also changes on scroll), and resetting it
+  // when pathname changes is the desired behavior.
   useEffect(() => {
-    setHidden(false);
+    setHidden(false); // eslint-disable-line react-hooks/set-state-in-effect -- reset on route change is the intent
     lastScrollY.current = 0;
   }, [pathname]);
 
-  const onScroll = useCallback(() => {
-    const y = window.scrollY;
-
-    // Always show when near the top
-    if (y < 56) {
-      setHidden(false);
-      lastScrollY.current = y;
-      return;
-    }
-
-    const delta = y - lastScrollY.current;
-
-    if (delta > SCROLL_THRESHOLD) {
-      setHidden(true);
-      lastScrollY.current = y;
-    } else if (delta < -SCROLL_THRESHOLD) {
-      setHidden(false);
-      lastScrollY.current = y;
-    }
-  }, []);
-
+  // rAF-throttle the scroll handler. Without this, fast scrolls (especially
+  // momentum/trackpad scrolls hitting the top) can flip --navbar-offset
+  // multiple times before the chat panel's 300ms top/height transition has
+  // a chance to play out, restarting it mid-flight. That manifests as
+  // sub-pixel jitter at the bottom edge of any sticky element that depends
+  // on --navbar-offset (most visibly the chat composer).
   useEffect(() => {
+    let ticking = false;
+    const onScroll = () => {
+      if (ticking) return;
+      ticking = true;
+      requestAnimationFrame(() => {
+        const y = window.scrollY;
+        if (y < 56) {
+          setHidden(false);
+        } else {
+          const delta = y - lastScrollY.current;
+          if (delta > SCROLL_THRESHOLD) setHidden(true);
+          else if (delta < -SCROLL_THRESHOLD) setHidden(false);
+        }
+        lastScrollY.current = y;
+        ticking = false;
+      });
+    };
     window.addEventListener('scroll', onScroll, { passive: true });
     return () => window.removeEventListener('scroll', onScroll);
-  }, [onScroll]);
+  }, []);
 
   useIsomorphicLayoutEffect(() => {
     document.documentElement.style.setProperty('--navbar-offset', hidden ? '0px' : '56px');
@@ -162,7 +167,7 @@ export const Navbar = () => {
             <MoonIcon />
           </S.ThemeOption>
         </S.ThemeSwitch>
-        <S.ThemeToggle onClick={() => router.push('/faq')} title="FAQ">
+        <S.ThemeToggle onClick={() => router.push('/help')} title="Help">
           <QuestionIcon />
         </S.ThemeToggle>
         <S.ThemeToggle onClick={() => router.push('/profile')} title={user?.email ?? 'Profile'}>

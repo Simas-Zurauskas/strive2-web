@@ -1,6 +1,6 @@
 import { BookPlus } from 'lucide-react';
 import Skeleton from 'react-loading-skeleton';
-import * as S from '../styles';
+import * as S from '../styles/links.styles';
 
 export const LinksEmptyPlaceholder = ({
   onGenerate,

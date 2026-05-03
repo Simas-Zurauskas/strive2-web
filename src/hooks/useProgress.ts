@@ -1,6 +1,7 @@
 'use client';
 
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
+import { useSession } from 'next-auth/react';
 import {
   getCourseProgress,
   getContinueLearning,
@@ -21,31 +22,41 @@ import {
 import { TOASTS } from '@/constants/toasts';
 import { QKeys } from '@/types';
 
-export const useCourseProgress = (courseId: string | null) =>
-  useQuery({
+export const useCourseProgress = (courseId: string | null) => {
+  const { status } = useSession();
+  return useQuery({
     queryKey: [QKeys.COURSE_PROGRESS, courseId],
     queryFn: () => getCourseProgress(courseId!),
-    enabled: !!courseId,
+    enabled: !!courseId && status === 'authenticated',
   });
+};
 
-export const useContinueLearning = () =>
-  useQuery({
+export const useContinueLearning = () => {
+  const { status } = useSession();
+  return useQuery({
     queryKey: [QKeys.CONTINUE_LEARNING],
     queryFn: getContinueLearning,
+    enabled: status === 'authenticated',
   });
+};
 
-export const useGeneratedLessons = (courseId: string | null) =>
-  useQuery({
+export const useGeneratedLessons = (courseId: string | null) => {
+  const { status } = useSession();
+  return useQuery({
     queryKey: [QKeys.GENERATED_LESSONS, courseId],
     queryFn: () => getGeneratedLessons(courseId!),
-    enabled: !!courseId,
+    enabled: !!courseId && status === 'authenticated',
   });
+};
 
-export const useProgressSummary = () =>
-  useQuery({
+export const useProgressSummary = () => {
+  const { status } = useSession();
+  return useQuery({
     queryKey: [QKeys.PROGRESS_SUMMARY],
     queryFn: getProgressSummary,
+    enabled: status === 'authenticated',
   });
+};
 
 export const useUpsertProgress = () => {
   const queryClient = useQueryClient();
@@ -78,19 +89,23 @@ export const useUpsertProgress = () => {
 
 // ── Module quiz hooks ──────────────────────────────────
 
-export const useModuleQuizContent = ({ courseId, moduleIndex }: { courseId: string | null; moduleIndex: number | null }) =>
-  useQuery({
+export const useModuleQuizContent = ({ courseId, moduleIndex }: { courseId: string | null; moduleIndex: number | null }) => {
+  const { status } = useSession();
+  return useQuery({
     queryKey: [QKeys.MODULE_QUIZ_CONTENT, courseId, moduleIndex],
     queryFn: () => getModuleQuizContent({ courseId: courseId!, moduleIndex: moduleIndex! }),
-    enabled: !!courseId && moduleIndex !== null,
+    enabled: !!courseId && moduleIndex !== null && status === 'authenticated',
   });
+};
 
-export const useModuleQuizProgress = ({ courseId, moduleIndex }: { courseId: string | null; moduleIndex: number | null }) =>
-  useQuery({
+export const useModuleQuizProgress = ({ courseId, moduleIndex }: { courseId: string | null; moduleIndex: number | null }) => {
+  const { status } = useSession();
+  return useQuery({
     queryKey: [QKeys.MODULE_QUIZ_PROGRESS, courseId, moduleIndex],
     queryFn: () => getModuleQuizProgress({ courseId: courseId!, moduleIndex: moduleIndex! }),
-    enabled: !!courseId && moduleIndex !== null,
+    enabled: !!courseId && moduleIndex !== null && status === 'authenticated',
   });
+};
 
 export const useGenerateModuleQuiz = () => {
   const queryClient = useQueryClient();
@@ -161,32 +176,44 @@ export const useResetModuleQuiz = () => {
 
 // ── Reviews due ──────────────────────────────────────────
 
-export const useReviewsDue = () =>
-  useQuery({
+export const useReviewsDue = () => {
+  const { status } = useSession();
+  return useQuery({
     queryKey: [QKeys.REVIEWS_DUE],
     queryFn: getReviewsDue,
+    enabled: status === 'authenticated',
   });
+};
 
 // ── Unattempted quiz count ───────────────────────────────
 
-export const useUnattemptedQuizzes = () =>
-  useQuery({
+export const useUnattemptedQuizzes = () => {
+  const { status } = useSession();
+  return useQuery({
     queryKey: [QKeys.UNATTEMPTED_QUIZ_COUNT],
     queryFn: getUnattemptedQuizzes,
+    enabled: status === 'authenticated',
   });
+};
 
 // ── Bookmarked lessons ────────────────────────────────
 
-export const useBookmarkedLessons = () =>
-  useQuery({
+export const useBookmarkedLessons = () => {
+  const { status } = useSession();
+  return useQuery({
     queryKey: [QKeys.BOOKMARKED_LESSONS],
     queryFn: getBookmarkedLessons,
+    enabled: status === 'authenticated',
   });
+};
 
 // ── Recent activity ─────────────────────────────────
 
-export const useRecentActivity = () =>
-  useQuery({
+export const useRecentActivity = () => {
+  const { status } = useSession();
+  return useQuery({
     queryKey: [QKeys.RECENT_ACTIVITY],
     queryFn: getRecentActivity,
+    enabled: status === 'authenticated',
   });
+};

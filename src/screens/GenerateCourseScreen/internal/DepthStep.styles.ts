@@ -115,6 +115,18 @@ export const CardLabel = styled.span`
   letter-spacing: -0.01em;
 `;
 
+export const CardScope = styled.span`
+  font-size: 0.8125rem;
+  color: ${(p) => p.theme.colors.muted};
+  font-variant-numeric: tabular-nums;
+  letter-spacing: 0.005em;
+  white-space: nowrap;
+  /* Pushes scope to the right edge of the header row regardless of
+     whether the Recommended badge is present, so cards align vertically
+     across all three tiers. */
+  margin-left: auto;
+`;
+
 export const CardSummary = styled.p`
   font-size: 1rem;
   color: ${(p) => p.theme.colors.muted};

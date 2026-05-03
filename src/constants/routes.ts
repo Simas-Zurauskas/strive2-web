@@ -17,6 +17,11 @@ export const ROUTES = {
   billing: () => '/profile?tab=billing',
   profile: () => '/profile',
 
+  // Global insights (Leitner) review queue — not course-scoped. Linked
+  // from the navbar AND from mentor hand-offs (`emit_handoff` with
+  // target='insights' resolves to this path).
+  insights: () => '/insights',
+
   course: (slugOrId: string | null | undefined, fallbackId: string) =>
     `/course/${slugOrId ?? fallbackId}`,
 

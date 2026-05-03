@@ -4,7 +4,8 @@ import { AnimatePresence, motion } from 'framer-motion';
 import { Check, X } from 'lucide-react';
 import { useState } from 'react';
 import { LessonMarkdown } from '../LessonMarkdown';
-import * as S from '../styles';
+import { parseQuizMetadata } from './blockMetadata';
+import * as S from '../styles/quiz.styles';
 import type { QuizResponse } from '@/api/types';
 import type { QuizOptionState } from '@/types';
 
@@ -24,10 +25,12 @@ export const QuizBlock = ({
   const [selected, setSelected] = useState<number | null>(savedResponse?.selectedOption ?? null);
   const [confirmed, setConfirmed] = useState(savedResponse != null);
 
-  const question = (metadata?.question as string) ?? '';
-  const options = (metadata?.options as string[]) ?? [];
-  const correctIndex = (metadata?.correctIndex as number) ?? 0;
-  const explanation = (metadata?.explanation as string) ?? '';
+  // Parse + validate metadata at the boundary. Malformed or empty shapes
+  // (LLM drift, legacy lessons) render no quiz instead of a half-broken
+  // one — the runtime guard catches issues the type-only cast missed.
+  const parsed = parseQuizMetadata(metadata);
+  if (!parsed) return null;
+  const { question, options, correctIndex, explanation = '' } = parsed;
 
   const getOptionState = (index: number): QuizOptionState => {
     if (!confirmed) {

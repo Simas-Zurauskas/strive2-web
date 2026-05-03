@@ -11,11 +11,11 @@ import {
   useUsageHistory,
   useUsageSummary,
 } from '@/hooks/useUsage';
-import type { UsageSortDir, UsageSortField } from '@/api/routes/usage';
 import { QKeys } from '@/types';
+import * as S from './BillingTab.styles';
 import { UsageHistoryList } from '../UsageTab/internal/UsageHistoryList/UsageHistoryList';
 import { UsageSummaryCards } from '../UsageTab/internal/UsageSummaryCards/UsageSummaryCards';
-import * as S from './BillingTab.styles';
+import type { UsageSortDir, UsageSortField } from '@/api/types';
 
 const USAGE_PAGE_SIZE = 20;
 

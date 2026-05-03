@@ -197,9 +197,12 @@ const GenerateCourseWizard = ({ resumeCourse }: { resumeCourse: Course | null })
               questions={handlers.clarifyData.questions}
               initialAnswers={answers}
               hasExistingData={!!handlers.depthPreviews}
+              goalType={course?.goalType ?? null}
+              goalTypeNoun={handlers.clarifyData.goalTypeNoun}
               onSubmit={handlers.handleClarifySubmit}
               onBack={() => setStep(1)}
               onDirtyChange={handlers.handleDirtyChange}
+              onGoalTypeChange={handlers.handleGoalTypeSwitch}
             />
           )}
 
@@ -231,6 +234,18 @@ const GenerateCourseWizard = ({ resumeCourse }: { resumeCourse: Course | null })
             <StructureStep
               courseId={courseId}
               modules={handlers.structureData}
+              selectedDepth={course?.depth ?? null}
+              recommendedDepth={
+                (course?.depthPreviews as { recommended?: string } | null | undefined)?.recommended ?? null
+              }
+              overcommitRisk={
+                (course?.depthPreviews as { overcommitRisk?: 'low' | 'moderate' | 'high' } | null | undefined)
+                  ?.overcommitRisk
+              }
+              undercommitRisk={
+                (course?.depthPreviews as { undercommitRisk?: 'low' | 'moderate' | 'high' } | null | undefined)
+                  ?.undercommitRisk
+              }
               onStructureModified={handlers.handleStructureModified}
               onAccept={handlers.handleAccept}
               onBack={() => setStep(3)}
