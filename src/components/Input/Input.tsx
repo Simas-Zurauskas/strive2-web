@@ -10,12 +10,31 @@ interface InputProps {
   value: string;
   min?: number;
   max?: number;
+  maxLength?: number;
+  inputMode?: React.HTMLAttributes<HTMLInputElement>['inputMode'];
+  autoComplete?: string;
+  autoFocus?: boolean;
   onChange: (e: React.ChangeEvent<HTMLInputElement>) => void;
   onBlur?: (e: React.FocusEvent<HTMLInputElement>) => void;
   error?: string;
 }
 
-export const Input = ({ label, name, type = 'text', placeholder, value, min, max, onChange, onBlur, error }: InputProps) => {
+export const Input = ({
+  label,
+  name,
+  type = 'text',
+  placeholder,
+  value,
+  min,
+  max,
+  maxLength,
+  inputMode,
+  autoComplete,
+  autoFocus,
+  onChange,
+  onBlur,
+  error,
+}: InputProps) => {
   return (
     <S.Wrapper>
       {label && <S.Label htmlFor={name}>{label}</S.Label>}
@@ -27,6 +46,10 @@ export const Input = ({ label, name, type = 'text', placeholder, value, min, max
         value={value}
         min={min}
         max={max}
+        maxLength={maxLength}
+        inputMode={inputMode}
+        autoComplete={autoComplete}
+        autoFocus={autoFocus}
         onChange={onChange}
         onBlur={onBlur}
       />

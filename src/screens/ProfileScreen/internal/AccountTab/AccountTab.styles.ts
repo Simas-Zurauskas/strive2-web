@@ -110,7 +110,10 @@ export const DangerButton = styled.button<{ $loading?: boolean }>`
   }
 `;
 
-export const PasswordInput = styled.input`
+// Reused for both the (now-removed) password confirm and the email-OTP code
+// entry. Name kept for git-blame continuity with prior commits; functionally
+// it's just a generic confirm input.
+export const ConfirmInput = styled.input`
   width: 100%;
   padding: 0.75rem 1rem;
   border-radius: 8px;
@@ -119,7 +122,7 @@ export const PasswordInput = styled.input`
   color: ${(p) => p.theme.colors.foreground};
   font-family: inherit;
   font-size: 0.875rem;
-  margin-bottom: 0.75rem;
+  margin-bottom: 0.5rem;
 
   &:focus {
     outline: none;
@@ -128,6 +131,35 @@ export const PasswordInput = styled.input`
 
   &:disabled {
     opacity: 0.6;
+  }
+`;
+
+export const CodeHint = styled.p`
+  font-size: 0.8125rem;
+  color: ${(p) => p.theme.colors.muted};
+  margin: 0 0 0.75rem 0;
+  line-height: 1.5;
+`;
+
+export const ResendButton = styled.button`
+  background: none;
+  border: none;
+  padding: 0;
+  margin-bottom: 0.75rem;
+  font-size: 0.8125rem;
+  color: ${(p) => p.theme.colors.muted};
+  cursor: pointer;
+  text-decoration: underline;
+  text-underline-offset: 3px;
+
+  &:disabled {
+    cursor: default;
+    opacity: 0.5;
+    text-decoration: none;
+  }
+
+  &:hover:not(:disabled) {
+    color: ${(p) => p.theme.colors.foreground};
   }
 `;
 

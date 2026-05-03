@@ -7,16 +7,12 @@ export const Layout = styled.div`
   color: ${(p) => p.theme.colors.foreground};
   padding: 3rem 2rem 5rem;
   width: 100%;
-  max-width: 980px;
+  max-width: 760px;
   margin: 0 auto;
 
   ${(p) => p.theme.media.tablet} {
     padding: 2rem 1.25rem 3rem;
   }
-`;
-
-export const ArticleLayout = styled(Layout)`
-  max-width: 760px;
 `;
 
 export const Eyebrow = styled.span`

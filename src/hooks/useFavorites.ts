@@ -1,12 +1,16 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
+import { useSession } from 'next-auth/react';
 import { getFavoriteCourseIds, toggleFavoriteCourse } from '@/api/routes/course';
 import { QKeys } from '@/types';
 
-export const useFavoriteCourseIds = () =>
-  useQuery({
+export const useFavoriteCourseIds = () => {
+  const { status } = useSession();
+  return useQuery({
     queryKey: [QKeys.FAVORITE_COURSES],
     queryFn: getFavoriteCourseIds,
+    enabled: status === 'authenticated',
   });
+};
 
 export const useToggleFavoriteCourse = () => {
   const queryClient = useQueryClient();

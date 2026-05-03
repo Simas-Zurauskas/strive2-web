@@ -21,8 +21,10 @@ export const useAuth = () => {
   // If Google auth failed on the backend, sign out to avoid a broken session.
   // Uses the raw next-auth signOut (not our wrapper): the token is already
   // invalid, so calling /api/auth/logout would just 401 and add noise.
+  // Same applies to `RefreshFailed` — the access token couldn't be refreshed
+  // (revoked tokenVersion, deleted user, etc.) and the session is dead.
   useEffect(() => {
-    if (session?.error === 'GoogleAuthFailed') {
+    if (session?.error === 'GoogleAuthFailed' || session?.error === 'RefreshFailed') {
       nextAuthSignOut({ callbackUrl: '/login' });
     }
   }, [session?.error]);

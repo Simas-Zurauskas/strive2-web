@@ -70,13 +70,17 @@ export const MermaidBlock = ({ content }: { content: string }) => {
       const mermaid = (await import('mermaid')).default;
       const isDark = resolvedTheme === 'dark';
 
+      // securityLevel: 'strict' is required because diagram source is LLM-generated
+      // and rendered in every learner's lesson. 'loose' would let an injected
+      // `click X "javascript:..."` directive run with the page's privileges
+      // (including JWT access).
       mermaid.initialize({
         startOnLoad: false,
         theme: 'base',
-        securityLevel: 'loose',
+        securityLevel: 'strict',
         fontFamily: 'var(--font-body-sans, sans-serif)',
         themeVariables: getMermaidThemeVars(isDark),
-        flowchart: { useMaxWidth: false },
+        flowchart: { useMaxWidth: false, htmlLabels: false },
         sequence: { useMaxWidth: false },
         mindmap: { useMaxWidth: false },
       });

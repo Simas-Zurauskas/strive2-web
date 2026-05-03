@@ -2,7 +2,7 @@
 
 import { Formik } from 'formik';
 import Link from 'next/link';
-import { useRouter } from 'next/navigation';
+import { useRouter, useSearchParams } from 'next/navigation';
 import { signIn } from 'next-auth/react';
 import { useState } from 'react';
 import {
@@ -15,13 +15,25 @@ import {
   GoogleBtn,
   Input,
 } from '@/components';
+import { safeRedirect } from '@/lib/safeRedirect';
 import { signUpSchema, SignUpValues } from '@/validation';
 
 const initialValues: SignUpValues = { email: '', password: '', confirmPassword: '' };
 
+const REDIRECT_STORAGE_KEY = 'pendingPostAuthRedirect';
+
 export const SignUpScreen = () => {
   const router = useRouter();
+  const searchParams = useSearchParams();
   const [apiError, setApiError] = useState('');
+
+  // The `?redirect=` query is set by upstream callers (e.g. PricingScreen)
+  // that want the user to land back on a specific page after onboarding.
+  // Credentials sign-up sends the user to /signup/check-email first; we stash
+  // the target so the verify-email flow can pick it up after activation.
+  // For Google OAuth we hand it directly to next-auth via callbackUrl, which
+  // next-auth itself sanitizes against same-origin.
+  const redirect = safeRedirect(searchParams.get('redirect'));
 
   const handleSubmit = async (values: SignUpValues) => {
     setApiError('');
@@ -38,10 +50,19 @@ export const SignUpScreen = () => {
     }
 
     sessionStorage.setItem('pendingVerificationEmail', values.email);
+    if (redirect && redirect !== '/') {
+      sessionStorage.setItem(REDIRECT_STORAGE_KEY, redirect);
+    } else {
+      sessionStorage.removeItem(REDIRECT_STORAGE_KEY);
+    }
     router.push('/signup/check-email');
   };
 
-  const handleGoogle = () => signIn('google', { callbackUrl: '/' });
+  const handleGoogle = () => signIn('google', { callbackUrl: redirect });
+
+  const loginHref = redirect && redirect !== '/'
+    ? `/login?redirect=${encodeURIComponent(redirect)}`
+    : '/login';
 
   return (
     <Formik
@@ -96,7 +117,7 @@ export const SignUpScreen = () => {
           </GoogleBtn>
 
           <AuthFormFooter>
-            Already have an account? <Link href="/login">Sign in</Link>
+            Already have an account? <Link href={loginHref}>Sign in</Link>
           </AuthFormFooter>
         </AuthForm>
       )}

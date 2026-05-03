@@ -45,7 +45,7 @@ export const KbArticleScreen = ({ article, related }: KbArticleScreenProps) => {
     },
   };
   return (
-    <S.ArticleLayout>
+    <S.Layout>
       <script
         type="application/ld+json"
         dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
@@ -65,6 +65,6 @@ export const KbArticleScreen = ({ article, related }: KbArticleScreenProps) => {
         <Markdown math>{article.body}</Markdown>
       </S.ArticleBody>
       <KbRelatedArticles articles={related} />
-    </S.ArticleLayout>
+    </S.Layout>
   );
 };

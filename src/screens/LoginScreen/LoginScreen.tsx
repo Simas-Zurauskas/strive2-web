@@ -3,7 +3,7 @@
 import { useMutation } from '@tanstack/react-query';
 import { Formik } from 'formik';
 import Link from 'next/link';
-import { useRouter } from 'next/navigation';
+import { useRouter, useSearchParams } from 'next/navigation';
 import { signIn } from 'next-auth/react';
 import { useState } from 'react';
 import { toast } from 'sonner';
@@ -20,15 +20,20 @@ import {
   Input,
 } from '@/components';
 import { TOASTS } from '@/constants/toasts';
+import { safeRedirect } from '@/lib/safeRedirect';
 import { signInSchema, SignInValues } from '@/validation';
 
 const initialValues: SignInValues = { email: '', password: '' };
 
 export const LoginScreen = () => {
   const router = useRouter();
+  const searchParams = useSearchParams();
   const [apiError, setApiError] = useState('');
   const [showResend, setShowResend] = useState(false);
   const [lastCredentials, setLastCredentials] = useState<SignInValues | null>(null);
+
+  // Same `?redirect=` semantics as SignUpScreen — see its inline note.
+  const redirect = safeRedirect(searchParams.get('redirect'));
 
   const resendMutation = useMutation({
     mutationFn: resendVerification,
@@ -58,7 +63,7 @@ export const LoginScreen = () => {
       return;
     }
 
-    router.push('/');
+    router.push(redirect);
     router.refresh();
   };
 
@@ -67,7 +72,11 @@ export const LoginScreen = () => {
     resendMutation.mutate({ email: lastCredentials.email, password: lastCredentials.password });
   };
 
-  const handleGoogle = () => signIn('google', { callbackUrl: '/' });
+  const handleGoogle = () => signIn('google', { callbackUrl: redirect });
+
+  const signupHref = redirect && redirect !== '/'
+    ? `/signup?redirect=${encodeURIComponent(redirect)}`
+    : '/signup';
 
   return (
     <Formik
@@ -122,7 +131,7 @@ export const LoginScreen = () => {
           </GoogleBtn>
 
           <AuthFormFooter>
-            Don&apos;t have an account? <Link href="/signup">Sign up</Link>
+            Don&apos;t have an account? <Link href={signupHref}>Sign up</Link>
           </AuthFormFooter>
         </AuthForm>
       )}

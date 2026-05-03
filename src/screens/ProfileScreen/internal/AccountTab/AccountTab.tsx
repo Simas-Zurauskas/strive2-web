@@ -1,7 +1,7 @@
 import { signOut as nextAuthSignOut } from 'next-auth/react';
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { toast } from 'sonner';
-import { deleteAccount } from '@/api/routes/auth';
+import { deleteAccount, requestSecurityActionCode } from '@/api/routes/auth';
 import { Button, InlineLink } from '@/components';
 import { TOASTS } from '@/constants/toasts';
 import { useAuth } from '@/hooks';
@@ -17,6 +17,10 @@ const formatProvider = (provider: string) => {
   return provider;
 };
 
+// Mirrors the API's `securityActionService.MIN_INTERVAL_MS` so the resend
+// button stays disabled long enough to avoid a guaranteed 429.
+const RESEND_COOLDOWN_SECONDS = 60;
+
 export const AccountTab: React.FC = () => {
   const { user, signOut } = useAuth();
   const { data: billing } = useBillingSummary();
@@ -30,22 +34,55 @@ export const AccountTab: React.FC = () => {
     ? `$${(billing.credits.bonus / topupRate).toFixed(2)}`
     : null;
 
+  const [deleteStep, setDeleteStep] = useState<'closed' | 'confirm' | 'code'>('closed');
+  const [code, setCode] = useState('');
+  const [requestingCode, setRequestingCode] = useState(false);
   const [deleting, setDeleting] = useState(false);
-  const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
-  const [deletePassword, setDeletePassword] = useState('');
+  const [resendUntil, setResendUntil] = useState(0);
+  const [now, setNow] = useState(() => Date.now());
   const [passwordModalOpen, setPasswordModalOpen] = useState(false);
 
   const hasCredentials = user?.authProviders?.some((p) => p.provider === 'CREDENTIALS');
 
-  const handleDeleteAccount = async () => {
-    if (hasCredentials && !deletePassword) {
-      toast.error(TOASTS.PASSWORD_REQUIRED);
+  // Tick once per second while a resend cooldown is active so the countdown
+  // re-renders. No-op when no cooldown is pending.
+  useEffect(() => {
+    if (resendUntil <= now) return;
+    const id = window.setInterval(() => setNow(Date.now()), 1000);
+    return () => window.clearInterval(id);
+  }, [resendUntil, now]);
+
+  const resetDeleteFlow = () => {
+    setDeleteStep('closed');
+    setCode('');
+    setRequestingCode(false);
+    setDeleting(false);
+    setResendUntil(0);
+  };
+
+  const sendDeleteCode = async () => {
+    setRequestingCode(true);
+    try {
+      await requestSecurityActionCode({ action: 'delete_account' });
+      toast.success(TOASTS.CODE_SENT);
+      setResendUntil(Date.now() + RESEND_COOLDOWN_SECONDS * 1000);
+      setDeleteStep('code');
+    } catch (err: unknown) {
+      const message = err instanceof Error ? err.message : TOASTS.CODE_SEND_ERROR;
+      toast.error(message);
+    } finally {
+      setRequestingCode(false);
+    }
+  };
+
+  const handleConfirmDelete = async () => {
+    if (!/^\d{6}$/.test(code)) {
+      toast.error('Enter the 6-digit code from your email.');
       return;
     }
-
     setDeleting(true);
     try {
-      await deleteAccount({ password: deletePassword });
+      await deleteAccount({ code });
       // User row is gone, so our signOut() wrapper's /logout call would 401.
       // Use raw nextAuthSignOut to just clear the NextAuth session.
       await nextAuthSignOut();
@@ -55,6 +92,9 @@ export const AccountTab: React.FC = () => {
       setDeleting(false);
     }
   };
+
+  const cooldownRemaining = Math.max(0, Math.ceil((resendUntil - now) / 1000));
+  const canResend = cooldownRemaining === 0 && !requestingCode;
 
   if (!user) return null;
 
@@ -112,8 +152,8 @@ export const AccountTab: React.FC = () => {
           Permanently delete your account and all associated data. This action cannot be undone.
         </S.DangerText>
 
-        {!showDeleteConfirm ? (
-          <S.DangerButton onClick={() => setShowDeleteConfirm(true)}>Delete Account</S.DangerButton>
+        {deleteStep === 'closed' ? (
+          <S.DangerButton onClick={() => setDeleteStep('confirm')}>Delete Account</S.DangerButton>
         ) : (
           <>
             {/* Surface every irreversible loss before they confirm. Industry
@@ -145,30 +185,54 @@ export const AccountTab: React.FC = () => {
                 </S.ForfeitList>
               </S.ForfeitWarning>
             )}
-            {hasCredentials && (
-              <S.PasswordInput
-                type="password"
-                placeholder="Enter your password to confirm"
-                value={deletePassword}
-                onChange={(e) => setDeletePassword(e.target.value)}
-                disabled={deleting}
-              />
+
+            {deleteStep === 'code' && (
+              <>
+                <S.CodeHint>
+                  We&apos;ve sent a 6-digit code to your email. Enter it below to confirm deletion.
+                </S.CodeHint>
+                <S.ConfirmInput
+                  type="text"
+                  inputMode="numeric"
+                  autoComplete="one-time-code"
+                  maxLength={6}
+                  placeholder="6-digit code"
+                  value={code}
+                  onChange={(e) => setCode(e.target.value.replace(/\D/g, ''))}
+                  disabled={deleting}
+                />
+                <S.ResendButton
+                  type="button"
+                  onClick={sendDeleteCode}
+                  disabled={!canResend || deleting}
+                >
+                  {requestingCode
+                    ? 'Sending...'
+                    : cooldownRemaining > 0
+                      ? `Resend in ${cooldownRemaining}s`
+                      : 'Resend code'}
+                </S.ResendButton>
+              </>
             )}
+
             <S.ButtonRow>
               <S.DangerButton
-                $loading={deleting}
-                disabled={deleting || (hasCredentials && !deletePassword)}
-                onClick={handleDeleteAccount}
+                $loading={deleting || requestingCode}
+                disabled={
+                  deleting || requestingCode || (deleteStep === 'code' && code.length !== 6)
+                }
+                onClick={deleteStep === 'confirm' ? sendDeleteCode : handleConfirmDelete}
               >
-                {deleting ? 'Deleting...' : 'Yes, delete my account'}
+                {deleting
+                  ? 'Deleting...'
+                  : deleteStep === 'confirm'
+                    ? 'Yes, send confirmation code'
+                    : 'Confirm and delete my account'}
               </S.DangerButton>
               <Button
                 variant="secondary"
                 size="small"
-                onClick={() => {
-                  setShowDeleteConfirm(false);
-                  setDeletePassword('');
-                }}
+                onClick={resetDeleteFlow}
                 disabled={deleting}
               >
                 Cancel
