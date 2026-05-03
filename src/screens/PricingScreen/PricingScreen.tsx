@@ -10,7 +10,6 @@ import {
   startCheckout,
   startPortal,
 } from '@/api/routes/billing';
-import type { BillingPlan, ClientApiError, PlanKey } from '@/api/types';
 import { AlertDialog, Button, TopupControl } from '@/components';
 import { ROUTES } from '@/constants/routes';
 import { useAuth } from '@/hooks/useAuth';
@@ -19,6 +18,7 @@ import { formatAllowance } from '@/lib/allowance';
 import { formatDate } from '@/lib/formatDate';
 import { QKeys } from '@/types';
 import * as S from './PricingScreen.styles';
+import type { BillingPlan, ClientApiError, PlanKey } from '@/api/types';
 
 type Cadence = 'monthly' | 'annual';
 

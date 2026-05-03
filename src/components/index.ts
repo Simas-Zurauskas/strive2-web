@@ -26,6 +26,8 @@ export { AlertDialog } from './AlertDialog';
 export { AppToaster } from './AppToaster';
 export { Stepper } from './Stepper';
 export { TextLoader } from './TextLoader';
+export { Accordion, AccordionItem } from './Accordion';
+export { KbChatPanel } from './KbChatPanel';
 
 // Data Display
 export { Badge } from './Badge';

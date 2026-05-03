@@ -1,7 +1,7 @@
 'use client';
 
-import type { ReactNode } from 'react';
 import * as S from './BentoGrid.styles';
+import type { ReactNode } from 'react';
 
 interface BentoGridProps {
   children: ReactNode;

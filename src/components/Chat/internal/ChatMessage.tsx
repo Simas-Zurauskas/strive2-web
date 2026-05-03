@@ -25,6 +25,7 @@ const TOOL_CONFIG: Record<string, { label: string; activeLabel: string }> = {
   TavilySearch: { label: 'Searched the web', activeLabel: 'Searching the web' },
   modify_structure: { label: 'Modified structure', activeLabel: 'Modifying structure' },
   search_lesson_content: { label: 'Searched lesson content', activeLabel: 'Searching lesson content' },
+  search_product_kb: { label: 'Searched the help center', activeLabel: 'Searching the help center' },
   fetch_url: { label: 'Read URL', activeLabel: 'Reading URL' },
   get_user_progress: { label: 'Checked your progress', activeLabel: 'Checking your progress' },
 };
@@ -80,7 +81,7 @@ const getToolDetail = ({ toolName, output }: { toolName: string; output: unknown
   const parsed = parseToolOutput(output);
   if (!parsed) return '';
 
-  if (toolName === 'search_lesson_content') {
+  if (toolName === 'search_lesson_content' || toolName === 'search_product_kb') {
     const results = parsed.results;
     if (Array.isArray(results)) {
       if (results.length === 0) return ' · no matches';

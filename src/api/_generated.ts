@@ -1424,6 +1424,8 @@ export interface paths {
                         answers?: Record<string, never>;
                         depth?: components["schemas"]["CourseDepth"];
                         status?: components["schemas"]["CourseStatus"];
+                        /** @description User-selected goalType from the ClarifyStep chip. Marks the choice as user-confirmed and causes the next clarify job to skip the auto-classifier. */
+                        goalType?: components["schemas"]["GoalType"];
                         /** @description Transport-only flag. Set to true on retry after a 409 DEPTH_OVERRIDE_REQUIRES_ACK response to confirm the learner has seen the course-magnitude modal and chooses to proceed with the selected depth. Never persisted. */
                         depthOverrideAcknowledged?: boolean;
                     };
@@ -3369,7 +3371,11 @@ export interface components {
         /** @enum {string} */
         CourseStatus: "creating" | "ready" | "archived";
         /** @enum {string} */
-        CourseDomain: "programming" | "stem" | "humanities" | "language" | "creative" | "business" | "practical" | "life-skills" | "other";
+        CourseDomain: "programming" | "stem" | "humanities" | "language" | "creative" | "business" | "practical" | "practical-ai" | "life-skills" | "other";
+        /** @enum {string} */
+        GoalType: "master" | "monetize" | "pass" | "build" | "fluency";
+        /** @enum {string} */
+        GoalTypeConfidence: "high" | "medium" | "low";
         /** @enum {string} */
         JobStatusEnum: "pending" | "processing" | "completed" | "failed";
         /** @enum {string} */
@@ -3500,6 +3506,8 @@ export interface components {
         ClarifyResponse: {
             courseName: string;
             questions: components["schemas"]["ClarifyQuestion"][];
+            /** @description Chip label noun phrase produced by the goalType classifier (e.g. 'your YouTube channel', 'the CPA exam'). The verb (e.g. 'monetize', 'pass') is a static client-side map keyed off course.goalType. */
+            goalTypeNoun?: string;
         };
         CourseAnswer: {
             questionId: string;
@@ -3958,6 +3966,8 @@ export interface components {
             status: components["schemas"]["CourseStatus"];
             goal: string;
             domain?: components["schemas"]["CourseDomain"] | null;
+            goalType?: components["schemas"]["GoalType"] | null;
+            goalTypeConfidence?: components["schemas"]["GoalTypeConfidence"] | null;
             clarifyData?: components["schemas"]["ClarifyResponse"];
             answers?: Record<string, never>;
             depth?: components["schemas"]["CourseDepth"];

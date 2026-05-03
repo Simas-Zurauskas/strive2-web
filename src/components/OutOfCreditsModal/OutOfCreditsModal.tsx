@@ -8,8 +8,8 @@ import { TopupControl } from '@/components/TopupControl';
 import { ROUTES } from '@/constants/routes';
 import { useBillingSummary } from '@/hooks/useBilling';
 import { registerCreditModalListener } from '@/lib/creditModalBus';
-import type { PlanKey } from '@/api/types';
 import * as S from './OutOfCreditsModal.styles';
+import type { PlanKey } from '@/api/types';
 
 const daysUntil = (date: string | Date | null | undefined): number | null => {
   if (!date) return null;

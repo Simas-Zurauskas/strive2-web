@@ -8,10 +8,10 @@ import { useEffect, useMemo, useRef, useState } from 'react';
 import { toast } from 'sonner';
 import { getChatHistory } from '@/api/routes/course';
 import { Chat } from '@/components/Chat';
-import type { ChatMessageData } from '@/components/Chat';
 import { NEXT_PUBLIC_API_URL } from '@/conf/env';
 import { TOASTS } from '@/constants/toasts';
 import * as S from './ChatPanel.styles';
+import type { ChatMessageData } from '@/components/Chat';
 
 interface ChatPanelProps {
   courseId: string;
@@ -19,7 +19,14 @@ interface ChatPanelProps {
   onModifying?: (active: boolean) => void;
 }
 
-const SUGGESTED_PROMPTS = [
+/**
+ * Last-resort fallback if the server response somehow omits
+ * `suggestedPrompts` (e.g. very old API). The server itself returns its
+ * own hardcoded fallback when the dynamic generator hasn't run, so this
+ * client-side array should almost never be used in practice. Kept short
+ * + generic enough to be useful even with no course context.
+ */
+const FALLBACK_SUGGESTED_PROMPTS = [
   'Why this module order?',
   'Add more practical exercises',
   'Skip the basics, I know them',
@@ -33,12 +40,21 @@ export const ChatPanel = ({ courseId, onStructureModified, onModifying }: ChatPa
   const { data: session } = useSession();
   const [initialMessages, setInitialMessages] = useState<UIMessage[] | null>(null);
   const [historyLoaded, setHistoryLoaded] = useState(false);
+  const [suggestedPrompts, setSuggestedPrompts] = useState<string[]>(FALLBACK_SUGGESTED_PROMPTS);
+  // Bumped after each modify_structure tool run so the inner panel
+  // refetches the chat history → picks up the regenerated suggested
+  // prompts. Background regeneration on the server may take ~1-2s, so
+  // there's an inherent staleness window the user may notice; that's
+  // acceptable because the chat is mid-conversation and the prompts
+  // are an empty-state aid.
+  const [refetchTick, setRefetchTick] = useState(0);
 
   useEffect(() => {
     if (!session?.token) return;
 
     getChatHistory(courseId)
-      .then(({ messages }) => {
+      .then((data) => {
+        const { messages } = data;
         if (messages.length > 0) {
           const uiMessages: UIMessage[] = messages.map((m) => ({
             id: nextId(),
@@ -46,6 +62,13 @@ export const ChatPanel = ({ courseId, onStructureModified, onModifying }: ChatPa
             parts: [{ type: 'text' as const, text: m.content ?? '' }],
           }));
           setInitialMessages(uiMessages);
+        }
+        // `suggestedPrompts` is a new server field; tolerate older
+        // codegen output by reading defensively. Falls back to the
+        // hardcoded array when missing or empty.
+        const serverPrompts = (data as { suggestedPrompts?: unknown }).suggestedPrompts;
+        if (Array.isArray(serverPrompts) && serverPrompts.length > 0) {
+          setSuggestedPrompts(serverPrompts.filter((p): p is string => typeof p === 'string'));
         }
       })
       .catch((err) => {
@@ -55,7 +78,19 @@ export const ChatPanel = ({ courseId, onStructureModified, onModifying }: ChatPa
       .finally(() => {
         setHistoryLoaded(true);
       });
-  }, [courseId, session?.token]);
+  }, [courseId, session?.token, refetchTick]);
+
+  // Refresh the suggested prompts after each structure modification.
+  // We wrap the parent's onStructureModified so the chat panel
+  // independently refetches without coupling to the parent's state.
+  const handleStructureModified = () => {
+    onStructureModified();
+    // Small delay so the server-side background regeneration has time
+    // to land before we refetch. Not foolproof — the regen may still
+    // be in-flight — but the client UX degrades gracefully (stays on
+    // the last set of prompts until the next refetch).
+    setTimeout(() => setRefetchTick((n) => n + 1), 2000);
+  };
 
   if (!historyLoaded) {
     return (
@@ -76,9 +111,10 @@ export const ChatPanel = ({ courseId, onStructureModified, onModifying }: ChatPa
   return (
     <ChatPanelInner
       courseId={courseId}
-      onStructureModified={onStructureModified}
+      onStructureModified={handleStructureModified}
       onModifying={onModifying}
       initialMessages={initialMessages ?? undefined}
+      suggestedPrompts={suggestedPrompts}
     />
   );
 };
@@ -89,7 +125,8 @@ const ChatPanelInner = ({
   onStructureModified,
   onModifying,
   initialMessages,
-}: ChatPanelProps & { initialMessages?: UIMessage[] }) => {
+  suggestedPrompts,
+}: ChatPanelProps & { initialMessages?: UIMessage[]; suggestedPrompts: string[] }) => {
   const { data: session } = useSession();
   const [inputValue, setInputValue] = useState('');
 
@@ -222,7 +259,7 @@ const ChatPanelInner = ({
         inputValue={inputValue}
         onInputChange={setInputValue}
         onSubmit={handleSubmit}
-        suggestedPrompts={SUGGESTED_PROMPTS}
+        suggestedPrompts={suggestedPrompts}
         onSuggestedPromptClick={handleSuggestedPrompt}
         placeholder="Ask about the structure or request changes..."
         isStreaming={isStreaming}

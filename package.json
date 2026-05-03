@@ -29,6 +29,8 @@
     "codemirror": "^6.0.2",
     "formik": "^2.4.9",
     "framer-motion": "^12.38.0",
+    "fuse.js": "^7.3.0",
+    "gray-matter": "^4.0.3",
     "highcharts": "^12.6.0",
     "highcharts-react-official": "^3.2.3",
     "katex": "^0.16.45",

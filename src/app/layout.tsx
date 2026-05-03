@@ -1,4 +1,5 @@
 import { Inter, Newsreader } from 'next/font/google';
+import { NEXT_PUBLIC_SITE_URL } from '@/conf/env';
 import Registry from './_registry';
 import type { Metadata } from 'next';
 import 'katex/dist/katex.min.css';
@@ -16,6 +17,7 @@ const newsreader = Newsreader({
 });
 
 export const metadata: Metadata = {
+  metadataBase: new URL(NEXT_PUBLIC_SITE_URL),
   title: 'Strive',
 };
 

@@ -2,9 +2,9 @@
 
 import { useQueryClient } from '@tanstack/react-query';
 import { useEffect } from 'react';
-import type { AuthorisedUser, BillingSummary, CreditsUpdatedEvent } from '@/api/types';
 import { QKeys } from '@/types';
 import { useSocket } from './useSocket';
+import type { AuthorisedUser, BillingSummary, CreditsUpdatedEvent } from '@/api/types';
 
 /**
  * Subscribe to the backend's `credits:updated` socket event and keep the

@@ -4,45 +4,49 @@ import { AlertDialog } from '@/components/AlertDialog/AlertDialog';
 import * as S from './DepthOverrideDialog.styles';
 
 /**
- * Response body shape for the backend's 409 DEPTH_OVERRIDE_REQUIRES_ACK.
+ * Shared base shape for both 409 codes from /PATCH /api/course/:id. The
+ * controller routes to one of two `code` values depending on which side of
+ * the bidirectional gate fired:
+ *   - DEPTH_OVERRIDE_REQUIRES_ACK — overcommit (selected too big)
+ *   - DEPTH_UNDERCOMMIT_REQUIRES_ACK — undercommit (selected too small)
+ *
+ * Field overlaps reflect what's meaningful for both sides; `*Cues` /
+ * `overcommit*` are overcommit-only, `recommended*Range` / `undercommit*`
+ * are undercommit-only.
  *
  * Declared locally (rather than imported from codegen) because the backend
- * Swagger update for this response lands in api/ separately; on the client
- * side we ship before `yarn codegen` has seen the new shape. After the
- * backend deploys and codegen runs, this local type can be replaced with
- * `components['schemas']['DepthOverrideRequiresAck']` — or whatever the
- * generator chooses to name it — from `@/api/_generated`.
- *
- * The fields match the controller at
- * /api/src/controlers/course/updateCourse.ts (see the 409 res.json payload).
+ * Swagger update for these responses lands separately; on the client side
+ * we ship before `yarn codegen` has seen the new shape.
  */
-export interface DepthOverridePayload {
-  code: 'DEPTH_OVERRIDE_REQUIRES_ACK';
+interface DepthOverridePayloadCommon {
   message: string;
   recommended: string | null;
   selectedDepth: string;
-  /** [min, max] total lesson count for the selected depth. */
   lessonCountRange?: [number, number];
-  /** [min, max] total learner-facing hours (~25 min/lesson). */
   estimatedHoursRange?: [number, number];
+}
+
+export interface DepthOverridePayloadOvercommit extends DepthOverridePayloadCommon {
+  code: 'DEPTH_OVERRIDE_REQUIRES_ACK';
   softnessCues?: string[];
   finishPressureCues?: string[];
-  /**
-   * Optional. LLM-emitted overcommit-risk level (the gate's primary cost
-   * signal on courses generated after this field was added). The dialog
-   * doesn't surface the level directly — it's used in conjunction with
-   * `overcommitRationale` for the explanatory copy. Absent on legacy
-   * courses where the gate fired on phrase-regex cost signals alone.
-   */
   overcommitRisk?: 'low' | 'moderate' | 'high';
-  /**
-   * Optional. One-sentence rationale from the LLM. When present, the
-   * dialog shows this verbatim INSTEAD of the phrase-cue bullets — the
-   * model's holistic reasoning is more informative than the matched
-   * allowlist phrases. Falls back to bullets when absent.
-   */
   overcommitRationale?: string;
 }
+
+export interface DepthOverridePayloadUndercommit extends DepthOverridePayloadCommon {
+  code: 'DEPTH_UNDERCOMMIT_REQUIRES_ACK';
+  /** Recommended-tier lesson range — what they would have gotten. */
+  recommendedLessonCountRange?: [number, number];
+  /** Recommended-tier hours range — what they would have gotten. */
+  recommendedEstimatedHoursRange?: [number, number];
+  undercommitRisk?: 'low' | 'moderate' | 'high';
+  undercommitRationale?: string;
+}
+
+export type DepthOverridePayload =
+  | DepthOverridePayloadOvercommit
+  | DepthOverridePayloadUndercommit;
 
 interface DepthOverrideDialogProps {
   open: boolean;
@@ -63,23 +67,26 @@ const formatRange = (range: [number, number] | undefined, unit: string): string 
   return `${lo}–${hi} ${unit}`;
 };
 
-export const DepthOverrideDialog = ({
-  open,
-  payload,
-  loading = false,
-  onConfirm,
-  onCancel,
-}: DepthOverrideDialogProps) => {
-  const lessonsText = formatRange(payload?.lessonCountRange, 'lessons');
-  const hoursText = formatRange(payload?.estimatedHoursRange, 'hours');
-  const cues = [...(payload?.softnessCues ?? []), ...(payload?.finishPressureCues ?? [])];
+/**
+ * Pretty-print a depth value ("deep_dive" → "Deep Dive") for inline copy.
+ * Defensive: returns the raw value unchanged for anything we don't know
+ * about (e.g. a future depth tier the client wasn't built against).
+ */
+const formatDepthLabel = (depth: string | null | undefined): string => {
+  if (!depth) return 'a deeper tier';
+  if (depth === 'overview') return 'Overview';
+  if (depth === 'comprehensive') return 'Comprehensive';
+  if (depth === 'deep_dive') return 'Deep Dive';
+  return depth;
+};
 
-  // Fallback for the intermediate state where the client is deployed against
-  // an older backend that didn't yet emit the new magnitude fields. Dialog
-  // still renders — just with a generic copy instead of concrete numbers.
+const renderOvercommitDescription = (payload: DepthOverridePayloadOvercommit) => {
+  const lessonsText = formatRange(payload.lessonCountRange, 'lessons');
+  const hoursText = formatRange(payload.estimatedHoursRange, 'hours');
+  const cues = [...(payload.softnessCues ?? []), ...(payload.finishPressureCues ?? [])];
   const hasMagnitude = !!(lessonsText && hoursText);
 
-  const description = (
+  return (
     <>
       {hasMagnitude ? (
         <S.Magnitude>
@@ -91,7 +98,7 @@ export const DepthOverrideDialog = ({
           This selection may produce a larger course than your answers suggest.
         </S.Magnitude>
       )}
-      {payload?.overcommitRationale ? (
+      {payload.overcommitRationale ? (
         // Prefer the LLM rationale when present — one explanatory sentence
         // grounded in the learner's actual answers reads better than a
         // bulleted list of allowlist-matched phrases.
@@ -111,14 +118,95 @@ export const DepthOverrideDialog = ({
       <S.Question>Continue with this depth?</S.Question>
     </>
   );
+};
+
+const renderUndercommitDescription = (payload: DepthOverridePayloadUndercommit) => {
+  const selectedLessonsText = formatRange(payload.lessonCountRange, 'lessons');
+  const selectedHoursText = formatRange(payload.estimatedHoursRange, 'hours');
+  const recommendedLessonsText = formatRange(payload.recommendedLessonCountRange, 'lessons');
+  const recommendedHoursText = formatRange(payload.recommendedEstimatedHoursRange, 'hours');
+  const selectedLabel = formatDepthLabel(payload.selectedDepth);
+  const recommendedLabel = formatDepthLabel(payload.recommended);
+
+  // Show a side-by-side magnitude comparison when we have both ranges,
+  // a single-side anchor when we have just the selected ranges, or a
+  // generic fallback when the backend omitted both (legacy / partial
+  // courses). The fallback message from the controller is always present
+  // so we never render a blank dialog.
+  const hasBothRanges = !!(selectedLessonsText && recommendedLessonsText);
+  const hasSelectedRange = !!(selectedLessonsText && selectedHoursText);
+
+  return (
+    <>
+      {hasBothRanges ? (
+        <S.Magnitude>
+          You picked <strong>{selectedLabel}</strong> (about{' '}
+          <strong>{selectedLessonsText}</strong>
+          {selectedHoursText && (
+            <>
+              , ~<strong>{selectedHoursText}</strong>
+            </>
+          )}
+          ). Your answers point at <strong>{recommendedLabel}</strong> (
+          <strong>{recommendedLessonsText}</strong>
+          {recommendedHoursText && (
+            <>
+              , ~<strong>{recommendedHoursText}</strong>
+            </>
+          )}
+          ).
+        </S.Magnitude>
+      ) : hasSelectedRange ? (
+        <S.Magnitude>
+          You picked <strong>{selectedLabel}</strong> (about{' '}
+          <strong>{selectedLessonsText}</strong>, ~<strong>{selectedHoursText}</strong>). Your
+          answers point at <strong>{recommendedLabel}</strong>.
+        </S.Magnitude>
+      ) : (
+        <S.Magnitude>{payload.message}</S.Magnitude>
+      )}
+      {payload.undercommitRationale && (
+        <S.CuesIntro>Why we suggest more: {payload.undercommitRationale}</S.CuesIntro>
+      )}
+      <S.Question>Continue with this depth?</S.Question>
+    </>
+  );
+};
+
+/**
+ * Bidirectional depth-override confirmation dialog. Renders different copy
+ * based on the payload's `code` discriminator:
+ *
+ *   - `DEPTH_OVERRIDE_REQUIRES_ACK` (overcommit): "this is bigger than
+ *     your answers suggest you'll finish — confirm or pick smaller"
+ *   - `DEPTH_UNDERCOMMIT_REQUIRES_ACK` (undercommit): "this is lighter
+ *     than recommended — confirm or pick fuller"
+ *
+ * The same `depthOverrideAcknowledged: true` flag works as the retry
+ * confirmation for both, so the parent only needs one onConfirm callback.
+ */
+export const DepthOverrideDialog = ({
+  open,
+  payload,
+  loading = false,
+  onConfirm,
+  onCancel,
+}: DepthOverrideDialogProps) => {
+  const isUndercommit = payload?.code === 'DEPTH_UNDERCOMMIT_REQUIRES_ACK';
+
+  const description = payload
+    ? isUndercommit
+      ? renderUndercommitDescription(payload)
+      : renderOvercommitDescription(payload as DepthOverridePayloadOvercommit)
+    : null;
 
   return (
     <AlertDialog
       open={open && !!payload}
-      title="Confirm course scope"
+      title={isUndercommit ? 'Lighter than recommended' : 'Confirm course scope'}
       description={description}
       confirmLabel="Continue with this depth"
-      cancelLabel="Pick a smaller tier"
+      cancelLabel={isUndercommit ? 'Pick a fuller tier' : 'Pick a smaller tier'}
       variant="default"
       loading={loading}
       onConfirm={onConfirm}

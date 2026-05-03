@@ -1,5 +1,5 @@
-import type { UIMessage } from 'ai';
 import type { ChatMessageAttachment, ChatMessageData } from '@/components/Chat';
+import type { UIMessage } from 'ai';
 
 interface PersistedMessage {
   role?: string;

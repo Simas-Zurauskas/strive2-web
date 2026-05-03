@@ -167,7 +167,7 @@ export const Navbar = () => {
             <MoonIcon />
           </S.ThemeOption>
         </S.ThemeSwitch>
-        <S.ThemeToggle onClick={() => router.push('/faq')} title="FAQ">
+        <S.ThemeToggle onClick={() => router.push('/help')} title="Help">
           <QuestionIcon />
         </S.ThemeToggle>
         <S.ThemeToggle onClick={() => router.push('/profile')} title={user?.email ?? 'Profile'}>

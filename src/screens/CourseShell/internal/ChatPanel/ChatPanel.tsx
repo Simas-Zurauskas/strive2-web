@@ -17,6 +17,7 @@ import {
 } from '@/api/routes/course';
 import { Chat } from '@/components/Chat';
 import { TOASTS } from '@/constants/toasts';
+import { useLessonContent } from '@/hooks/useLessonContent';
 import * as S from './ChatPanel.styles';
 import { buildPartsFromPersistedMessage, uiMessagesToChatData } from './mentorMessages';
 import type { AttachmentChipData, ChatMessageAttachment, ChatMessageData } from '@/components/Chat';
@@ -96,6 +97,33 @@ const LessonChatPanel = ({ contextLabel, courseSlug, moduleIndex, lessonIndex, o
   const [isClearing, setIsClearing] = useState(false);
   const [hasMessages, setHasMessages] = useState(false);
 
+  // Subscribe to the lesson-content react-query cache. The JobManager
+  // already invalidates this on `generate_lesson` completion (see
+  // hooks/useJobManager.tsx — handleStatus invalidates LESSON_CONTENT),
+  // so the moment generation finishes, `lessonContent.blocks` flips
+  // from empty to populated. We use that transition as the trigger to
+  // refetch the chat history — without it, the panel would stay on the
+  // pre-generation empty state until the user manually reloads, even
+  // though the lesson body has rendered next to it.
+  const { data: lessonContent } = useLessonContent({
+    courseId: courseSlug,
+    moduleIndex,
+    lessonIndex,
+  });
+  const hasContent = (lessonContent?.blocks?.length ?? 0) > 0;
+  const [historyRefetchKey, setHistoryRefetchKey] = useState(0);
+  const prevHasContentRef = useRef(hasContent);
+  useEffect(() => {
+    // Only react to the no-content → has-content transition. Other
+    // transitions (e.g. has-content → has-content as new blocks
+    // arrive during regeneration) shouldn't blow away the user's
+    // in-flight chat session by remounting the inner panel.
+    if (!prevHasContentRef.current && hasContent) {
+      setHistoryRefetchKey((k) => k + 1);
+    }
+    prevHasContentRef.current = hasContent;
+  }, [hasContent]);
+
   const handleClear = async () => {
     if (isClearing) return;
     setIsClearing(true);
@@ -157,7 +185,7 @@ const LessonChatPanel = ({ contextLabel, courseSlug, moduleIndex, lessonIndex, o
     return () => {
       cancelled = true;
     };
-  }, [courseSlug, moduleIndex, lessonIndex, session?.token]);
+  }, [courseSlug, moduleIndex, lessonIndex, session?.token, historyRefetchKey]);
 
   const header = (
     <S.Header>

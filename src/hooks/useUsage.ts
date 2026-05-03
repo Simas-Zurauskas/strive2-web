@@ -6,8 +6,8 @@ import {
   getUsageHistory,
   getUsageSummary,
 } from '@/api/routes/usage';
-import type { UsageSortDir, UsageSortField } from '@/api/types';
 import { QKeys } from '@/types';
+import type { UsageSortDir, UsageSortField } from '@/api/types';
 
 export const useUsageHistory = ({
   limit,
