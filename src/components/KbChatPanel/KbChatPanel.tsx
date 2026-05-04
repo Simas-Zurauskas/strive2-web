@@ -68,7 +68,13 @@ export const KbChatPanel = () => {
           return h;
         },
       }),
-    [session?.token],
+    // Depend on the whole `session` rather than just `session?.token` —
+    // React Compiler infers the broader capture from the closure (the
+    // header builder reads `session?.token` through `session`), and
+    // mismatching the dep keeps the compiler from optimizing this hook.
+    // The reference identity of `session` shifts on token rotation
+    // anyway, so this rebuilds the transport at the same cadence.
+    [session],
   );
 
   const chat = useChat({
@@ -112,7 +118,6 @@ const ExpandedPanel = ({ onClose, chat }: ExpandedPanelProps) => (
       </S.HeaderAvatar>
       <S.HeaderText>
         <S.HeaderTitle>Strive guide</S.HeaderTitle>
-        <S.HeaderSubtitle>Live · grounded in /help · free</S.HeaderSubtitle>
       </S.HeaderText>
       <S.HeaderAction type="button" onClick={onClose} aria-label="Minimize chat" title="Minimize">
         <ChevronDown size={18} />
@@ -121,7 +126,7 @@ const ExpandedPanel = ({ onClose, chat }: ExpandedPanelProps) => (
     <S.Body>
       <ChatBody chat={chat} />
     </S.Body>
-    <S.Footnote>Powered by AI · chats are not saved across reloads</S.Footnote>
+    <S.Footnote>Chats aren&rsquo;t saved between sessions.</S.Footnote>
   </S.Widget>
 );
 

@@ -13,13 +13,13 @@ interface KbHubScreenProps {
 export const KbHubScreen = ({ topics, searchEntries }: KbHubScreenProps) => (
   <S.Layout>
     <S.Eyebrow>Help center</S.Eyebrow>
-    <S.HeroTitle>How can we help you learn?</S.HeroTitle>
+    <S.HeroTitle>Reading material on how Strive works.</S.HeroTitle>
     <S.HeroSubtitle>
-      Browse the topics below or search across every article. Strive is built around a few teaching ideas —
-      once you understand them, the rest of the product clicks into place.
+      Browse a topic or search the whole library. The product is built around a few teaching ideas —
+      once you have those, the rest clicks into place.
     </S.HeroSubtitle>
     <KbSearchBar entries={searchEntries} />
-    <S.SectionHeading>Browse topics</S.SectionHeading>
+    <S.SectionHeading>Topics</S.SectionHeading>
     <S.TopicGrid>
       {topics.map((t) => (
         <KbTopicCard key={t.slug} topic={t} />

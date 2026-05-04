@@ -1,8 +1,9 @@
+import { ArrowUpRight } from 'lucide-react';
 import { signOut as nextAuthSignOut } from 'next-auth/react';
 import { useEffect, useState } from 'react';
 import { toast } from 'sonner';
 import { deleteAccount, requestSecurityActionCode } from '@/api/routes/auth';
-import { Button, InlineLink } from '@/components';
+import { Button } from '@/components';
 import { TOASTS } from '@/constants/toasts';
 import { useAuth } from '@/hooks';
 import { useBillingPlans, useBillingSummary } from '@/hooks/useBilling';
@@ -136,14 +137,14 @@ export const AccountTab: React.FC = () => {
 
       <S.Section>
         <S.SectionTitle>Legal</S.SectionTitle>
-        <S.InfoRow>
-          <S.Label>Terms of Service</S.Label>
-          <InlineLink href="/terms" newTab>View</InlineLink>
-        </S.InfoRow>
-        <S.InfoRow>
-          <S.Label>Privacy Policy</S.Label>
-          <InlineLink href="/privacy" newTab>View</InlineLink>
-        </S.InfoRow>
+        <S.LegalLink href="/terms" target="_blank" rel="noopener noreferrer">
+          <span>Terms of Service</span>
+          <ArrowUpRight size={14} strokeWidth={2} />
+        </S.LegalLink>
+        <S.LegalLink href="/privacy" target="_blank" rel="noopener noreferrer">
+          <span>Privacy Policy</span>
+          <ArrowUpRight size={14} strokeWidth={2} />
+        </S.LegalLink>
       </S.Section>
 
       <S.DangerZone>

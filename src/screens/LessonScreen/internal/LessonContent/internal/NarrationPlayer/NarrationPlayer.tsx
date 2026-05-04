@@ -12,7 +12,7 @@ import { useAuth, useJobManager } from '@/hooks';
 import { useSocket } from '@/hooks/useSocket';
 import { QKeys } from '@/types';
 import * as S from './NarrationPlayer.styles';
-import type { JobProgressEvent, JobStatusEvent } from '@/api/types';
+import type { JobStatusEvent } from '@/api/types';
 
 const PLAYBACK_RATES = [1, 1.25, 1.5, 1.75, 2] as const;
 
@@ -98,23 +98,9 @@ export const NarrationPlayer = ({
   // this signal, "Clear → Generate" with unchanged settings looks broken
   // — same audio reappears in ~1s because the file is content-hash-keyed
   // and shared across users (intentional dedup, but invisible to users).
-  useEffect(() => {
-    if (!socket || !pendingJobId) return;
-    const handleProgress = (event: JobProgressEvent) => {
-      if (event.jobId !== pendingJobId) return;
-      const inner = event.event as { type: string; cached?: boolean };
-      if (inner?.type === 'narration_ready' && inner.cached === true) {
-        // Cache hits happen when the script + voice + rate exactly match
-        // a previous synthesis (intentional dedup). Surface this so an
-        // instant playback after Generate isn't read as "broken".
-        toast('Reused cached narration — same script and voice as a previous run.');
-      }
-    };
-    socket.on('job:progress', handleProgress);
-    return () => {
-      socket.off('job:progress', handleProgress);
-    };
-  }, [socket, pendingJobId]);
+  // We deliberately don't toast about it — the audio simply starts playing,
+  // which is itself the confirmation. Telling the user about cache hits is
+  // dev-think, not user-think.
 
   // Voice catalog is fetched lazily, only when we need to display the
   // currently-active voice's friendly label in the player eyebrow.

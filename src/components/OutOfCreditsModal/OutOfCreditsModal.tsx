@@ -86,9 +86,9 @@ export const OutOfCreditsModal = () => {
         <S.CloseBtn onClick={close} aria-label="Close">×</S.CloseBtn>
 
         <div>
-          <S.Title id="out-of-credits-title">You're out of allowance</S.Title>
+          <S.Title id="out-of-credits-title">You&rsquo;re out of allowance</S.Title>
           <S.Lede>
-            You don't have enough allowance left for this action.
+            You don&rsquo;t have enough allowance left for this action.
             {canUpgrade
               ? ' Upgrade your plan for a bigger monthly pool, or top up below.'
               : ' Top up below to keep going — your existing Studio allowance still refreshes at the period end.'}

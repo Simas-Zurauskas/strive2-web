@@ -1,10 +1,10 @@
 import Skeleton from 'react-loading-skeleton';
 import { useGamificationProfile, useGamificationStats, useQuizTrends } from '@/hooks/useGamification';
 import { GamificationSection } from '../GamificationSection/GamificationSection';
+import { Section, SectionHeader } from './internal/_shared/styles';
 import { ActivityHeatmap } from './internal/ActivityHeatmap/ActivityHeatmap';
-import { InsightsCard } from './internal/InsightsCard/InsightsCard';
 import { QuizScoreTrend } from './internal/QuizScoreTrend/QuizScoreTrend';
-import * as QS from './internal/QuizScoreTrend/QuizScoreTrend.styles';
+import { RecallActivityCard } from './internal/RecallActivityCard/RecallActivityCard';
 import { WeeklySummary } from './internal/WeeklySummary/WeeklySummary';
 import * as WS from './internal/WeeklySummary/WeeklySummary.styles';
 import { XpChart } from './internal/XpChart/XpChart';
@@ -12,25 +12,41 @@ import { XpChart } from './internal/XpChart/XpChart';
 // ── Skeleton placeholders ─────────────────────────
 
 const SummarySkeleton = () => (
-  <WS.Grid>
-    {[0, 1, 2, 3, 4].map((i) => (
-      <WS.Card key={i}>
-        <WS.Value><Skeleton width={52} /></WS.Value>
-        <WS.Label><Skeleton width={68} /></WS.Label>
-        <WS.Delta $positive={false} $neutral={true}><Skeleton width={96} /></WS.Delta>
-      </WS.Card>
-    ))}
-  </WS.Grid>
+  <WS.Wrap>
+    <WS.Header>
+      <WS.Eyebrow>
+        <Skeleton width={64} />
+      </WS.Eyebrow>
+      <WS.Sub>
+        <Skeleton width={72} />
+      </WS.Sub>
+    </WS.Header>
+    <WS.Grid>
+      {[0, 1, 2, 3, 4].map((i) => (
+        <WS.Cell key={i}>
+          <WS.Label>
+            <Skeleton width={56} />
+          </WS.Label>
+          <WS.Value>
+            <Skeleton width={42} />
+          </WS.Value>
+          <WS.Delta $positive={false} $neutral>
+            <Skeleton width={28} />
+          </WS.Delta>
+        </WS.Cell>
+      ))}
+    </WS.Grid>
+  </WS.Wrap>
 );
 
 const QuizTrendSkeleton = () => (
-  <QS.Section>
-    <QS.Header>
+  <Section>
+    <SectionHeader>
       <Skeleton width={100} height={12} borderRadius={4} />
       <Skeleton width={80} height={10} borderRadius={4} />
-    </QS.Header>
+    </SectionHeader>
     <Skeleton height={200} borderRadius={8} />
-  </QS.Section>
+  </Section>
 );
 
 // ── Main component ────────────────────────────────
@@ -58,8 +74,8 @@ export const LearningTab: React.FC = () => {
       {quizLoading && !quizTrends && <QuizTrendSkeleton />}
       {quizTrends && <QuizScoreTrend data={quizTrends} />}
 
-      {/* Widget 5: Insights retention */}
-      <InsightsCard />
+      {/* Widget 5: Recall retention */}
+      <RecallActivityCard />
 
       {/* Achievements (existing) */}
       <GamificationSection />

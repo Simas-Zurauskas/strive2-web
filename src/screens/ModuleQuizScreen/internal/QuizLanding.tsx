@@ -1,13 +1,14 @@
-import { AlertCircle, CheckCircle, Trophy } from 'lucide-react';
-import { Eyebrow, TextLoader } from '@/components';
+import { ArrowRight } from 'lucide-react';
+import { Button, Eyebrow } from '@/components';
 import { plural } from '@/lib/strings';
+import { QuizGenerationPanel } from './QuizGenerationPanel';
 import * as S from '../ModuleQuizScreen.styles';
 import type { CourseModule, QuizMasteryTier, UserModuleQuizProgress } from '@/api/types';
 
-const tierIcon: Record<QuizMasteryTier, typeof Trophy> = {
-  mastered: Trophy,
-  passed: CheckCircle,
-  needs_review: AlertCircle,
+const tierLabel: Record<QuizMasteryTier, string> = {
+  mastered: 'Mastered',
+  passed: 'Passed',
+  needs_review: 'Needs review',
 };
 
 interface QuizLandingProps {
@@ -20,6 +21,8 @@ interface QuizLandingProps {
   hasQuizContent: boolean;
   onStart: () => void;
   onGenerate: () => void;
+  onBack: () => void;
+  backLabel: string;
 }
 
 export const QuizLanding = ({
@@ -32,60 +35,78 @@ export const QuizLanding = ({
   hasQuizContent,
   onStart,
   onGenerate,
-}: QuizLandingProps) => (
-  <S.Container>
-    <S.Content>
-      <S.HeaderSection>
-        <Eyebrow>
-          {isReviewMode ? 'Spaced Review' : `Module ${moduleIndex + 1} Quiz`}
-        </Eyebrow>
-        <S.Title>{mod.name}</S.Title>
-      </S.HeaderSection>
+  onBack,
+  backLabel,
+}: QuizLandingProps) => {
+  const lessonCount = mod.lessons?.length ?? 0;
 
-      {quizProgress && quizProgress.bestTier && (() => {
-        const TierIcon = tierIcon[quizProgress.bestTier];
-        return (
-          <S.PreviousAttempt>
-            <S.TierIconInline $tier={quizProgress.bestTier}>
-              <TierIcon size={16} strokeWidth={2} />
-            </S.TierIconInline>
-            <span>Previous best:</span>
-            <S.MasteryBadge $tier={quizProgress.bestTier}>
-              {quizProgress.bestScore}% —{' '}
-              {quizProgress.bestTier === 'mastered'
-                ? 'Mastered'
-                : quizProgress.bestTier === 'passed'
-                  ? 'Passed'
-                  : 'Needs Review'}
-            </S.MasteryBadge>
-            <span style={{ color: 'inherit', opacity: 0.5 }}>
-              ({quizProgress.attempts.length} {plural({ count: quizProgress.attempts.length, singular: 'attempt' })})
-            </span>
-          </S.PreviousAttempt>
-        );
-      })()}
+  // Description folds in the question count once content exists, so the
+  // separate meta line ("3 lessons · 8 questions · Pass at 70%…") is no
+  // longer needed — the lesson count is already in the description, and
+  // the pass/master thresholds live once on the /quizzes index hero.
+  const lessonText = `${lessonCount} ${plural({ count: lessonCount, singular: 'lesson' })}`;
+  const description = isReviewMode
+    ? 'A quick check-in to keep what you learned within reach. Mixed questions across the module.'
+    : totalQuestions > 0
+      ? `${totalQuestions} ${plural({
+          count: totalQuestions,
+          singular: 'question',
+        })} testing your understanding across the ${lessonText} in this module.`
+      : `Test your understanding across the ${lessonText} in this module.`;
 
-      {isGenerating ? (
-        <TextLoader text="Creating quiz questions..." />
-      ) : hasQuizContent ? (
-        <>
-          <S.DescriptionText>
-            {totalQuestions} questions testing your understanding across all lessons in this module.
-          </S.DescriptionText>
-          <S.StartButton onClick={onStart}>
-            {quizProgress ? 'Retake Quiz' : 'Start Quiz'}
-          </S.StartButton>
-        </>
-      ) : (
-        <>
-          <S.DescriptionText>
-            Test your understanding across all {mod.lessons?.length ?? 0} lessons in this module.
-          </S.DescriptionText>
-          <S.StartButton onClick={onGenerate} disabled={isGenerating}>
-            {quizProgress ? 'Create New Quiz' : 'Start Quiz'}
-          </S.StartButton>
-        </>
-      )}
-    </S.Content>
-  </S.Container>
-);
+  return (
+    <S.Container>
+      <S.Content>
+        <S.TopRail>
+          <S.BackLink onClick={onBack}>
+            <S.BackIcon />
+            {backLabel}
+          </S.BackLink>
+        </S.TopRail>
+
+        <S.HeaderSection>
+          <Eyebrow>{isReviewMode ? 'Spaced review' : `Module ${moduleIndex + 1} · Quiz`}</Eyebrow>
+          <S.Title>{mod.name}</S.Title>
+        </S.HeaderSection>
+
+        {isGenerating ? (
+          <QuizGenerationPanel />
+        ) : (
+          <>
+            <S.DescriptionText>{description}</S.DescriptionText>
+
+            {quizProgress && quizProgress.bestTier && (
+              <S.PreviousAttemptLine>
+                Previous best ·{' '}
+                <S.PreviousAttemptHighlight $tier={quizProgress.bestTier}>
+                  {quizProgress.bestScore}% · {tierLabel[quizProgress.bestTier]}
+                </S.PreviousAttemptHighlight>
+                {' '}
+                <S.PreviousAttemptCount>
+                  {quizProgress.attempts.length}{' '}
+                  {plural({ count: quizProgress.attempts.length, singular: 'attempt' })}
+                </S.PreviousAttemptCount>
+              </S.PreviousAttemptLine>
+            )}
+
+            <S.PrimaryAction>
+              <Button
+                onClick={hasQuizContent ? onStart : onGenerate}
+                disabled={isGenerating}
+              >
+                {hasQuizContent
+                  ? quizProgress
+                    ? 'Retake quiz'
+                    : 'Start quiz'
+                  : quizProgress
+                    ? 'Create new quiz'
+                    : 'Start quiz'}
+                <ArrowRight size={14} />
+              </Button>
+            </S.PrimaryAction>
+          </>
+        )}
+      </S.Content>
+    </S.Container>
+  );
+};

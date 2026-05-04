@@ -72,6 +72,41 @@ export const themeColors: Record<'light' | 'dark', ColorsSet> = {
   },
 };
 
+// ── Design tokens (Strive design system) ────────────────
+// Canonical values come from
+//   _resources/strive-design-system/project/colors_and_type.css.
+// Radii: 4 sm / 6 md (buttons) / 8 lg (inputs, cards) / 10 xl (hero) / pill.
+// Shadows: card (rest), btn (primary), btn-hover, lift (hover on cards).
+// Spacing: 4-based then 8-based; expose `space[n]` for inline usage but prefer
+// CSS vars (--space-N) inside styled-components.
+
+export const radii = {
+  sm: 'var(--radius-sm)',
+  md: 'var(--radius-md)',
+  lg: 'var(--radius-lg)',
+  xl: 'var(--radius-xl)',
+  pill: 'var(--radius-pill)',
+} as const;
+
+export const shadows = {
+  card: 'var(--shadow-card)',
+  btn: 'var(--shadow-btn)',
+  btnHover: 'var(--shadow-btn-hover)',
+  lift: 'var(--shadow-lift)',
+} as const;
+
+export const space = {
+  1: 'var(--space-1)',
+  2: 'var(--space-2)',
+  3: 'var(--space-3)',
+  4: 'var(--space-4)',
+  5: 'var(--space-5)',
+  6: 'var(--space-6)',
+  8: 'var(--space-8)',
+  10: 'var(--space-10)',
+  12: 'var(--space-12)',
+} as const;
+
 // ── Breakpoints ─────────────────────────────────────────
 
 export const breakpoints = {

@@ -13,7 +13,7 @@ import * as S from './HandoffButton.styles';
  */
 export interface HandoffSuccess {
   ok: true;
-  target: 'quiz' | 'insights' | 'lesson';
+  target: 'quiz' | 'recall' | 'lesson';
   moduleIndex?: number;
   lessonIndex?: number;
   label: string;
@@ -73,8 +73,8 @@ const describeTarget = (target: HandoffSuccess['target']): string => {
   switch (target) {
     case 'quiz':
       return 'the module quiz';
-    case 'insights':
-      return 'your insights review queue';
+    case 'recall':
+      return 'your recall practice queue';
     case 'lesson':
       return 'the lesson';
   }
@@ -93,8 +93,8 @@ const resolveHref = ({
   payload: HandoffSuccess;
   courseSlug: string;
 }): string | null => {
-  if (payload.target === 'insights') {
-    return ROUTES.insights();
+  if (payload.target === 'recall') {
+    return ROUTES.recall();
   }
   if (payload.target === 'quiz') {
     if (payload.moduleIndex === undefined) return null;

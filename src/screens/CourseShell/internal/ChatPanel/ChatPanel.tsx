@@ -2,7 +2,7 @@
 
 import { useChat } from '@ai-sdk/react';
 import { UIMessage, DefaultChatTransport } from 'ai';
-import { ChevronRight, Sparkles, Trash2 } from 'lucide-react';
+import { ChevronRight, Trash2 } from 'lucide-react';
 import { useSession } from 'next-auth/react';
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { toast } from 'sonner';
@@ -17,6 +17,7 @@ import {
 } from '@/api/routes/course';
 import { Chat } from '@/components/Chat';
 import { TOASTS } from '@/constants/toasts';
+import { useJobManager } from '@/hooks/useJobManager';
 import { useLessonContent } from '@/hooks/useLessonContent';
 import * as S from './ChatPanel.styles';
 import { buildPartsFromPersistedMessage, uiMessagesToChatData } from './mentorMessages';
@@ -97,32 +98,61 @@ const LessonChatPanel = ({ contextLabel, courseSlug, moduleIndex, lessonIndex, o
   const [isClearing, setIsClearing] = useState(false);
   const [hasMessages, setHasMessages] = useState(false);
 
-  // Subscribe to the lesson-content react-query cache. The JobManager
-  // already invalidates this on `generate_lesson` completion (see
-  // hooks/useJobManager.tsx — handleStatus invalidates LESSON_CONTENT),
-  // so the moment generation finishes, `lessonContent.blocks` flips
-  // from empty to populated. We use that transition as the trigger to
-  // refetch the chat history — without it, the panel would stay on the
-  // pre-generation empty state until the user manually reloads, even
-  // though the lesson body has rendered next to it.
   const { data: lessonContent } = useLessonContent({
     courseId: courseSlug,
     moduleIndex,
     lessonIndex,
   });
   const hasContent = (lessonContent?.blocks?.length ?? 0) > 0;
+
+  // JobManager tracks which lesson is actively generating (set on
+  // job:started, cleared on job:status completed/failed). We treat the
+  // lesson as "settled" only when no generation job is in flight for
+  // it AND the body has rendered. While streaming, the lesson-content
+  // cache may populate partially via the LessonContent panel's
+  // polling — `hasContent` alone is NOT a "done" signal. Pairing it
+  // with `!isGeneratingThis` is.
+  const { generatingLesson } = useJobManager();
+  const isGeneratingThis =
+    !!generatingLesson &&
+    generatingLesson.moduleIndex === moduleIndex &&
+    generatingLesson.lessonIndex === lessonIndex;
+  const lessonReady = hasContent && !isGeneratingThis;
+
   const [historyRefetchKey, setHistoryRefetchKey] = useState(0);
-  const prevHasContentRef = useRef(hasContent);
+
+  // Bump refetch the moment the lesson transitions from "in-flight" to
+  // "settled". This catches the post-generation moment without needing
+  // a separate socket subscription — JobManager already clears
+  // generatingLesson on completion, which flips `lessonReady` here.
+  const prevReadyRef = useRef(lessonReady);
   useEffect(() => {
-    // Only react to the no-content → has-content transition. Other
-    // transitions (e.g. has-content → has-content as new blocks
-    // arrive during regeneration) shouldn't blow away the user's
-    // in-flight chat session by remounting the inner panel.
-    if (!prevHasContentRef.current && hasContent) {
+    if (!prevReadyRef.current && lessonReady) {
       setHistoryRefetchKey((k) => k + 1);
     }
-    prevHasContentRef.current = hasContent;
-  }, [hasContent]);
+    prevReadyRef.current = lessonReady;
+  }, [lessonReady]);
+
+  // Poll the history endpoint while the lesson is settled but the gate
+  // hasn't flipped yet — the server only returns non-empty
+  // `suggestedPrompts` once the full post-generation chain (recall cards,
+  // hero, links, prompt-building) finishes, which can lag the
+  // generate_lesson job by a few seconds. Caps at 20 attempts × 2s = 40s
+  // so we don't loop forever if a downstream job is stuck.
+  useEffect(() => {
+    if (lessonGenerated === true) return;
+    if (!lessonReady) return;
+    let attempts = 0;
+    const id = window.setInterval(() => {
+      attempts += 1;
+      if (attempts > 20) {
+        window.clearInterval(id);
+        return;
+      }
+      setHistoryRefetchKey((k) => k + 1);
+    }, 2000);
+    return () => window.clearInterval(id);
+  }, [lessonGenerated, lessonReady]);
 
   const handleClear = async () => {
     if (isClearing) return;
@@ -150,7 +180,14 @@ const LessonChatPanel = ({ contextLabel, courseSlug, moduleIndex, lessonIndex, o
       .then(
         ({ messages, attachmentsById, suggestedPrompts: serverPrompts, lessonGenerated: serverLessonGenerated }) => {
           if (cancelled) return;
-          setLessonGenerated(serverLessonGenerated);
+          // Unlock only when the server reports the lesson generated AND
+          // has produced suggested prompts. The server only returns a
+          // non-empty prompts array once the post-generation chain
+          // (recall cards, hero, links, prompt-building) finishes — using
+          // it as the gate avoids unlocking the chat while those tasks
+          // are still in flight. Ratchet so we never demote once ready.
+          const ready = serverLessonGenerated && (serverPrompts?.length ?? 0) > 0;
+          setLessonGenerated((prev) => (prev === true ? true : ready));
           if (serverPrompts?.length) {
             setSuggestedPrompts(serverPrompts);
           }
@@ -224,13 +261,12 @@ const LessonChatPanel = ({ contextLabel, courseSlug, moduleIndex, lessonIndex, o
         {header}
         <S.Body>
           <S.EmptyState>
-            <S.EmptyIcon>
-              <Sparkles size={22} />
-            </S.EmptyIcon>
-            <S.EmptyHeading>Generate this lesson to start chatting</S.EmptyHeading>
+            <S.EmptyRule aria-hidden />
+            <S.EmptyEyebrow>Mentor</S.EmptyEyebrow>
+            <S.EmptyHeading>Grounded in the lesson.</S.EmptyHeading>
             <S.EmptyHint>
-              Your mentor uses the lesson content to answer questions, surface what you&rsquo;re missing, and quiz you
-              on the key concepts.
+              Generate the lesson on the left to begin. Your mentor reads it with you — ready for
+              questions, more examples, and anything that&rsquo;s not landing.
             </S.EmptyHint>
           </S.EmptyState>
         </S.Body>
@@ -536,13 +572,12 @@ const CourseChatPanel = ({ contextLabel, courseSlug, onClose }: CourseChatPanelP
         {header}
         <S.Body>
           <S.EmptyState>
-            <S.EmptyIcon>
-              <Sparkles size={22} />
-            </S.EmptyIcon>
-            <S.EmptyHeading>Accept your course to start chatting</S.EmptyHeading>
+            <S.EmptyRule aria-hidden />
+            <S.EmptyEyebrow>Guide</S.EmptyEyebrow>
+            <S.EmptyHeading>Mapped to your course.</S.EmptyHeading>
             <S.EmptyHint>
-              Your guide knows your modules and lessons, your progress, and where you might be stuck — once your course
-              is ready it can help you decide what to do next.
+              Accept the course on the left to begin. Your guide knows your modules and lessons,
+              your progress, and where you might be stuck — and helps you decide what to do next.
             </S.EmptyHint>
           </S.EmptyState>
         </S.Body>

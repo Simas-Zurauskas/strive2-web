@@ -4,138 +4,23 @@ export const Layout = styled.div`
   min-height: calc(100vh - 56px);
   background: ${(p) => p.theme.colors.background};
   color: ${(p) => p.theme.colors.foreground};
-  padding: 2rem;
+  padding: 3.5rem 2rem 6rem;
 
   ${(p) => p.theme.media.tablet} {
-    padding: 1.5rem 1.25rem;
+    padding: 2rem 1.25rem 4rem;
   }
 `;
 
 export const Container = styled.div`
   width: 100%;
-  max-width: 1200px;
+  max-width: 1120px;
   margin: 0 auto;
   display: flex;
   flex-direction: column;
-  gap: 1.5rem;
+  gap: 2rem;
 `;
 
-// ── Debug panel ─────────────────────────────────────
-
-export const DebugPanel = styled.div`
-  display: flex;
-  flex-direction: column;
-  gap: 0.5rem;
-  padding: 0.875rem 1rem;
-  background: ${(p) => p.theme.colors.surface};
-  border: 1px dashed ${(p) => p.theme.colors.surfaceBorder};
-  border-radius: 8px;
-`;
-
-export const DebugLabel = styled.span`
-  font-size: 0.6875rem;
-  font-weight: 600;
-  text-transform: uppercase;
-  letter-spacing: 0.05em;
-  color: ${(p) => p.theme.colors.muted};
-`;
-
-export const DebugRow = styled.div`
-  display: flex;
-  flex-wrap: wrap;
-  gap: 0.5rem;
-`;
-
-// ── Filter bar ──────────────────────────────────────
-
-export const FilterBar = styled.div`
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 1rem;
-  margin-bottom: 1rem;
-`;
-
-export const SortToggle = styled.button`
-  padding: 0.375rem 0.75rem;
-  border-radius: 6px;
-  border: 1px solid ${(p) => p.theme.colors.border};
-  background: transparent;
-  color: ${(p) => p.theme.colors.muted};
-  font-size: 0.75rem;
-  font-weight: 500;
-  cursor: pointer;
-  transition:
-    border-color 0.15s,
-    color 0.15s;
-  flex-shrink: 0;
-
-  &:hover {
-    border-color: ${(p) => p.theme.colors.accent};
-    color: ${(p) => p.theme.colors.foreground};
-  }
-`;
-
-// ── Course grids ────────────────────────────────────
-
-export const CourseGrid = styled.div`
-  display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
-  gap: 1rem;
-`;
-
-export const DraftGrid = styled.div`
-  display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
-  gap: 0.75rem;
-`;
-
-// ── Bookmark list ───────────────────────────────────
-
-export const BookmarkList = styled.div`
-  display: flex;
-  flex-direction: column;
-  gap: 0.375rem;
-`;
-
-export const BookmarkItem = styled.div`
-  display: flex;
-  align-items: center;
-  gap: 0.75rem;
-  padding: 0.875rem 1rem;
-  background: ${(p) => p.theme.colors.surface};
-  border: 1px solid ${(p) => p.theme.colors.surfaceBorder};
-  border-radius: 8px;
-  cursor: pointer;
-  transition: border-color 0.15s;
-
-  &:hover {
-    border-color: ${(p) => p.theme.colors.accent};
-  }
-`;
-
-export const BookmarkContent = styled.div`
-  flex: 1;
-  min-width: 0;
-`;
-
-export const BookmarkCourse = styled.span`
-  font-size: 0.6875rem;
-  color: ${(p) => p.theme.colors.muted};
-  display: block;
-`;
-
-export const BookmarkLesson = styled.span`
-  font-size: 0.875rem;
-  font-weight: 500;
-  color: ${(p) => p.theme.colors.foreground};
-  display: block;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-`;
-
-// ── Empty & loading states ──────────────────────────
+// ── Empty / first-run state ────────────────────────────
 
 export const EmptyState = styled.div`
   display: flex;
@@ -143,15 +28,75 @@ export const EmptyState = styled.div`
   align-items: center;
   justify-content: center;
   text-align: center;
-  padding: 4rem 2rem;
-  gap: 1.5rem;
+  padding: 5rem 2rem;
+  gap: 1.25rem;
+  background: ${(p) => p.theme.colors.surface};
+  border: 1px solid ${(p) => p.theme.colors.surfaceBorder};
+  border-radius: var(--radius-xl);
+`;
+
+export const EmptyTitle = styled.h2`
+  font-family: var(--font-heading-serif), Georgia, serif;
+  font-style: italic;
+  font-size: 2.25rem;
+  font-weight: 400;
+  letter-spacing: -0.025em;
+  line-height: 1.05;
+  margin: 0;
+  color: ${(p) => p.theme.colors.foreground};
 `;
 
 export const EmptyText = styled.p`
-  font-size: 0.875rem;
+  font-size: 0.9375rem;
   color: ${(p) => p.theme.colors.muted};
-  text-align: center;
-  padding: 2rem 0;
+  max-width: 56ch;
+  line-height: 1.6;
   margin: 0;
 `;
 
+// ── Drafts inline rail ────────────────────────────────
+
+export const DraftsBlock = styled.section`
+  display: flex;
+  flex-direction: column;
+  gap: 0.875rem;
+`;
+
+export const SectionLead = styled.div`
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 1rem;
+`;
+
+export const SectionLabel = styled.span`
+  font-size: 0.6875rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: ${(p) => p.theme.colors.muted};
+`;
+
+export const SectionLink = styled.button`
+  background: transparent;
+  border: none;
+  padding: 0;
+  font: inherit;
+  font-size: 0.8125rem;
+  color: ${(p) => p.theme.colors.muted};
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.25rem;
+  transition: color 0.15s;
+
+  &:hover {
+    color: ${(p) => p.theme.colors.foreground};
+  }
+`;
+
+export const DraftGrid = styled.div`
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+  gap: 0.75rem;
+`;

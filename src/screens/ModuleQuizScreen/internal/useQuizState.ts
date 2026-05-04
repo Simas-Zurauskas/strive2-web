@@ -30,6 +30,23 @@ export const useQuizState = ({ courseSlug, moduleIndex }: { courseSlug: string; 
   const [quizStarted, setQuizStarted] = useState(false);
 
   const isGeneratingRef = useRef(false);
+  // Snapshot of `quizContent` at the moment a generation cycle begins. The
+  // belt-and-braces effect below uses reference inequality against this
+  // snapshot to know whether the cache holds *fresh* questions vs. stale
+  // ones from a prior attempt — important on the "Create new quiz" path
+  // where the previous attempt's content is still in cache.
+  const generationStartContentRef = useRef<typeof quizContent | null>(null);
+  // Live mirror of `quizContent` so the callbacks below can read its
+  // current value at click-time without listing it in their dep arrays.
+  // Putting `quizContent` in deps would re-create the callback on every
+  // cache refresh and prevent React Compiler from preserving manual
+  // memoization. The effect-write pattern keeps deps stable; we don't
+  // write during render because that would trip the no-refs-in-render
+  // rule (and cause stale reads in concurrent renders).
+  const quizContentRef = useRef(quizContent);
+  useEffect(() => {
+    quizContentRef.current = quizContent;
+  }, [quizContent]);
 
   // The trackJob registration outlives this hook because JobManager is
   // a global singleton — the `onComplete` callback can fire after the
@@ -59,6 +76,7 @@ export const useQuizState = ({ courseSlug, moduleIndex }: { courseSlug: string; 
             job.metadata?.moduleIndex === moduleIndex &&
             (job.status === 'pending' || job.status === 'processing')
           ) {
+            generationStartContentRef.current = quizContentRef.current;
             isGeneratingRef.current = true;
             setIsGenerating(true);
             trackJob({
@@ -89,13 +107,42 @@ export const useQuizState = ({ courseSlug, moduleIndex }: { courseSlug: string; 
   useEffect(() => {
     if (isGenerating && !isJobRunning && !generateQuiz.isPending) {
       isGeneratingRef.current = false;
-      setIsGenerating(false); // eslint-disable-line react-hooks/set-state-in-effect -- sync with external job state
+      // eslint-disable-next-line react-hooks/set-state-in-effect -- sync UI state with external job-runner state when no job is active
+      setIsGenerating(false);
     }
   }, [isGenerating, isJobRunning, generateQuiz.isPending]);
+
+  // Belt-and-braces: if FRESH quiz content lands in the react-query cache
+  // while we're still in the generating state (the trackJob `onComplete`
+  // callback can be missed if the socket disconnects right at completion —
+  // the user would otherwise be stuck on the generation panel until they
+  // reload), force the UI to transition. JobManager invalidates
+  // MODULE_QUIZ_CONTENT on `generate_module_quiz` completion, so a fresh
+  // fetch is guaranteed regardless of which tab/socket saw the event.
+  //
+  // The ref-comparison is what distinguishes "fresh content arrived" from
+  // "stale content from a prior attempt is still in cache" — without it
+  // this effect would fire immediately on the "Create new quiz" path
+  // (because `quizContent` already has the previous attempt's questions).
+  useEffect(() => {
+    if (!isGenerating) return;
+    if (totalQuestions === 0) return;
+    if (quizContent === generationStartContentRef.current) return;
+    isGeneratingRef.current = false;
+    generationStartContentRef.current = null;
+    // eslint-disable-next-line react-hooks/set-state-in-effect -- recover from missed socket completion event; ref guards above prevent loops
+    setIsGenerating(false);
+    setQuizStarted(true);
+  }, [isGenerating, totalQuestions, quizContent]);
 
   // ── Generate quiz ─────────────────────────────────────
 
   const handleGenerate = useCallback(async () => {
+    // Snapshot whatever's in the cache now — the belt-and-braces effect
+    // uses this to detect when fresh content arrives. If we're regenerating
+    // over an existing quiz, the previous attempt's questions are in
+    // `quizContent` until JobManager invalidates the cache on completion.
+    generationStartContentRef.current = quizContentRef.current;
     setIsGenerating(true);
     isGeneratingRef.current = true;
     try {

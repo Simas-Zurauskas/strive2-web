@@ -20,10 +20,12 @@ const peekJwtExp = (token: string): number | null => {
   }
 };
 
-// Sliding-refresh threshold. JWTs are issued for 7 days server-side; we
-// refresh when they're within 24 hours of expiring. This gives us room
-// to absorb a brief network outage without forcing the user to re-login.
-const REFRESH_BEFORE_EXPIRY_SECONDS = 24 * 60 * 60;
+// Sliding-refresh threshold. JWTs are issued for 30 days server-side; we
+// refresh when they're within 7 days of expiring. Matches the same 1/4
+// ratio the previous (7d / 24h) pair used — wide enough that casual
+// users who visit weekly never see a re-login prompt, narrow enough that
+// the refresh hit doesn't fire on every tab focus for active sessions.
+const REFRESH_BEFORE_EXPIRY_SECONDS = 7 * 24 * 60 * 60;
 
 export const authOptions: NextAuthOptions = {
   providers: [
@@ -138,6 +140,15 @@ export const authOptions: NextAuthOptions = {
   pages: {
     signIn: '/login',
     error: '/login',
+  },
+  // Pin the NextAuth session cookie to the same horizon as the wrapped
+  // access token. NextAuth's default is 30 days, which happens to match,
+  // but stating it explicitly keeps the two from drifting if either is
+  // tuned later — a session cookie that outlives its inner JWT just
+  // shows the user a "logged in but everything 401s" state.
+  session: {
+    strategy: 'jwt',
+    maxAge: 30 * 24 * 60 * 60,
   },
   secret: NEXTAUTH_SECRET,
 };

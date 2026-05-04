@@ -16,7 +16,7 @@ Strive's gamification surface exists for one reason: to make consistency easier.
 You earn experience points for the actions that matter:
 
 - Completing a lesson
-- Reviewing insight cards
+- Reviewing recall cards
 - Passing a module quiz (with bonuses for higher mastery tiers)
 - Hitting daily streak milestones
 
@@ -28,11 +28,11 @@ XP rolls up into levels at curved thresholds. Levels exist mostly for the satisf
 
 ## Streaks
 
-A streak counts consecutive days you've engaged with Strive — completed a lesson, reviewed at least one insight card, or finished a module quiz. The streak is the most behaviorally important number on the platform, and it's the only one we surface prominently.
+A streak counts consecutive days you've engaged with Strive — completed a lesson, reviewed at least one recall card, or finished a module quiz. The streak is the most behaviorally important number on the platform, and it's the only one we surface prominently.
 
 A few things to know:
 
-- **The bar is low.** Reviewing a single insight card counts. We're trying to make daily engagement the path of least resistance, not gating it behind serious work.
+- **The bar is low.** Reviewing a single recall card counts. We're trying to make daily engagement the path of least resistance, not gating it behind serious work.
 - **Streaks reset at midnight in your local timezone.** If you study late, you're fine.
 - **One day of grace.** A single missed day reduces (rather than nukes) your streak — life happens.
 
@@ -44,4 +44,4 @@ Achievements are intentionally finite. We don't want a cheap drip of ribbons; we
 
 ## What gamification doesn't do
 
-Gamification is a tailwind, not a destination. We don't recommend chasing XP at the expense of actual mastery. The Insights queue and the module quizzes are the things that actually move material into long-term memory. Leveling up just means you've spent enough time with those tools that the platform has noticed.
+Gamification is a tailwind, not a destination. We don't recommend chasing XP at the expense of actual mastery. The Recall queue and the module quizzes are the things that actually move material into long-term memory. Leveling up just means you've spent enough time with those tools that the platform has noticed.

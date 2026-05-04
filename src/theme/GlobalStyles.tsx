@@ -23,6 +23,33 @@ export const GlobalStyles = createGlobalStyle`
     --error: ${themeColors.light.error};
     --scrollbar-thumb: ${colorsLib.gray200};
     --scrollbar-thumb-hover: ${colorsLib.gray400};
+
+    /* Design system tokens — canonical values from
+       _resources/strive-design-system/project/colors_and_type.css. */
+
+    /* Radii — buttons 6, inputs/cards 8, hero 10, pills 9999 */
+    --radius-sm: 4px;
+    --radius-md: 6px;
+    --radius-lg: 8px;
+    --radius-xl: 10px;
+    --radius-pill: 9999px;
+
+    /* Spacing scale — 4-based, then 8-based */
+    --space-1: 0.25rem;
+    --space-2: 0.5rem;
+    --space-3: 0.75rem;
+    --space-4: 1rem;
+    --space-5: 1.25rem;
+    --space-6: 1.5rem;
+    --space-8: 2rem;
+    --space-10: 2.5rem;
+    --space-12: 3rem;
+
+    /* Shadows — used sparingly */
+    --shadow-card: 0 1px 3px rgba(0, 0, 0, 0.04);
+    --shadow-btn: 0 1px 3px rgba(0, 0, 0, 0.12), 0 1px 2px rgba(0, 0, 0, 0.08);
+    --shadow-btn-hover: 0 2px 6px rgba(0, 0, 0, 0.15), 0 1px 3px rgba(0, 0, 0, 0.10);
+    --shadow-lift: 0 4px 12px rgba(0, 0, 0, 0.08);
   }
 
   [data-theme="dark"],
@@ -44,6 +71,10 @@ export const GlobalStyles = createGlobalStyle`
     --error: ${themeColors.dark.error};
     --scrollbar-thumb: ${colorsLib.gray700};
     --scrollbar-thumb-hover: ${colorsLib.gray400};
+    --shadow-card: 0 1px 3px rgba(0, 0, 0, 0.18);
+    --shadow-btn: 0 1px 3px rgba(0, 0, 0, 0.4), 0 1px 2px rgba(0, 0, 0, 0.3);
+    --shadow-btn-hover: 0 2px 6px rgba(0, 0, 0, 0.45), 0 1px 3px rgba(0, 0, 0, 0.35);
+    --shadow-lift: 0 4px 14px rgba(0, 0, 0, 0.32);
   }
 
   html {

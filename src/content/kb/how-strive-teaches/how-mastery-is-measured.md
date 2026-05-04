@@ -23,12 +23,12 @@ Tiers are not gates. You can move on at any tier. They're a signal — to you �
 
 ## Card-level retrieval performance
 
-Separately, every insight card you review gets a private rating history. Cards you consistently get right at long intervals are flagged as *mastered* and rotate out of the daily queue. Cards you consistently rate Hard or Again stay in heavy rotation and reappear on shorter intervals.
+Separately, every recall card you review gets a private rating history. Cards you consistently get right at long intervals are flagged as *mastered* and rotate out of the daily queue. Cards you consistently rate Hard or Again stay in heavy rotation and reappear on shorter intervals.
 
-You can see the breakdown on your Insights page: how many cards are in each maturity bucket, how many are due today, and how your weekly retrieval rate is trending.
+You can see the breakdown on your Recall page: how many cards are in each maturity bucket, how many are due today, and how your weekly retrieval rate is trending.
 
 ## Why two layers
 
-Module mastery tells you whether the *concepts* connect. Insight-card mastery tells you whether the *facts and relationships* are durable. A learner can have Gold-tier module mastery and still forget specific details if they don't review — and conversely, a learner who's drilled the cards but never sat with the synthesis can recite definitions without being able to apply them. You want both.
+Module mastery tells you whether the *concepts* connect. Recall-card mastery tells you whether the *facts and relationships* are durable. A learner can have Gold-tier module mastery and still forget specific details if they don't review — and conversely, a learner who's drilled the cards but never sat with the synthesis can recite definitions without being able to apply them. You want both.
 
-The Insights page is where you'll spend your daily five minutes. The module quiz is the rite of passage at the end of each module. Together they're the difference between *finishing a course* and *actually learning the material*.
+The Recall page is where you'll spend your daily five minutes. The module quiz is the rite of passage at the end of each module. Together they're the difference between *finishing a course* and *actually learning the material*.

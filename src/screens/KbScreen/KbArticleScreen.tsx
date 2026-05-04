@@ -60,7 +60,7 @@ export const KbArticleScreen = ({ article, related }: KbArticleScreenProps) => {
       <S.Eyebrow>{article.topicTitle}</S.Eyebrow>
       <S.ArticleTitle>{article.title}</S.ArticleTitle>
       <S.ArticleSummary>{article.summary}</S.ArticleSummary>
-      {updated && <S.ArticleMeta>Last updated {updated}</S.ArticleMeta>}
+      {updated && <S.ArticleMeta>Updated {updated}</S.ArticleMeta>}
       <S.ArticleBody>
         <Markdown math>{article.body}</Markdown>
       </S.ArticleBody>

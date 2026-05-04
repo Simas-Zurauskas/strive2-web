@@ -1,7 +1,5 @@
 import { useRouter } from 'next/navigation';
-import { useCallback, useRef } from 'react';
-import { toast } from 'sonner';
-import { TOASTS } from '@/constants/toasts';
+import { useCallback, useEffect, useRef } from 'react';
 import { useJobManager } from '@/hooks/useJobManager';
 import { QKeys } from '@/types';
 import type { useDepthOverrideDialog } from './useDepthOverrideDialog';
@@ -322,6 +320,15 @@ export const useWizardHandlers = ({
     });
   }, [courseId, structureMutation, trackJob, setStep]);
 
+  // Self-recursive callback (the dialog's "confirm override" reuses the
+  // same flow with `acknowledged: true`). We thread the recursion through
+  // a ref so the closure can call the *current* version without capturing
+  // its own identifier — that bare self-reference fails React Compiler's
+  // "access before declared" check, since the closure captures the
+  // binding before the `useCallback` finishes assigning to it.
+  const executeDepthConfirmRef = useRef<
+    ((depthValue: CourseDepth, options?: { acknowledged?: boolean }) => void) | null
+  >(null);
   const executeDepthConfirm = useCallback(
     (depthValue: CourseDepth, options?: { acknowledged?: boolean }) => {
       if (!courseId) return;
@@ -351,7 +358,7 @@ export const useWizardHandlers = ({
             // selection while the dialog is open. The retry will re-set it.
             setDepth(previousDepth);
             depthOverrideDialog.showDialog(gatePayload, () => {
-              executeDepthConfirm(depthValue, { acknowledged: true });
+              executeDepthConfirmRef.current?.(depthValue, { acknowledged: true });
             });
           },
         },
@@ -359,6 +366,9 @@ export const useWizardHandlers = ({
     },
     [courseId, course, updateCourseMutation, triggerStructureGeneration, setDepth, depthOverrideDialog],
   );
+  useEffect(() => {
+    executeDepthConfirmRef.current = executeDepthConfirm;
+  }, [executeDepthConfirm]);
 
   const handleDepthConfirm = useCallback(
     (depthValue: CourseDepth) => {
@@ -395,7 +405,8 @@ export const useWizardHandlers = ({
         onSuccess: () => {
           queryClient.invalidateQueries({ queryKey: [QKeys.COURSES] });
           queryClient.invalidateQueries({ queryKey: [QKeys.COURSE, courseId] });
-          toast.success(TOASTS.COURSE_READY);
+          // Course-ready toast intentionally omitted — the redirect to the
+          // course page IS the confirmation. A toast on top would be noise.
           router.push(`/course/${course?.slug ?? courseId}`);
         },
       },

@@ -12,7 +12,7 @@ import {
   setPassword,
 } from '@/api/routes/auth';
 import { ClientApiError } from '@/api/types';
-import { Button, Input } from '@/components';
+import { Button, Input, PasswordRequirements } from '@/components';
 import { TOASTS } from '@/constants/toasts';
 import {
   changePasswordSchema,
@@ -174,8 +174,12 @@ export const PasswordModal = ({ open, mode, onClose }: PasswordModalProps) => {
                   autoComplete="new-password"
                   onChange={handleChange}
                   onBlur={handleBlur}
-                  error={touched.password ? errors.password : undefined}
+                  // Live checklist communicates which rule is failing — suppress
+                  // the redundant yup error so the field only shows the
+                  // "required" case after blur.
+                  error={touched.password && !values.password ? errors.password : undefined}
                 />
+                <PasswordRequirements value={values.password} />
                 <Input
                   name="confirmPassword"
                   type="password"

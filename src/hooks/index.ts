@@ -23,11 +23,11 @@ export { useLessonStream, LessonStreamProvider } from './useLessonStream';
 export { useSocket, SocketProvider } from './useSocket';
 export { useFavoriteCourseIds, useToggleFavoriteCourse } from './useFavorites';
 export {
-  useInsightQueue,
-  useInsightStats,
-  useInsightsDueCount,
-  useRateInsight,
-  useSkipInsight,
-  useSetInsightMode,
-  useGradeInsightAnswer,
-} from './useInsights';
+  useRecallQueue,
+  useRecallStats,
+  useRecallDueCount,
+  useRateRecall,
+  useSkipRecall,
+  useSetRecallMode,
+  useGradeRecallAnswer,
+} from './useRecall';

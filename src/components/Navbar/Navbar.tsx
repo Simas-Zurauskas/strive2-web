@@ -128,8 +128,8 @@ export const Navbar = () => {
           <S.NavLink href="/courses/new" $active={pathname === '/courses/new'}>
             Create
           </S.NavLink>
-          <S.NavLink href="/insights" $active={pathname === '/insights'}>
-            Insights
+          <S.NavLink href="/recall" $active={pathname === '/recall'}>
+            Recall
           </S.NavLink>
           <S.NavLink href="/quizzes" $active={pathname === '/quizzes'}>
             Quizzes

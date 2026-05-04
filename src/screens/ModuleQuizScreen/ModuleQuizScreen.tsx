@@ -2,10 +2,8 @@
 
 import { useParams, useRouter, useSearchParams } from 'next/navigation';
 import { useEffect } from 'react';
-import { TextLoader } from '@/components';
 import { useCourse } from '@/hooks';
-import { useQuizState, QuizResults, QuizQuestion, QuizLanding } from './internal';
-import * as S from './ModuleQuizScreen.styles';
+import { useQuizState, QuizResults, QuizQuestion, QuizLanding, QuizLoadingShell } from './internal';
 
 export const ModuleQuizScreen = () => {
   const params = useParams();
@@ -25,23 +23,22 @@ export const ModuleQuizScreen = () => {
   const mod = course?.structure?.modules?.[moduleIndex];
   const modules = course?.structure?.modules ?? [];
 
-  // ── Detect active quiz job on mount (navigate-back case) ──
   useEffect(() => {
     if (course?.activeJobId) {
       quiz.detectActiveJob(course.activeJobId);
     }
   }, [course?.activeJobId]); // eslint-disable-line react-hooks/exhaustive-deps
 
-  // ── Loading ───────────────────────────────────────────
+  // Where the back-link points: when the user landed via the global Quizzes
+  // index, return there; otherwise back to the course module list.
+  const backHref = fromQuizzes ? '/quizzes' : courseBasePath;
+  const backLabel = fromQuizzes ? 'Back to quizzes' : 'Back to module';
+  const onBack = () => router.push(backHref);
+
+  // ── Loading: course not yet hydrated ──────────────────
 
   if (!course || !mod) {
-    return (
-      <S.Container>
-        <S.Content>
-          <TextLoader />
-        </S.Content>
-      </S.Container>
-    );
+    return <QuizLoadingShell onBack={onBack} backLabel={backLabel} />;
   }
 
   // ── Results view ──────────────────────────────────────
@@ -63,11 +60,13 @@ export const ModuleQuizScreen = () => {
         onBackToReviews={() => router.push('/quizzes')}
         onDevReset={quiz.handleDevReset}
         hasNextModule={moduleIndex < modules.length - 1}
+        backLabel={backLabel}
+        onBack={onBack}
       />
     );
   }
 
-  // ── Taking quiz (one question at a time) ──────────────
+  // ── Taking quiz ───────────────────────────────────────
 
   if (quiz.quizStarted && quiz.questions.length > 0) {
     return (
@@ -84,20 +83,16 @@ export const ModuleQuizScreen = () => {
         onSelectOption={quiz.handleSelectOption}
         onNext={quiz.handleNext}
         onDevReset={quiz.handleDevReset}
+        backLabel={backLabel}
+        onBack={onBack}
       />
     );
   }
 
-  // ── Loading quiz content ───────────────────────────────
+  // ── Loading: quiz content fetching ────────────────────
 
   if (quiz.isLoadingContent) {
-    return (
-      <S.Container>
-        <S.Content>
-          <TextLoader />
-        </S.Content>
-      </S.Container>
-    );
+    return <QuizLoadingShell onBack={onBack} backLabel={backLabel} />;
   }
 
   // ── Pre-quiz / generate ───────────────────────────────
@@ -113,6 +108,8 @@ export const ModuleQuizScreen = () => {
       hasQuizContent={!!quiz.quizContent && !quiz.quizStarted}
       onStart={() => quiz.setQuizStarted(true)}
       onGenerate={quiz.handleGenerate}
+      backLabel={backLabel}
+      onBack={onBack}
     />
   );
 };

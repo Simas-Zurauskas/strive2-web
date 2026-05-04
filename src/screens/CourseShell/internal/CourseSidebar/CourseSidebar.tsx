@@ -2,12 +2,12 @@
 
 import {
   AlertCircle,
+  BookmarkCheck,
   CheckCircle,
   ChevronLeft,
   ChevronRight,
   Lock,
   Sparkles,
-  Star,
   Trophy,
 } from 'lucide-react';
 import { useRouter } from 'next/navigation';
@@ -234,8 +234,8 @@ export const CourseSidebar = ({
                         <LessonIndicator state={indicatorState} size="sm" />
                         <S.LessonName>{lesson.name}</S.LessonName>
                         {isBookmarked && (
-                          <S.BookmarkIcon>
-                            <Star size={12} fill="currentColor" />
+                          <S.BookmarkIcon aria-label="Bookmarked">
+                            <BookmarkCheck size={13} strokeWidth={1.75} fill="currentColor" />
                           </S.BookmarkIcon>
                         )}
                       </S.LessonItem>

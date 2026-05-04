@@ -1,14 +1,14 @@
 'use client';
 
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
-import { Check } from 'lucide-react';
-import { useState } from 'react';
+import { useMemo, useState } from 'react';
 import { toast } from 'sonner';
 import { updatePreferences } from '@/api/routes/auth';
 import { getNarrationVoices } from '@/api/routes/course';
 import { useAuth } from '@/hooks';
 import { QKeys } from '@/types';
 import * as S from './NarrationPreferences.styles';
+import { VoiceSelect, buildVoiceOptions } from './VoiceSelect';
 
 const PRESET_RATES = [0.85, 1.0, 1.15, 1.25, 1.5] as const;
 
@@ -43,6 +43,11 @@ export const NarrationPreferences = () => {
     onError: () => toast.error('Could not save narration preference'),
   });
 
+  const voiceOptions = useMemo(
+    () => buildVoiceOptions(voicesQuery.data?.voices),
+    [voicesQuery.data?.voices],
+  );
+
   if (!user) return null;
 
   const currentVoice = user.preferences?.narrationVoice ?? '';
@@ -53,15 +58,6 @@ export const NarrationPreferences = () => {
     setPendingVoiceId(voiceId);
     updateMutation.mutate(
       { narrationVoice: voiceId },
-      { onSettled: () => setPendingVoiceId(null) },
-    );
-  };
-
-  const handleClearVoice = () => {
-    if (currentVoice === '') return;
-    setPendingVoiceId('');
-    updateMutation.mutate(
-      { narrationVoice: '' },
       { onSettled: () => setPendingVoiceId(null) },
     );
   };
@@ -79,73 +75,47 @@ export const NarrationPreferences = () => {
     <S.Section>
       <S.SectionTitle>Lesson narration</S.SectionTitle>
       <S.Description>
-        Your default voice and speaking rate for audio narration. Each lesson can override
-        these from the player.
+        Your default voice and speaking rate for audio narration. Each lesson can override these
+        from the player.
       </S.Description>
 
-      <S.SubsectionLabel>Voice</S.SubsectionLabel>
-      <S.VoiceList>
-        <S.VoiceCard
-          $selected={currentVoice === ''}
-          onClick={handleClearVoice}
-          disabled={updateMutation.isPending}
-          type="button"
-        >
-          <S.VoiceMain>
-            <S.VoiceLabel>System default</S.VoiceLabel>
-            <S.VoiceDescription>
-              Whatever we recommend. Updates as we add new voices.
-            </S.VoiceDescription>
-          </S.VoiceMain>
-          <S.SelectionIndicator $selected={currentVoice === ''}>
-            {currentVoice === '' && <Check size={12} strokeWidth={3} />}
-          </S.SelectionIndicator>
-        </S.VoiceCard>
-        {(voicesQuery.data?.voices ?? []).map((v) => {
-          const isSelected = currentVoice === v.id;
-          const isPending = pendingVoiceId === v.id && updateMutation.isPending;
-          return (
-            <S.VoiceCard
-              key={v.id}
-              $selected={isSelected}
-              onClick={() => handlePickVoice(v.id)}
-              disabled={updateMutation.isPending}
-              type="button"
-            >
-              <S.VoiceMain>
-                <S.VoiceLabel>{v.label}</S.VoiceLabel>
-                <S.VoiceDescription>{v.description}</S.VoiceDescription>
-              </S.VoiceMain>
-              {isPending ? (
-                <S.PendingDot />
-              ) : (
-                <S.SelectionIndicator $selected={isSelected}>
-                  {isSelected && <Check size={12} strokeWidth={3} />}
-                </S.SelectionIndicator>
-              )}
-            </S.VoiceCard>
-          );
-        })}
-      </S.VoiceList>
+      <S.FieldGroup>
+        <S.FieldRow>
+          <S.SubsectionLabel>Voice</S.SubsectionLabel>
+          <VoiceSelect
+            value={currentVoice}
+            options={voiceOptions}
+            onChange={handlePickVoice}
+            disabled={updateMutation.isPending || voicesQuery.isLoading}
+            pendingId={pendingVoiceId}
+          />
+        </S.FieldRow>
 
-      <S.SubsectionLabel>Speaking rate</S.SubsectionLabel>
-      <S.RateRow>
-        {PRESET_RATES.map((rate) => {
-          const active = Math.abs(rate - currentRate) < 0.01;
-          const pending = pendingRate === rate && updateMutation.isPending;
-          return (
-            <S.RateButton
-              key={rate}
-              $active={active}
-              onClick={() => handlePickRate(rate)}
-              disabled={updateMutation.isPending}
-              type="button"
-            >
-              {pending ? '…' : `${rate}×`}
-            </S.RateButton>
-          );
-        })}
-      </S.RateRow>
+        <S.FieldRow>
+          <S.SubsectionLabel>Speaking rate</S.SubsectionLabel>
+          <S.RateRow>
+            {PRESET_RATES.map((rate) => {
+              const active = Math.abs(rate - currentRate) < 0.01;
+              const pending = pendingRate === rate && updateMutation.isPending;
+              return (
+                <S.RateButton
+                  key={rate}
+                  $active={active}
+                  $pending={pending}
+                  onClick={() => handlePickRate(rate)}
+                  disabled={updateMutation.isPending}
+                  type="button"
+                  aria-pressed={active}
+                  aria-busy={pending}
+                >
+                  {`${rate}×`}
+                  {pending && <S.RatePulse aria-hidden />}
+                </S.RateButton>
+              );
+            })}
+          </S.RateRow>
+        </S.FieldRow>
+      </S.FieldGroup>
     </S.Section>
   );
 };

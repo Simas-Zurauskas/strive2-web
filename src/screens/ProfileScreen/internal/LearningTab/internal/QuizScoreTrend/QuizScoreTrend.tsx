@@ -3,7 +3,18 @@ import HighchartsReact from 'highcharts-react-official';
 import { useMemo } from 'react';
 import { useTheme } from 'styled-components';
 import { themeColors } from '@/theme';
-import * as S from './QuizScoreTrend.styles';
+import { tooltipShellStyle } from '../_shared/chartTooltip';
+import {
+  Section,
+  SectionHeader,
+  SectionEyebrow,
+  TrendChip,
+  EmptyBlock,
+  EmptyRule,
+  EmptyEyebrow,
+  EmptyTitle,
+  EmptyText,
+} from '../_shared/styles';
 import type { QuizTrendsResult } from '@/api/types';
 
 interface QuizScoreTrendProps {
@@ -64,6 +75,12 @@ export const QuizScoreTrend: React.FC<QuizScoreTrendProps> = ({ data }) => {
       credits: { enabled: false },
       legend: {
         enabled: courseMap.size > 1,
+        align: 'left',
+        verticalAlign: 'bottom',
+        margin: 12,
+        itemDistance: 14,
+        itemMarginTop: 2,
+        itemMarginBottom: 2,
         itemStyle: { color: c.muted, fontSize: '0.625rem', fontWeight: '500' },
         itemHoverStyle: { color: c.foreground },
         symbolHeight: 8,
@@ -108,23 +125,34 @@ export const QuizScoreTrend: React.FC<QuizScoreTrendProps> = ({ data }) => {
         padding: 0,
         outside: true,
         formatter: function () {
-           
-          const ctx = this as unknown as { point: { y: number; custom?: { moduleName: string } }; series: { name: string }; color: string };
+          // Per-point tooltip — Highcharts gives us `this.point` directly,
+          // not a `points[]` array (we're not in shared-tooltip mode here).
+          const ctx = this as unknown as {
+            point: { y: number; custom?: { moduleName: string } };
+            series: { name: string };
+            color: string;
+          };
           const score = ctx.point.y ?? 0;
-          const tier = score >= 80 ? 'Mastered' : score >= 60 ? 'Passed' : 'Needs Review';
+          const tier = score >= 80 ? 'Mastered' : score >= 60 ? 'Passed' : 'Needs review';
           const tierColor = score >= 80 ? c.success : score >= 60 ? c.accent : c.error;
-          return `<div style="background:${c.surface};border:1px solid ${c.surfaceBorder};border-radius:12px;padding:12px 14px;min-width:160px;` +
-            `box-shadow:0 4px 24px rgba(0,0,0,${scheme === 'dark' ? '0.5' : '0.15'}),0 1px 4px rgba(0,0,0,${scheme === 'dark' ? '0.3' : '0.08'});` +
-            `color:${c.foreground};font-size:0.75rem;line-height:1.5">` +
-            `<div style="display:flex;align-items:center;gap:8px;margin-bottom:6px">` +
+          return (
+            `<div style="${tooltipShellStyle(c)}">` +
+            `<div style="display:flex;align-items:center;gap:8px;margin-bottom:4px">` +
             `<span style="width:8px;height:8px;border-radius:50%;background:${ctx.color};flex-shrink:0"></span>` +
             `<span style="font-weight:600">${ctx.series.name}</span></div>` +
-            `<div style="color:${c.muted};margin-bottom:4px">${ctx.point.custom?.moduleName ?? ''}</div>` +
-            `<div style="display:flex;justify-content:space-between;align-items:center">` +
-            `<span style="font-weight:700;font-size:1rem">${score}%</span>` +
-            `<span style="display:flex;align-items:center;gap:4px;font-weight:600;color:${tierColor}">` +
-            `<span style="width:6px;height:6px;border-radius:50%;background:${tierColor}"></span>${tier}</span>` +
-            `</div></div>`;
+            `<div style="color:${c.muted};font-size:0.6875rem;margin-bottom:6px">` +
+            `${ctx.point.custom?.moduleName ?? ''}</div>` +
+            `<div style="display:flex;justify-content:space-between;align-items:center;gap:10px">` +
+            `<span style="font-family:var(--font-heading-serif),Georgia,serif;font-style:italic;` +
+            `font-size:1.25rem;font-weight:600;font-variant-numeric:tabular-nums">${score}%</span>` +
+            `<span style="display:inline-flex;align-items:center;gap:5px;font-size:0.625rem;` +
+            `font-weight:600;letter-spacing:0.06em;text-transform:uppercase;` +
+            `padding:0.1875rem 0.5rem;border-radius:var(--radius-pill);` +
+            `border:1px solid color-mix(in oklab, ${tierColor} 28%, transparent);` +
+            `background:color-mix(in oklab, ${tierColor} 10%, transparent);` +
+            `color:${tierColor}">${tier}</span>` +
+            `</div></div>`
+          );
         },
       },
       plotOptions: {
@@ -136,27 +164,35 @@ export const QuizScoreTrend: React.FC<QuizScoreTrendProps> = ({ data }) => {
 
   if (data.attempts.length === 0) {
     return (
-      <S.Section>
-        <S.Header>
-          <S.Title>Quiz Scores</S.Title>
-        </S.Header>
-        <S.EmptyText>Complete quizzes to see your score trend</S.EmptyText>
-      </S.Section>
+      <Section>
+        <SectionHeader>
+          <SectionEyebrow>Quiz scores</SectionEyebrow>
+        </SectionHeader>
+        <EmptyBlock>
+          <EmptyRule aria-hidden />
+          <EmptyEyebrow>Nothing to chart yet</EmptyEyebrow>
+          <EmptyTitle>Take a quiz to start the line.</EmptyTitle>
+          <EmptyText>
+            Module quizzes appear here once you&rsquo;ve attempted at least one — the chart tracks
+            your best score per attempt across courses.
+          </EmptyText>
+        </EmptyBlock>
+      </Section>
     );
   }
 
   return (
-    <S.Section>
-      <S.Header>
-        <S.Title>Quiz Scores</S.Title>
+    <Section>
+      <SectionHeader>
+        <SectionEyebrow>Quiz scores</SectionEyebrow>
         {data.recentTrend !== 0 && (
-          <S.TrendLabel $positive={data.recentTrend > 0}>
+          <TrendChip $positive={data.recentTrend > 0}>
             {data.recentTrend > 0 ? '+' : ''}
             {data.recentTrend}% this month
-          </S.TrendLabel>
+          </TrendChip>
         )}
-      </S.Header>
+      </SectionHeader>
       <HighchartsReact highcharts={Highcharts} options={options} />
-    </S.Section>
+    </Section>
   );
 };

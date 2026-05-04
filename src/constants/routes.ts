@@ -3,6 +3,7 @@
 
 export const ROUTES = {
   home: () => '/',
+  library: (tab?: 'courses' | 'bookmarks') => (tab ? `/library?tab=${tab}` : '/library'),
   login: () => '/login',
   signup: () => '/signup',
   checkEmail: () => '/signup/check-email',
@@ -17,10 +18,11 @@ export const ROUTES = {
   billing: () => '/profile?tab=billing',
   profile: () => '/profile',
 
-  // Global insights (Leitner) review queue — not course-scoped. Linked
+  // Global recall practice queue (Leitner) — not course-scoped. Linked
   // from the navbar AND from mentor hand-offs (`emit_handoff` with
-  // target='insights' resolves to this path).
-  insights: () => '/insights',
+  // target='recall' resolves here; the wire string is 'recall'
+  // for back-compat with stored mentor sessions).
+  recall: () => '/recall',
 
   course: (slugOrId: string | null | undefined, fallbackId: string) =>
     `/course/${slugOrId ?? fallbackId}`,

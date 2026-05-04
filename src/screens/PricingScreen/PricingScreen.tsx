@@ -10,7 +10,7 @@ import {
   startCheckout,
   startPortal,
 } from '@/api/routes/billing';
-import { AlertDialog, Button, TopupControl } from '@/components';
+import { AlertDialog, Button } from '@/components';
 import { ROUTES } from '@/constants/routes';
 import { useAuth } from '@/hooks/useAuth';
 import { useBillingPlans, useBillingSummary } from '@/hooks/useBilling';
@@ -18,9 +18,7 @@ import { formatAllowance } from '@/lib/allowance';
 import { formatDate } from '@/lib/formatDate';
 import { QKeys } from '@/types';
 import * as S from './PricingScreen.styles';
-import type { BillingPlan, ClientApiError, PlanKey } from '@/api/types';
-
-type Cadence = 'monthly' | 'annual';
+import type { BillingCadence, BillingPlan, ClientApiError, PlanKey } from '@/api/types';
 
 // Allowance rank — used to compute upgrade vs downgrade for UX labels.
 // Doesn't affect backend behavior; both directions use the same
@@ -91,7 +89,7 @@ export const PricingScreen: React.FC = () => {
   const { user, isLoading: isAuthLoading } = useAuth();
   const { data: summary } = useBillingSummary();
   const { data: catalog, isLoading: isCatalogLoading } = useBillingPlans();
-  const [cadence, setCadence] = useState<Cadence>('monthly');
+  const [cadence, setCadence] = useState<BillingCadence>('monthly');
 
   const isAuthenticated = Boolean(user);
   const currentPlan = summary?.plan;
@@ -310,69 +308,78 @@ export const PricingScreen: React.FC = () => {
         </S.Grid>
       )}
 
-      {catalog && (
-        <S.TopupsSection>
-          <S.TopupsTitle>Need more mid-month? Top up any amount</S.TopupsTitle>
-          <S.Subtitle style={{ margin: 0, textAlign: 'left' }}>
-            Available on any plan. Pay once — the allowance never expires and is used after your monthly allowance runs out. Pay-as-you-go is priced ~25% above Starter's per-credit rate; subscriptions remain the cheaper recurring option.
-          </S.Subtitle>
-          {isAuthenticated ? (
-            <TopupControl />
-          ) : (
-            <Button
-              variant="secondary"
-              onClick={() => {
-                toast.info('Sign in to purchase allowance.');
-                router.push(`${ROUTES.signup()}?redirect=${encodeURIComponent(ROUTES.pricing())}`);
-              }}
-            >
-              Sign in to top up
-            </Button>
-          )}
-        </S.TopupsSection>
-      )}
-
       <S.FaqSection>
         <S.FaqTitle>Common questions</S.FaqTitle>
 
         <S.FaqItem>
-          <summary>What's the difference between the plans?</summary>
+          <summary>What can I actually do on each plan?</summary>
           <p>
-            Only the monthly allowance. Every plan unlocks the same features — course generation, hero images, curated
-            links, interactive exercises, and spaced-review cards. Pick the tier that matches how much you plan to generate each month.
+            Allowance translates roughly to <strong>full courses generated end-to-end</strong>. Free is enough to
+            try one short course or generate a handful of individual lessons. Starter covers a few personalized
+            courses a month. Pro is the comfortable middle for someone studying or building consistently. Studio
+            is for power users — multiple parallel courses, heavy regeneration, in-depth modules. Every plan
+            unlocks the same features; tiers only change how much you can generate.
           </p>
         </S.FaqItem>
 
         <S.FaqItem>
-          <summary>How does allowance work?</summary>
+          <summary>Will I lose my courses if I cancel or downgrade?</summary>
           <p>
-            Every AI-generated piece of content — a course outline, a lesson, a quiz — draws from your monthly allowance.
-            A full lesson uses about a third of one allowance unit; a whole course design uses about half. Your allowance
-            refreshes at the start of each billing period. Top-up allowance never expires and is used after your monthly
-            pool runs out.
+            No. Your courses, lessons, notes, bookmarks, quiz attempts, and recall progress all stay with your
+            account regardless of plan. You just won&rsquo;t be able to <em>generate</em> new content beyond your
+            current tier&rsquo;s allowance. Reading and reviewing existing courses is always free.
           </p>
         </S.FaqItem>
 
         <S.FaqItem>
-          <summary>What happens if a generation fails?</summary>
+          <summary>What happens if I run out mid-month?</summary>
           <p>
-            Allowance is fully refunded on any failure — network, provider outage, timeout, or cancellation. You only pay
-            for generations that finish and persist.
+            Two options. Upgrade to a higher tier and the new allowance is granted immediately — no waiting for
+            the next cycle. Or top up any whole-dollar amount from the Billing tab; top-up balance never expires
+            and is spent after your monthly allowance is drained.
+          </p>
+        </S.FaqItem>
+
+        <S.FaqItem>
+          <summary>What if a generation fails?</summary>
+          <p>
+            Allowance is fully refunded on any failure — network drop, provider outage, timeout, cancellation.
+            You only pay for generations that finish and persist. The same applies if you cancel a job
+            mid-flight.
           </p>
         </S.FaqItem>
 
         <S.FaqItem>
           <summary>Can I cancel anytime?</summary>
           <p>
-            Yes. Cancel from the billing portal and you retain access plus your remaining allowance through the end of your
-            current billing period, then drop to the Free tier. No partial-month refunds.
+            Yes. Cancel from the Billing portal and you keep full access plus your remaining allowance through
+            the end of the current billing period, then drop to Free. No partial-month refunds, but no
+            commitment beyond the current cycle either.
+          </p>
+        </S.FaqItem>
+
+        <S.FaqItem>
+          <summary>Is there a free trial?</summary>
+          <p>
+            The Free plan <em>is</em> the trial. Sign up, get a baseline monthly allowance, generate a real
+            course, and decide whether you want more. No credit card required to start.
+          </p>
+        </S.FaqItem>
+
+        <S.FaqItem>
+          <summary>Monthly or annual — which should I pick?</summary>
+          <p>
+            Annual saves about 20% on the price, but the allowance is granted <strong>once per year</strong>, not
+            split across 12 monthly refreshes. Pick monthly if you want predictable per-month allowance refreshes;
+            pick annual if you generate in bursts and want the lower price.
           </p>
         </S.FaqItem>
 
         <S.FaqItem>
           <summary>What about taxes?</summary>
           <p>
-            Prices are in USD. Stripe handles any applicable VAT or sales tax at checkout based on your billing address.
+            Prices are listed in USD. Stripe handles any applicable VAT or sales tax at checkout based on your
+            billing address — the line item is added to your invoice, not bundled into the headline price.
           </p>
         </S.FaqItem>
       </S.FaqSection>
@@ -392,7 +399,7 @@ export const PricingScreen: React.FC = () => {
           if (pendingConfirm.type === 'cancel') {
             return (
               <>
-                You'll keep full <strong>{summary.displayName}</strong> access until{' '}
+                You&rsquo;ll keep full <strong>{summary.displayName}</strong> access until{' '}
                 <strong>{periodEndLabel}</strong>. After that your account drops to Free.{' '}
                 No refund for the current period.
               </>
@@ -404,7 +411,7 @@ export const PricingScreen: React.FC = () => {
 
           return (
             <>
-              You'll keep your <strong>{summary.displayName}</strong> plan until{' '}
+              You&rsquo;ll keep your <strong>{summary.displayName}</strong> plan until{' '}
               <strong>{periodEndLabel}</strong>, then switch to{' '}
               <strong>{cap(pendingConfirm.planKey)}</strong>
               {priceLabel ? <> at <strong>{priceLabel}</strong></> : ''}.{' '}

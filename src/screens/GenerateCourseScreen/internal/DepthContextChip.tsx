@@ -111,11 +111,14 @@ export const DepthContextChip = ({
 }: DepthContextChipProps) => {
   const [dismissed, setDismissed] = useState(false);
 
-  // Restore dismissed state on mount. Done in an effect (not initial
-  // useState) so SSR doesn't try to access localStorage.
+  // Restore dismissed state per-course. Done in an effect (not lazy
+  // useState) because courseId can change across renders — a lazy
+  // initializer would only fire once on mount. SSR-safe: window guard
+  // sits behind the try/catch.
   useEffect(() => {
     try {
       const raw = window.localStorage.getItem(`${STORAGE_KEY_PREFIX}${courseId}`);
+      // eslint-disable-next-line react-hooks/set-state-in-effect -- restoring local UI state from external (localStorage) keyed on courseId
       if (raw === '1') setDismissed(true);
     } catch {
       // localStorage unavailable (incognito, restricted) — treat as

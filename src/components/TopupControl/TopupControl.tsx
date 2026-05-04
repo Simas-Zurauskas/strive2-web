@@ -127,7 +127,6 @@ export const TopupControl = ({ onRedirect, defaultAmount = 25, stacked = false }
         {!stacked && (
           <Button
             variant="primary"
-            size="small"
             onClick={handleBuy}
             disabled={!canBuy}
             loading={topupMutation.isPending}

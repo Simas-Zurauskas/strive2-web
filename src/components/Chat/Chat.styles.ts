@@ -94,16 +94,30 @@ export const ScrollDownButton = styled.button`
 
 // ── Empty state ───────────────────────────────────────
 
+/**
+ * Vertically + horizontally centered so the suggested prompts sit as a
+ * calm focal point, not stuck against the input or floating at the top.
+ */
 export const EmptyState = styled.div`
   display: flex;
   flex-direction: column;
   align-items: center;
-  justify-content: flex-end;
+  justify-content: center;
   flex: 1;
+  min-height: 100%;
   text-align: center;
-  padding: 1rem;
-  gap: 0.75rem;
+  padding: 2rem 1.25rem;
+  gap: 1.125rem;
   animation: ${fadeIn} 0.4s ease-out;
+`;
+
+/** Small uppercase tracked eyebrow above the prompt list. */
+export const EmptyEyebrow = styled.span`
+  font-size: 0.6875rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.12em;
+  color: ${(p) => p.theme.colors.muted};
 `;
 
 export const SuggestedPrompts = styled.div`
@@ -111,20 +125,28 @@ export const SuggestedPrompts = styled.div`
   flex-direction: column;
   gap: 0.5rem;
   width: 100%;
+  max-width: 320px;
 `;
 
+/**
+ * Suggested prompt button — sans-serif question (more legible than the
+ * serif italic at small sizes) with a faint hairline border and an
+ * accent-muted halo on hover.
+ */
 export const SuggestedPrompt = styled.button`
   background: ${(p) => p.theme.colors.surface};
   border: 1px solid ${(p) => p.theme.colors.surfaceBorder};
-  border-radius: 8px;
-  padding: 0.625rem 0.875rem;
-  font-size: 0.8125rem;
-  color: ${(p) => p.theme.colors.muted};
+  border-radius: var(--radius-md);
+  padding: 0.6875rem 0.9375rem;
   font-family: inherit;
-  text-align: left;
+  font-size: 0.875rem;
+  color: ${(p) => p.theme.colors.foreground};
+  line-height: 1.4;
+  text-align: center;
   cursor: pointer;
   transition:
     border-color 0.15s ease,
+    background 0.15s ease,
     color 0.15s ease;
   animation: ${fadeIn} 0.4s ease-out both;
 
@@ -139,8 +161,10 @@ export const SuggestedPrompt = styled.button`
   }
 
   &:hover:not(:disabled) {
-    border-color: ${(p) => p.theme.colors.muted};
-    color: ${(p) => p.theme.colors.foreground};
+    border-color: ${(p) =>
+      `color-mix(in oklab, ${p.theme.colors.accent} 45%, ${p.theme.colors.surfaceBorder})`};
+    background: ${(p) => p.theme.colors.accentMuted};
+    color: ${(p) => p.theme.colors.accent};
   }
 
   &:disabled {

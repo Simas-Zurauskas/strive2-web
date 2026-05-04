@@ -28,6 +28,8 @@ export type ClientApiError = ApiError & { status?: number };
 
 export type AuthorisedUser = components['schemas']['AuthorisedUser'];
 export type AuthProvider = components['schemas']['AuthProvider'];
+export type UserPreferences = components['schemas']['UserPreferences'];
+export type SecurityAction = components['schemas']['SecurityAction'];
 
 // ── Course / clarify types ─────────────────────────────
 
@@ -41,6 +43,10 @@ export type StructureReasoning = components['schemas']['StructureReasoning'];
 export type GenerateStructureResponse = components['schemas']['GenerateStructureResponse'];
 export type DepthPreview = components['schemas']['DepthPreview'];
 export type DepthPreviewsResponse = components['schemas']['DepthPreviewsResponse'];
+export type DepthOverrideRiskLevel = components['schemas']['DepthOverrideRiskLevel'];
+export type DepthOverrideOvercommitPayload = components['schemas']['DepthOverrideOvercommitPayload'];
+export type DepthOverrideUndercommitPayload = components['schemas']['DepthOverrideUndercommitPayload'];
+export type DepthOverridePayload = components['schemas']['DepthOverridePayload'];
 
 // ── Job / lesson content types ─────────────────────────
 
@@ -74,6 +80,29 @@ export type RecentActivityItem = components['schemas']['RecentActivityItem'];
 export type ChatMessage = components['schemas']['ChatMessage'];
 export type ChatHistoryMessage = components['schemas']['ChatHistoryMessage'];
 
+// ── Lesson-mentor chat types ───────────────────────────
+
+export type LessonChatHistoryAttachmentRef = components['schemas']['LessonChatHistoryAttachmentRef'];
+export type LessonChatHistoryMessage = components['schemas']['LessonChatHistoryMessage'];
+export type LessonChatHistoryResponse = components['schemas']['LessonChatHistoryResponse'];
+export type LessonChatAttachmentMeta = components['schemas']['LessonChatAttachmentMeta'];
+export type MentorChatHandoff = components['schemas']['MentorChatHandoff'];
+export type MentorAttachmentResponse = components['schemas']['MentorAttachmentResponse'];
+
+// ── Course-mentor chat (compass) types ─────────────────
+
+export type CourseMentorHistoryMessage = components['schemas']['CourseMentorHistoryMessage'];
+export type CourseMentorHistoryResponse = components['schemas']['CourseMentorHistoryResponse'];
+
+// ── Narration / TTS types ──────────────────────────────
+
+export type NarrationVoice = components['schemas']['NarrationVoice'];
+export type NarrationVoicesResponse = components['schemas']['NarrationVoicesResponse'];
+
+// ── Generic ack ────────────────────────────────────────
+
+export type OkResponse = components['schemas']['OkResponse'];
+
 // ── Gamification types ─────────────────────────────────
 
 export type AchievementCategory = components['schemas']['AchievementCategory'];
@@ -89,16 +118,16 @@ export type GamificationStats = components['schemas']['GamificationStats'];
 export type QuizTrendsAttempt = components['schemas']['QuizTrendsAttempt'];
 export type QuizTrendsResult = components['schemas']['QuizTrendsResult'];
 
-// ── Insight types ──────────────────────────────────────
+// ── Recall types ──────────────────────────────────────
 
-export type InsightKind = components['schemas']['InsightKind'];
-export type InsightMode = components['schemas']['InsightMode'];
-export type InsightState = components['schemas']['InsightState'];
-export type InsightRating = components['schemas']['InsightRating'];
-export type InsightQueueItem = components['schemas']['InsightQueueItem'];
-export type InsightQueue = components['schemas']['InsightQueue'];
-export type RateInsightResult = components['schemas']['RateInsightResult'];
-export type InsightStats = components['schemas']['InsightStats'];
+export type RecallCardKind = components['schemas']['RecallCardKind'];
+export type RecallMode = components['schemas']['RecallMode'];
+export type RecallState = components['schemas']['RecallState'];
+export type RecallRating = components['schemas']['RecallRating'];
+export type RecallQueueItem = components['schemas']['RecallQueueItem'];
+export type RecallQueue = components['schemas']['RecallQueue'];
+export type RateRecallResult = components['schemas']['RateRecallResult'];
+export type RecallStats = components['schemas']['RecallStats'];
 export type GradeVerdict = components['schemas']['GradeVerdict'];
 export type GradeResult = components['schemas']['GradeResult'];
 
@@ -142,7 +171,9 @@ export type LessonProgressEvent = components['schemas']['LessonProgressEvent'];
 export type LessonProgressBlockEvent = components['schemas']['LessonProgressBlockEvent'];
 export type LessonProgressHeroImageEvent = components['schemas']['LessonProgressHeroImageEvent'];
 export type LessonProgressContentReadyEvent = components['schemas']['LessonProgressContentReadyEvent'];
-export type LessonProgressInsightEvent = components['schemas']['LessonProgressInsightEvent'];
-export type LessonProgressInsightsSavedEvent = components['schemas']['LessonProgressInsightsSavedEvent'];
-export type GeneratedInsight = components['schemas']['GeneratedInsight'];
+export type LessonProgressRecallCardEvent = components['schemas']['LessonProgressRecallCardEvent'];
+export type LessonProgressRecallCardsSavedEvent = components['schemas']['LessonProgressRecallCardsSavedEvent'];
+export type LessonProgressNarrationStartedEvent = components['schemas']['LessonProgressNarrationStartedEvent'];
+export type LessonProgressNarrationReadyEvent = components['schemas']['LessonProgressNarrationReadyEvent'];
+export type GeneratedRecallCard = components['schemas']['GeneratedRecallCard'];
 export type CreditsUpdatedEvent = components['schemas']['CreditsUpdatedEvent'];

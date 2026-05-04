@@ -5,6 +5,7 @@ import { useTheme } from 'styled-components';
 import { plural } from '@/lib/strings';
 import { themeColors } from '@/theme';
 import * as S from './ActivityHeatmap.styles';
+import { Section, SectionHeader, SectionEyebrow, SectionMeta } from '../_shared/styles';
 import type { XpDayEntry } from '@/api/types';
 
 interface ActivityHeatmapProps {
@@ -111,13 +112,15 @@ export const ActivityHeatmap: React.FC<ActivityHeatmapProps> = ({ data, activeDa
   const calendarData = isLoading ? PLACEHOLDER_DATA : activities;
 
   return (
-    <S.Section>
-      <S.Header>
-        <S.Title>{isLoading ? <Skeleton width={80} /> : 'Activity'}</S.Title>
-        <S.Stat>
-          {isLoading ? <Skeleton width={80} /> : `${activeDays} active ${plural({ count: activeDays, singular: 'day' })}`}
-        </S.Stat>
-      </S.Header>
+    <Section>
+      <SectionHeader>
+        <SectionEyebrow>{isLoading ? <Skeleton width={80} /> : 'Daily activity'}</SectionEyebrow>
+        <SectionMeta>
+          {isLoading
+            ? <Skeleton width={80} />
+            : `${activeDays} active ${plural({ count: activeDays, singular: 'day' })} this year`}
+        </SectionMeta>
+      </SectionHeader>
       <S.CalendarWrap $loading={isLoading}>
         <ActivityCalendar
           data={calendarData}
@@ -137,6 +140,6 @@ export const ActivityHeatmap: React.FC<ActivityHeatmapProps> = ({ data, activeDa
           </S.SkeletonOverlay>
         )}
       </S.CalendarWrap>
-    </S.Section>
+    </Section>
   );
 };

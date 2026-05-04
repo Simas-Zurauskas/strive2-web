@@ -19,7 +19,9 @@ export {
   AuthSubmitBtn,
   AuthDivider,
   GoogleBtn,
+  AuthMoment,
 } from './AuthForm';
+export { PasswordRequirements } from './PasswordRequirements';
 
 // Feedback
 export { AlertDialog } from './AlertDialog';

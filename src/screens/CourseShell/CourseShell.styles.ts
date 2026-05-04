@@ -44,7 +44,11 @@ export const SidebarSlot = styled(motion.aside)`
 export const SidebarPanelFixed = styled(motion.div)`
   position: fixed;
   top: var(--navbar-offset, 56px);
-  bottom: 0;
+  /* --shell-bottom-offset is set by CourseShell to the height of the
+     footer currently visible in the viewport (0 most of the time). The
+     panel retracts upward as the footer scrolls into view so it never
+     overlaps the footer. */
+  bottom: var(--shell-bottom-offset, 0px);
   left: 0;
   width: 420px;
   z-index: 30;
@@ -53,6 +57,7 @@ export const SidebarPanelFixed = styled(motion.div)`
 
   ${(p) => p.theme.media.desktop} {
     top: 0;
+    bottom: 0;
     width: 100%;
     z-index: 40;
     transition: none;
@@ -93,7 +98,8 @@ export const ChatSlot = styled(motion.aside)`
 export const ChatPanelFixed = styled(motion.div)`
   position: fixed;
   top: var(--navbar-offset, 56px);
-  bottom: 0;
+  /* See SidebarPanelFixed — same retract-when-footer-visible mechanism. */
+  bottom: var(--shell-bottom-offset, 0px);
   right: 0;
   width: 420px;
   z-index: 30;
@@ -102,6 +108,7 @@ export const ChatPanelFixed = styled(motion.div)`
 
   ${(p) => p.theme.media.desktop} {
     top: 0;
+    bottom: 0;
     width: 100%;
     z-index: 40;
     transition: none;

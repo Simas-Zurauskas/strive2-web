@@ -28,7 +28,7 @@ const secondaryStyles = css`
   &:hover:not(:disabled) {
     border-color: ${(p) => p.theme.colors.tertiary};
     color: ${(p) => p.theme.colors.tertiary};
-    background: ${(p) => p.theme.colorsLib.secondary}08;
+    background: ${(p) => p.theme.colors.tertiaryMuted};
   }
 
   &:active:not(:disabled) {

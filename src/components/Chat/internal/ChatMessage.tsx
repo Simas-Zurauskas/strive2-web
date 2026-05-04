@@ -65,7 +65,7 @@ const parseHandoffSuccess = (output: unknown): HandoffSuccess | null => {
   if (!parsed || parsed.ok !== true) return null;
   const target = parsed.target;
   const label = parsed.label;
-  if (target !== 'quiz' && target !== 'insights' && target !== 'lesson') return null;
+  if (target !== 'quiz' && target !== 'recall' && target !== 'lesson') return null;
   if (typeof label !== 'string' || label.length === 0) return null;
   const moduleIndex = typeof parsed.moduleIndex === 'number' ? parsed.moduleIndex : undefined;
   const lessonIndex = typeof parsed.lessonIndex === 'number' ? parsed.lessonIndex : undefined;

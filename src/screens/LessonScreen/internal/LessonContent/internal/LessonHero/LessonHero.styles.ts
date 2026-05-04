@@ -96,29 +96,51 @@ export const TitleArea = styled.div`
 `;
 
 export const BookmarkButtonInline = styled.button<{ $active: boolean }>`
-  display: flex;
+  /* Sized to fit the longer "Bookmarked" label so toggling between the
+     two states doesn't visibly resize the chip — keeps the eyebrow row
+     stable. justify-content: center keeps the shorter label visually
+     centered inside the same width. margin-left: auto pushes it to the
+     right edge of the eyebrow row regardless of eyebrow content width. */
+  display: inline-flex;
   align-items: center;
   justify-content: center;
-  width: 32px;
-  height: 32px;
-  border-radius: 8px;
-  border: 1px solid ${(p) => p.theme.colors.border};
-  background: ${(p) => (p.$active ? `${p.theme.colors.tertiary}15` : 'transparent')};
+  gap: 0.375rem;
+  padding: 0.25rem 0.625rem;
+  min-width: 7rem;
+  margin-left: auto;
+  font-family: var(--font-body-sans), system-ui, sans-serif;
+  font-size: 0.6875rem;
+  font-weight: 500;
+  line-height: 1;
+  letter-spacing: 0.01em;
+  border-radius: var(--radius-md);
+  border: 1px solid ${(p) => (p.$active ? p.theme.colors.tertiary : p.theme.colors.border)};
+  background: ${(p) => (p.$active ? p.theme.colors.tertiaryMuted : 'transparent')};
   color: ${(p) => (p.$active ? p.theme.colors.tertiary : p.theme.colors.muted)};
   cursor: pointer;
   flex-shrink: 0;
-  margin-top: 0.25rem;
   transition:
     background 0.15s,
-    color 0.15s;
+    color 0.15s,
+    border-color 0.15s;
+
+  & svg {
+    width: 12px;
+    height: 12px;
+    stroke-width: 1.75;
+  }
 
   &:hover {
     color: ${(p) => p.theme.colors.tertiary};
-    background: ${(p) => `${p.theme.colors.tertiary}10`};
+    border-color: ${(p) =>
+      p.$active
+        ? p.theme.colors.tertiary
+        : `color-mix(in oklab, ${p.theme.colors.tertiary} 50%, ${p.theme.colors.border})`};
+    background: ${(p) => p.theme.colors.tertiaryMuted};
   }
 
   &:active {
-    transform: scale(0.95);
+    transform: scale(0.97);
   }
 `;
 
@@ -126,6 +148,11 @@ export const EyebrowRow = styled.div`
   display: flex;
   align-items: center;
   gap: 0.5rem;
+  width: 100%;
+  /* min-height locks the row to the chip's height so toggling
+     hasContent (which mounts/unmounts the bookmark chip) doesn't
+     change the row height and shift the title below. */
+  min-height: 1.75rem;
 `;
 
 export const Eyebrow = styled.span`

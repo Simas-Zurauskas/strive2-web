@@ -66,10 +66,10 @@ export const CadenceBtn = styled.button<{ $active: boolean }>`
 export const SavingsChip = styled.span`
   margin-left: 0.4rem;
   font-size: 0.7rem;
-  background: ${(p) => p.theme.colorsLib.green}15;
+  background: ${(p) => `color-mix(in oklab, ${p.theme.colors.success} 12%, transparent)`};
   color: ${(p) => p.theme.colors.success};
   padding: 0.15rem 0.5rem;
-  border-radius: 9999px;
+  border-radius: var(--radius-pill);
   font-weight: 600;
 `;
 
@@ -197,28 +197,23 @@ export const CardFooter = styled.div`
   gap: 0.5rem;
 `;
 
-export const TopupsSection = styled.section`
-  margin-top: 1.5rem;
-  padding: 1.5rem;
-  background: ${(p) => p.theme.colors.surface};
-  border: 1px solid ${(p) => p.theme.colors.surfaceBorder};
-  border-radius: 12px;
-  display: flex;
-  flex-direction: column;
-  gap: 0.75rem;
-`;
+// TopupsSection / TopupsTitle were removed alongside the in-pricing
+// top-up control. Top-up is reachable via the Billing tab and the
+// in-context OutOfCreditsModal — keeping it on /pricing
+// cannibalized subscription conversions and confused first-time
+// visitors with "Need more mid-month?" framing they couldn't apply.
 
-export const TopupsTitle = styled.h2`
-  font-size: 1.125rem;
-  font-weight: 600;
-  color: ${(p) => p.theme.colors.foreground};
-  margin: 0;
-`;
+// ── FAQ — hairline-divided list ────────────────────────
+// Editorial pattern: italic-serif section title, hairline-divided rows
+// (no per-item card chrome), serif chevron on the right that rotates on
+// open. Reads as a scholarly "Q&A" appendix rather than a help-center
+// accordion. Native <details> handles the toggle — no JS state needed.
 
 export const FaqSection = styled.section`
   display: flex;
   flex-direction: column;
-  gap: 1rem;
+  gap: 0;
+  margin-top: 1rem;
 `;
 
 export const FaqTitle = styled.h2`
@@ -226,26 +221,71 @@ export const FaqTitle = styled.h2`
   font-style: italic;
   font-size: 1.75rem;
   font-weight: 400;
+  letter-spacing: -0.015em;
   color: ${(p) => p.theme.colors.foreground};
-  margin: 0 0 0.5rem 0;
+  margin: 0 0 0.5rem;
 `;
 
 export const FaqItem = styled.details`
-  background: ${(p) => p.theme.colors.surface};
-  border: 1px solid ${(p) => p.theme.colors.surfaceBorder};
-  border-radius: 8px;
-  padding: 1rem 1.25rem;
+  border-top: 1px solid ${(p) => p.theme.colors.surfaceBorder};
+  padding: 1rem 0.5rem 1rem 0;
+  position: relative;
+
+  &:last-of-type {
+    border-bottom: 1px solid ${(p) => p.theme.colors.surfaceBorder};
+  }
 
   summary {
     cursor: pointer;
-    font-weight: 600;
+    font-size: 1rem;
+    font-weight: 500;
     color: ${(p) => p.theme.colors.foreground};
+    list-style: none;
+    padding-right: 1.5rem;
+    transition: color 0.15s;
+
+    &::-webkit-details-marker {
+      display: none;
+    }
+
+    &::after {
+      content: '+';
+      position: absolute;
+      right: 0.5rem;
+      top: 1rem;
+      font-family: var(--font-heading-serif), Georgia, serif;
+      font-style: italic;
+      font-size: 1.25rem;
+      font-weight: 400;
+      line-height: 1;
+      color: ${(p) => p.theme.colors.tertiary};
+      transition: transform 0.18s ease;
+    }
+
+    &:hover {
+      color: ${(p) => p.theme.colors.tertiary};
+    }
+  }
+
+  &[open] summary::after {
+    content: '–';
   }
 
   p {
-    margin: 0.75rem 0 0 0;
+    margin: 0.625rem 0 0;
     color: ${(p) => p.theme.colors.muted};
-    line-height: 1.55;
+    line-height: 1.6;
     font-size: 0.9375rem;
+    max-width: 60ch;
+
+    strong {
+      color: ${(p) => p.theme.colors.foreground};
+      font-weight: 600;
+    }
+
+    em {
+      font-style: italic;
+      color: ${(p) => p.theme.colors.foreground};
+    }
   }
 `;

@@ -96,7 +96,8 @@ export const CourseShell = ({ children }: CourseShellProps) => {
     onSuccess: () => {
       setShowDeleteDialog(false);
       queryClient.invalidateQueries({ queryKey: [QKeys.COURSES] });
-      toast(TOASTS.COURSE_DELETED);
+      // No toast — user confirmed via dialog; the visible state change
+      // (course removed from home library) is the confirmation.
       router.push('/');
     },
   });
@@ -151,6 +152,43 @@ export const CourseShell = ({ children }: CourseShellProps) => {
       // non-fatal.
     }
   }, [sidebarOpen]);
+
+  // ── Keep fixed sidebars above the global footer ──────
+  // Both sidebars are position: fixed with bottom: 0 — without this they'd
+  // sit ON TOP of the footer when the page is scrolled to the bottom. We
+  // measure how much of the footer is currently visible in the viewport
+  // and write that as a CSS variable; the SidebarPanelFixed and
+  // ChatPanelFixed styles bind their `bottom` to it. Result: panels stay
+  // at viewport-bottom during normal scroll, retract upward exactly the
+  // height of footer that's currently visible.
+  useEffect(() => {
+    const root = document.documentElement;
+    let raf: number | null = null;
+    const update = () => {
+      raf = null;
+      const footer = document.querySelector('footer');
+      if (!footer) {
+        root.style.setProperty('--shell-bottom-offset', '0px');
+        return;
+      }
+      const rect = footer.getBoundingClientRect();
+      const overlap = Math.max(0, window.innerHeight - rect.top);
+      root.style.setProperty('--shell-bottom-offset', `${overlap}px`);
+    };
+    const onScroll = () => {
+      if (raf !== null) return;
+      raf = requestAnimationFrame(update);
+    };
+    update();
+    window.addEventListener('scroll', onScroll, { passive: true });
+    window.addEventListener('resize', onScroll);
+    return () => {
+      window.removeEventListener('scroll', onScroll);
+      window.removeEventListener('resize', onScroll);
+      if (raf !== null) cancelAnimationFrame(raf);
+      root.style.setProperty('--shell-bottom-offset', '0px');
+    };
+  }, []);
 
   // ── Keyboard shortcuts ───────────────────────────────
   // ⌘\ / Ctrl+\           → toggle chat (right panel)

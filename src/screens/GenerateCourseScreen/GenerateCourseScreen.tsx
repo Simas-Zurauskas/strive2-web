@@ -150,6 +150,21 @@ const GenerateCourseWizard = ({ resumeCourse }: { resumeCourse: Course | null })
     (handlers.isJobRunning && step === 1);
   const goalError = handlers.createCourseMutation.error || handlers.clarifyMutation.error;
 
+  /**
+   * Any in-flight wizard work — used to lock the Discard button so a user
+   * can't tear down a course mid-generation. Includes the active job tracker
+   * (long-running structure / depth previews) and every wizard mutation that
+   * could leave server state inconsistent if cancelled by deletion.
+   */
+  const isAnyStepLoading =
+    handlers.isJobRunning ||
+    handlers.createCourseMutation.isPending ||
+    handlers.clarifyMutation.isPending ||
+    handlers.updateCourseMutation.isPending ||
+    handlers.depthPreviewsMutation.isPending ||
+    handlers.structureMutation.isPending ||
+    handlers.deleteMutation.isPending;
+
   return (
     <S.Layout>
       <S.Container $wide={step === 4} $semiWide={step === 1}>
@@ -158,7 +173,12 @@ const GenerateCourseWizard = ({ resumeCourse }: { resumeCourse: Course | null })
             <S.TopBar>
               {courseName && <S.CourseName>{courseName}</S.CourseName>}
               {courseId && (
-                <S.DiscardLink type="button" onClick={() => setShowDeleteDialog(true)}>
+                <S.DiscardLink
+                  type="button"
+                  onClick={() => setShowDeleteDialog(true)}
+                  disabled={isAnyStepLoading}
+                  title={isAnyStepLoading ? 'Wait for the current step to finish before discarding' : undefined}
+                >
                   Discard
                 </S.DiscardLink>
               )}

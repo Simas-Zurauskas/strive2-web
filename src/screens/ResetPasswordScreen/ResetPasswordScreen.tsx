@@ -14,6 +14,7 @@ import {
   AuthFormTitle,
   AuthSubmitBtn,
   Input,
+  PasswordRequirements,
 } from '@/components';
 import { TOASTS } from '@/constants/toasts';
 import { resetPasswordSchema, ResetPasswordValues } from '@/validation';
@@ -73,8 +74,12 @@ export const ResetPasswordScreen = () => {
             value={values.password}
             onChange={handleChange}
             onBlur={handleBlur}
-            error={touched.password ? errors.password : undefined}
+            // Live checklist below shows which rules are unmet — suppress the
+            // duplicate yup message under the field for the same reason as
+            // SignUpScreen. Only "required" surfaces here.
+            error={touched.password && !values.password ? errors.password : undefined}
           />
+          <PasswordRequirements value={values.password} />
 
           <Input
             name="confirmPassword"

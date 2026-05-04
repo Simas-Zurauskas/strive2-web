@@ -27,7 +27,7 @@ Strive's assessment is two-layered, and the two layers test different things:
 
 **Module quizzes.** At the end of each module you take a short quiz that pulls together ideas across the module's lessons. Module quizzes test *synthesis* — can you put pieces together into a working understanding? — and reward you with a mastery tier (Bronze, Silver, Gold) based on how cleanly you do it.
 
-**Insight cards.** Daily, atomic, retrieval-only. Insight cards test whether *individual* ideas have made it into long-term memory. Where the module quiz asks "do you understand the system?", insight cards ask "do you remember the building blocks?" Both matter; neither replaces the other.
+**Recall cards.** Daily, atomic, retrieval-only. Recall cards test whether *individual* ideas have made it into long-term memory. Where the module quiz asks "do you understand the system?", recall cards ask "do you remember the building blocks?" Both matter; neither replaces the other.
 
 ## The takeaway
 

@@ -54,10 +54,22 @@ client.interceptors.response.use(
   (err) => {
     const status = err.response?.status as number | undefined;
     if (status === 401) {
-      // Clear token immediately so in-flight requests can't resend the invalidated one
-      // before NextAuth's session update propagates through useAuth's effect.
-      setAuthToken(null);
-      signOut();
+      // Skip the auto-signOut if the failed request didn't carry a bearer
+      // header at all. That signature means the request raced ahead of
+      // the session-token sync (NOT that the server rotated the token
+      // and rejected ours). Auto-signing-out in the no-header case
+      // creates the "I just signed in but immediately got logged out"
+      // bug — the request fires before <AuthTokenSync> propagates the
+      // token, comes back 401, and the user is evicted before the next
+      // render. Real "your token was revoked" 401s always carry a stale
+      // bearer; those still trigger signOut.
+      const hadBearer = Boolean(err.config?.headers?.Authorization);
+      if (hadBearer) {
+        // Clear token immediately so in-flight requests can't resend the
+        // invalidated one before NextAuth's session update propagates.
+        setAuthToken(null);
+        signOut();
+      }
     }
 
     return parseErrorData(err.response?.data).then((parsed) => Promise.reject({ ...parsed, status }));

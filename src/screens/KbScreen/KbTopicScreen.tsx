@@ -27,13 +27,16 @@ export const KbTopicScreen = ({ topic, articles, searchEntries }: KbTopicScreenP
     <S.HeroSubtitle>{topic.summary}</S.HeroSubtitle>
     <KbSearchBar entries={searchEntries} />
     {articles.length === 0 ? (
-      <p>No articles in this topic yet — check back soon.</p>
+      <S.HeroSubtitle>No articles in this topic yet — check back soon.</S.HeroSubtitle>
     ) : (
-      <S.ArticleList>
-        {articles.map((a) => (
-          <KbArticleCard key={a.slug} article={a} />
-        ))}
-      </S.ArticleList>
+      <>
+        <S.SectionHeading>Articles</S.SectionHeading>
+        <S.ArticleList>
+          {articles.map((a) => (
+            <KbArticleCard key={a.slug} article={a} />
+          ))}
+        </S.ArticleList>
+      </>
     )}
   </S.Layout>
 );

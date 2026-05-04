@@ -281,32 +281,46 @@ export const LessonContent = ({
           <S.Placeholder>
             {isPrevLessonGenerated ? (
               <>
+                <S.PlaceholderHeader>
+                  <S.PlaceholderRule aria-hidden />
+                  <S.PlaceholderEyebrow>Ready to generate</S.PlaceholderEyebrow>
+                  <S.PlaceholderTitle>This lesson is yours to start.</S.PlaceholderTitle>
+                  <S.PlaceholderLead>
+                    Pick what to include, then we&rsquo;ll build the lesson around your goal.
+                  </S.PlaceholderLead>
+                </S.PlaceholderHeader>
+
                 <S.GenerateOptions>
-                  <S.GenerateOptionsHeading>Optional extras</S.GenerateOptionsHeading>
-                  <Checkbox
-                    label="Hero image"
-                    description="Decorative cover image for the lesson"
-                    checked={stream.includeImage}
-                    onChange={(e) => stream.handleIncludeImage(e.target.checked)}
-                  />
-                  <Checkbox
-                    label="Further reading"
-                    description="AI-curated links to deepen your understanding"
-                    checked={stream.includeLinks}
-                    onChange={(e) => stream.handleIncludeLinks(e.target.checked)}
-                  />
+                  <S.GenerateOptionRow>
+                    <Checkbox
+                      label="Hero image"
+                      description="Decorative cover image for the lesson"
+                      checked={stream.includeImage}
+                      onChange={(e) => stream.handleIncludeImage(e.target.checked)}
+                    />
+                  </S.GenerateOptionRow>
+                  <S.GenerateOptionRow>
+                    <Checkbox
+                      label="Further reading"
+                      description="AI-curated links to deepen your understanding"
+                      checked={stream.includeLinks}
+                      onChange={(e) => stream.handleIncludeLinks(e.target.checked)}
+                    />
+                  </S.GenerateOptionRow>
                 </S.GenerateOptions>
 
                 <Button onClick={stream.handleGenerate} disabled={stream.isAnyLessonGenerating || !affordable}>
                   {stream.isAnyLessonGenerating
-                    ? 'Another lesson is being created...'
+                    ? 'Another lesson is being created…'
                     : !affordable
                     ? 'Out of allowance'
                     : 'Create lesson'}
                 </Button>
               </>
             ) : (
-              <S.PlaceholderText>Create the previous lesson first to unlock this one.</S.PlaceholderText>
+              <S.PlaceholderText>
+                Generate the previous lesson first — they unlock in order.
+              </S.PlaceholderText>
             )}
           </S.Placeholder>
         )}
@@ -327,7 +341,7 @@ export const LessonContent = ({
             <AnimatePresence mode="wait" initial={false}>
               {completion.isCompleted ? (
                 <motion.div
-                  key="completed"
+                  key="finished"
                   initial={{ opacity: 0, y: 6 }}
                   animate={{ opacity: 1, y: 0 }}
                   transition={{ duration: 0.3, ease: 'easeOut' }}
@@ -337,33 +351,54 @@ export const LessonContent = ({
                       viewBox="0 0 16 16"
                       fill="none"
                       stroke="currentColor"
-                      strokeWidth="1.5"
+                      strokeWidth="1.75"
                       strokeLinecap="round"
                       strokeLinejoin="round"
                     >
                       <path d="M3.5 8.5L6.5 11.5L12.5 4.5" />
                     </svg>
-                    Lesson completed
+                    Lesson finished.
                   </S.CompletedBanner>
                 </motion.div>
               ) : (
-                <motion.div key="incomplete" exit={{ opacity: 0, scale: 0.95 }} transition={{ duration: 0.15 }}>
-                  <S.CompleteButton onClick={completion.handleMarkComplete} disabled={completion.upsertProgress.isPending}>
+                <motion.div key="unfinished" exit={{ opacity: 0, scale: 0.95 }} transition={{ duration: 0.15 }}>
+                  <S.CompleteButton
+                    onClick={completion.handleMarkComplete}
+                    disabled={completion.upsertProgress.isPending}
+                  >
                     {completion.upsertProgress.isPending ? (
-                      <S.Spinner />
+                      <>
+                        <S.Spinner />
+                        Saving…
+                      </>
                     ) : (
-                      <svg
-                        viewBox="0 0 16 16"
-                        fill="none"
-                        stroke="currentColor"
-                        strokeWidth="1.5"
-                        strokeLinecap="round"
-                        strokeLinejoin="round"
-                      >
-                        <path d="M3.5 8.5L6.5 11.5L12.5 4.5" />
-                      </svg>
+                      <>
+                        <svg
+                          viewBox="0 0 16 16"
+                          fill="none"
+                          stroke="currentColor"
+                          strokeWidth="1.75"
+                          strokeLinecap="round"
+                          strokeLinejoin="round"
+                        >
+                          <path d="M3.5 8.5L6.5 11.5L12.5 4.5" />
+                        </svg>
+                        {hasNext ? 'Mark as finished — next lesson' : 'Mark as finished'}
+                        {hasNext && (
+                          <svg
+                            className="arrow"
+                            viewBox="0 0 16 16"
+                            fill="none"
+                            stroke="currentColor"
+                            strokeWidth="1.75"
+                            strokeLinecap="round"
+                            strokeLinejoin="round"
+                          >
+                            <path d="M3 8h10M9 4l4 4-4 4" />
+                          </svg>
+                        )}
+                      </>
                     )}
-                    {completion.upsertProgress.isPending ? 'Completing...' : hasNext ? 'Complete & continue' : 'Mark as complete'}
                   </S.CompleteButton>
                 </motion.div>
               )}

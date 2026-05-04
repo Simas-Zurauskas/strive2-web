@@ -10,36 +10,48 @@ import {
 import { QKeys } from '@/types';
 import type { UsageSortDir, UsageSortField } from '@/api/types';
 
+/**
+ * `enabled` is opt-in lazy mode — callers pass `false` to hold the
+ * request until the user actually opens the engineer view. The default
+ * `true` keeps existing call sites working but the only consumer right
+ * now (BillingTab) flips it on/off based on the toggle.
+ *
+ * The server already gates these routes behind `requireAdmin`, so a
+ * non-admin who somehow flipped the flag client-side just gets 403s.
+ * `enabled` is purely a UX/quota convenience.
+ */
 export const useUsageHistory = ({
   limit,
   offset,
   sortBy = 'timestamp',
   sortDir = 'desc',
+  enabled = true,
 }: {
   limit: number;
   offset: number;
   sortBy?: UsageSortField;
   sortDir?: UsageSortDir;
+  enabled?: boolean;
 }) => {
   const { status } = useSession();
   return useQuery({
     queryKey: [QKeys.USAGE_HISTORY, limit, offset, sortBy, sortDir],
     queryFn: () => getUsageHistory({ limit, offset, sortBy, sortDir }),
-    enabled: status === 'authenticated',
+    enabled: enabled && status === 'authenticated',
   });
 };
 
-export const useUsageSummary = () => {
+export const useUsageSummary = ({ enabled = true }: { enabled?: boolean } = {}) => {
   const { status } = useSession();
   return useQuery({
     queryKey: [QKeys.USAGE_SUMMARY],
     queryFn: getUsageSummary,
-    enabled: status === 'authenticated',
+    enabled: enabled && status === 'authenticated',
   });
 };
 
-// Dev-only mutation — the endpoint 404s in non-dev environments, and the
-// UI that exposes this button is guarded by `DEV_MODE`.
+// Admin-only mutation. The server enforces this via `requireAdmin`; the
+// UI surfaces the button only when `user.isAdmin` is true.
 export const useDeleteAllUsageEvents = () => {
   const qc = useQueryClient();
   return useMutation({

@@ -14,7 +14,7 @@ We take privacy seriously. This page is the friendlier sibling of our [privacy p
 ## What we store
 
 - **Account information.** Your name, email, and authentication provider details (Google or password) when you create an account.
-- **Course and learning data.** Your generated courses, lessons you've studied, your notes, your bookmarks, your insight-card review history, and your quiz attempts. This data is stored so that *you* can come back to it.
+- **Course and learning data.** Your generated courses, lessons you've studied, your notes, your bookmarks, your recall-card review history, and your quiz attempts. This data is stored so that *you* can come back to it.
 - **Billing data.** Your subscription tier, allowance balance, ledger entries, and top-up history. Card details themselves are stored by Stripe, our payment processor — Strive never sees or stores your card.
 - **Usage telemetry.** Anonymous metrics about which features are used and how often, so we can improve the product.
 
@@ -32,7 +32,7 @@ When *you* are studying, your goal text and your wizard answers are sent to AI p
 
 ## How long we keep things
 
-As long as your account is active, your data stays with you. If you delete your account, all of your courses, lessons, notes, bookmarks, insight-card history, and quiz attempts are deleted. Active subscriptions are cancelled and any unspent top-up balance is forfeit (we make this explicit on the deletion confirmation screen so you can use up the balance first if you want).
+As long as your account is active, your data stays with you. If you delete your account, all of your courses, lessons, notes, bookmarks, recall-card history, and quiz attempts are deleted. Active subscriptions are cancelled and any unspent top-up balance is forfeit (we make this explicit on the deletion confirmation screen so you can use up the balance first if you want).
 
 ## Asking us anything
 
