@@ -114,8 +114,8 @@ export const LessonStreamProvider = ({ children }: { children: React.ReactNode }
           return { ...prev, image: event.url };
         case 'content_ready':
           return { ...prev, phase: 'finishing', placeholders: event.placeholders };
-        case 'insight':
-        case 'insights_saved':
+        case 'recall_card':
+        case 'recall_cards_saved':
           // No UI affordance yet — server-side persistence is the only
           // contract. Kept in the event union so future side-panels can
           // render incoming cards live without a protocol change.

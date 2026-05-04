@@ -138,13 +138,6 @@ export const HeaderTitle = styled.div`
   color: ${(p) => p.theme.colors.foreground};
 `;
 
-export const HeaderSubtitle = styled.div`
-  font-size: 0.6875rem;
-  color: ${(p) => p.theme.colors.muted};
-  letter-spacing: 0.04em;
-  text-transform: uppercase;
-`;
-
 export const HeaderAction = styled.button`
   width: 32px;
   height: 32px;

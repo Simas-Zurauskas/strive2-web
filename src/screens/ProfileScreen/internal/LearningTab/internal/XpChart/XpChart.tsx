@@ -132,15 +132,15 @@ export const XpChart: React.FC<XpChartProps> = ({ data, loading }) => {
           color: c.warning,
         },
         {
-          name: 'Insights',
+          name: 'Recall',
           type: 'column',
-          data: last30.map((d) => d.sources.insight_review),
+          data: last30.map((d) => d.sources.recall_review),
           color: c.tertiaryHover,
         },
         {
           name: 'Mastery',
           type: 'column',
-          data: last30.map((d) => d.sources.insight_mastery),
+          data: last30.map((d) => d.sources.recall_mastery),
           color: c.error,
         },
       ],

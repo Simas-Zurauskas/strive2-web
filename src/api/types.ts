@@ -89,16 +89,16 @@ export type GamificationStats = components['schemas']['GamificationStats'];
 export type QuizTrendsAttempt = components['schemas']['QuizTrendsAttempt'];
 export type QuizTrendsResult = components['schemas']['QuizTrendsResult'];
 
-// ── Insight types ──────────────────────────────────────
+// ── Recall types ──────────────────────────────────────
 
-export type InsightKind = components['schemas']['InsightKind'];
-export type InsightMode = components['schemas']['InsightMode'];
-export type InsightState = components['schemas']['InsightState'];
-export type InsightRating = components['schemas']['InsightRating'];
-export type InsightQueueItem = components['schemas']['InsightQueueItem'];
-export type InsightQueue = components['schemas']['InsightQueue'];
-export type RateInsightResult = components['schemas']['RateInsightResult'];
-export type InsightStats = components['schemas']['InsightStats'];
+export type RecallCardKind = components['schemas']['RecallCardKind'];
+export type RecallMode = components['schemas']['RecallMode'];
+export type RecallState = components['schemas']['RecallState'];
+export type RecallRating = components['schemas']['RecallRating'];
+export type RecallQueueItem = components['schemas']['RecallQueueItem'];
+export type RecallQueue = components['schemas']['RecallQueue'];
+export type RateRecallResult = components['schemas']['RateRecallResult'];
+export type RecallStats = components['schemas']['RecallStats'];
 export type GradeVerdict = components['schemas']['GradeVerdict'];
 export type GradeResult = components['schemas']['GradeResult'];
 
@@ -142,7 +142,7 @@ export type LessonProgressEvent = components['schemas']['LessonProgressEvent'];
 export type LessonProgressBlockEvent = components['schemas']['LessonProgressBlockEvent'];
 export type LessonProgressHeroImageEvent = components['schemas']['LessonProgressHeroImageEvent'];
 export type LessonProgressContentReadyEvent = components['schemas']['LessonProgressContentReadyEvent'];
-export type LessonProgressInsightEvent = components['schemas']['LessonProgressInsightEvent'];
-export type LessonProgressInsightsSavedEvent = components['schemas']['LessonProgressInsightsSavedEvent'];
-export type GeneratedInsight = components['schemas']['GeneratedInsight'];
+export type LessonProgressRecallCardEvent = components['schemas']['LessonProgressRecallCardEvent'];
+export type LessonProgressRecallCardsSavedEvent = components['schemas']['LessonProgressRecallCardsSavedEvent'];
+export type GeneratedRecallCard = components['schemas']['GeneratedRecallCard'];
 export type CreditsUpdatedEvent = components['schemas']['CreditsUpdatedEvent'];

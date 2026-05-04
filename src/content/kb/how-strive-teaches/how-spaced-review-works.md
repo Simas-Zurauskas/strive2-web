@@ -13,7 +13,7 @@ Reading a lesson once is not the same as remembering it. Cognitive scientists ha
 
 ## What the queue is
 
-When a lesson is generated, Strive automatically extracts a handful of *insight cards* — small, atomic facts or relationships from that lesson, framed as a question on the front and an answer on the back. The cards land in your Insights queue and start showing up daily for retrieval practice.
+When a lesson is generated, Strive automatically extracts a handful of *recall cards* — small, atomic facts or relationships from that lesson, framed as a question on the front and an answer on the back. The cards land in your Recall queue and start showing up daily for retrieval practice.
 
 Each morning, the queue surfaces a small number of due cards. You see the question, try to answer from memory, then reveal the answer and rate how confident you were:
 
@@ -36,7 +36,7 @@ Three things drive the design:
 
 You don't write cards. Strive's content pipeline writes them automatically as lessons are generated. The cards are paraphrases, not direct copies of the lesson — paraphrasing forces you to think semantically rather than match surface form.
 
-You can review your full insight queue on the Insights page from the navbar.
+You can review your full recall queue on the Recall page from the navbar.
 
 ## What's coming next
 

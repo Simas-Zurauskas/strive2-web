@@ -174,6 +174,7 @@ export const Chat = ({
             <S.Messages role="log" aria-live="polite" aria-relevant="additions">
               {showEmptyState && (
                 <S.EmptyState>
+                  <S.EmptyEyebrow>Try asking</S.EmptyEyebrow>
                   <S.SuggestedPrompts>
                     {suggestedPrompts!.map((prompt) => (
                       <S.SuggestedPrompt

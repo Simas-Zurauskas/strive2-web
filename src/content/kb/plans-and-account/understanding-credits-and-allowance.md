@@ -41,7 +41,7 @@ Anything that calls an AI model:
 - Regenerating a hero image
 - Synthesizing audio narration for a lesson
 
-Reading, reviewing insights, taking already-generated quizzes, taking notes, and changing settings cost nothing.
+Reading, reviewing recall cards, taking already-generated quizzes, taking notes, and changing settings cost nothing.
 
 ## How charges actually settle
 

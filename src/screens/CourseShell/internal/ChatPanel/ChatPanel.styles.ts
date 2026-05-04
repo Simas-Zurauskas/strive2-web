@@ -132,42 +132,56 @@ export const Body = styled.div`
 // the user is already on the lesson page where the generate button
 // lives, so a duplicate CTA would be noise.
 
+/**
+ * Editorial gate, not a generic empty state. Type does the work — small
+ * tertiary eyebrow, serif italic heading (a single quoted "promise"),
+ * muted body paragraph below. No iconographic rounded square.
+ */
 export const EmptyState = styled.div`
   display: flex;
   flex-direction: column;
   align-items: center;
   justify-content: center;
   height: 100%;
-  padding: 2rem 1.5rem;
+  padding: 2rem 1.75rem;
   text-align: center;
   gap: 0.875rem;
 `;
 
-export const EmptyIcon = styled.div`
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  width: 56px;
-  height: 56px;
-  border-radius: 14px;
-  background: ${(p) => p.theme.colors.background};
-  color: ${(p) => p.theme.colors.muted};
-  border: 1px solid ${(p) => p.theme.colors.surfaceBorder};
+/** Small ornamental rule above the heading — subtle, editorial. */
+export const EmptyRule = styled.span`
+  display: block;
+  width: 36px;
+  height: 1px;
+  background: ${(p) =>
+    `color-mix(in oklab, ${p.theme.colors.tertiary} 50%, ${p.theme.colors.surfaceBorder})`};
+  margin-bottom: 0.25rem;
+`;
+
+export const EmptyEyebrow = styled.span`
+  font-size: 0.6875rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.14em;
+  color: ${(p) => p.theme.colors.tertiary};
 `;
 
 export const EmptyHeading = styled.p`
-  font-size: 0.9375rem;
-  font-weight: 500;
+  font-family: var(--font-heading-serif), Georgia, serif;
+  font-style: italic;
+  font-size: 1.5rem;
+  font-weight: 400;
+  letter-spacing: -0.015em;
   color: ${(p) => p.theme.colors.foreground};
-  line-height: 1.4;
+  line-height: 1.2;
   margin: 0;
-  max-width: 22rem;
+  max-width: 18ch;
 `;
 
 export const EmptyHint = styled.p`
   font-size: 0.8125rem;
   color: ${(p) => p.theme.colors.muted};
-  line-height: 1.55;
+  line-height: 1.6;
   margin: 0;
-  max-width: 22rem;
+  max-width: 26ch;
 `;

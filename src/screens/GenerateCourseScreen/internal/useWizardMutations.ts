@@ -1,6 +1,5 @@
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { useRouter } from 'next/navigation';
-import { toast } from 'sonner';
 import {
   createCourse,
   clarifyCourse,
@@ -45,7 +44,9 @@ export const useWizardMutations = (courseId: string | null) => {
     mutationFn: () => deleteCourse(courseId!),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: [QKeys.COURSES] });
-      toast(TOASTS.COURSE_DELETED);
+      // No success toast — user explicitly confirmed deletion via dialog
+      // and is then navigated to home where the course is no longer listed.
+      // The dialog flow + visible state change is the confirmation.
       router.push('/');
     },
     meta: { errorMessage: TOASTS.COURSE_DELETE_ERROR },

@@ -1,7 +1,5 @@
 import { useRouter } from 'next/navigation';
 import { useCallback, useRef } from 'react';
-import { toast } from 'sonner';
-import { TOASTS } from '@/constants/toasts';
 import { useJobManager } from '@/hooks/useJobManager';
 import { QKeys } from '@/types';
 import type { useDepthOverrideDialog } from './useDepthOverrideDialog';
@@ -395,7 +393,8 @@ export const useWizardHandlers = ({
         onSuccess: () => {
           queryClient.invalidateQueries({ queryKey: [QKeys.COURSES] });
           queryClient.invalidateQueries({ queryKey: [QKeys.COURSE, courseId] });
-          toast.success(TOASTS.COURSE_READY);
+          // Course-ready toast intentionally omitted — the redirect to the
+          // course page IS the confirmation. A toast on top would be noise.
           router.push(`/course/${course?.slug ?? courseId}`);
         },
       },

@@ -2,9 +2,9 @@ import Skeleton from 'react-loading-skeleton';
 import { useGamificationProfile, useGamificationStats, useQuizTrends } from '@/hooks/useGamification';
 import { GamificationSection } from '../GamificationSection/GamificationSection';
 import { ActivityHeatmap } from './internal/ActivityHeatmap/ActivityHeatmap';
-import { InsightsCard } from './internal/InsightsCard/InsightsCard';
 import { QuizScoreTrend } from './internal/QuizScoreTrend/QuizScoreTrend';
 import * as QS from './internal/QuizScoreTrend/QuizScoreTrend.styles';
+import { RecallActivityCard } from './internal/RecallActivityCard/RecallActivityCard';
 import { WeeklySummary } from './internal/WeeklySummary/WeeklySummary';
 import * as WS from './internal/WeeklySummary/WeeklySummary.styles';
 import { XpChart } from './internal/XpChart/XpChart';
@@ -58,8 +58,8 @@ export const LearningTab: React.FC = () => {
       {quizLoading && !quizTrends && <QuizTrendSkeleton />}
       {quizTrends && <QuizScoreTrend data={quizTrends} />}
 
-      {/* Widget 5: Insights retention */}
-      <InsightsCard />
+      {/* Widget 5: Recall retention */}
+      <RecallActivityCard />
 
       {/* Achievements (existing) */}
       <GamificationSection />

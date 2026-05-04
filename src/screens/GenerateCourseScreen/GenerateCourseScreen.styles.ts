@@ -17,7 +17,9 @@ export const Layout = styled.div`
 
 export const Container = styled.div<{ $wide?: boolean; $semiWide?: boolean }>`
   width: 100%;
-  max-width: ${(p) => (p.$wide ? '1200px' : p.$semiWide ? '820px' : '640px')};
+  /* $wide (step 4 — structure review with side panel) matches the home
+     layout's 1120px so the page edges stay consistent across the app. */
+  max-width: ${(p) => (p.$wide ? '1120px' : p.$semiWide ? '820px' : '640px')};
   display: flex;
   flex-direction: column;
   gap: 2.5rem;
@@ -41,8 +43,13 @@ export const Content = styled.div``;
 export const DiscardLink = styled(TextAction)`
   margin-left: auto;
 
-  &:hover {
+  &:hover:not(:disabled) {
     text-decoration: underline;
+  }
+
+  &:disabled {
+    opacity: 0.4;
+    cursor: not-allowed;
   }
 `;
 

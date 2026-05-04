@@ -47,4 +47,4 @@ While you read, three private tools follow you:
 - **Bookmarks.** Star a lesson to pin it in your library's Bookmarks tab.
 - **Font scaling.** Make the text bigger or smaller; preferences persist.
 
-Notes and bookmarks are also content that you can return to later when reviewing — the queue surfaces *insight cards* automatically, but your notes are where your interpretation lives.
+Notes and bookmarks are also content that you can return to later when reviewing — the queue surfaces *recall cards* automatically, but your notes are where your interpretation lives.

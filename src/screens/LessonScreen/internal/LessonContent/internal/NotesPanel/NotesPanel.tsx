@@ -22,14 +22,22 @@ const PencilIcon = () => (
 
 const MAX_NOTES_LENGTH = 10_000;
 
+/**
+ * Collapse motion. Height + opacity share the same curve and duration so
+ * neither finishes ahead of the other (the previous split caused a brief
+ * "empty collapsing box" tail). The marginTop is animated on a child
+ * element via padding-top so the gap above the textarea collapses
+ * smoothly with the height — instead of disappearing in a snap when the
+ * outer element unmounts.
+ */
 const bodyVariants = {
   collapsed: { height: 0, opacity: 0 },
   expanded: { height: 'auto', opacity: 1 },
 };
 
 const bodyTransition = {
-  height: { duration: 0.3, ease: [0.25, 0.1, 0.25, 1] as const },
-  opacity: { duration: 0.2, ease: 'easeInOut' as const },
+  duration: 0.26,
+  ease: [0.32, 0.72, 0, 1] as const,
 };
 
 interface NotesPanelProps {
@@ -139,12 +147,12 @@ export const NotesPanel = ({ courseId, moduleIndex, lessonIndex, initialNotes }:
   return (
     <S.Container>
       <S.Header>
-        <S.Toggle onClick={toggle}>
+        <S.Toggle onClick={toggle} title="Toggle notes (⌘⇧M)">
           <PencilIcon />
           {expanded ? 'Hide notes' : text ? 'My notes' : 'Add a note'}
         </S.Toggle>
         {saveStatus !== 'idle' && (
-          <S.SaveStatus>{saveStatus === 'saving' ? 'Saving...' : 'Saved'}</S.SaveStatus>
+          <S.SaveStatus>{saveStatus === 'saving' ? 'Saving…' : 'Saved'}</S.SaveStatus>
         )}
       </S.Header>
 
@@ -157,26 +165,28 @@ export const NotesPanel = ({ courseId, moduleIndex, lessonIndex, initialNotes }:
             animate="expanded"
             exit="collapsed"
             transition={bodyTransition}
-            style={{ overflow: 'hidden', marginTop: '0.75rem' }}
+            style={{ overflow: 'hidden' }}
           >
-            <S.Textarea
-              ref={textareaRef}
-              value={text}
-              onChange={(e) => handleChange(e.target.value)}
-              onBlur={handleBlur}
-              maxLength={MAX_NOTES_LENGTH}
-              placeholder="Type your notes here..."
-            />
-            <S.Footer>
-              {text.length > MAX_NOTES_LENGTH * 0.9 ? (
-                <S.CharCount $warn>
-                  {text.length.toLocaleString()} / {MAX_NOTES_LENGTH.toLocaleString()}
-                </S.CharCount>
-              ) : (
-                <span />
-              )}
-              <S.ShortcutHint>⌘⇧M</S.ShortcutHint>
-            </S.Footer>
+            {/* paddingTop on this inner element (not the motion.div) so the
+                top gap collapses with the height instead of snapping at the
+                end of the exit animation. */}
+            <div style={{ paddingTop: '0.625rem' }}>
+              <S.TextareaWrap>
+                <S.Textarea
+                  ref={textareaRef}
+                  value={text}
+                  onChange={(e) => handleChange(e.target.value)}
+                  onBlur={handleBlur}
+                  maxLength={MAX_NOTES_LENGTH}
+                  placeholder="Type your notes here…"
+                />
+                {text.length > MAX_NOTES_LENGTH * 0.9 && (
+                  <S.CharCount $warn>
+                    {text.length.toLocaleString()} / {MAX_NOTES_LENGTH.toLocaleString()}
+                  </S.CharCount>
+                )}
+              </S.TextareaWrap>
+            </div>
           </motion.div>
         )}
       </AnimatePresence>

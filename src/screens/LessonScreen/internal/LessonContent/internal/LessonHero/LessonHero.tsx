@@ -1,6 +1,6 @@
 'use client';
 
-import { ImagePlus, Star } from 'lucide-react';
+import { Bookmark, BookmarkCheck, ImagePlus } from 'lucide-react';
 import { useState } from 'react';
 import Skeleton from 'react-loading-skeleton';
 import * as S from './LessonHero.styles';
@@ -60,6 +60,21 @@ export const LessonHero = ({
           <S.EyebrowRow>
             <S.Eyebrow>{eyebrowText}</S.Eyebrow>
             {isGenerating && <S.GeneratingDot />}
+            {hasContent && (
+              <S.BookmarkButtonInline
+                $active={isBookmarked}
+                onClick={onToggleBookmark}
+                aria-label={isBookmarked ? 'Remove bookmark' : 'Bookmark this lesson'}
+                title={isBookmarked ? 'Remove bookmark' : 'Bookmark this lesson'}
+              >
+                {isBookmarked ? (
+                  <BookmarkCheck strokeWidth={1.75} fill="currentColor" />
+                ) : (
+                  <Bookmark strokeWidth={1.75} />
+                )}
+                {isBookmarked ? 'Bookmarked' : 'Bookmark'}
+              </S.BookmarkButtonInline>
+            )}
           </S.EyebrowRow>
           <S.Title>{lessonName}</S.Title>
           {canRegenerateHero && (
@@ -69,15 +84,6 @@ export const LessonHero = ({
             </S.GenerateButton>
           )}
         </S.TitleArea>
-        {hasContent && (
-          <S.BookmarkButtonInline
-            $active={isBookmarked}
-            onClick={onToggleBookmark}
-            aria-label={isBookmarked ? 'Remove bookmark' : 'Bookmark this lesson'}
-          >
-            <Star size={16} fill={isBookmarked ? 'currentColor' : 'none'} />
-          </S.BookmarkButtonInline>
-        )}
       </S.TitleRow>
     );
   }
@@ -95,18 +101,24 @@ export const LessonHero = ({
           <S.EyebrowRow>
             <S.Eyebrow>{eyebrowText}</S.Eyebrow>
             {isGenerating && <S.GeneratingDot />}
+            {hasContent && (
+              <S.BookmarkButtonInline
+                $active={isBookmarked}
+                onClick={onToggleBookmark}
+                aria-label={isBookmarked ? 'Remove bookmark' : 'Bookmark this lesson'}
+                title={isBookmarked ? 'Remove bookmark' : 'Bookmark this lesson'}
+              >
+                {isBookmarked ? (
+                  <BookmarkCheck strokeWidth={1.75} fill="currentColor" />
+                ) : (
+                  <Bookmark strokeWidth={1.75} />
+                )}
+                {isBookmarked ? 'Bookmarked' : 'Bookmark'}
+              </S.BookmarkButtonInline>
+            )}
           </S.EyebrowRow>
           <S.Title>{lessonName}</S.Title>
         </S.TitleArea>
-        {hasContent && (
-          <S.BookmarkButtonInline
-            $active={isBookmarked}
-            onClick={onToggleBookmark}
-            aria-label={isBookmarked ? 'Remove bookmark' : 'Bookmark this lesson'}
-          >
-            <Star size={16} fill={isBookmarked ? 'currentColor' : 'none'} />
-          </S.BookmarkButtonInline>
-        )}
       </S.TitleRow>
     </S.HeroWrapper>
   );

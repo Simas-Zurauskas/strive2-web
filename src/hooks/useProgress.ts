@@ -82,6 +82,12 @@ export const useUpsertProgress = () => {
       queryClient.invalidateQueries({
         queryKey: [QKeys.GAMIFICATION_PROFILE],
       });
+      // Bookmark toggles flow through the same upsert, so the home/library
+      // bookmarks list must be refreshed too — otherwise newly-toggled
+      // bookmarks only appear after a hard reload.
+      queryClient.invalidateQueries({
+        queryKey: [QKeys.BOOKMARKED_LESSONS],
+      });
     },
     meta: { errorMessage: 'Failed to save progress' },
   });

@@ -59,11 +59,14 @@ export const useLessonCompletion = ({
 
           if (isCourseComplete) {
             celebrateCourseComplete();
-            toast.success(TOASTS.COURSE_COMPLETE);
+            toast(TOASTS.COURSE_COMPLETE);
             setTimeout(onOpenQuiz, 800);
           } else if (isModuleComplete) {
             celebrateModuleComplete();
-            toast(`Module ${moduleIndex + 1} complete! Take the quiz to test your knowledge.`);
+            // Auto-redirect to the module quiz follows in 800ms — the toast
+            // doesn't need to call out "take the quiz", the user is already
+            // looking at it by the time they finish reading the toast.
+            toast(`Module ${moduleIndex + 1} complete.`);
             setTimeout(onOpenQuiz, 800);
           } else {
             celebrateLessonComplete();

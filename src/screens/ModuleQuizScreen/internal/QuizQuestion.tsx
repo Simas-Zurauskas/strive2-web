@@ -20,6 +20,8 @@ interface QuizQuestionProps {
   onSelectOption: (index: number) => void;
   onNext: () => void;
   onDevReset: () => void;
+  onBack: () => void;
+  backLabel: string;
 }
 
 export const QuizQuestion = ({
@@ -35,27 +37,31 @@ export const QuizQuestion = ({
   onSelectOption,
   onNext,
   onDevReset,
+  onBack,
+  backLabel,
 }: QuizQuestionProps) => {
-  const getOptionState = (index: number): QuizOptionState => {
-    if (index === selectedOption) return 'selected';
-    return 'default';
-  };
+  const getOptionState = (index: number): QuizOptionState =>
+    index === selectedOption ? 'selected' : 'default';
+
+  const isLastQuestion = currentQuestion >= totalQuestions - 1;
 
   return (
     <S.Container>
       <S.Content>
-        {DEV_MODE && (
-          <S.TopBar>
+        <S.TopRail>
+          <S.BackLink onClick={onBack}>
+            <S.BackIcon />
+            {backLabel}
+          </S.BackLink>
+          {DEV_MODE && (
             <S.DevResetButton onClick={onDevReset} disabled={isResetting}>
-              <Trash2 size={10} /> Reset Quiz
+              <Trash2 size={10} /> Reset quiz
             </S.DevResetButton>
-          </S.TopBar>
-        )}
+          )}
+        </S.TopRail>
 
         <S.HeaderSection>
-          <Eyebrow>
-            {isReviewMode ? 'Spaced Review' : `Module ${moduleIndex + 1} Quiz`}
-          </Eyebrow>
+          <Eyebrow>{isReviewMode ? 'Spaced review' : `Module ${moduleIndex + 1} · Quiz`}</Eyebrow>
           <S.Title>{mod.name}</S.Title>
         </S.HeaderSection>
 
@@ -64,7 +70,7 @@ export const QuizQuestion = ({
             <S.ProgressBarFill $percent={((currentQuestion + 1) / totalQuestions) * 100} />
           </S.ProgressBarTrack>
           <S.ProgressText>
-            {currentQuestion + 1} / {totalQuestions}
+            Question {currentQuestion + 1} of {totalQuestions}
           </S.ProgressText>
         </S.ProgressBarContainer>
 
@@ -79,19 +85,21 @@ export const QuizQuestion = ({
             ))}
           </S.OptionsContainer>
           {question.isInterleaved && (
-            <S.Explanation>
+            <S.InterleavedTagWrap>
               <S.SourceTag>
-                Review question from Module {(question.interleavedModuleIndex ?? 0) + 1}
+                Review · From module {(question.interleavedModuleIndex ?? 0) + 1}
               </S.SourceTag>
-            </S.Explanation>
+            </S.InterleavedTagWrap>
           )}
         </S.QuestionCard>
 
         {selectedOption !== null && (
-          <Button onClick={onNext} loading={isSubmitting} style={{ alignSelf: 'flex-start' }}>
-            {currentQuestion < totalQuestions - 1 ? 'Next Question' : 'See Results'}{' '}
-            <ArrowRight size={14} />
-          </Button>
+          <S.PrimaryAction>
+            <Button onClick={onNext} loading={isSubmitting}>
+              {isLastQuestion ? 'Submit answers' : 'Next question'}
+              <ArrowRight size={14} />
+            </Button>
+          </S.PrimaryAction>
         )}
       </S.Content>
     </S.Container>

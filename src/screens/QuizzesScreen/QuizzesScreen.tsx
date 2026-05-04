@@ -1,6 +1,6 @@
 'use client';
 
-import { AlertCircle, CheckCircle, Sparkles, Trophy } from 'lucide-react';
+import { ArrowRight } from 'lucide-react';
 import { useRouter } from 'next/navigation';
 import { useMemo, useState } from 'react';
 import { FilterTabs, FilterTab, PageLayout } from '@/components';
@@ -22,12 +22,6 @@ interface QuizItem {
   reviewReason?: string;
 }
 
-const tierIcon: Record<QuizMasteryTier, typeof Trophy> = {
-  mastered: Trophy,
-  passed: CheckCircle,
-  needs_review: AlertCircle,
-};
-
 interface CourseGroup {
   courseId: string;
   courseSlug: string | null;
@@ -35,6 +29,18 @@ interface CourseGroup {
   hasReviews: boolean;
   items: QuizItem[];
 }
+
+const tierLabel: Record<QuizMasteryTier, string> = {
+  mastered: 'Mastered',
+  passed: 'Passed',
+  needs_review: 'Needs review',
+};
+
+const reviewMetaLine = (item: QuizItem): string => {
+  if (item.type === 'not-taken') return 'Not taken yet';
+  if (item.reviewReason === 'progression') return 'New progress unlocked a review';
+  return 'Scheduled review';
+};
 
 export const QuizzesScreen: React.FC = () => {
   const router = useRouter();
@@ -107,7 +113,6 @@ export const QuizzesScreen: React.FC = () => {
 
   const filteredGroups = useMemo(() => {
     if (filter === 'all') return courseGroups;
-
     return courseGroups
       .map((group) => ({
         ...group,
@@ -128,7 +133,23 @@ export const QuizzesScreen: React.FC = () => {
     <PageLayout>
       <S.ContentWrap>
         <S.PageHeader>
-          <S.Title>Quizzes</S.Title>
+          <S.Eyebrow>Practice</S.Eyebrow>
+          <S.Title>A quiet way to make what you read stick.</S.Title>
+          <S.Subtitle>
+            Each module ends with a quiz that checks your understanding. Reviews come back on a
+            spaced schedule, so the work compounds instead of fading.
+          </S.Subtitle>
+          <S.ScoringLine>
+            <S.ScoringLabel>Scoring</S.ScoringLabel>
+            <S.ScoringChip $tone="pass">
+              <S.ScoringDot $tone="pass" aria-hidden />
+              Pass · 70%
+            </S.ScoringChip>
+            <S.ScoringChip $tone="master">
+              <S.ScoringDot $tone="master" aria-hidden />
+              Master · 90%
+            </S.ScoringChip>
+          </S.ScoringLine>
         </S.PageHeader>
 
         {!isLoading && totalCount > 0 && (
@@ -149,9 +170,11 @@ export const QuizzesScreen: React.FC = () => {
 
         {!isLoading && totalCount === 0 && (
           <S.EmptyState>
-            <S.EmptyTitle>All caught up</S.EmptyTitle>
+            <S.EmptyRule aria-hidden />
+            <S.EmptyTitle>All caught up.</S.EmptyTitle>
             <S.EmptyText>
-              Complete module quizzes to unlock spaced reviews. They&apos;ll appear here when it&apos;s time to review.
+              Complete module quizzes to unlock spaced reviews. They&rsquo;ll appear here when it&rsquo;s
+              time to revisit them.
             </S.EmptyText>
           </S.EmptyState>
         )}
@@ -159,7 +182,7 @@ export const QuizzesScreen: React.FC = () => {
         {!isLoading && totalCount > 0 && filteredGroups.length === 0 && (
           <S.EmptyState>
             <S.EmptyText>
-              {filter === 'review' ? 'No reviews due' : 'No untaken quizzes'}
+              {filter === 'review' ? 'Nothing due for review.' : 'No untaken quizzes.'}
             </S.EmptyText>
           </S.EmptyState>
         )}
@@ -167,41 +190,46 @@ export const QuizzesScreen: React.FC = () => {
         {!isLoading && filteredGroups.length > 0 && (
           <S.CourseList>
             {filteredGroups.map((group) => (
-              <S.CourseCard key={group.courseId}>
-                <S.CourseHeader>
+              <S.CourseSection key={group.courseId}>
+                <S.CourseSectionHeader>
+                  <S.CourseEyebrow>Course</S.CourseEyebrow>
                   <S.CourseName>{group.courseName}</S.CourseName>
-                </S.CourseHeader>
-                {group.items.map((item) => {
-                  const tier: QuizMasteryTier | undefined =
-                    item.type === 'review' ? (item.bestTier ?? 'needs_review') : undefined;
-                  const Icon = tier ? tierIcon[tier] : Sparkles;
-                  return (
-                    <S.QuizRow
-                      key={`${item.courseId}-${item.moduleIndex}`}
-                      onClick={() => handleQuizClick(item)}
-                    >
-                      <S.QuizIconWrap $variant={tier ?? 'not-taken'}>
-                        <Icon size={16} strokeWidth={2} />
-                      </S.QuizIconWrap>
-                      <S.QuizContent>
-                        <S.QuizModuleName>
-                          Module {item.moduleIndex + 1}: {item.moduleName}
-                        </S.QuizModuleName>
-                        {item.type === 'review' && (
-                          <S.QuizMeta>
-                            {item.reviewReason === 'progression'
-                              ? 'Triggered by new progress'
-                              : 'Scheduled review'}
-                          </S.QuizMeta>
+                </S.CourseSectionHeader>
+                <S.QuizList>
+                  {group.items.map((item) => (
+                    <li key={`${item.courseId}-${item.moduleIndex}`}>
+                      <S.QuizRow onClick={() => handleQuizClick(item)}>
+                        <S.QuizContent>
+                          <S.QuizModuleName>
+                            Module {item.moduleIndex + 1} · {item.moduleName}
+                          </S.QuizModuleName>
+                          <S.QuizMeta>{reviewMetaLine(item)}</S.QuizMeta>
+                        </S.QuizContent>
+
+                        {item.type === 'review' && item.bestTier && item.bestScore != null ? (
+                          <S.QuizStatus $variant="tier" $tier={item.bestTier}>
+                            {item.bestScore}% · {tierLabel[item.bestTier]}
+                          </S.QuizStatus>
+                        ) : item.type === 'review' ? (
+                          <S.QuizStatus $variant="review-due">
+                            <S.StatusDot $tone="error" aria-hidden />
+                            Due
+                          </S.QuizStatus>
+                        ) : (
+                          <S.QuizStatus $variant="fresh">
+                            <S.StatusDot $tone="tertiary" aria-hidden />
+                            New
+                          </S.QuizStatus>
                         )}
-                      </S.QuizContent>
-                      {tier && item.bestScore != null && (
-                        <S.TierBadge $tier={tier}>{item.bestScore}%</S.TierBadge>
-                      )}
-                    </S.QuizRow>
-                  );
-                })}
-              </S.CourseCard>
+
+                        <S.QuizArrow aria-hidden>
+                          <ArrowRight size={15} strokeWidth={1.75} />
+                        </S.QuizArrow>
+                      </S.QuizRow>
+                    </li>
+                  ))}
+                </S.QuizList>
+              </S.CourseSection>
             ))}
           </S.CourseList>
         )}

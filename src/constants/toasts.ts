@@ -15,12 +15,12 @@ export const TOASTS = {
   GENERATION_COMPLETE: 'Generation complete',
   GENERATION_FAILED: 'Generation failed',
   GENERATION_FAILED_RETRY: 'Generation failed. Please try again.',
-  COURSE_COMPLETE: 'Congratulations! Course complete!',
+  COURSE_COMPLETE: 'Course complete.',
 
   // ── Quiz ──────────────────────────────────────────────
   QUIZ_GENERATION_FAILED: 'Quiz generation failed. Please try again.',
   QUIZ_START_ERROR: 'Failed to start quiz generation',
-  MODULE_MASTERED: 'Module mastered!',
+  MODULE_MASTERED: 'Module mastered.',
   QUIZ_SUBMIT_ERROR: 'Failed to submit quiz',
 
   // ── Auth & verification ───────────────────────────────

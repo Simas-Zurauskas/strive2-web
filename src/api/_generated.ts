@@ -15,7 +15,13 @@ export interface paths {
         put?: never;
         /**
          * Change the password for the authenticated user
-         * @description Requires an existing password (CREDENTIALS provider). Bumps tokenVersion to invalidate other sessions; the caller must re-authenticate.
+         * @description Two-factor: requires a fresh 6-digit confirmation code emailed to the
+         *     user via `/api/auth/security-action/request-code` with action=change_password.
+         *     The code is the gate — without it a stolen JWT cannot rotate the
+         *     password. On success bumps tokenVersion to invalidate every other
+         *     session AND mints a fresh JWT for the caller (returned as
+         *     `data.token`) so the calling session stays alive while every other
+         *     device is forced to re-authenticate.
          */
         post: {
             parameters: {
@@ -28,6 +34,8 @@ export interface paths {
                 content: {
                     "application/json": {
                         newPassword: string;
+                        /** @description 6-digit confirmation code from the email. */
+                        code: string;
                     };
                 };
             };
@@ -40,6 +48,8 @@ export interface paths {
                         "application/json": {
                             data: {
                                 message?: string;
+                                /** @description Fresh JWT bound to the new tokenVersion. The client should swap this in to keep the calling session alive. */
+                                token: string;
                             };
                         };
                     };
@@ -53,6 +63,14 @@ export interface paths {
                     };
                 };
                 401: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ApiError"];
+                    };
+                };
+                429: {
                     headers: {
                         [name: string]: unknown;
                     };
@@ -78,7 +96,13 @@ export interface paths {
         get?: never;
         put?: never;
         post?: never;
-        /** Delete the authenticated user's account and all associated data */
+        /**
+         * Delete the authenticated user's account and all associated data
+         * @description Two-factor: requires a fresh 6-digit confirmation code emailed to the
+         *     user via `/api/auth/security-action/request-code` with action=delete_account.
+         *     Applies uniformly to credentials and OAuth users — a stolen JWT alone
+         *     cannot delete the account.
+         */
         delete: {
             parameters: {
                 query?: never;
@@ -89,7 +113,8 @@ export interface paths {
             requestBody: {
                 content: {
                     "application/json": {
-                        password: string;
+                        /** @description 6-digit confirmation code from the email. */
+                        code: string;
                     };
                 };
             };
@@ -106,7 +131,23 @@ export interface paths {
                         };
                     };
                 };
+                400: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ApiError"];
+                    };
+                };
                 401: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ApiError"];
+                    };
+                };
+                429: {
                     headers: {
                         [name: string]: unknown;
                     };
@@ -292,6 +333,70 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/auth/refresh": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Issue a fresh access token for a still-valid session
+         * @description Sliding-refresh entrypoint. Accepts a still-valid bearer token (the
+         *     same one the client already holds) and returns a fresh 7-day access
+         *     token. Re-checks `tokenVersion` against the DB so a token whose
+         *     version has been bumped (logout, password change, change-password)
+         *     refuses to refresh and forces re-authentication.
+         *
+         *     The client (NextAuth jwt callback) should call this when the JWT
+         *     is within ~24h of expiry — early enough that a network blip
+         *     doesn't strand the user on an expired token, late enough that
+         *     short sessions don't generate refresh churn.
+         *
+         *     This endpoint does NOT require email verification (`requireVerified`)
+         *     — sliding-refresh is a session-management primitive that should
+         *     work regardless of verification state. Feature routes still gate
+         *     behind `requireVerified` separately.
+         */
+        post: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path?: never;
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": {
+                            data: {
+                                token: string;
+                            };
+                        };
+                    };
+                };
+                401: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ApiError"];
+                    };
+                };
+            };
+        };
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/auth/resend-verification": {
         parameters: {
             query?: never;
@@ -467,6 +572,82 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/auth/security-action/request-code": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Request a one-time email code authorising a sensitive action
+         * @description Sends a 6-digit confirmation code to the authenticated user's verified
+         *     email. The code is required as the second factor for `set_password`,
+         *     `change_password`, and `delete_account`. Code expires in 15 minutes;
+         *     max 5 verify attempts; rate-limited per user (60s spacing, 5/hour).
+         */
+        post: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path?: never;
+                cookie?: never;
+            };
+            requestBody: {
+                content: {
+                    "application/json": {
+                        /** @enum {string} */
+                        action: "set_password" | "change_password" | "delete_account";
+                    };
+                };
+            };
+            responses: {
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": {
+                            data: {
+                                sent?: boolean;
+                            };
+                        };
+                    };
+                };
+                400: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ApiError"];
+                    };
+                };
+                403: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ApiError"];
+                    };
+                };
+                429: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ApiError"];
+                    };
+                };
+            };
+        };
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/auth/set-password": {
         parameters: {
             query?: never;
@@ -478,7 +659,14 @@ export interface paths {
         put?: never;
         /**
          * Set a password on a Google-only account
-         * @description Adds a password (and the CREDENTIALS provider) to an authenticated user that does not yet have one. Bumps tokenVersion, so the caller must re-authenticate after success.
+         * @description Two-factor: requires a fresh 6-digit confirmation code emailed to the
+         *     user via `/api/auth/security-action/request-code` with action=set_password.
+         *     Without the code a stolen JWT could attach a CREDENTIALS provider with
+         *     an attacker-controlled password and lock out the legitimate owner.
+         *     On success bumps tokenVersion to invalidate every other session AND
+         *     mints a fresh JWT for the caller (returned as `data.token`) so the
+         *     calling session stays alive while every other device is forced to
+         *     re-authenticate.
          */
         post: {
             parameters: {
@@ -491,6 +679,8 @@ export interface paths {
                 content: {
                     "application/json": {
                         newPassword: string;
+                        /** @description 6-digit confirmation code from the email. */
+                        code: string;
                     };
                 };
             };
@@ -503,6 +693,8 @@ export interface paths {
                         "application/json": {
                             data: {
                                 message?: string;
+                                /** @description Fresh JWT bound to the new tokenVersion. The client should swap this in to keep the calling session alive. */
+                                token: string;
                             };
                         };
                     };
@@ -516,6 +708,14 @@ export interface paths {
                     };
                 };
                 401: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ApiError"];
+                    };
+                };
+                429: {
                     headers: {
                         [name: string]: unknown;
                     };
@@ -1449,7 +1649,20 @@ export interface paths {
                     };
                     content?: never;
                 };
-                /** @description Depth selection produces a larger course than the learner's answers suggest they will finish. Client should render the magnitude (lessonCountRange, estimatedHoursRange, softnessCues, finishPressureCues) in a confirmation dialog and retry the PATCH with depthOverrideAcknowledged: true on user confirm. */
+                /**
+                 * @description Depth selection requires explicit confirmation. The `code` field discriminates which side of the bidirectional gate fired:
+                 *     - `DEPTH_OVERRIDE_REQUIRES_ACK` — selected depth is likely
+                 *       too big for what the learner's answers suggest they'll
+                 *       finish (overcommit). Payload includes selected-depth ranges
+                 *       and softness/finishPressure cues.
+                 *
+                 *     - `DEPTH_UNDERCOMMIT_REQUIRES_ACK` — selected depth is below
+                 *       the recommended tier and the LLM judged the coverage gap
+                 *       meaningful (undercommit). Payload includes both selected
+                 *       and recommended ranges so the dialog can show the gap.
+                 *
+                 *     Client should render the appropriate confirmation dialog and retry the PATCH with `depthOverrideAcknowledged: true` on user confirm. The same ack flag works for both 409 codes (a single PATCH evaluates each side at most once based on rank delta).
+                 */
                 409: {
                     headers: {
                         [name: string]: unknown;
@@ -1457,7 +1670,7 @@ export interface paths {
                     content: {
                         "application/json": {
                             /** @enum {string} */
-                            code: "DEPTH_OVERRIDE_REQUIRES_ACK";
+                            code: "DEPTH_OVERRIDE_REQUIRES_ACK" | "DEPTH_UNDERCOMMIT_REQUIRES_ACK";
                             message: string;
                             recommended?: components["schemas"]["CourseDepth"] | null;
                             selectedDepth?: components["schemas"]["CourseDepth"];
@@ -1465,15 +1678,28 @@ export interface paths {
                             lessonCountRange?: number[];
                             /** @description [min, max] estimated total learner-facing hours for the selected depth. Derived from lessonCountRange × ~25 minutes per lesson, rounded up. */
                             estimatedHoursRange?: number[];
+                            /** @description Undercommit only. [min, max] estimated lesson count for the recommended depth, so the dialog can frame the coverage gap. Absent on overcommit responses. */
+                            recommendedLessonCountRange?: number[];
+                            /** @description Undercommit only. [min, max] estimated learner-facing hours for the recommended depth. Absent on overcommit responses. */
+                            recommendedEstimatedHoursRange?: number[];
+                            /** @description Overcommit only. */
                             softnessCues?: string[];
+                            /** @description Overcommit only. */
                             finishPressureCues?: string[];
                             /**
-                             * @description Optional. The LLM-emitted overcommit-risk level read from the course's depth-previews. Present when the gate fires on a course generated after this field was added; absent on legacy courses where the gate triggered on phrase-regex cost signals alone.
+                             * @description Overcommit only. The LLM-emitted overcommit-risk level read from the course's depth-previews. Present when the gate fires on a course generated after this field was added; absent on legacy courses where the gate triggered on phrase-regex cost signals alone.
                              * @enum {string}
                              */
                             overcommitRisk?: "low" | "moderate" | "high";
-                            /** @description Optional. One-sentence rationale for `overcommitRisk`, surfaced in the dialog so the learner can see the model's reasoning rather than only allowlist-matched phrases. Absent when `overcommitRisk` is absent. */
+                            /** @description Overcommit only. One-sentence rationale for `overcommitRisk`, surfaced in the dialog so the learner can see the model's reasoning rather than only allowlist-matched phrases. Absent when `overcommitRisk` is absent. */
                             overcommitRationale?: string;
+                            /**
+                             * @description Undercommit only. The LLM-emitted undercommit-risk level. Either `moderate` or `high` triggered the gate (paired with the contraction signal).
+                             * @enum {string}
+                             */
+                            undercommitRisk?: "low" | "moderate" | "high";
+                            /** @description Undercommit only. One-sentence rationale for `undercommitRisk`, surfaced in the dialog so the learner can see the model's reasoning. Absent when the LLM didn't emit one. */
+                            undercommitRationale?: string;
                         };
                     };
                 };
@@ -1854,6 +2080,8 @@ export interface paths {
                         "application/json": {
                             data: {
                                 messages: components["schemas"]["ChatHistoryMessage"][];
+                                /** @description Up to 4 opening prompts for the design-chat empty state. Generated dynamically per course (anchored to goal + structure + depth-mismatch signals) when available; falls back to a small hardcoded set on legacy courses or generator failures. */
+                                suggestedPrompts: string[];
                             };
                         };
                     };
@@ -1900,6 +2128,8 @@ export interface paths {
                                 lessonName: string;
                                 moduleIndex: number;
                                 lessonIndex: number;
+                                /** @description Hero image of the resume-target lesson. Null when content has not been generated or generation failed. */
+                                lessonHeroImageUrl: string | null;
                                 courseProgress: components["schemas"]["CourseProgressStats"];
                             } | null;
                         };
@@ -2967,7 +3197,47 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
-    "/api/insight/queue": {
+    "/api/product-kb/chat": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Stream a chat message for the product knowledge-base guide */
+        post: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path?: never;
+                cookie?: never;
+            };
+            requestBody: {
+                content: {
+                    "application/json": {
+                        messages: components["schemas"]["ChatMessage"][];
+                    };
+                };
+            };
+            responses: {
+                /** @description SSE stream of chat response */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content?: never;
+                };
+            };
+        };
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/recall/queue": {
         parameters: {
             query?: never;
             header?: never;
@@ -2975,7 +3245,7 @@ export interface paths {
             cookie?: never;
         };
         /**
-         * Get the user's daily insight queue (due items + fresh items, interleaved across courses)
+         * Get the user's daily recall queue (due items + fresh items, interleaved across courses)
          * @description When `currentCourseId` is supplied (e.g. the learner is reviewing from
          *     inside a specific lesson) the active course's items are placed first
          *     in both the due and fresh slices; cross-course items still follow.
@@ -2999,7 +3269,7 @@ export interface paths {
                     };
                     content: {
                         "application/json": {
-                            data: components["schemas"]["InsightQueue"];
+                            data: components["schemas"]["RecallQueue"];
                         };
                     };
                 };
@@ -3020,14 +3290,14 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
-    "/api/insight/stats": {
+    "/api/recall/stats": {
         parameters: {
             query?: never;
             header?: never;
             path?: never;
             cookie?: never;
         };
-        /** Get per-user insight review stats (mastery dashboard) */
+        /** Get per-user recall review stats (mastery dashboard) */
         get: {
             parameters: {
                 query?: never;
@@ -3043,7 +3313,7 @@ export interface paths {
                     };
                     content: {
                         "application/json": {
-                            data: components["schemas"]["InsightStats"];
+                            data: components["schemas"]["RecallStats"];
                         };
                     };
                 };
@@ -3057,14 +3327,14 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
-    "/api/insight/due-count": {
+    "/api/recall/due-count": {
         parameters: {
             query?: never;
             header?: never;
             path?: never;
             cookie?: never;
         };
-        /** Cheap count of due insights for dashboard widgets */
+        /** Cheap count of due recall cards for dashboard widgets */
         get: {
             parameters: {
                 query?: never;
@@ -3096,7 +3366,7 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
-    "/api/insight/{insightId}/grade": {
+    "/api/recall/{recallCardId}/grade": {
         parameters: {
             query?: never;
             header?: never;
@@ -3111,7 +3381,7 @@ export interface paths {
                 query?: never;
                 header?: never;
                 path: {
-                    insightId: string;
+                    recallCardId: string;
                 };
                 cookie?: never;
             };
@@ -3141,7 +3411,7 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
-    "/api/insight/{insightId}/rate": {
+    "/api/recall/{recallCardId}/rate": {
         parameters: {
             query?: never;
             header?: never;
@@ -3150,20 +3420,20 @@ export interface paths {
         };
         get?: never;
         put?: never;
-        /** Submit a rating for an insight and advance its scheduler state */
+        /** Submit a rating for a recall card and advance its scheduler state */
         post: {
             parameters: {
                 query?: never;
                 header?: never;
                 path: {
-                    insightId: string;
+                    recallCardId: string;
                 };
                 cookie?: never;
             };
             requestBody: {
                 content: {
                     "application/json": {
-                        rating: components["schemas"]["InsightRating"];
+                        rating: components["schemas"]["RecallRating"];
                         /** @description Similarity score if answered via typed-recall mode */
                         typedMatch?: number | null;
                     };
@@ -3176,7 +3446,7 @@ export interface paths {
                     };
                     content: {
                         "application/json": {
-                            data: components["schemas"]["RateInsightResult"];
+                            data: components["schemas"]["RateRecallResult"];
                         };
                     };
                 };
@@ -3188,7 +3458,7 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
-    "/api/insight/{insightId}/mode": {
+    "/api/recall/{recallCardId}/mode": {
         parameters: {
             query?: never;
             header?: never;
@@ -3197,20 +3467,20 @@ export interface paths {
         };
         get?: never;
         put?: never;
-        /** Switch an insight between tap-reveal and typed-recall modes */
+        /** Switch a recall card between tap-reveal and typed-recall modes */
         post: {
             parameters: {
                 query?: never;
                 header?: never;
                 path: {
-                    insightId: string;
+                    recallCardId: string;
                 };
                 cookie?: never;
             };
             requestBody: {
                 content: {
                     "application/json": {
-                        mode: components["schemas"]["InsightMode"];
+                        mode: components["schemas"]["RecallMode"];
                     };
                 };
             };
@@ -3222,7 +3492,7 @@ export interface paths {
                     content: {
                         "application/json": {
                             data: {
-                                mode: components["schemas"]["InsightMode"];
+                                mode: components["schemas"]["RecallMode"];
                             };
                         };
                     };
@@ -3235,7 +3505,7 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
-    "/api/insight/{insightId}/skip": {
+    "/api/recall/{recallCardId}/skip": {
         parameters: {
             query?: never;
             header?: never;
@@ -3244,13 +3514,13 @@ export interface paths {
         };
         get?: never;
         put?: never;
-        /** Defer an insight by 1 day without treating it as a failed review */
+        /** Defer a recall card by 1 day without treating it as a failed review */
         post: {
             parameters: {
                 query?: never;
                 header?: never;
                 path: {
-                    insightId: string;
+                    recallCardId: string;
                 };
                 cookie?: never;
             };
@@ -3361,7 +3631,7 @@ export type webhooks = Record<string, never>;
 export interface components {
     schemas: {
         /** @enum {string} */
-        ErrorCode: "CUSTOM_ERROR" | "EMAIL_NOT_VERIFIED" | "EMAIL_ALREADY_VERIFIED" | "EMAIL_VERIFICATION_EXPIRED" | "EMAIL_VERIFICATION_INVALID" | "PASSWORD_RESET_INVALID" | "PASSWORD_RESET_EXPIRED" | "PASSWORD_ALREADY_SET" | "PASSWORD_NOT_SET" | "INSUFFICIENT_CREDITS" | "SUBSCRIPTION_ALREADY_EXISTS" | "TOO_MANY_ACTIVE_JOBS";
+        ErrorCode: "CUSTOM_ERROR" | "NOT_FOUND" | "EMAIL_NOT_VERIFIED" | "EMAIL_ALREADY_VERIFIED" | "EMAIL_VERIFICATION_EXPIRED" | "EMAIL_VERIFICATION_INVALID" | "PASSWORD_RESET_INVALID" | "PASSWORD_RESET_EXPIRED" | "PASSWORD_ALREADY_SET" | "PASSWORD_NOT_SET" | "INSUFFICIENT_CREDITS" | "SUBSCRIPTION_ALREADY_EXISTS" | "TOO_MANY_ACTIVE_JOBS" | "CODE_REQUEST_TOO_SOON" | "CODE_REQUEST_RATE_EXCEEDED" | "SECURITY_CODE_INVALID" | "SECURITY_CODE_EXPIRED" | "SECURITY_CODE_TOO_MANY_ATTEMPTS" | "SESSION_INVALID";
         /** @enum {string} */
         AuthProviderType: "GOOGLE" | "CREDENTIALS";
         /** @enum {string} */
@@ -3548,12 +3818,19 @@ export interface components {
             recommended: components["schemas"]["CourseDepth"];
             recommendationReason: string;
             /**
-             * @description Optional. LLM-emitted holistic judgment of how likely the learner is to over-commit if they pick a depth above `recommended`. Drives the depth-override gate as the primary cost signal — `high` triggers a confirmation dialog when combined with an expansion signal. Absent on courses persisted before this field was added; the gate falls back to phrase-regex softness/finish-pressure detection in that case.
+             * @description Optional. LLM-emitted holistic judgment of how likely the learner is to over-commit if they pick a depth above `recommended`. Drives the depth-override gate as the primary cost signal — `high` triggers a confirmation dialog when combined with an expansion signal; `moderate` triggers when combined with a large-course expansion (>15 lessons). Absent on courses persisted before this field was added; the gate falls back to phrase-regex softness/finish-pressure detection in that case.
              * @enum {string}
              */
             overcommitRisk?: "low" | "moderate" | "high";
             /** @description Optional. One-sentence rationale for `overcommitRisk`, referencing specific answer content (e.g. "Mentioned 'just want to learn the basics'"). Surfaced verbatim in the 409 confirmation dialog and gate-fire logs. Absent when `overcommitRisk` is absent. */
             overcommitRationale?: string;
+            /**
+             * @description Optional. LLM-emitted judgment of how poorly served the learner will be if they pick a depth BELOW `recommended` — the symmetric coverage-gap signal to `overcommitRisk`. `moderate` or `high` triggers the undercommit half of the depth-override gate (separate 409 code DEPTH_UNDERCOMMIT_REQUIRES_ACK) so the learner is warned before committing to a tier that would skip practical applications they explicitly asked about. Absent on legacy courses; absence means no undercommit warning will fire (we have no regex fallback for deadline/professional-goal phrasing).
+             * @enum {string}
+             */
+            undercommitRisk?: "low" | "moderate" | "high";
+            /** @description Optional. One-sentence rationale for `undercommitRisk`, referencing specific answer content (e.g. "You said the interview is in 3 weeks"). Surfaced verbatim in the 409 dialog and gate-fire logs. Absent when `undercommitRisk` is absent. */
+            undercommitRationale?: string;
         };
         JobStatus: {
             status: components["schemas"]["JobStatusEnum"];
@@ -3799,8 +4076,8 @@ export interface components {
             type: components["schemas"]["LessonPlaceholderType"];
             order: number;
         };
-        GeneratedInsight: {
-            kind: components["schemas"]["InsightKind"];
+        GeneratedRecallCard: {
+            kind: components["schemas"]["RecallCardKind"];
             prompt: string;
             answer: string;
             conceptTags: string[];
@@ -3831,20 +4108,20 @@ export interface components {
             type: "content_ready";
             placeholders: components["schemas"]["LessonPlaceholderBlock"][];
         };
-        LessonProgressInsightEvent: {
+        LessonProgressRecallCardEvent: {
             /**
              * @description discriminator enum property added by openapi-typescript
              * @enum {string}
              */
-            type: "insight";
-            insight: components["schemas"]["GeneratedInsight"];
+            type: "recall_card";
+            card: components["schemas"]["GeneratedRecallCard"];
         };
-        LessonProgressInsightsSavedEvent: {
+        LessonProgressRecallCardsSavedEvent: {
             /**
              * @description discriminator enum property added by openapi-typescript
              * @enum {string}
              */
-            type: "insights_saved";
+            type: "recall_cards_saved";
             count: number;
         };
         LessonProgressNarrationStartedEvent: {
@@ -3863,7 +4140,7 @@ export interface components {
             cached: boolean;
             voiceId: string;
         };
-        LessonProgressEvent: components["schemas"]["LessonProgressBlockEvent"] | components["schemas"]["LessonProgressHeroImageEvent"] | components["schemas"]["LessonProgressContentReadyEvent"] | components["schemas"]["LessonProgressInsightEvent"] | components["schemas"]["LessonProgressInsightsSavedEvent"] | components["schemas"]["LessonProgressNarrationStartedEvent"] | components["schemas"]["LessonProgressNarrationReadyEvent"];
+        LessonProgressEvent: components["schemas"]["LessonProgressBlockEvent"] | components["schemas"]["LessonProgressHeroImageEvent"] | components["schemas"]["LessonProgressContentReadyEvent"] | components["schemas"]["LessonProgressRecallCardEvent"] | components["schemas"]["LessonProgressRecallCardsSavedEvent"] | components["schemas"]["LessonProgressNarrationStartedEvent"] | components["schemas"]["LessonProgressNarrationReadyEvent"];
         JobProgressEvent: {
             jobId: string;
             courseId: string;
@@ -3883,7 +4160,7 @@ export interface components {
             actionType?: string;
         };
         /** @enum {string} */
-        XpSource: "lesson_complete" | "quiz_score" | "exercise_pass" | "review_complete" | "insight_review" | "insight_mastery";
+        XpSource: "lesson_complete" | "quiz_score" | "exercise_pass" | "review_complete" | "recall_review" | "recall_mastery";
         /** @enum {string} */
         AchievementCategory: "milestone" | "streak" | "mastery" | "dedication";
         EarnedAchievement: {
@@ -3916,15 +4193,15 @@ export interface components {
             timeSeconds: number;
             lessons: number;
             quizzes: number;
-            insights: number;
+            recallReviews: number;
         };
         XpDaySources: {
             lesson_complete: number;
             quiz_score: number;
             exercise_pass: number;
             review_complete: number;
-            insight_review: number;
-            insight_mastery: number;
+            recall_review: number;
+            recall_mastery: number;
         };
         XpDayEntry: {
             date: string;
@@ -3987,18 +4264,18 @@ export interface components {
             updatedAt: string;
         };
         /** @enum {string} */
-        InsightKind: "qa" | "cloze";
+        RecallCardKind: "qa" | "cloze";
         /** @enum {string} */
-        InsightMode: "tap-reveal" | "typed-recall";
+        RecallMode: "tap-reveal" | "typed-recall";
         /** @enum {string} */
-        InsightState: "new" | "learning" | "review" | "relearning";
+        RecallState: "new" | "learning" | "review" | "relearning";
         /**
          * @description 1=Again, 2=Hard, 3=Good, 4=Easy
          * @enum {integer}
          */
-        InsightRating: 1 | 2 | 3 | 4;
-        InsightQueueItem: {
-            insightId: string;
+        RecallRating: 1 | 2 | 3 | 4;
+        RecallQueueItem: {
+            recallCardId: string;
             courseId: string;
             courseSlug: string | null;
             courseName: string;
@@ -4007,29 +4284,29 @@ export interface components {
             lessonIndex: number;
             lessonName: string;
             moduleName: string;
-            kind: components["schemas"]["InsightKind"];
+            kind: components["schemas"]["RecallCardKind"];
             prompt: string;
             answer: string;
             conceptTags: string[];
             sourceBlockId: string;
             isNew: boolean;
-            mode: components["schemas"]["InsightMode"];
+            mode: components["schemas"]["RecallMode"];
             box: number;
             /** Format: date-time */
             dueAt: string | null;
         };
-        InsightQueue: {
-            due: components["schemas"]["InsightQueueItem"][];
-            fresh: components["schemas"]["InsightQueueItem"][];
+        RecallQueue: {
+            due: components["schemas"]["RecallQueueItem"][];
+            fresh: components["schemas"]["RecallQueueItem"][];
             counts: {
                 dueTotal: number;
                 freshAvailable: number;
                 learned: number;
             };
         };
-        RateInsightResult: {
+        RateRecallResult: {
             box: number;
-            state: components["schemas"]["InsightState"];
+            state: components["schemas"]["RecallState"];
             reps: number;
             lapses: number;
             /** Format: date-time */
@@ -4038,7 +4315,7 @@ export interface components {
             lastReview: string | null;
             /** Format: date-time */
             masteredAt?: string | null;
-            /** @description True exactly once per insight, when this rating first reached Leitner box 4. Never true on re-mastery. */
+            /** @description True exactly once per recall card, when this rating first reached Leitner box 4. Never true on re-mastery. */
             justMastered?: boolean;
         };
         /** @enum {string} */
@@ -4048,10 +4325,10 @@ export interface components {
             verdict: components["schemas"]["GradeVerdict"];
             feedback: string;
         };
-        InsightStats: {
-            totalInsights: number;
+        RecallStats: {
+            totalCards: number;
             totalReviewed: number;
-            /** @description Insights that reached Leitner box 4 at least once (masteredAt !== null) */
+            /** @description Recall cards that reached Leitner box 4 at least once (masteredAt !== null) */
             totalMastered: number;
             reviewedThisWeek: number;
             reviewedLastWeek: number;
@@ -4116,12 +4393,21 @@ export interface components {
         LessonChatHistoryAttachmentRef: {
             attachmentId: string;
         };
+        /** @description A successful emit_handoff result persisted alongside the assistant message that produced it. Used by the client to re-render the inline button on history reload. */
+        MentorChatHandoff: {
+            /** @enum {string} */
+            target: "quiz" | "recall" | "lesson";
+            moduleIndex?: number;
+            lessonIndex?: number;
+            label: string;
+        };
         LessonChatHistoryMessage: {
             role: string;
             content: string;
             /** Format: date-time */
             createdAt?: string;
             attachments?: components["schemas"]["LessonChatHistoryAttachmentRef"][];
+            handoffs?: components["schemas"]["MentorChatHandoff"][];
         };
         LessonChatAttachmentMeta: {
             id: string;
@@ -4145,6 +4431,7 @@ export interface components {
             content: string;
             /** Format: date-time */
             createdAt?: string;
+            handoffs?: components["schemas"]["MentorChatHandoff"][];
         };
         CourseMentorHistoryResponse: {
             messages: components["schemas"]["CourseMentorHistoryMessage"][];

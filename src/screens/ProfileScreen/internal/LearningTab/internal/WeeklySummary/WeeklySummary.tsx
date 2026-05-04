@@ -31,7 +31,7 @@ export const WeeklySummary: React.FC<WeeklySummaryProps> = ({ thisWeek, lastWeek
     },
     { label: 'Lessons', value: String(thisWeek.lessons), delta: formatDelta({ current: thisWeek.lessons, previous: lastWeek.lessons }) },
     { label: 'Quizzes', value: String(thisWeek.quizzes), delta: formatDelta({ current: thisWeek.quizzes, previous: lastWeek.quizzes }) },
-    { label: 'Insights', value: String(thisWeek.insights), delta: formatDelta({ current: thisWeek.insights, previous: lastWeek.insights }) },
+    { label: 'Recall', value: String(thisWeek.recallReviews), delta: formatDelta({ current: thisWeek.recallReviews, previous: lastWeek.recallReviews }) },
   ];
 
   return (

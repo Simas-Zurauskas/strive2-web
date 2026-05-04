@@ -30,10 +30,11 @@ const DEFAULT_ERROR_MESSAGE = 'Something went wrong. Please try again.';
  * when the server-sent message is missing. 401s are skipped — the axios
  * interceptor already triggers sign-out.
  *
- * 409 DEPTH_OVERRIDE_REQUIRES_ACK is also skipped: it's not really an
- * error, it's a "please confirm the scope" signal that the course-creation
- * wizard renders as a dedicated confirmation dialog. Toasting on top of
- * the dialog would be redundant noise.
+ * 409 DEPTH_OVERRIDE_REQUIRES_ACK / DEPTH_UNDERCOMMIT_REQUIRES_ACK are also
+ * skipped: they're not really errors, they're "please confirm the scope"
+ * signals that the course-creation wizard renders as a dedicated
+ * confirmation dialog. Toasting on top of the dialog would be redundant
+ * noise.
  */
 const mutationCache = new MutationCache({
   onError: (error, _vars, _ctx, mutation) => {
@@ -45,9 +46,16 @@ const mutationCache = new MutationCache({
     // Depth-override gate uses a `code` field (not `errorCode`) because it's
     // emitted outside the standard error middleware. Check both shapes so
     // this guard holds whether the server aligns on `errorCode` later or not.
+    // Bidirectional: overcommit AND undercommit both surface as ack-required
+    // signals that the wizard handles via DepthOverrideDialog.
     const ackCode = (apiError as { code?: string; errorCode?: string }).code
       ?? apiError.errorCode;
-    if (apiError.status === 409 && ackCode === 'DEPTH_OVERRIDE_REQUIRES_ACK') return;
+    if (
+      apiError.status === 409 &&
+      (ackCode === 'DEPTH_OVERRIDE_REQUIRES_ACK' || ackCode === 'DEPTH_UNDERCOMMIT_REQUIRES_ACK')
+    ) {
+      return;
+    }
 
     // 402 INSUFFICIENT_CREDITS → open the Out of Credits modal. The payload
     // carries `{ need, have }` under `meta`. Never fall through to a toast —

@@ -112,7 +112,6 @@ const ExpandedPanel = ({ onClose, chat }: ExpandedPanelProps) => (
       </S.HeaderAvatar>
       <S.HeaderText>
         <S.HeaderTitle>Strive guide</S.HeaderTitle>
-        <S.HeaderSubtitle>Live · grounded in /help · free</S.HeaderSubtitle>
       </S.HeaderText>
       <S.HeaderAction type="button" onClick={onClose} aria-label="Minimize chat" title="Minimize">
         <ChevronDown size={18} />
@@ -121,7 +120,7 @@ const ExpandedPanel = ({ onClose, chat }: ExpandedPanelProps) => (
     <S.Body>
       <ChatBody chat={chat} />
     </S.Body>
-    <S.Footnote>Powered by AI · chats are not saved across reloads</S.Footnote>
+    <S.Footnote>Chats aren&rsquo;t saved between sessions.</S.Footnote>
   </S.Widget>
 );
 
