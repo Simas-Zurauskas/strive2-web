@@ -598,8 +598,7 @@ export interface paths {
             requestBody: {
                 content: {
                     "application/json": {
-                        /** @enum {string} */
-                        action: "set_password" | "change_password" | "delete_account";
+                        action: components["schemas"]["SecurityAction"];
                     };
                 };
             };
@@ -1668,39 +1667,7 @@ export interface paths {
                         [name: string]: unknown;
                     };
                     content: {
-                        "application/json": {
-                            /** @enum {string} */
-                            code: "DEPTH_OVERRIDE_REQUIRES_ACK" | "DEPTH_UNDERCOMMIT_REQUIRES_ACK";
-                            message: string;
-                            recommended?: components["schemas"]["CourseDepth"] | null;
-                            selectedDepth?: components["schemas"]["CourseDepth"];
-                            /** @description [min, max] estimated total lesson count for the selected depth, derived from the lesson-count hints (soft or normal band per the learner's softness signal). */
-                            lessonCountRange?: number[];
-                            /** @description [min, max] estimated total learner-facing hours for the selected depth. Derived from lessonCountRange × ~25 minutes per lesson, rounded up. */
-                            estimatedHoursRange?: number[];
-                            /** @description Undercommit only. [min, max] estimated lesson count for the recommended depth, so the dialog can frame the coverage gap. Absent on overcommit responses. */
-                            recommendedLessonCountRange?: number[];
-                            /** @description Undercommit only. [min, max] estimated learner-facing hours for the recommended depth. Absent on overcommit responses. */
-                            recommendedEstimatedHoursRange?: number[];
-                            /** @description Overcommit only. */
-                            softnessCues?: string[];
-                            /** @description Overcommit only. */
-                            finishPressureCues?: string[];
-                            /**
-                             * @description Overcommit only. The LLM-emitted overcommit-risk level read from the course's depth-previews. Present when the gate fires on a course generated after this field was added; absent on legacy courses where the gate triggered on phrase-regex cost signals alone.
-                             * @enum {string}
-                             */
-                            overcommitRisk?: "low" | "moderate" | "high";
-                            /** @description Overcommit only. One-sentence rationale for `overcommitRisk`, surfaced in the dialog so the learner can see the model's reasoning rather than only allowlist-matched phrases. Absent when `overcommitRisk` is absent. */
-                            overcommitRationale?: string;
-                            /**
-                             * @description Undercommit only. The LLM-emitted undercommit-risk level. Either `moderate` or `high` triggered the gate (paired with the contraction signal).
-                             * @enum {string}
-                             */
-                            undercommitRisk?: "low" | "moderate" | "high";
-                            /** @description Undercommit only. One-sentence rationale for `undercommitRisk`, surfaced in the dialog so the learner can see the model's reasoning. Absent when the LLM didn't emit one. */
-                            undercommitRationale?: string;
-                        };
+                        "application/json": components["schemas"]["DepthOverridePayload"];
                     };
                 };
             };
@@ -3631,7 +3598,7 @@ export type webhooks = Record<string, never>;
 export interface components {
     schemas: {
         /** @enum {string} */
-        ErrorCode: "CUSTOM_ERROR" | "NOT_FOUND" | "EMAIL_NOT_VERIFIED" | "EMAIL_ALREADY_VERIFIED" | "EMAIL_VERIFICATION_EXPIRED" | "EMAIL_VERIFICATION_INVALID" | "PASSWORD_RESET_INVALID" | "PASSWORD_RESET_EXPIRED" | "PASSWORD_ALREADY_SET" | "PASSWORD_NOT_SET" | "INSUFFICIENT_CREDITS" | "SUBSCRIPTION_ALREADY_EXISTS" | "TOO_MANY_ACTIVE_JOBS" | "CODE_REQUEST_TOO_SOON" | "CODE_REQUEST_RATE_EXCEEDED" | "SECURITY_CODE_INVALID" | "SECURITY_CODE_EXPIRED" | "SECURITY_CODE_TOO_MANY_ATTEMPTS" | "SESSION_INVALID";
+        ErrorCode: "CUSTOM_ERROR" | "NOT_FOUND" | "EMAIL_NOT_VERIFIED" | "EMAIL_ALREADY_VERIFIED" | "EMAIL_VERIFICATION_EXPIRED" | "EMAIL_VERIFICATION_INVALID" | "VERIFICATION_RESEND_TOO_SOON" | "PASSWORD_RESET_INVALID" | "PASSWORD_RESET_EXPIRED" | "PASSWORD_ALREADY_SET" | "PASSWORD_NOT_SET" | "INSUFFICIENT_CREDITS" | "SUBSCRIPTION_ALREADY_EXISTS" | "TOO_MANY_ACTIVE_JOBS" | "CODE_REQUEST_TOO_SOON" | "CODE_REQUEST_RATE_EXCEEDED" | "SECURITY_CODE_INVALID" | "SECURITY_CODE_EXPIRED" | "SECURITY_CODE_TOO_MANY_ATTEMPTS" | "SESSION_INVALID";
         /** @enum {string} */
         AuthProviderType: "GOOGLE" | "CREDENTIALS";
         /** @enum {string} */
@@ -3705,6 +3672,7 @@ export interface components {
             name?: string;
             image?: string;
             emailVerified: boolean;
+            isAdmin: boolean;
             authProviders: components["schemas"]["AuthProvider"][];
             subscription: components["schemas"]["UserSubscription"];
             credits: components["schemas"]["UserCredits"];
@@ -4441,6 +4409,54 @@ export interface components {
             /** @description True if at least one lesson in the course has had its content generated. */
             hasAnyLessonContent: boolean;
         };
+        /**
+         * @description Sensitive account-state action that requires a fresh email-delivered 6-digit code in addition to the bearer token.
+         * @enum {string}
+         */
+        SecurityAction: "set_password" | "change_password" | "delete_account";
+        /** @enum {string} */
+        DepthOverrideRiskLevel: "low" | "moderate" | "high";
+        /** @description Selected depth is likely too big for what the learner answered (overcommit). Returned with HTTP 409. */
+        DepthOverrideOvercommitPayload: {
+            /**
+             * @description discriminator enum property added by openapi-typescript
+             * @enum {string}
+             */
+            code: "DEPTH_OVERRIDE_REQUIRES_ACK";
+            message: string;
+            recommended: components["schemas"]["CourseDepth"] | null;
+            selectedDepth: components["schemas"]["CourseDepth"];
+            /** @description [min, max] estimated lesson count for the selected depth. */
+            lessonCountRange?: number[];
+            /** @description [min, max] estimated learner-facing hours for the selected depth. */
+            estimatedHoursRange?: number[];
+            softnessCues?: string[];
+            finishPressureCues?: string[];
+            overcommitRisk?: components["schemas"]["DepthOverrideRiskLevel"];
+            overcommitRationale?: string;
+        };
+        /** @description Selected depth is below the recommended tier and the LLM judged the coverage gap meaningful (undercommit). Returned with HTTP 409. */
+        DepthOverrideUndercommitPayload: {
+            /**
+             * @description discriminator enum property added by openapi-typescript
+             * @enum {string}
+             */
+            code: "DEPTH_UNDERCOMMIT_REQUIRES_ACK";
+            message: string;
+            recommended: components["schemas"]["CourseDepth"] | null;
+            selectedDepth: components["schemas"]["CourseDepth"];
+            /** @description [min, max] estimated lesson count for the selected depth (what the learner will get). */
+            lessonCountRange?: number[];
+            /** @description [min, max] estimated learner-facing hours for the selected depth. */
+            estimatedHoursRange?: number[];
+            /** @description [min, max] estimated lesson count for the recommended depth (what they would have gotten). */
+            recommendedLessonCountRange?: number[];
+            /** @description [min, max] estimated learner-facing hours for the recommended depth. */
+            recommendedEstimatedHoursRange?: number[];
+            undercommitRisk?: components["schemas"]["DepthOverrideRiskLevel"];
+            undercommitRationale?: string;
+        };
+        DepthOverridePayload: components["schemas"]["DepthOverrideOvercommitPayload"] | components["schemas"]["DepthOverrideUndercommitPayload"];
         MentorAttachmentResponse: {
             id: string;
             filename: string;

@@ -13,7 +13,13 @@ const formatTime = (seconds: number): string => {
   return `${m}m`;
 };
 
-const formatDelta = ({ current, previous }: { current: number; previous: number }): { text: string; positive: boolean; neutral: boolean } => {
+const formatDelta = ({
+  current,
+  previous,
+}: {
+  current: number;
+  previous: number;
+}): { text: string; positive: boolean; neutral: boolean } => {
   if (previous === 0 && current === 0) return { text: '—', positive: false, neutral: true };
   if (previous === 0) return { text: `+${current}`, positive: true, neutral: false };
   const pct = Math.round(((current - previous) / previous) * 100);
@@ -23,28 +29,50 @@ const formatDelta = ({ current, previous }: { current: number; previous: number 
 
 export const WeeklySummary: React.FC<WeeklySummaryProps> = ({ thisWeek, lastWeek }) => {
   const metrics = [
-    { label: 'XP Earned', value: thisWeek.xp.toLocaleString(), delta: formatDelta({ current: thisWeek.xp, previous: lastWeek.xp }) },
+    {
+      label: 'XP Earned',
+      value: thisWeek.xp.toLocaleString(),
+      delta: formatDelta({ current: thisWeek.xp, previous: lastWeek.xp }),
+    },
     {
       label: 'Time Spent',
       value: formatTime(thisWeek.timeSeconds),
       delta: formatDelta({ current: thisWeek.timeSeconds, previous: lastWeek.timeSeconds }),
     },
-    { label: 'Lessons', value: String(thisWeek.lessons), delta: formatDelta({ current: thisWeek.lessons, previous: lastWeek.lessons }) },
-    { label: 'Quizzes', value: String(thisWeek.quizzes), delta: formatDelta({ current: thisWeek.quizzes, previous: lastWeek.quizzes }) },
-    { label: 'Recall', value: String(thisWeek.recallReviews), delta: formatDelta({ current: thisWeek.recallReviews, previous: lastWeek.recallReviews }) },
+    {
+      label: 'Lessons',
+      value: String(thisWeek.lessons),
+      delta: formatDelta({ current: thisWeek.lessons, previous: lastWeek.lessons }),
+    },
+    {
+      label: 'Quizzes',
+      value: String(thisWeek.quizzes),
+      delta: formatDelta({ current: thisWeek.quizzes, previous: lastWeek.quizzes }),
+    },
+    {
+      label: 'Recall',
+      value: String(thisWeek.recallReviews),
+      delta: formatDelta({ current: thisWeek.recallReviews, previous: lastWeek.recallReviews }),
+    },
   ];
 
   return (
-    <S.Grid>
-      {metrics.map((m) => (
-        <S.Card key={m.label}>
-          <S.Value>{m.value}</S.Value>
-          <S.Label>{m.label}</S.Label>
-          <S.Delta $positive={m.delta.positive} $neutral={m.delta.neutral}>
-            {m.delta.text} vs last week
-          </S.Delta>
-        </S.Card>
-      ))}
-    </S.Grid>
+    <S.Wrap>
+      <S.Header>
+        <S.Eyebrow>This week</S.Eyebrow>
+        <S.Sub>vs last week</S.Sub>
+      </S.Header>
+      <S.Grid>
+        {metrics.map((m) => (
+          <S.Cell key={m.label}>
+            <S.Label>{m.label}</S.Label>
+            <S.Value>{m.value}</S.Value>
+            <S.Delta $positive={m.delta.positive} $neutral={m.delta.neutral}>
+              {m.delta.text}
+            </S.Delta>
+          </S.Cell>
+        ))}
+      </S.Grid>
+    </S.Wrap>
   );
 };

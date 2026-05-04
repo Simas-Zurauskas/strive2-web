@@ -68,7 +68,13 @@ export const KbChatPanel = () => {
           return h;
         },
       }),
-    [session?.token],
+    // Depend on the whole `session` rather than just `session?.token` —
+    // React Compiler infers the broader capture from the closure (the
+    // header builder reads `session?.token` through `session`), and
+    // mismatching the dep keeps the compiler from optimizing this hook.
+    // The reference identity of `session` shifts on token rotation
+    // anyway, so this rebuilds the transport at the same cadence.
+    [session],
   );
 
   const chat = useChat({

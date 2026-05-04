@@ -8,3 +8,4 @@ export {
   Divider as AuthDivider,
   GoogleBtn as GoogleBtn,
 } from './AuthForm.styles';
+export * as AuthMoment from './AuthMoment.styles';

@@ -1,6 +1,6 @@
 import { ArrowRight, Trash2 } from 'lucide-react';
 import { Button, Eyebrow } from '@/components';
-import { DEV_MODE } from '@/conf/env';
+import { useAuth } from '@/hooks';
 import * as S from '../ModuleQuizScreen.styles';
 import type { CourseModule, ModuleQuizQuestion } from '@/api/types';
 import type { QuizOptionState } from '@/types';
@@ -40,6 +40,9 @@ export const QuizQuestion = ({
   onBack,
   backLabel,
 }: QuizQuestionProps) => {
+  const { user } = useAuth();
+  const isAdmin = Boolean(user?.isAdmin);
+
   const getOptionState = (index: number): QuizOptionState =>
     index === selectedOption ? 'selected' : 'default';
 
@@ -53,7 +56,7 @@ export const QuizQuestion = ({
             <S.BackIcon />
             {backLabel}
           </S.BackLink>
-          {DEV_MODE && (
+          {isAdmin && (
             <S.DevResetButton onClick={onDevReset} disabled={isResetting}>
               <Trash2 size={10} /> Reset quiz
             </S.DevResetButton>

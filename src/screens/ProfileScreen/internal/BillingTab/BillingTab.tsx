@@ -5,7 +5,7 @@ import { useRouter, useSearchParams } from 'next/navigation';
 import { useEffect, useRef, useState } from 'react';
 import { toast } from 'sonner';
 import { BillingPanel, Button } from '@/components';
-import { DEV_MODE } from '@/conf/env';
+import { useAuth } from '@/hooks';
 import {
   useDeleteAllUsageEvents,
   useUsageHistory,
@@ -21,16 +21,24 @@ const USAGE_PAGE_SIZE = 20;
 
 /**
  * Profile > Billing tab. Primary content is the user-facing `BillingPanel`
- * (plan, credits, ledger, top-ups, portal). DEV_MODE exposes the raw
+ * (plan, credits, ledger, top-ups, portal). For admins, exposes the raw
  * per-call API spend (microcents) from UsageEventModel in a collapsible
  * "engineer view" — useful for debugging actual LLM/BFL/Tavily costs
- * vs. what the user is being charged in credits.
+ * vs. what the user is being charged in credits. The view is gated on
+ * `user.isAdmin` (set by ops directly in the DB) AND the underlying
+ * usage routes are protected by `requireAdmin` server-side.
+ *
+ * The summary/history queries are lazy: they only fire when the
+ * engineer-view toggle is open, so non-admins never even attempt the
+ * call and admins don't pay for the request unless they ask for it.
  */
 export const BillingTab: React.FC = () => {
   const searchParams = useSearchParams();
   const router = useRouter();
   const queryClient = useQueryClient();
   const checkoutToastShown = useRef(false);
+  const { user } = useAuth();
+  const isAdmin = Boolean(user?.isAdmin);
   const [devExpanded, setDevExpanded] = useState(false);
   const [offset, setOffset] = useState(0);
   const [sortBy, setSortBy] = useState<UsageSortField>('timestamp');
@@ -77,15 +85,24 @@ export const BillingTab: React.FC = () => {
     router.replace('/profile?tab=billing', { scroll: false });
   }, [searchParams, router, queryClient]);
 
-  // Only fetch dev usage data when the toggle is open and DEV_MODE is on —
-  // no point hitting the endpoints for end users.
-  const showDev = DEV_MODE && devExpanded;
-  const summary = useUsageSummary();
-  const history = useUsageHistory({ limit: USAGE_PAGE_SIZE, offset, sortBy, sortDir });
+  // Lazy-load usage data: queries only fire when the engineer-view
+  // toggle is open AND the user is an admin. `enabled: false` keeps
+  // react-query from sending the request, so non-admins never attempt
+  // the call (which would 403 anyway) and admins don't pay for it unless
+  // they actually open the view.
+  const showDev = isAdmin && devExpanded;
+  const summary = useUsageSummary({ enabled: showDev });
+  const history = useUsageHistory({
+    limit: USAGE_PAGE_SIZE,
+    offset,
+    sortBy,
+    sortDir,
+    enabled: showDev,
+  });
   const clearEvents = useDeleteAllUsageEvents();
 
   const handleClear = () => {
-    if (!window.confirm('Delete ALL your usage events? This is a dev-only action and cannot be undone.')) return;
+    if (!window.confirm('Delete ALL your usage events? This is an admin action and cannot be undone.')) return;
     clearEvents.mutate(undefined, { onSuccess: () => setOffset(0) });
   };
 
@@ -93,7 +110,7 @@ export const BillingTab: React.FC = () => {
     <>
       <BillingPanel />
 
-      {DEV_MODE && (
+      {isAdmin && (
         <S.DevSection>
           <S.DevToggle onClick={() => setDevExpanded((v) => !v)}>
             {devExpanded ? 'Hide' : 'Show'} engineer view · API spend

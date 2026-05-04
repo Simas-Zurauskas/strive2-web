@@ -12,7 +12,7 @@ import { useAuth, useJobManager } from '@/hooks';
 import { useSocket } from '@/hooks/useSocket';
 import { QKeys } from '@/types';
 import * as S from './NarrationPlayer.styles';
-import type { JobProgressEvent, JobStatusEvent } from '@/api/types';
+import type { JobStatusEvent } from '@/api/types';
 
 const PLAYBACK_RATES = [1, 1.25, 1.5, 1.75, 2] as const;
 

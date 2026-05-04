@@ -13,7 +13,7 @@ import { LessonStreamProvider } from '@/hooks/useLessonStream';
 import { SocketProvider } from '@/hooks/useSocket';
 import { fireInsufficientCredits } from '@/lib/creditModalBus';
 import { ColorScheme } from '@/theme';
-import { StyledRegistry, ThemeSessionSync } from './comps';
+import { AuthTokenSync, StyledRegistry, ThemeSessionSync } from './comps';
 
 const defaultOptions: DefaultOptions = {
   queries: {
@@ -91,6 +91,13 @@ const Registry = ({ children }: { children: React.ReactNode }) => {
 
   return (
     <SessionProvider>
+      {/* Mirrors session.token into the api/client's bearer-token store
+          synchronously during render, before any descendant's React Query
+          query function runs. Without this, queries gated on
+          `status === "authenticated"` could fire one tick before useAuth's
+          useEffect propagated the token, hit 401, and the response
+          interceptor's auto-signOut evicted the user. */}
+      <AuthTokenSync />
       <QueryClientProvider client={queryClient}>
         <NextThemeProvider
           enableSystem

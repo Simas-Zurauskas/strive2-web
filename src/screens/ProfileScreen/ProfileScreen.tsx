@@ -76,6 +76,12 @@ export const ProfileScreen: React.FC = () => {
         <S.Avatar>
           {getInitials()}
           {user.image && !imgError && (
+            // Plain <img> here on purpose: user.image is an arbitrary external
+            // URL (Google profile, Gravatar, etc.) so next/image would require
+            // domain allowlisting in next.config for every provider, and the
+            // avatar is a tiny low-priority element where the LCP gain is
+            // negligible.
+            // eslint-disable-next-line @next/next/no-img-element
             <img
               src={user.image}
               alt={user.name || 'Avatar'}

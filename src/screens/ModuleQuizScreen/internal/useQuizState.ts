@@ -36,6 +36,17 @@ export const useQuizState = ({ courseSlug, moduleIndex }: { courseSlug: string; 
   // ones from a prior attempt — important on the "Create new quiz" path
   // where the previous attempt's content is still in cache.
   const generationStartContentRef = useRef<typeof quizContent | null>(null);
+  // Live mirror of `quizContent` so the callbacks below can read its
+  // current value at click-time without listing it in their dep arrays.
+  // Putting `quizContent` in deps would re-create the callback on every
+  // cache refresh and prevent React Compiler from preserving manual
+  // memoization. The effect-write pattern keeps deps stable; we don't
+  // write during render because that would trip the no-refs-in-render
+  // rule (and cause stale reads in concurrent renders).
+  const quizContentRef = useRef(quizContent);
+  useEffect(() => {
+    quizContentRef.current = quizContent;
+  }, [quizContent]);
 
   // The trackJob registration outlives this hook because JobManager is
   // a global singleton — the `onComplete` callback can fire after the
@@ -65,7 +76,7 @@ export const useQuizState = ({ courseSlug, moduleIndex }: { courseSlug: string; 
             job.metadata?.moduleIndex === moduleIndex &&
             (job.status === 'pending' || job.status === 'processing')
           ) {
-            generationStartContentRef.current = quizContent;
+            generationStartContentRef.current = quizContentRef.current;
             isGeneratingRef.current = true;
             setIsGenerating(true);
             trackJob({
@@ -96,7 +107,8 @@ export const useQuizState = ({ courseSlug, moduleIndex }: { courseSlug: string; 
   useEffect(() => {
     if (isGenerating && !isJobRunning && !generateQuiz.isPending) {
       isGeneratingRef.current = false;
-      setIsGenerating(false); // eslint-disable-line react-hooks/set-state-in-effect -- sync with external job state
+      // eslint-disable-next-line react-hooks/set-state-in-effect -- sync UI state with external job-runner state when no job is active
+      setIsGenerating(false);
     }
   }, [isGenerating, isJobRunning, generateQuiz.isPending]);
 
@@ -118,8 +130,9 @@ export const useQuizState = ({ courseSlug, moduleIndex }: { courseSlug: string; 
     if (quizContent === generationStartContentRef.current) return;
     isGeneratingRef.current = false;
     generationStartContentRef.current = null;
-    setIsGenerating(false); // eslint-disable-line react-hooks/set-state-in-effect -- recover from missed completion event
-    setQuizStarted(true); // eslint-disable-line react-hooks/set-state-in-effect -- recover from missed completion event
+    // eslint-disable-next-line react-hooks/set-state-in-effect -- recover from missed socket completion event; ref guards above prevent loops
+    setIsGenerating(false);
+    setQuizStarted(true);
   }, [isGenerating, totalQuestions, quizContent]);
 
   // ── Generate quiz ─────────────────────────────────────
@@ -129,7 +142,7 @@ export const useQuizState = ({ courseSlug, moduleIndex }: { courseSlug: string; 
     // uses this to detect when fresh content arrives. If we're regenerating
     // over an existing quiz, the previous attempt's questions are in
     // `quizContent` until JobManager invalidates the cache on completion.
-    generationStartContentRef.current = quizContent;
+    generationStartContentRef.current = quizContentRef.current;
     setIsGenerating(true);
     isGeneratingRef.current = true;
     try {

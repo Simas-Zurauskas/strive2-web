@@ -2,7 +2,6 @@
 
 import Highcharts from 'highcharts';
 import HighchartsReact from 'highcharts-react-official';
-import { Brain } from 'lucide-react';
 import { useMemo } from 'react';
 import Skeleton from 'react-loading-skeleton';
 import { useTheme } from 'styled-components';
@@ -10,6 +9,17 @@ import { useRecallStats } from '@/hooks';
 import { formatDate } from '@/lib/formatDate';
 import { themeColors } from '@/theme';
 import * as S from './RecallActivityCard.styles';
+import { buildTooltipHtml, type TooltipRow } from '../_shared/chartTooltip';
+import {
+  Section,
+  SectionHeader,
+  SectionEyebrow,
+  EmptyBlock,
+  EmptyRule,
+  EmptyEyebrow,
+  EmptyTitle,
+  EmptyText,
+} from '../_shared/styles';
 
 /**
  * Profile Learning-tab widget surfacing spaced-repetition health.
@@ -189,36 +199,21 @@ export const RecallActivityCard: React.FC = () => {
           const reviewsPt = points.find((p) => p.series.name === 'Reviews');
           const ratingPt = points.find((p) => p.series.name === 'Avg rating');
           const reviews = reviewsPt?.y ?? 0;
-          // When the rating spline has no value for this day (reviews === 0)
-          // we fall back to 0 so the swatch stays muted.
           const avg = typeof ratingPt?.y === 'number' ? ratingPt.y : 0;
-          // `this.x` on a shared tooltip over a categorized axis returns the
-          // numeric index — `points[0].key` is the category label (date).
-          const label = (points[0]?.key as string | undefined) ?? String(this.x ?? '');
-          const header = `<div style="font-weight:600;font-size:0.8125rem;margin-bottom:8px">${label}</div>`;
-          const reviewsRow =
-            `<div style="display:flex;align-items:center;gap:8px;padding:2px 0">` +
-            `<span style="width:8px;height:8px;border-radius:2px;background:${colorForRating(avg)};flex-shrink:0"></span>` +
-            `<span style="color:${c.muted};flex:1">Reviews</span>` +
-            `<span style="font-weight:600;font-variant-numeric:tabular-nums">${reviews}</span>` +
-            `</div>`;
-          const ratingRow =
+          const header = (points[0]?.key as string | undefined) ?? String(this.x ?? '');
+          const rows: TooltipRow[] =
             reviews > 0
-              ? `<div style="display:flex;align-items:center;gap:8px;padding:2px 0">` +
-                `<span style="width:8px;height:8px;border-radius:50%;background:${c.foreground};flex-shrink:0"></span>` +
-                `<span style="color:${c.muted};flex:1">Avg rating</span>` +
-                `<span style="font-weight:600">${fmtRatingLabel(avg)}</span>` +
-                `</div>`
-              : `<div style="color:${c.muted};font-size:0.6875rem;padding-top:4px">No reviews this day</div>`;
-          return (
-            `<div style="background:${c.surface};border:1px solid ${c.surfaceBorder};border-radius:12px;padding:12px 14px;min-width:180px;` +
-            `box-shadow:0 4px 24px rgba(0,0,0,${scheme === 'dark' ? '0.5' : '0.15'}),0 1px 4px rgba(0,0,0,${scheme === 'dark' ? '0.3' : '0.08'});` +
-            `color:${c.foreground};font-size:0.75rem;line-height:1.5">` +
-            header +
-            reviewsRow +
-            ratingRow +
-            `</div>`
-          );
+              ? [
+                  { color: colorForRating(avg), shape: 'square', label: 'Reviews', value: String(reviews) },
+                  { color: c.foreground, shape: 'dot', label: 'Avg rating', value: fmtRatingLabel(avg) },
+                ]
+              : [];
+          return buildTooltipHtml({
+            colors: c,
+            header,
+            rows,
+            emptyLine: reviews > 0 ? undefined : 'No reviews this day',
+          });
         },
       },
       series: [
@@ -250,14 +245,14 @@ export const RecallActivityCard: React.FC = () => {
         ],
       },
     };
-  }, [data, c, scheme]);
+  }, [data, c]);
 
   if (isLoading) {
     return (
-      <S.Section>
-        <S.Header>
-          <S.Title><Skeleton width={100} height={12} borderRadius={4} /></S.Title>
-        </S.Header>
+      <Section>
+        <SectionHeader>
+          <SectionEyebrow><Skeleton width={100} height={12} borderRadius={4} /></SectionEyebrow>
+        </SectionHeader>
         <S.StatsRow>
           {[0, 1, 2].map((i) => (
             <S.StatTile key={i}>
@@ -267,7 +262,7 @@ export const RecallActivityCard: React.FC = () => {
           ))}
         </S.StatsRow>
         <Skeleton height={CHART_HEIGHT} borderRadius={8} />
-      </S.Section>
+      </Section>
     );
   }
 
@@ -287,19 +282,20 @@ export const RecallActivityCard: React.FC = () => {
 
   if (isEmpty) {
     return (
-      <S.Section>
-        <S.Header>
-          <S.Title>Recall</S.Title>
-        </S.Header>
-        <S.EmptyState>
-          <S.EmptyIconWrap>
-            <Brain size={20} strokeWidth={1.75} />
-          </S.EmptyIconWrap>
-          <S.EmptyText>
-            Start reviewing recall cards from your lessons to build long-term memory. Your progress will show here.
-          </S.EmptyText>
-        </S.EmptyState>
-      </S.Section>
+      <Section>
+        <SectionHeader>
+          <SectionEyebrow>Recall</SectionEyebrow>
+        </SectionHeader>
+        <EmptyBlock>
+          <EmptyRule aria-hidden />
+          <EmptyEyebrow>Nothing to chart yet</EmptyEyebrow>
+          <EmptyTitle>Start with a few cards a day.</EmptyTitle>
+          <EmptyText>
+            Review recall cards pulled from your lessons and your progress will start showing
+            here — review volume, rating quality, and how cards mature over time.
+          </EmptyText>
+        </EmptyBlock>
+      </Section>
     );
   }
 
@@ -307,15 +303,15 @@ export const RecallActivityCard: React.FC = () => {
   const hasHistory = (data?.recentHistory?.length ?? 0) > 0;
 
   return (
-    <S.Section>
-      <S.Header>
-        <S.Title>Recall</S.Title>
+    <Section>
+      <SectionHeader>
+        <SectionEyebrow>Recall</SectionEyebrow>
         {!delta.neutral && (
           <S.TrendLabel $positive={delta.positive} $neutral={delta.neutral}>
             {delta.text}
           </S.TrendLabel>
         )}
-      </S.Header>
+      </SectionHeader>
 
       <S.StatsRow>
         <S.StatTile>
@@ -336,6 +332,16 @@ export const RecallActivityCard: React.FC = () => {
         <S.ChartWrap>
           <S.ChartLabel>Last 14 days — review volume &amp; recall quality</S.ChartLabel>
           <HighchartsReact highcharts={Highcharts} options={options} />
+          <S.ChartLegend>
+            <S.ChartLegendItem>
+              <S.ChartLegendSwatch $shape="gradient" aria-hidden />
+              Reviews · tinted by rating
+            </S.ChartLegendItem>
+            <S.ChartLegendItem>
+              <S.ChartLegendSwatch $shape="line" aria-hidden />
+              Avg rating
+            </S.ChartLegendItem>
+          </S.ChartLegend>
         </S.ChartWrap>
       )}
 
@@ -364,6 +370,6 @@ export const RecallActivityCard: React.FC = () => {
           </S.Legend>
         </S.BarSection>
       )}
-    </S.Section>
+    </Section>
   );
 };

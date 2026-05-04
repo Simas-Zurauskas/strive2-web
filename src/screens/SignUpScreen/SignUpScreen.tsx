@@ -5,6 +5,7 @@ import Link from 'next/link';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { signIn } from 'next-auth/react';
 import { useState } from 'react';
+import { toast } from 'sonner';
 import {
   AuthDivider,
   AuthForm,
@@ -14,6 +15,7 @@ import {
   AuthSubmitBtn,
   GoogleBtn,
   Input,
+  PasswordRequirements,
 } from '@/components';
 import { safeRedirect } from '@/lib/safeRedirect';
 import { signUpSchema, SignUpValues } from '@/validation';
@@ -55,7 +57,14 @@ export const SignUpScreen = () => {
     } else {
       sessionStorage.removeItem(REDIRECT_STORAGE_KEY);
     }
+    // Toast first so the user gets an immediate "submit worked" cue —
+    // without it, the visual transition to /signup/check-email reads as
+    // "form just cleared, nothing happened" because the destination uses
+    // the same <AuthForm> chrome. router.refresh() pairs with push to
+    // force the new server tree to render in dev (matches LoginScreen).
+    toast.success('Account created. Check your email to verify.');
     router.push('/signup/check-email');
+    router.refresh();
   };
 
   const handleGoogle = () => signIn('google', { callbackUrl: redirect });
@@ -91,8 +100,13 @@ export const SignUpScreen = () => {
             value={values.password}
             onChange={handleChange}
             onBlur={handleBlur}
-            error={touched.password ? errors.password : undefined}
+            // Suppress the yup message under the field — the live checklist
+            // below already communicates which specific rule is failing,
+            // so a duplicate "must contain a number" line would just be noise.
+            // Only the "required"-class error (empty after blur) surfaces.
+            error={touched.password && !values.password ? errors.password : undefined}
           />
+          <PasswordRequirements value={values.password} />
 
           <Input
             name="confirmPassword"

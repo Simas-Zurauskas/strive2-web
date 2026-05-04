@@ -237,6 +237,7 @@ export const CompleteButton = styled.button`
   align-items: center;
   justify-content: center;
   gap: 0.625rem;
+  min-height: 3rem;
   padding: 0.75rem 1.625rem;
   border-radius: var(--radius-md);
   border: 1px solid ${(p) => p.theme.colors.accent};
@@ -305,6 +306,7 @@ export const CompletedBanner = styled.div`
   display: inline-flex;
   align-items: center;
   gap: 0.625rem;
+  min-height: 3rem;
   padding: 0.6875rem 1.5rem;
   border-radius: var(--radius-md);
   background: ${(p) => p.theme.colors.tertiaryMuted};

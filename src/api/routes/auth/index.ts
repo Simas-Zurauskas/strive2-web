@@ -64,11 +64,7 @@ export const resendVerificationAuthenticated = () => {
 
 // ── Delete account ──────────────────────────────────────────
 
-// Body shape is hand-typed (`{ code }`) instead of pulled from `paths` because
-// `_generated.ts` may lag behind the API; the actual runtime contract is
-// `{ code: string }` (6-digit OTP from the email-OTP flow). Run `yarn codegen`
-// to refresh the generated paths if you want compile-time enforcement here.
-type DeleteAccountBody = { code: string };
+type DeleteAccountBody = paths['/api/auth/delete-account']['delete']['requestBody']['content']['application/json'];
 type DeleteAccountResponse = paths['/api/auth/delete-account']['delete']['responses']['200']['content']['application/json'];
 
 export const deleteAccount = (params: DeleteAccountBody) => {
@@ -116,26 +112,22 @@ export const resetPassword = (params: ResetPasswordBody) => {
 
 // ── Password management (authenticated) ─────────────────────
 
-// `{ newPassword, code }` is hand-typed for the same reason as `deleteAccount`
-// above — `_generated.ts` lags behind the API until `yarn codegen` runs.
-// Response shape is also hand-typed because the API now returns a fresh
-// `token` (bound to the bumped tokenVersion) so the caller can keep its
-// session alive via NextAuth `session.update()`.
-type SetPasswordBody = { newPassword: string; code: string };
-type PasswordMutationResponse = { data: { message?: string; token: string } };
+type SetPasswordBody = paths['/api/auth/set-password']['post']['requestBody']['content']['application/json'];
+type SetPasswordResponse = paths['/api/auth/set-password']['post']['responses']['200']['content']['application/json'];
 
 export const setPassword = (params: SetPasswordBody) => {
-  return client<PasswordMutationResponse>({
+  return client<SetPasswordResponse>({
     url: '/auth/set-password',
     method: 'POST',
     data: params,
   }).then((res) => res.data.data);
 };
 
-type ChangePasswordBody = { newPassword: string; code: string };
+type ChangePasswordBody = paths['/api/auth/change-password']['post']['requestBody']['content']['application/json'];
+type ChangePasswordResponse = paths['/api/auth/change-password']['post']['responses']['200']['content']['application/json'];
 
 export const changePassword = (params: ChangePasswordBody) => {
-  return client<PasswordMutationResponse>({
+  return client<ChangePasswordResponse>({
     url: '/auth/change-password',
     method: 'POST',
     data: params,
@@ -146,10 +138,13 @@ export const changePassword = (params: ChangePasswordBody) => {
 
 // Sends a 6-digit code to the user's verified email. The client surfaces the
 // code-entry form once this resolves; the API enforces 60s spacing + 5/hr cap.
-type SecurityAction = 'set_password' | 'change_password' | 'delete_account';
+type RequestSecurityActionCodeBody =
+  paths['/api/auth/security-action/request-code']['post']['requestBody']['content']['application/json'];
+type RequestSecurityActionCodeResponse =
+  paths['/api/auth/security-action/request-code']['post']['responses']['200']['content']['application/json'];
 
-export const requestSecurityActionCode = (params: { action: SecurityAction }) => {
-  return client<{ data: { sent: boolean } }>({
+export const requestSecurityActionCode = (params: RequestSecurityActionCodeBody) => {
+  return client<RequestSecurityActionCodeResponse>({
     url: '/auth/security-action/request-code',
     method: 'POST',
     data: params,

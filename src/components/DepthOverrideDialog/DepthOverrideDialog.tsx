@@ -2,51 +2,17 @@
 
 import { AlertDialog } from '@/components/AlertDialog/AlertDialog';
 import * as S from './DepthOverrideDialog.styles';
+import type {
+  DepthOverridePayload,
+  DepthOverrideOvercommitPayload,
+  DepthOverrideUndercommitPayload,
+} from '@/api/types';
 
-/**
- * Shared base shape for both 409 codes from /PATCH /api/course/:id. The
- * controller routes to one of two `code` values depending on which side of
- * the bidirectional gate fired:
- *   - DEPTH_OVERRIDE_REQUIRES_ACK — overcommit (selected too big)
- *   - DEPTH_UNDERCOMMIT_REQUIRES_ACK — undercommit (selected too small)
- *
- * Field overlaps reflect what's meaningful for both sides; `*Cues` /
- * `overcommit*` are overcommit-only, `recommended*Range` / `undercommit*`
- * are undercommit-only.
- *
- * Declared locally (rather than imported from codegen) because the backend
- * Swagger update for these responses lands separately; on the client side
- * we ship before `yarn codegen` has seen the new shape.
- */
-interface DepthOverridePayloadCommon {
-  message: string;
-  recommended: string | null;
-  selectedDepth: string;
-  lessonCountRange?: [number, number];
-  estimatedHoursRange?: [number, number];
-}
-
-export interface DepthOverridePayloadOvercommit extends DepthOverridePayloadCommon {
-  code: 'DEPTH_OVERRIDE_REQUIRES_ACK';
-  softnessCues?: string[];
-  finishPressureCues?: string[];
-  overcommitRisk?: 'low' | 'moderate' | 'high';
-  overcommitRationale?: string;
-}
-
-export interface DepthOverridePayloadUndercommit extends DepthOverridePayloadCommon {
-  code: 'DEPTH_UNDERCOMMIT_REQUIRES_ACK';
-  /** Recommended-tier lesson range — what they would have gotten. */
-  recommendedLessonCountRange?: [number, number];
-  /** Recommended-tier hours range — what they would have gotten. */
-  recommendedEstimatedHoursRange?: [number, number];
-  undercommitRisk?: 'low' | 'moderate' | 'high';
-  undercommitRationale?: string;
-}
-
-export type DepthOverridePayload =
-  | DepthOverridePayloadOvercommit
-  | DepthOverridePayloadUndercommit;
+export type {
+  DepthOverridePayload,
+  DepthOverrideOvercommitPayload as DepthOverridePayloadOvercommit,
+  DepthOverrideUndercommitPayload as DepthOverridePayloadUndercommit,
+};
 
 interface DepthOverrideDialogProps {
   open: boolean;
@@ -60,8 +26,8 @@ interface DepthOverrideDialogProps {
  * Format a [min, max] pair for inline display, collapsing identical bounds
  * ("12–12 lessons" → "12 lessons") so short courses read naturally.
  */
-const formatRange = (range: [number, number] | undefined, unit: string): string | null => {
-  if (!range) return null;
+const formatRange = (range: number[] | undefined, unit: string): string | null => {
+  if (!range || range.length < 2) return null;
   const [lo, hi] = range;
   if (lo === hi) return `${lo} ${unit}`;
   return `${lo}–${hi} ${unit}`;
@@ -80,7 +46,7 @@ const formatDepthLabel = (depth: string | null | undefined): string => {
   return depth;
 };
 
-const renderOvercommitDescription = (payload: DepthOverridePayloadOvercommit) => {
+const renderOvercommitDescription = (payload: DepthOverrideOvercommitPayload) => {
   const lessonsText = formatRange(payload.lessonCountRange, 'lessons');
   const hoursText = formatRange(payload.estimatedHoursRange, 'hours');
   const cues = [...(payload.softnessCues ?? []), ...(payload.finishPressureCues ?? [])];
@@ -90,13 +56,10 @@ const renderOvercommitDescription = (payload: DepthOverridePayloadOvercommit) =>
     <>
       {hasMagnitude ? (
         <S.Magnitude>
-          This depth produces roughly <strong>{lessonsText}</strong>{' '}
-          (~<strong>{hoursText}</strong>).
+          This depth produces roughly <strong>{lessonsText}</strong> (~<strong>{hoursText}</strong>).
         </S.Magnitude>
       ) : (
-        <S.Magnitude>
-          This selection may produce a larger course than your answers suggest.
-        </S.Magnitude>
+        <S.Magnitude>This selection may produce a larger course than your answers suggest.</S.Magnitude>
       )}
       {payload.overcommitRationale ? (
         // Prefer the LLM rationale when present — one explanatory sentence
@@ -120,7 +83,7 @@ const renderOvercommitDescription = (payload: DepthOverridePayloadOvercommit) =>
   );
 };
 
-const renderUndercommitDescription = (payload: DepthOverridePayloadUndercommit) => {
+const renderUndercommitDescription = (payload: DepthOverrideUndercommitPayload) => {
   const selectedLessonsText = formatRange(payload.lessonCountRange, 'lessons');
   const selectedHoursText = formatRange(payload.estimatedHoursRange, 'hours');
   const recommendedLessonsText = formatRange(payload.recommendedLessonCountRange, 'lessons');
@@ -140,15 +103,13 @@ const renderUndercommitDescription = (payload: DepthOverridePayloadUndercommit) 
     <>
       {hasBothRanges ? (
         <S.Magnitude>
-          You picked <strong>{selectedLabel}</strong> (about{' '}
-          <strong>{selectedLessonsText}</strong>
+          You picked <strong>{selectedLabel}</strong> (about <strong>{selectedLessonsText}</strong>
           {selectedHoursText && (
             <>
               , ~<strong>{selectedHoursText}</strong>
             </>
           )}
-          ). Your answers point at <strong>{recommendedLabel}</strong> (
-          <strong>{recommendedLessonsText}</strong>
+          ). Your answers point at <strong>{recommendedLabel}</strong> (<strong>{recommendedLessonsText}</strong>
           {recommendedHoursText && (
             <>
               , ~<strong>{recommendedHoursText}</strong>
@@ -158,16 +119,13 @@ const renderUndercommitDescription = (payload: DepthOverridePayloadUndercommit) 
         </S.Magnitude>
       ) : hasSelectedRange ? (
         <S.Magnitude>
-          You picked <strong>{selectedLabel}</strong> (about{' '}
-          <strong>{selectedLessonsText}</strong>, ~<strong>{selectedHoursText}</strong>). Your
-          answers point at <strong>{recommendedLabel}</strong>.
+          You picked <strong>{selectedLabel}</strong> (about <strong>{selectedLessonsText}</strong>, ~
+          <strong>{selectedHoursText}</strong>). Your answers point at <strong>{recommendedLabel}</strong>.
         </S.Magnitude>
       ) : (
         <S.Magnitude>{payload.message}</S.Magnitude>
       )}
-      {payload.undercommitRationale && (
-        <S.CuesIntro>Why we suggest more: {payload.undercommitRationale}</S.CuesIntro>
-      )}
+      {payload.undercommitRationale && <S.CuesIntro>Why we suggest more: {payload.undercommitRationale}</S.CuesIntro>}
       <S.Question>Continue with this depth?</S.Question>
     </>
   );
@@ -197,7 +155,7 @@ export const DepthOverrideDialog = ({
   const description = payload
     ? isUndercommit
       ? renderUndercommitDescription(payload)
-      : renderOvercommitDescription(payload as DepthOverridePayloadOvercommit)
+      : renderOvercommitDescription(payload as DepthOverrideOvercommitPayload)
     : null;
 
   return (

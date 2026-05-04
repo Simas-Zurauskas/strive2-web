@@ -1,30 +1,8 @@
 import styled from 'styled-components';
 
-export const Section = styled.section`
-  border: 1px solid ${(p) => p.theme.colors.border};
-  border-radius: 12px;
-  padding: 1.25rem 1.5rem;
-  background: ${(p) => p.theme.colors.surface};
-  margin-bottom: 1.5rem;
-`;
-
-export const Header = styled.div`
-  display: flex;
-  align-items: baseline;
-  justify-content: space-between;
-  gap: 1rem;
-  margin-bottom: 1rem;
-`;
-
-export const Title = styled.h3`
-  font-size: 0.8125rem;
-  font-weight: 600;
-  text-transform: uppercase;
-  letter-spacing: 0.04em;
-  color: ${(p) => p.theme.colors.muted};
-  margin: 0;
-`;
-
+/** Recall card uses a non-pill trend label (it carries longer text like
+ *  "+24% vs last week") so it stays as a plain colored line. The chip is
+ *  reserved for shorter percentage-only labels on other widgets. */
 export const TrendLabel = styled.span<{ $positive: boolean; $neutral: boolean }>`
   font-size: 0.6875rem;
   font-weight: 600;
@@ -32,6 +10,7 @@ export const TrendLabel = styled.span<{ $positive: boolean; $neutral: boolean }>
     if (p.$neutral) return p.theme.colors.muted;
     return p.$positive ? p.theme.colors.success : p.theme.colors.error;
   }};
+  font-variant-numeric: tabular-nums;
 `;
 
 // ── Stats tiles ────────────────────────────────────
@@ -46,11 +25,18 @@ export const StatsRow = styled.div`
 export const StatTile = styled.div<{ $urgent?: boolean }>`
   display: flex;
   flex-direction: column;
-  gap: 0.25rem;
-  padding: 0.625rem 0.875rem;
-  border-radius: 10px;
-  background: ${(p) => (p.$urgent ? `${p.theme.colors.warning}12` : p.theme.colors.surfaceBorder + '40')};
-  border: 1px solid ${(p) => (p.$urgent ? `${p.theme.colors.warning}55` : 'transparent')};
+  gap: 0.3125rem;
+  padding: 0.6875rem 0.9375rem;
+  border-radius: var(--radius-lg);
+  background: ${(p) =>
+    p.$urgent
+      ? `color-mix(in oklab, ${p.theme.colors.warning} 8%, transparent)`
+      : `color-mix(in oklab, ${p.theme.colors.surfaceBorder} 50%, transparent)`};
+  border: 1px solid
+    ${(p) =>
+      p.$urgent
+        ? `color-mix(in oklab, ${p.theme.colors.warning} 30%, transparent)`
+        : 'transparent'};
 `;
 
 export const StatValue = styled.span`
@@ -82,6 +68,58 @@ export const ChartLabel = styled.span`
   font-size: 0.6875rem;
   color: ${(p) => p.theme.colors.muted};
   margin-bottom: 0.375rem;
+`;
+
+/** Inline 2-series legend below the chart. The Highcharts legend is
+ *  disabled because it doesn't compose with the dual-y-axis combo
+ *  cleanly — we render our own muted strip so the user knows which
+ *  visual represents what (rating-tinted columns vs the dark spline). */
+export const ChartLegend = styled.div`
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem 1rem;
+  margin-top: 0.5rem;
+  padding-left: 0.125rem;
+  font-size: 0.625rem;
+  color: ${(p) => p.theme.colors.muted};
+  font-weight: 500;
+  letter-spacing: 0.005em;
+`;
+
+export const ChartLegendItem = styled.span`
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4375rem;
+`;
+
+export const ChartLegendSwatch = styled.span<{ $shape: 'square' | 'line' | 'gradient' }>`
+  flex-shrink: 0;
+  ${(p) =>
+    p.$shape === 'gradient'
+      ? `
+        width: 18px;
+        height: 8px;
+        border-radius: 2px;
+        background: linear-gradient(
+          90deg,
+          ${p.theme.colors.error} 0%,
+          ${p.theme.colors.warning} 35%,
+          ${p.theme.colors.accent} 70%,
+          ${p.theme.colors.success} 100%
+        );
+      `
+      : p.$shape === 'line'
+        ? `
+          width: 14px;
+          height: 0;
+          border-top: 2px solid ${p.theme.colors.foreground};
+        `
+        : `
+          width: 8px;
+          height: 8px;
+          border-radius: 2px;
+          background: ${p.theme.colors.muted};
+        `}
 `;
 
 // ── Leitner distribution (demoted to footer strip) ─
@@ -147,31 +185,7 @@ export const Swatch = styled.span<{ $color: string }>`
   flex-shrink: 0;
 `;
 
-// ── Empty state ────────────────────────────────────
-
-export const EmptyState = styled.div`
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  text-align: center;
-  padding: 1.5rem 1rem;
-  gap: 0.5rem;
-`;
-
-export const EmptyIconWrap = styled.div`
-  width: 40px;
-  height: 40px;
-  border-radius: 50%;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  background: ${(p) => `${p.theme.colors.accent}18`};
-  color: ${(p) => p.theme.colors.accent};
-`;
-
-export const EmptyText = styled.p`
-  font-size: 0.8125rem;
-  color: ${(p) => p.theme.colors.muted};
-  margin: 0;
-  max-width: 40ch;
-`;
+// Empty state primitives now come from `_shared/styles.ts` (re-exported
+// at the top of this file). The previous icon-led empty state has been
+// replaced with the editorial gold-rule + italic-serif pattern used
+// across /recall, /quizzes, and the QuizScoreTrend widget here.

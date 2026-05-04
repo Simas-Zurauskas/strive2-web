@@ -1,6 +1,6 @@
 import { ArrowRight, Check, Trash2, X } from 'lucide-react';
 import { Button, Eyebrow, InlineLink } from '@/components';
-import { DEV_MODE } from '@/conf/env';
+import { useAuth } from '@/hooks';
 import { plural } from '@/lib/strings';
 import * as S from '../ModuleQuizScreen.styles';
 import type { CourseModule, QuizAttemptResult, QuizMasteryTier } from '@/api/types';
@@ -56,6 +56,8 @@ export const QuizResults = ({
   onBack,
   backLabel,
 }: QuizResultsProps) => {
+  const { user } = useAuth();
+  const isAdmin = Boolean(user?.isAdmin);
   return (
     <S.Container>
       <S.Content>
@@ -64,7 +66,7 @@ export const QuizResults = ({
             <S.BackIcon />
             {backLabel}
           </S.BackLink>
-          {DEV_MODE && (
+          {isAdmin && (
             <S.DevResetButton onClick={onDevReset} disabled={isResetting}>
               <Trash2 size={10} /> Reset quiz
             </S.DevResetButton>

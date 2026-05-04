@@ -8,6 +8,7 @@ import {
   AuthForm,
   AuthFormFooter,
   AuthFormTitle,
+  AuthMoment,
   AuthSubmitBtn,
   Input,
 } from '@/components';
@@ -21,18 +22,37 @@ export const ForgotPasswordScreen = () => {
     mutationFn: forgotPassword,
     meta: { errorMessage: TOASTS.FORGOT_PASSWORD_ERROR },
   });
+  const submittedEmail = mutation.variables?.email ?? '';
 
   // Render the same neutral confirmation on success AND error so the UI never
   // reveals whether an account exists for the submitted email.
   if (mutation.isSuccess || mutation.isError) {
     return (
-      <AuthForm as="div">
-        <AuthFormTitle>Check your inbox</AuthFormTitle>
-        <AuthFormFooter>{TOASTS.RESET_LINK_SENT}</AuthFormFooter>
-        <Link href="/login">
-          <AuthSubmitBtn as="span">Back to sign in</AuthSubmitBtn>
+      <AuthMoment.Wrap>
+        <AuthMoment.Rule aria-hidden />
+        <AuthMoment.Eyebrow>Check your inbox</AuthMoment.Eyebrow>
+        <AuthMoment.Title>Reset link on the way.</AuthMoment.Title>
+        <AuthMoment.Lead>
+          If an account exists for
+          {submittedEmail ? (
+            <>
+              {' '}
+              <AuthMoment.InlineMark>{submittedEmail}</AuthMoment.InlineMark>
+            </>
+          ) : (
+            ' that email'
+          )}
+          , a reset link is on its way. Click it to choose a new password.
+        </AuthMoment.Lead>
+
+        <AuthMoment.Hint>
+          Didn&rsquo;t get it? Check your spam folder. Links expire after 1 hour.
+        </AuthMoment.Hint>
+
+        <Link href="/login" passHref legacyBehavior>
+          <AuthMoment.PrimaryButton as="a">Back to sign in</AuthMoment.PrimaryButton>
         </Link>
-      </AuthForm>
+      </AuthMoment.Wrap>
     );
   }
 

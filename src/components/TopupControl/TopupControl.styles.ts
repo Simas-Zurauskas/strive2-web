@@ -22,17 +22,26 @@ export const InputWrap = styled.div<{ $state: 'neutral' | 'error' }>`
   position: relative;
   display: inline-flex;
   align-items: center;
-  height: 36px;
-  padding: 0 0.6rem 0 0.85rem;
+  /* Matches the default <Button> height so the input, chips, and Buy CTA
+     all sit on the same baseline. Earlier the input/chips were 38px and
+     the default Button rendered ~42px — visibly off. */
+  height: 42px;
+  padding: 0 0.625rem 0 0.875rem;
   background: ${(p) => p.theme.colors.background};
   border: 1px solid
     ${(p) =>
       p.$state === 'error' ? p.theme.colors.error : p.theme.colors.surfaceBorder};
-  border-radius: 8px;
-  transition: border-color 120ms ease;
+  border-radius: var(--radius-md);
+  transition: border-color 120ms ease, box-shadow 120ms ease;
 
   &:focus-within {
-    border-color: ${(p) => p.theme.colors.accent};
+    border-color: ${(p) =>
+      p.$state === 'error' ? p.theme.colors.error : p.theme.colors.accent};
+    box-shadow: 0 0 0 3px
+      ${(p) =>
+        p.$state === 'error'
+          ? `color-mix(in oklab, ${p.theme.colors.error} 16%, transparent)`
+          : `color-mix(in oklab, ${p.theme.colors.accent} 16%, transparent)`};
   }
 `;
 
@@ -74,21 +83,35 @@ export const QuickPicks = styled.div`
   flex-wrap: wrap;
 `;
 
+/** Quick-pick chip. Selected state used to fill solid accent — too loud
+ *  next to the input field. Now an accent-tinted hairline like the
+ *  recall card status pills, so the picked amount reads as "selected"
+ *  without competing with the Buy CTA. */
 export const QuickPick = styled.button<{ $selected: boolean }>`
-  height: 32px;
-  padding: 0 0.65rem;
-  border-radius: 9999px;
+  height: 42px;
+  padding: 0 1rem;
+  border-radius: var(--radius-md);
   font-size: 0.8125rem;
   font-weight: 600;
   cursor: pointer;
   border: 1px solid ${(p) => p.theme.colors.surfaceBorder};
   background: ${(p) => p.theme.colors.surface};
-  color: ${(p) => p.theme.colors.foreground};
-  transition: background 120ms ease, border-color 120ms ease, transform 120ms ease;
+  color: ${(p) => p.theme.colors.muted};
+  transition:
+    background 120ms ease,
+    border-color 120ms ease,
+    color 120ms ease;
   font-variant-numeric: tabular-nums;
 
   &:hover:not(:disabled) {
-    transform: translateY(-1px);
+    border-color: ${(p) =>
+      `color-mix(in oklab, ${p.theme.colors.tertiary} 50%, ${p.theme.colors.surfaceBorder})`};
+    color: ${(p) => p.theme.colors.foreground};
+  }
+
+  &:focus-visible {
+    outline: 2px solid ${(p) => p.theme.colors.accent};
+    outline-offset: 2px;
   }
 
   &:disabled {
@@ -99,8 +122,8 @@ export const QuickPick = styled.button<{ $selected: boolean }>`
   ${(p) =>
     p.$selected &&
     css`
-      background: ${p.theme.colors.accent};
-      color: white;
+      background: ${p.theme.colors.accentMuted};
+      color: ${p.theme.colors.accent};
       border-color: ${p.theme.colors.accent};
     `}
 `;

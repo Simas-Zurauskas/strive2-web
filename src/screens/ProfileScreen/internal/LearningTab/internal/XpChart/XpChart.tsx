@@ -5,7 +5,8 @@ import Skeleton from 'react-loading-skeleton';
 import { useTheme } from 'styled-components';
 import { formatDate } from '@/lib/formatDate';
 import { themeColors } from '@/theme';
-import * as S from './XpChart.styles';
+import { buildTooltipHtml, type TooltipRow } from '../_shared/chartTooltip';
+import { Section, SectionHeader, SectionEyebrow, SectionMeta } from '../_shared/styles';
 import type { XpDayEntry } from '@/api/types';
 
 interface XpChartProps {
@@ -13,7 +14,9 @@ interface XpChartProps {
   loading?: boolean;
 }
 
-const CHART_HEIGHT = 200;
+// Slightly taller now that the legend lives below the plot rather than
+// floating in the top-right corner. ~36px reserved for the legend strip.
+const CHART_HEIGHT = 240;
 
 export const XpChart: React.FC<XpChartProps> = ({ data, loading }) => {
   const theme = useTheme();
@@ -36,10 +39,18 @@ export const XpChart: React.FC<XpChartProps> = ({ data, loading }) => {
       title: { text: undefined },
       credits: { enabled: false },
       legend: {
+        // Bottom-aligned, non-floating, so a 6-series legend wraps cleanly
+        // on narrow widths instead of overlapping the chart's top-right
+        // gridlines (the previous floating top-right placement clipped
+        // and crowded the y-axis labels).
         enabled: true,
-        align: 'right',
-        verticalAlign: 'top',
-        floating: true,
+        align: 'left',
+        verticalAlign: 'bottom',
+        floating: false,
+        margin: 12,
+        itemDistance: 14,
+        itemMarginTop: 2,
+        itemMarginBottom: 2,
         itemStyle: { color: c.muted, fontSize: '0.625rem', fontWeight: '500' },
         itemHoverStyle: { color: c.foreground },
         symbolHeight: 8,
@@ -82,28 +93,23 @@ export const XpChart: React.FC<XpChartProps> = ({ data, loading }) => {
           const points = this.points ?? [];
           const total = points.reduce((s, p) => s + (p.y ?? 0), 0);
           if (total === 0) return false;
-          // `this.x` on a shared tooltip over a categorized axis returns the
-          // numeric index — `points[0].key` is the category label (date).
-          const label = (points[0]?.key as string | undefined) ?? String(this.x ?? '');
-          const header = `<div style="font-weight:600;font-size:0.8125rem;margin-bottom:8px">${label}</div>`;
-          const rows = points
+          // `this.x` on a shared tooltip over a categorized axis returns
+          // the numeric index — `points[0].key` is the category label (date).
+          const header = (points[0]?.key as string | undefined) ?? String(this.x ?? '');
+          const rows: TooltipRow[] = points
             .filter((p) => (p.y ?? 0) > 0)
-            .map(
-              (p) =>
-                `<div style="display:flex;align-items:center;gap:8px;padding:2px 0">` +
-                `<span style="width:8px;height:8px;border-radius:50%;background:${p.color};flex-shrink:0"></span>` +
-                `<span style="color:${c.muted};flex:1">${p.series.name}</span>` +
-                `<span style="font-weight:600;font-variant-numeric:tabular-nums">${p.y} XP</span>` +
-                `</div>`,
-            )
-            .join('');
-          const footer =
-            `<div style="border-top:1px solid ${c.surfaceBorder};margin-top:8px;padding-top:8px;display:flex;justify-content:space-between;font-weight:600">` +
-            `<span>Total</span><span>${total} XP</span></div>`;
-          return `<div style="background:${c.surface};border:1px solid ${c.surfaceBorder};border-radius:12px;padding:12px 14px;min-width:160px;` +
-            `box-shadow:0 4px 24px rgba(0,0,0,${scheme === 'dark' ? '0.5' : '0.15'}),0 1px 4px rgba(0,0,0,${scheme === 'dark' ? '0.3' : '0.08'});` +
-            `color:${c.foreground};font-size:0.75rem;line-height:1.5">` +
-            header + rows + footer + '</div>';
+            .map((p) => ({
+              color: String(p.color ?? c.muted),
+              shape: 'square',
+              label: p.series.name,
+              value: `${p.y} XP`,
+            }));
+          return buildTooltipHtml({
+            colors: c,
+            header,
+            rows,
+            footer: { label: 'Total', value: `${total} XP` },
+          });
         },
       },
       series: [
@@ -145,7 +151,7 @@ export const XpChart: React.FC<XpChartProps> = ({ data, loading }) => {
         },
       ],
     };
-  }, [last30, c, scheme]);
+  }, [last30, c]);
 
   const showSkeleton = loading && last30.length === 0;
 
@@ -153,22 +159,24 @@ export const XpChart: React.FC<XpChartProps> = ({ data, loading }) => {
   const endDate = last30[last30.length - 1]?.date;
 
   return (
-    <S.Section>
-      <S.Header>
+    <Section>
+      <SectionHeader>
         {showSkeleton ? (
           <>
-            <S.Title><Skeleton width={140} /></S.Title>
-            <S.RangeLabel><Skeleton width={100} /></S.RangeLabel>
+            <SectionEyebrow><Skeleton width={80} /></SectionEyebrow>
+            <SectionMeta><Skeleton width={120} /></SectionMeta>
           </>
         ) : (
           <>
-            <S.Title>XP — Last 30 Days</S.Title>
+            <SectionEyebrow>Daily XP</SectionEyebrow>
             {startDate && endDate && (
-              <S.RangeLabel>{formatDate({ input: startDate })} — {formatDate({ input: endDate })}</S.RangeLabel>
+              <SectionMeta>
+                {formatDate({ input: startDate })} — {formatDate({ input: endDate })}
+              </SectionMeta>
             )}
           </>
         )}
-      </S.Header>
+      </SectionHeader>
       <div style={{ height: CHART_HEIGHT }}>
         {showSkeleton ? (
           <Skeleton height={CHART_HEIGHT} borderRadius={8} />
@@ -176,6 +184,6 @@ export const XpChart: React.FC<XpChartProps> = ({ data, loading }) => {
           <HighchartsReact highcharts={Highcharts} options={options} />
         ) : null}
       </div>
-    </S.Section>
+    </Section>
   );
 };

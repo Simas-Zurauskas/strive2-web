@@ -6,13 +6,14 @@ import { startPortal } from '@/api/routes/billing';
 import { Button } from '@/components/Button';
 import { TopupControl } from '@/components/TopupControl';
 import { ROUTES } from '@/constants/routes';
-import { useBillingLedger, useBillingPlans, useBillingSummary } from '@/hooks/useBilling';
+import { useBillingPlans, useBillingSummary } from '@/hooks/useBilling';
 import { percentAllowanceRemaining } from '@/lib/allowance';
 import { formatDate } from '@/lib/formatDate';
 import * as S from './BillingPanel.styles';
-import type { BillingPlan, BillingSummary, CreditLedgerEntry, PlanKey, SubscriptionStatus } from '@/api/types';
+import type { BillingPlan, BillingSummary, PlanKey, SubscriptionStatus } from '@/api/types';
 
-const statusTone = (status: SubscriptionStatus): 'active' | 'warning' | 'canceled' => {
+const statusTone = (status: SubscriptionStatus, cancelAtPeriodEnd: boolean): 'active' | 'warning' | 'canceled' => {
+  if (cancelAtPeriodEnd) return 'warning';
   if (status === 'active') return 'active';
   if (status === 'past_due' || status === 'canceling') return 'warning';
   return 'canceled';
@@ -25,42 +26,6 @@ const statusLabel = (status: SubscriptionStatus, cancelAtPeriodEnd: boolean): st
   if (status === 'canceling') return 'Canceling';
   return 'Canceled';
 };
-
-const reasonLabel: Record<CreditLedgerEntry['reason'], string> = {
-  signup_grant: 'Signup grant',
-  period_reset: 'Period reset',
-  plan_upgrade_bonus: 'Plan upgrade',
-  topup_purchase: 'Top-up',
-  debit_action: 'Used',
-  refund_job_failed: 'Refund (failed job)',
-  refund_job_canceled: 'Refund (canceled)',
-  refund_cross_period: 'Refund (cross-period)',
-  refund_topup: 'Refund (top-up)',
-  dispute_clawback: 'Dispute clawback',
-  admin_grant: 'Admin grant',
-  admin_clawback: 'Admin adjustment',
-};
-
-// Ledger `actionType` is now the raw JobType string ('generate_lesson',
-// 'clarify', 'generate_structure', ...). Map to human phrasing for the
-// recent-activity subtitle; unknown values render as-is.
-const actionLabel = (actionType: string | undefined): string => {
-  if (!actionType) return '';
-  const map: Record<string, string> = {
-    clarify: 'clarifying questions',
-    generate_structure: 'course design',
-    refine_structure: 'course redesign',
-    generate_depth_previews: 'depth previews',
-    generate_lesson: 'lesson',
-    generate_module_quiz: 'module quiz',
-  };
-  return map[actionType] ?? actionType;
-};
-
-interface BillingPanelProps {
-  /** Max rows in the ledger list (default 20). */
-  ledgerLimit?: number;
-}
 
 const MS_PER_DAY = 24 * 60 * 60 * 1000;
 
@@ -86,32 +51,19 @@ const formatPriceWithCadence = ({
   return `$${usd.toFixed(2)}/${cadenceHint === 'annual' ? 'year' : 'month'}`;
 };
 
-interface RenewalState {
-  tone: S.RenewalTone;
-  icon: string;
-  headline: string;
-  detail: React.ReactNode;
-}
-
 /**
- * Translate the user's subscription state into the next-event card the user
- * sees front-and-center on the billing tab. Every branch must answer four
- * questions: WHEN, WHAT, AT WHAT COST, and any callout (e.g. payment issue).
- *
- * Branches in priority order:
- *   1. past_due  → warning, "fix payment"
- *   2. cancelAtPeriodEnd  → warning, "subscription ending"
- *   3. pendingPlan set  → info, "downgrading on X"
- *   4. paid + active  → positive, "auto-renews on X for $Y"
- *   5. free  → neutral, "credits refresh on X"
+ * Build the renewal sentence shown beneath the plan name. Replaces the
+ * previous separate colored callout — quiet text inside the plan card
+ * is enough for the normal active/free path, and the warning tone on
+ * the card border signals past_due / canceling visually.
  */
-const computeRenewalState = ({
+const buildRenewalCopy = ({
   summary,
   plans,
 }: {
   summary: BillingSummary;
   plans: BillingPlan[] | undefined;
-}): RenewalState => {
+}): React.ReactNode => {
   const { plan, status, cancelAtPeriodEnd, pendingPlan, credits } = summary;
   const isPaid = plan !== 'free';
   const dateLabel = credits.periodEnd ? formatDate({ input: credits.periodEnd, format: 'long' }) : null;
@@ -122,110 +74,70 @@ const computeRenewalState = ({
       <strong>{dateLabel}</strong>
       {inLabel ? ` (${inLabel})` : ''}
     </>
-  ) : (
-    ''
-  );
+  ) : null;
 
-  // Past-due trumps everything — call attention to fix payment first.
   if (status === 'past_due') {
-    return {
-      tone: 'warning',
-      icon: '!',
-      headline: 'Payment failed — fix card to keep your plan',
-      detail: (
-        <>
-          Stripe will keep retrying for a few days. After that your subscription downgrades to Free. Open the billing
-          portal to update your card.
-        </>
-      ),
-    };
+    return (
+      <>
+        Your last payment failed and Stripe is retrying. Update your card from the billing portal —
+        if it doesn&rsquo;t recover in a few days, your subscription drops to Free.
+      </>
+    );
   }
 
   if (isPaid && cancelAtPeriodEnd) {
-    return {
-      tone: 'warning',
-      icon: '×',
-      headline: `Subscription ends ${inLabel || 'soon'}`,
-      detail: (
-        <>
-          You'll keep <strong>{summary.displayName}</strong> until {dateBlock}, then drop to Free. Reactivate from the
-          billing portal to keep your subscription running.
-        </>
-      ),
-    };
+    return (
+      <>
+        Your subscription ends on {dateBlock}, then drops to Free. Reactivate from the billing
+        portal to keep your plan running.
+      </>
+    );
   }
 
   if (isPaid && pendingPlan && pendingPlan !== plan) {
     const targetPlan = plans?.find((p) => p.key === pendingPlan);
     const targetName = planDisplayName(pendingPlan, plans);
     const targetPrice = formatPriceWithCadence({ plan: targetPlan, cadenceHint: 'monthly' });
-    return {
-      tone: 'info',
-      icon: '⇄',
-      headline: `Switching to ${targetName} on renewal`,
-      detail: (
-        <>
-          You stay on <strong>{summary.displayName}</strong> until {dateBlock}. Then your plan becomes{' '}
-          <strong>{targetName}</strong>
-          {targetPrice ? (
-            <>
-              {' '}
-              at <strong>{targetPrice}</strong>
-            </>
-          ) : (
-            ''
-          )}
-          .
-        </>
-      ),
-    };
+    return (
+      <>
+        On {dateBlock}, your plan switches to <strong>{targetName}</strong>
+        {targetPrice ? <> at <strong>{targetPrice}</strong></> : null}.
+      </>
+    );
   }
 
   if (isPaid) {
     const currentPlanDef = plans?.find((p) => p.key === plan);
     const renewalPrice = formatPriceWithCadence({ plan: currentPlanDef, cadenceHint: 'monthly' });
-    return {
-      tone: 'positive',
-      icon: '↻',
-      headline: `Auto-renews ${inLabel || 'soon'}`,
-      detail: (
-        <>
-          Your card will be charged
-          {renewalPrice ? (
-            <>
-              {' '}
-              <strong>{renewalPrice}</strong>
-            </>
-          ) : (
-            ''
-          )}{' '}
-          on {dateBlock} and your allowance refreshes for the new period. Cancel any time from the billing portal.
-        </>
-      ),
-    };
+    return (
+      <>
+        Auto-renews on {dateBlock}
+        {renewalPrice ? <> at <strong>{renewalPrice}</strong></> : null}. Cancel any time from the
+        billing portal.
+      </>
+    );
   }
 
   // Free tier
-  return {
-    tone: 'neutral',
-    icon: '↻',
-    headline: `Allowance refreshes ${inLabel || 'soon'}`,
-    detail: <>Your free allowance refills on {dateBlock}. Upgrade any time to get more.</>,
-  };
+  return (
+    <>
+      Your free allowance refreshes on {dateBlock}. Upgrade any time to get more capacity that
+      doesn&rsquo;t reset to zero each cycle.
+    </>
+  );
 };
 
 /**
- * Plan + credit balance + ledger + portal/topup actions. Embedded in the
- * Profile screen's Billing tab — the single canonical place for billing
- * state. Standalone /billing route was removed in favor of
- * /profile?tab=billing so users have one mental location for everything
- * account-related. Layout padding is the caller's responsibility.
+ * Plan + allowance + top-up. Three editorial cards stacked vertically —
+ * Plan (identity + status + renewal + upgrade CTAs), Allowance (the
+ * single most important number on the surface, big italic-serif), and
+ * Top-up (buy more capacity that never expires). Embedded in the
+ * Profile screen's Billing tab.
  */
-export const BillingPanel: React.FC<BillingPanelProps> = ({ ledgerLimit = 20 }) => {
+export const BillingPanel: React.FC = () => {
   const router = useRouter();
   const { data: summary, isLoading: summaryLoading } = useBillingSummary();
   const { data: catalog } = useBillingPlans();
-  const { data: ledgerPage, isLoading: ledgerLoading } = useBillingLedger({ limit: ledgerLimit });
 
   const portalMutation = useMutation({
     mutationFn: startPortal,
@@ -243,120 +155,91 @@ export const BillingPanel: React.FC<BillingPanelProps> = ({ ledgerLimit = 20 }) 
     );
   }
 
-  const { plan, displayName, status, cancelAtPeriodEnd, pendingPlan, credits } = summary;
+  const { plan, displayName, status, cancelAtPeriodEnd, credits } = summary;
   const pctRemaining = percentAllowanceRemaining({
     balance: credits.allowance,
     granted: credits.allowanceGranted,
   });
 
   const isPaid = plan !== 'free';
-  const ledger = ledgerPage?.rows ?? [];
-  const renewal = computeRenewalState({ summary, plans: catalog?.plans });
+  const tone = statusTone(status, cancelAtPeriodEnd);
+  const cardTone: 'default' | 'warning' = tone === 'warning' ? 'warning' : 'default';
+  const renewalCopy = buildRenewalCopy({ summary, plans: catalog?.plans });
 
   // Bonus balance (credits) → USD display. Users bought top-ups in dollars,
   // so they should see the remaining value in dollars. Uses the catalog's
-  // published rate so the math matches what was charged at checkout — if
-  // the rate ever changes, unspent bonus credits are still shown at their
-  // original USD-equivalent via the current rate (a minor inaccuracy we
-  // accept; the ledger retains the exact amount paid).
+  // published rate so the math matches what was charged at checkout.
   const topupRate = catalog?.topupRate?.creditsPerUsd ?? 0;
   const bonusUsdLabel = topupRate > 0 && credits.bonus > 0 ? `$${(credits.bonus / topupRate).toFixed(2)}` : null;
 
   return (
     <S.Wrap>
-      <S.PlanCard $emphasis={isPaid}>
+      {/* ── Plan ────────────────────────────────────────── */}
+      <S.PlanCard $tone={cardTone}>
         <S.PlanHeader>
-          <S.PlanTitle>
+          <S.PlanIdentity>
+            <S.PlanEyebrow>Current plan</S.PlanEyebrow>
             <S.PlanName>{displayName}</S.PlanName>
-          </S.PlanTitle>
-          <S.PlanStatus $status={statusTone(status)}>{statusLabel(status, cancelAtPeriodEnd)}</S.PlanStatus>
+          </S.PlanIdentity>
+          {/* Status pill is meaningful only for paid plans — "Active" on Free
+              reads as confused, since there's no subscription to be active.
+              Free is the default state and shouldn't be labeled. */}
+          {isPaid && (
+            <S.PlanStatus $status={tone}>
+              <S.StatusDot $status={tone} aria-hidden />
+              {statusLabel(status, cancelAtPeriodEnd)}
+            </S.PlanStatus>
+          )}
         </S.PlanHeader>
 
-        {/* What happens next — unmissable on every billing view. */}
-        <S.RenewalCard $tone={renewal.tone} role="status">
-          <S.RenewalIcon $tone={renewal.tone} aria-hidden="true">
-            {renewal.icon}
-          </S.RenewalIcon>
-          <S.RenewalBody>
-            <S.RenewalHeadline>{renewal.headline}</S.RenewalHeadline>
-            <S.RenewalDetail>{renewal.detail}</S.RenewalDetail>
-          </S.RenewalBody>
-        </S.RenewalCard>
+        <S.PlanRenewal>{renewalCopy}</S.PlanRenewal>
 
-        <S.CreditBar>
-          <S.CreditBarHeader>
-            <span>Allowance this period</span>
-            <span>
-              <strong>{Math.round(pctRemaining)}%</strong> remaining
-            </span>
-          </S.CreditBarHeader>
-          <S.BarTrack>
-            <S.BarFill $pct={pctRemaining} />
-          </S.BarTrack>
-          {credits.bonus > 0 && bonusUsdLabel && (
-            <S.CreditSub>
-              <span>
-                Plus <strong>{bonusUsdLabel}</strong> top-up allowance
-              </span>
-            </S.CreditSub>
-          )}
-        </S.CreditBar>
-
-        <S.Actions>
-          {/* Plan switching: pricing page is always reachable. For paid users
-              its CTAs route the actual switch through Stripe Portal — but we
-              still want them to SEE the tier comparison side-by-side without
-              leaving the app first. */}
-          <Button onClick={() => router.push(ROUTES.pricing())}>{isPaid ? 'Change plan' : 'See plans'}</Button>
-          {/* Manage = card / cancel / invoices via Stripe Portal. Only paid
-              users have a Stripe customer + subscription to manage. */}
+        <S.PlanActions>
+          <Button onClick={() => router.push(ROUTES.pricing())}>
+            {isPaid ? 'Change plan' : 'See plans'}
+          </Button>
           {isPaid && (
-            <Button variant="secondary" onClick={() => portalMutation.mutate()} loading={portalMutation.isPending}>
+            <Button
+              variant="secondary"
+              onClick={() => portalMutation.mutate()}
+              loading={portalMutation.isPending}
+            >
               Manage billing
             </Button>
           )}
-        </S.Actions>
-
-        <S.TopupSection>
-          <S.TopupHeader>
-            <S.TopupBadge aria-hidden="true">+</S.TopupBadge>
-            <S.TopupLabel>Top up extra allowance</S.TopupLabel>
-            <S.TopupHint>never expires</S.TopupHint>
-          </S.TopupHeader>
-          <TopupControl />
-        </S.TopupSection>
+        </S.PlanActions>
       </S.PlanCard>
 
-      <S.LedgerSection>
-        <S.SectionHeader>Recent activity</S.SectionHeader>
-        {ledgerLoading && <S.EmptyLedger>Loading…</S.EmptyLedger>}
-        {!ledgerLoading && ledger.length === 0 && <S.EmptyLedger>No activity yet.</S.EmptyLedger>}
-        {ledger.length > 0 && (
-          <S.LedgerTable>
-            {ledger.map((row) => {
-              const positive = row.delta > 0;
-              const label = reasonLabel[row.reason] ?? row.reason;
-              const subLabel = row.actionType ? actionLabel(row.actionType) : (row.notes ?? '');
-              // Raw credit numbers are intentionally not surfaced — the sign
-              // arrow communicates direction, the reason + action tell the
-              // user what happened. Aligns with the "hide credit numbers"
-              // directive applied across the billing surfaces.
-              return (
-                <S.LedgerRow key={row._id}>
-                  <S.LedgerMain>
-                    <strong>{label}</strong>
-                    {subLabel && <span>{subLabel}</span>}
-                  </S.LedgerMain>
-                  <S.LedgerDate>{formatDate({ input: row.timestamp, format: 'short' })}</S.LedgerDate>
-                  <S.LedgerDelta $positive={positive} aria-hidden="true">
-                    {positive ? '↑' : '↓'}
-                  </S.LedgerDelta>
-                </S.LedgerRow>
-              );
-            })}
-          </S.LedgerTable>
+      {/* ── Allowance ───────────────────────────────────── */}
+      <S.AllowanceCard>
+        <S.AllowanceEyebrow>Allowance this period</S.AllowanceEyebrow>
+        <S.AllowanceHero>
+          <S.AllowanceValue>{Math.round(pctRemaining)}%</S.AllowanceValue>
+          <S.AllowanceLabel>remaining</S.AllowanceLabel>
+        </S.AllowanceHero>
+        <S.BarTrack>
+          <S.BarFill $pct={pctRemaining} />
+        </S.BarTrack>
+        {bonusUsdLabel && (
+          <S.BonusLine>
+            <S.BonusDot aria-hidden />
+            Plus <strong>{bonusUsdLabel}</strong> top-up balance
+            <S.BonusSep aria-hidden>·</S.BonusSep>
+            never expires
+          </S.BonusLine>
         )}
-      </S.LedgerSection>
+      </S.AllowanceCard>
+
+      {/* ── Top up ──────────────────────────────────────── */}
+      <S.TopupCard>
+        <S.TopupEyebrow>Top up</S.TopupEyebrow>
+        <S.TopupTitle>Buy more, anytime.</S.TopupTitle>
+        <S.TopupLead>
+          One-off purchases sit on top of your monthly allowance and never reset to zero. Use them
+          first when generating courses or lessons.
+        </S.TopupLead>
+        <TopupControl />
+      </S.TopupCard>
     </S.Wrap>
   );
 };

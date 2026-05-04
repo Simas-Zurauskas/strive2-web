@@ -42,10 +42,12 @@ export const RecallScreen = () => {
 
   const [progressedIds, setProgressedIds] = useState<string[]>([]);
   const [modeOverrides, setModeOverrides] = useState<Record<string, RecallMode>>({});
-  const [preferredMode, setPreferredMode] = useState<RecallMode | null>(null);
-  useEffect(() => {
-    setPreferredMode(readSavedMode());
-  }, []);
+  // Lazy initializer pulls the saved mode from localStorage once on mount.
+  // SSR-safe: readSavedMode short-circuits to null when window is absent,
+  // and the lazy callback only runs client-side anyway because this is a
+  // 'use client' component. Previously this lived in a mount effect, which
+  // tripped the set-state-in-effect rule.
+  const [preferredMode, setPreferredMode] = useState<RecallMode | null>(() => readSavedMode());
 
   const remaining = useMemo(
     () => sessionQueue.filter((i) => !progressedIds.includes(i.recallCardId)),
@@ -64,6 +66,7 @@ export const RecallScreen = () => {
     if (!currentRaw) return;
     if (modeOverrides[currentRaw.recallCardId]) return;
     if (!preferredMode || preferredMode === currentRaw.mode) return;
+    // eslint-disable-next-line react-hooks/set-state-in-effect -- syncing local override map with external preferredMode + persisting to server
     setModeOverrides((prev) => ({ ...prev, [currentRaw.recallCardId]: preferredMode }));
     setMode({ recallCardId: currentRaw.recallCardId, mode: preferredMode });
   }, [currentRaw, preferredMode, modeOverrides, setMode]);

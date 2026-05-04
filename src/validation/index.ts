@@ -6,6 +6,7 @@ export {
   setPasswordSchema,
   changePasswordSchema,
   securityActionCodeSchema,
+  PASSWORD_RULES,
 } from './auth';
 export type {
   SignInValues,

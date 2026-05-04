@@ -5,19 +5,48 @@ import { useRouter, useSearchParams } from 'next/navigation';
 import { useSession } from 'next-auth/react';
 import { useEffect, useRef, useState } from 'react';
 import { verifyEmail } from '@/api/routes/auth';
-import { AuthForm, AuthFormFooter, AuthFormTitle, AuthSubmitBtn } from '@/components';
+import { AuthMoment } from '@/components';
 import { safeRedirect } from '@/lib/safeRedirect';
 
 const REDIRECT_STORAGE_KEY = 'pendingPostAuthRedirect';
 
 type Status = 'verifying' | 'success' | 'error' | 'expired' | 'already-verified';
 
+interface CopyForState {
+  eyebrow: string;
+  title: string;
+  lead: string;
+}
+
+const COPY: Record<Exclude<Status, 'verifying'>, CopyForState> = {
+  success: {
+    eyebrow: 'Email verified',
+    title: "You're all set.",
+    lead: 'Your account is ready. Continue to start generating courses.',
+  },
+  'already-verified': {
+    eyebrow: 'Already verified',
+    title: 'No action needed.',
+    lead: 'This email is already verified — sign in to pick up where you left off.',
+  },
+  expired: {
+    eyebrow: 'Link expired',
+    title: 'This link is no longer valid.',
+    lead: 'Verification links expire after 24 hours. Sign in again and request a fresh one.',
+  },
+  error: {
+    eyebrow: 'Verification failed',
+    title: 'We couldn’t verify this link.',
+    lead: 'The link may be malformed or already used. Sign up again to send a new verification email.',
+  },
+};
+
 export const VerifyEmailScreen = () => {
   const searchParams = useSearchParams();
   const router = useRouter();
   const { status: sessionStatus } = useSession();
   const [status, setStatus] = useState<Status>('verifying');
-  const [message, setMessage] = useState('');
+  const [errorOverride, setErrorOverride] = useState<string | null>(null);
   const calledRef = useRef(false);
   const isAuthenticated = sessionStatus === 'authenticated';
 
@@ -29,27 +58,24 @@ export const VerifyEmailScreen = () => {
 
     if (!token) {
       setStatus('error'); // eslint-disable-line react-hooks/set-state-in-effect -- async verification flow
-      setMessage('Invalid verification link.');
+      setErrorOverride('Invalid verification link.');
       return;
     }
 
     verifyEmail({ token })
       .then(() => {
         setStatus('success');
-        setMessage('Your email has been verified.');
       })
       .catch((err) => {
         const errorCode = err?.errorCode as string | undefined;
 
         if (errorCode === 'EMAIL_VERIFICATION_EXPIRED') {
           setStatus('expired');
-          setMessage('This verification link has expired. Please sign in and request a new one.');
         } else if (errorCode === 'EMAIL_ALREADY_VERIFIED') {
           setStatus('already-verified');
-          setMessage('Your email is already verified.');
         } else {
           setStatus('error');
-          setMessage(err?.message || 'Verification failed. Please try again.');
+          if (typeof err?.message === 'string') setErrorOverride(err.message);
         }
       });
   }, [searchParams]);
@@ -79,35 +105,52 @@ export const VerifyEmailScreen = () => {
     }
   };
 
-  return (
-    <AuthForm as="div">
-      <AuthFormTitle>
-        {status === 'verifying' && 'Verifying...'}
-        {status === 'success' && 'Email verified'}
-        {status === 'expired' && 'Link expired'}
-        {status === 'already-verified' && 'Already verified'}
-        {status === 'error' && 'Verification failed'}
-      </AuthFormTitle>
+  if (status === 'verifying') {
+    return (
+      <AuthMoment.Wrap>
+        <AuthMoment.VerifyingTrack aria-hidden>
+          <AuthMoment.VerifyingFill />
+        </AuthMoment.VerifyingTrack>
+        <AuthMoment.Eyebrow>One moment</AuthMoment.Eyebrow>
+        <AuthMoment.Title>Verifying your email.</AuthMoment.Title>
+        <AuthMoment.Lead>This usually takes a second.</AuthMoment.Lead>
+      </AuthMoment.Wrap>
+    );
+  }
 
-      {status !== 'verifying' && <AuthFormFooter>{message}</AuthFormFooter>}
+  const copy = COPY[status];
+  const lead = errorOverride && status === 'error' ? errorOverride : copy.lead;
+
+  return (
+    <AuthMoment.Wrap>
+      <AuthMoment.Rule aria-hidden />
+      <AuthMoment.Eyebrow>{copy.eyebrow}</AuthMoment.Eyebrow>
+      <AuthMoment.Title>{copy.title}</AuthMoment.Title>
+      <AuthMoment.Lead>{lead}</AuthMoment.Lead>
 
       {(status === 'success' || status === 'already-verified') && (
-        <AuthSubmitBtn as="button" type="button" onClick={handleContinue}>
+        <AuthMoment.PrimaryButton type="button" onClick={handleContinue}>
           {isAuthenticated ? 'Continue' : 'Continue to sign in'}
-        </AuthSubmitBtn>
+        </AuthMoment.PrimaryButton>
       )}
 
       {status === 'expired' && (
-        <Link href="/login">
-          <AuthSubmitBtn as="span">Back to sign in</AuthSubmitBtn>
+        <Link href="/login" passHref legacyBehavior>
+          <AuthMoment.PrimaryButton as="a">Back to sign in</AuthMoment.PrimaryButton>
         </Link>
       )}
 
       {status === 'error' && (
-        <Link href="/signup">
-          <AuthSubmitBtn as="span">Back to sign up</AuthSubmitBtn>
+        <Link href="/signup" passHref legacyBehavior>
+          <AuthMoment.PrimaryButton as="a">Back to sign up</AuthMoment.PrimaryButton>
         </Link>
       )}
-    </AuthForm>
+
+      {(status === 'expired' || status === 'error') && (
+        <AuthMoment.FootLine>
+          Need help? <Link href="/help">Visit the help center</Link>
+        </AuthMoment.FootLine>
+      )}
+    </AuthMoment.Wrap>
   );
 };
