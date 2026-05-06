@@ -1,6 +1,15 @@
-import styled, { css } from 'styled-components';
+import styled, { css, keyframes } from 'styled-components';
 
 export const Layout = styled.div`
+  /* width: 100% is critical here — without it, Layout falls into flex
+     shrink-to-fit sizing (because its parent <main> uses align-items:
+     stretch on a flex-column with margin: 0 auto on the item). With no
+     explicit width, Layout's cross-axis size becomes max-content of its
+     widest child. During the skeleton state, the widest measurable child
+     was the Subtitle's 42rem max-width, collapsing Layout to ~670px and
+     making the entire pricing grid narrow. Forcing width: 100% locks
+     Layout to fill parent up to its max-width (1100px). */
+  width: 100%;
   max-width: 1100px;
   margin: 0 auto;
   padding: 2.5rem 1.25rem 4rem;
@@ -74,20 +83,27 @@ export const SavingsChip = styled.span`
 `;
 
 export const Grid = styled.div`
+  width: 100%;
   display: grid;
-  grid-template-columns: repeat(4, 1fr);
+  /* minmax(0, 1fr) instead of plain 1fr — locks columns to equal width
+     regardless of content's intrinsic min-width. Prevents real cards from
+     widening past skeleton-card width when text content loads in. */
+  grid-template-columns: repeat(4, minmax(0, 1fr));
   gap: 1rem;
 
   @media (max-width: 900px) {
-    grid-template-columns: repeat(2, 1fr);
+    grid-template-columns: repeat(2, minmax(0, 1fr));
   }
   @media (max-width: 560px) {
-    grid-template-columns: 1fr;
+    grid-template-columns: minmax(0, 1fr);
   }
 `;
 
 export const Card = styled.div<{ $highlighted?: boolean }>`
   position: relative;
+  width: 100%;
+  min-width: 0;
+  box-sizing: border-box;
   background: ${(p) => p.theme.colors.surface};
   border: 1px solid ${(p) => p.theme.colors.surfaceBorder};
   border-radius: 12px;
@@ -125,6 +141,9 @@ export const PlanName = styled.h3`
   font-style: italic;
   font-size: 1.5rem;
   font-weight: 400;
+  /* Explicit line-height so rendered height is deterministic — the skeleton
+     block stand-in below sizes against this exact number. */
+  line-height: 1.2;
   color: ${(p) => p.theme.colors.foreground};
   margin: 0;
 `;
@@ -150,12 +169,14 @@ export const PriceRow = styled.div`
 export const Price = styled.span`
   font-size: 2rem;
   font-weight: 700;
+  line-height: 1.2;
   color: ${(p) => p.theme.colors.foreground};
   font-variant-numeric: tabular-nums;
 `;
 
 export const PriceMeta = styled.span`
   font-size: 0.8125rem;
+  line-height: 1.2;
   color: ${(p) => p.theme.colors.muted};
   white-space: nowrap;
 `;
@@ -187,6 +208,7 @@ export const AllowanceMultiplier = styled.span`
 
 export const AllowanceUnit = styled.div`
   font-size: 0.8125rem;
+  line-height: 1.5;
   color: ${(p) => p.theme.colors.muted};
   letter-spacing: 0.01em;
 `;
@@ -197,17 +219,45 @@ export const CardFooter = styled.div`
   gap: 0.5rem;
 `;
 
+// ── Skeleton primitive (loading state) ──────────────────
+// SkBar is the ONLY skeleton primitive — sized as a percentage of its
+// parent's content box, taking 1em height that scales to the parent's
+// font-size. Designed to be placed INSIDE the real wrappers (PlanName,
+// PlanDescription, Price, AllowanceNumber, AllowanceUnit, CardFooter) so
+// the wrappers themselves compute layout exactly the same as in the
+// loaded state — guaranteed zero width or height shift.
+
+const skeletonPulse = keyframes`
+  0%, 100% { opacity: 0.55; }
+  50%      { opacity: 1; }
+`;
+
+export const SkBar = styled.span<{ $w?: string; $h?: string; $radius?: string }>`
+  display: inline-block;
+  vertical-align: middle;
+  width: ${(p) => p.$w ?? '100%'};
+  /* 1em scales with the parent's font-size — so a SkBar inside PlanName
+     (1.5rem font) is taller than one inside AllowanceUnit (0.8125rem). */
+  height: ${(p) => p.$h ?? '1em'};
+  background: ${(p) => p.theme.colors.surfaceBorder};
+  border-radius: ${(p) => p.$radius ?? 'var(--radius-sm)'};
+  animation: ${skeletonPulse} 1.6s ease-in-out infinite;
+
+  @media (prefers-reduced-motion: reduce) {
+    animation: none;
+  }
+`;
+
 // TopupsSection / TopupsTitle were removed alongside the in-pricing
 // top-up control. Top-up is reachable via the Billing tab and the
 // in-context OutOfCreditsModal — keeping it on /pricing
 // cannibalized subscription conversions and confused first-time
 // visitors with "Need more mid-month?" framing they couldn't apply.
 
-// ── FAQ — hairline-divided list ────────────────────────
-// Editorial pattern: italic-serif section title, hairline-divided rows
-// (no per-item card chrome), serif chevron on the right that rotates on
-// open. Reads as a scholarly "Q&A" appendix rather than a help-center
-// accordion. Native <details> handles the toggle — no JS state needed.
+// ── FAQ wrap + title ────────────────────────────────────
+// The accordion items themselves come from the shared <Accordion>
+// component (client/src/components/Accordion). Only the wrapper section
+// + italic-serif title live here.
 
 export const FaqSection = styled.section`
   display: flex;
@@ -224,68 +274,4 @@ export const FaqTitle = styled.h2`
   letter-spacing: -0.015em;
   color: ${(p) => p.theme.colors.foreground};
   margin: 0 0 0.5rem;
-`;
-
-export const FaqItem = styled.details`
-  border-top: 1px solid ${(p) => p.theme.colors.surfaceBorder};
-  padding: 1rem 0.5rem 1rem 0;
-  position: relative;
-
-  &:last-of-type {
-    border-bottom: 1px solid ${(p) => p.theme.colors.surfaceBorder};
-  }
-
-  summary {
-    cursor: pointer;
-    font-size: 1rem;
-    font-weight: 500;
-    color: ${(p) => p.theme.colors.foreground};
-    list-style: none;
-    padding-right: 1.5rem;
-    transition: color 0.15s;
-
-    &::-webkit-details-marker {
-      display: none;
-    }
-
-    &::after {
-      content: '+';
-      position: absolute;
-      right: 0.5rem;
-      top: 1rem;
-      font-family: var(--font-heading-serif), Georgia, serif;
-      font-style: italic;
-      font-size: 1.25rem;
-      font-weight: 400;
-      line-height: 1;
-      color: ${(p) => p.theme.colors.tertiary};
-      transition: transform 0.18s ease;
-    }
-
-    &:hover {
-      color: ${(p) => p.theme.colors.tertiary};
-    }
-  }
-
-  &[open] summary::after {
-    content: '–';
-  }
-
-  p {
-    margin: 0.625rem 0 0;
-    color: ${(p) => p.theme.colors.muted};
-    line-height: 1.6;
-    font-size: 0.9375rem;
-    max-width: 60ch;
-
-    strong {
-      color: ${(p) => p.theme.colors.foreground};
-      font-weight: 600;
-    }
-
-    em {
-      font-style: italic;
-      color: ${(p) => p.theme.colors.foreground};
-    }
-  }
 `;

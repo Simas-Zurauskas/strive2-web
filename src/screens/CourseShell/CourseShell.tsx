@@ -98,7 +98,7 @@ export const CourseShell = ({ children }: CourseShellProps) => {
       queryClient.invalidateQueries({ queryKey: [QKeys.COURSES] });
       // No toast — user confirmed via dialog; the visible state change
       // (course removed from home library) is the confirmation.
-      router.push('/');
+      router.push(ROUTES.home());
     },
   });
 
@@ -115,7 +115,7 @@ export const CourseShell = ({ children }: CourseShellProps) => {
       queryClient.invalidateQueries({ queryKey: [QKeys.COURSES] });
       queryClient.invalidateQueries({ queryKey: [QKeys.COURSE, courseSlug] });
       toast(isArchived ? TOASTS.COURSE_UNARCHIVED : TOASTS.COURSE_ARCHIVED);
-      router.push('/');
+      router.push(ROUTES.home());
     },
   });
 

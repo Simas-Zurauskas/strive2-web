@@ -12,6 +12,7 @@ import {
   AuthFormError,
   AuthFormFooter,
   AuthFormTitle,
+  AuthMoment,
   AuthSubmitBtn,
   Input,
   PasswordRequirements,
@@ -31,20 +32,22 @@ export const ResetPasswordScreen = () => {
     mutationFn: resetPassword,
     onSuccess: () => {
       toast.success(TOASTS.RESET_PASSWORD_SUCCESS);
-      router.push('/login');
+      router.push('/');
     },
     meta: { silent: true },
   });
 
   if (!token || !email) {
     return (
-      <AuthForm as="div">
-        <AuthFormTitle>Invalid reset link</AuthFormTitle>
-        <AuthFormFooter>{TOASTS.RESET_LINK_INVALID}</AuthFormFooter>
-        <Link href="/forgot-password">
-          <AuthSubmitBtn as="span">Request a new link</AuthSubmitBtn>
-        </Link>
-      </AuthForm>
+      <AuthMoment.Centered>
+        <AuthForm as="div">
+          <AuthFormTitle>Invalid reset link</AuthFormTitle>
+          <AuthFormFooter>{TOASTS.RESET_LINK_INVALID}</AuthFormFooter>
+          <Link href="/forgot-password">
+            <AuthSubmitBtn as="span">Request a new link</AuthSubmitBtn>
+          </Link>
+        </AuthForm>
+      </AuthMoment.Centered>
     );
   }
 
@@ -57,6 +60,7 @@ export const ResetPasswordScreen = () => {
   })();
 
   return (
+    <AuthMoment.Centered>
     <Formik
       initialValues={initialValues}
       validationSchema={resetPasswordSchema}
@@ -108,10 +112,11 @@ export const ResetPasswordScreen = () => {
           )}
 
           <AuthFormFooter>
-            <Link href="/login">Back to sign in</Link>
+            <Link href="/">Back to sign in</Link>
           </AuthFormFooter>
         </AuthForm>
       )}
     </Formik>
+    </AuthMoment.Centered>
   );
 };

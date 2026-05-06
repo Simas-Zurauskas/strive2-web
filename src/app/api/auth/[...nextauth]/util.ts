@@ -138,8 +138,8 @@ export const authOptions: NextAuthOptions = {
     },
   },
   pages: {
-    signIn: '/login',
-    error: '/login',
+    signIn: '/',
+    error: '/',
   },
   // Pin the NextAuth session cookie to the same horizon as the wrapped
   // access token. NextAuth's default is 30 days, which happens to match,

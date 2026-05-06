@@ -2,6 +2,7 @@
 
 import { useParams, useRouter, useSearchParams } from 'next/navigation';
 import { useEffect } from 'react';
+import { ROUTES } from '@/constants/routes';
 import { useCourse } from '@/hooks';
 import { useQuizState, QuizResults, QuizQuestion, QuizLanding, QuizLoadingShell } from './internal';
 
@@ -56,7 +57,7 @@ export const ModuleQuizScreen = () => {
         isResetting={quiz.isResetting}
         onRetake={quiz.handleRetake}
         onNextModule={() => router.push(`${courseBasePath}/lesson/${moduleIndex + 1}/0`)}
-        onBackToCourses={() => router.push('/')}
+        onBackToCourses={() => router.push(ROUTES.home())}
         onBackToReviews={() => router.push('/quizzes')}
         onDevReset={quiz.handleDevReset}
         hasNextModule={moduleIndex < modules.length - 1}

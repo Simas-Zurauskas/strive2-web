@@ -28,6 +28,7 @@ export const ForgotPasswordScreen = () => {
   // reveals whether an account exists for the submitted email.
   if (mutation.isSuccess || mutation.isError) {
     return (
+      <AuthMoment.Centered>
       <AuthMoment.Wrap>
         <AuthMoment.Rule aria-hidden />
         <AuthMoment.Eyebrow>Check your inbox</AuthMoment.Eyebrow>
@@ -49,14 +50,16 @@ export const ForgotPasswordScreen = () => {
           Didn&rsquo;t get it? Check your spam folder. Links expire after 1 hour.
         </AuthMoment.Hint>
 
-        <Link href="/login" passHref legacyBehavior>
+        <Link href="/" passHref legacyBehavior>
           <AuthMoment.PrimaryButton as="a">Back to sign in</AuthMoment.PrimaryButton>
         </Link>
       </AuthMoment.Wrap>
+      </AuthMoment.Centered>
     );
   }
 
   return (
+    <AuthMoment.Centered>
     <Formik
       initialValues={initialValues}
       validationSchema={forgotPasswordSchema}
@@ -88,10 +91,11 @@ export const ForgotPasswordScreen = () => {
           </AuthSubmitBtn>
 
           <AuthFormFooter>
-            Remembered it? <Link href="/login">Sign in</Link>
+            Remembered it? <Link href="/">Sign in</Link>
           </AuthFormFooter>
         </AuthForm>
       )}
     </Formik>
+    </AuthMoment.Centered>
   );
 };

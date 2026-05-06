@@ -6,10 +6,13 @@ export const Wrapper = styled.div`
   min-height: 100dvh;
 `;
 
+// The container is a plain growing column. Each (auth) page owns its own
+// padding and centring — the public landing page stretches full-width;
+// the small-card auth screens (forgot/reset/verify/check-email) wrap
+// themselves in a centred container.
 export const Container = styled.main`
-  display: flex;
-  align-items: center;
-  justify-content: center;
   flex: 1;
-  padding: 2rem;
+  display: flex;
+  flex-direction: column;
+  width: 100%;
 `;

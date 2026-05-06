@@ -8,6 +8,7 @@ import {
   updateCourse,
   deleteCourse,
 } from '@/api/routes/course';
+import { ROUTES } from '@/constants/routes';
 import { TOASTS } from '@/constants/toasts';
 import { QKeys } from '@/types';
 
@@ -47,7 +48,7 @@ export const useWizardMutations = (courseId: string | null) => {
       // No success toast — user explicitly confirmed deletion via dialog
       // and is then navigated to home where the course is no longer listed.
       // The dialog flow + visible state change is the confirmation.
-      router.push('/');
+      router.push(ROUTES.home());
     },
     meta: { errorMessage: TOASTS.COURSE_DELETE_ERROR },
   });

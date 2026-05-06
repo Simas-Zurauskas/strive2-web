@@ -32,6 +32,13 @@ export const signUpSchema = yup.object({
     .string()
     .oneOf([yup.ref('password')], 'Passwords do not match')
     .required('Please confirm your password'),
+  // GDPR / consumer-rights compliance: explicit opt-in to Terms + Privacy
+  // is required before account creation. The checkbox cannot be
+  // pre-checked (per consent rules) — initialValue is false in the form.
+  acceptTerms: yup
+    .boolean()
+    .oneOf([true], 'Please accept the Terms and Privacy Policy to continue')
+    .required('Please accept the Terms and Privacy Policy to continue'),
 });
 
 export const forgotPasswordSchema = yup.object({

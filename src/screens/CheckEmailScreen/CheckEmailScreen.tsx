@@ -79,6 +79,7 @@ export const CheckEmailScreen = () => {
       : 'Resend verification email';
 
   return (
+    <AuthMoment.Centered>
     <AuthMoment.Wrap>
       <AuthMoment.Rule aria-hidden />
       <AuthMoment.Eyebrow>Account created</AuthMoment.Eyebrow>
@@ -120,12 +121,13 @@ export const CheckEmailScreen = () => {
           type="button"
           onClick={() => {
             window.sessionStorage.removeItem('pendingVerificationEmail');
-            signOut({ callbackUrl: '/login' });
+            signOut({ callbackUrl: '/' });
           }}
         >
           Back to sign in
         </AuthMoment.InlineLinkButton>
       </AuthMoment.FootLine>
     </AuthMoment.Wrap>
+    </AuthMoment.Centered>
   );
 };

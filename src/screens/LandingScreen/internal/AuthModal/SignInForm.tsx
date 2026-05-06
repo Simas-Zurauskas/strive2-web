@@ -3,7 +3,7 @@
 import { useMutation } from '@tanstack/react-query';
 import { Formik } from 'formik';
 import Link from 'next/link';
-import { useRouter, useSearchParams } from 'next/navigation';
+import { useRouter } from 'next/navigation';
 import { signIn } from 'next-auth/react';
 import { useState } from 'react';
 import { toast } from 'sonner';
@@ -14,26 +14,27 @@ import {
   AuthFormError,
   AuthFormFooter,
   AuthFormHelperRow,
-  AuthFormTitle,
   AuthSubmitBtn,
   GoogleBtn,
+  GoogleIcon,
   Input,
 } from '@/components';
 import { TOASTS } from '@/constants/toasts';
 import { safeRedirect } from '@/lib/safeRedirect';
 import { signInSchema, SignInValues } from '@/validation';
 
+interface SignInFormProps {
+  redirect: string;
+  onSwitchMode: (next: 'signin' | 'signup') => void;
+}
+
 const initialValues: SignInValues = { email: '', password: '' };
 
-export const LoginScreen = () => {
+export const SignInForm = ({ redirect, onSwitchMode }: SignInFormProps) => {
   const router = useRouter();
-  const searchParams = useSearchParams();
   const [apiError, setApiError] = useState('');
   const [showResend, setShowResend] = useState(false);
   const [lastCredentials, setLastCredentials] = useState<SignInValues | null>(null);
-
-  // Same `?redirect=` semantics as SignUpScreen — see its inline note.
-  const redirect = safeRedirect(searchParams.get('redirect'));
 
   const resendMutation = useMutation({
     mutationFn: resendVerification,
@@ -42,7 +43,7 @@ export const LoginScreen = () => {
   });
   const resending = resendMutation.isPending;
 
-  const handleSubmit = async (values: SignInValues) => {
+  const handleSignIn = async (values: SignInValues) => {
     setApiError('');
     setShowResend(false);
 
@@ -72,47 +73,77 @@ export const LoginScreen = () => {
     resendMutation.mutate({ email: lastCredentials.email, password: lastCredentials.password });
   };
 
-  const handleGoogle = () => signIn('google', { callbackUrl: redirect });
-
-  const signupHref = redirect && redirect !== '/'
-    ? `/signup?redirect=${encodeURIComponent(redirect)}`
-    : '/signup';
+  // Re-validate the callbackUrl as defense-in-depth: NextAuth treats absolute
+  // URLs as same-host or rejects them, but a future caller could thread an
+  // unvalidated redirect into this prop. safeRedirect guarantees a same-origin
+  // path even if the upstream gate is bypassed.
+  const handleGoogle = () =>
+    signIn('google', { callbackUrl: safeRedirect(redirect, '/home') });
 
   return (
     <Formik
       initialValues={initialValues}
       validationSchema={signInSchema}
-      onSubmit={handleSubmit}
+      onSubmit={handleSignIn}
     >
-      {({ handleSubmit, handleChange, handleBlur, values, errors, touched, isSubmitting }) => (
+      {({
+        handleSubmit,
+        handleChange,
+        handleBlur,
+        values,
+        errors,
+        touched,
+        isSubmitting,
+        submitCount,
+      }) => {
+        // Error gating: never on first render (avoids the autofill-and-
+        // hidden-slot phantom "required" messages); after submit, show
+        // everything; on blur with content, show format errors so the
+        // user sees "Enter a valid email" before pressing the button.
+        // Empty-and-blurred ≠ error — that's just the user clicking past
+        // a field they haven't filled yet.
+        const showError = (field: 'email' | 'password') => {
+          if (submitCount > 0) return errors[field];
+          if (touched[field] && values[field] && errors[field]) return errors[field];
+          return undefined;
+        };
+        return (
         <AuthForm onSubmit={handleSubmit}>
-          <AuthFormTitle>Sign in</AuthFormTitle>
+          <GoogleBtn type="button" onClick={handleGoogle} data-analytics-id="landing.modal.google">
+            <GoogleIcon />
+            Continue with Google
+          </GoogleBtn>
+
+          <AuthDivider>or</AuthDivider>
 
           <Input
             name="email"
             type="email"
             placeholder="Email"
+            autoComplete="email"
+            autoFocus
             value={values.email}
             onChange={handleChange}
             onBlur={handleBlur}
-            error={touched.email ? errors.email : undefined}
+            error={showError('email')}
           />
 
           <Input
             name="password"
             type="password"
             placeholder="Password"
+            autoComplete="current-password"
             value={values.password}
             onChange={handleChange}
             onBlur={handleBlur}
-            error={touched.password ? errors.password : undefined}
+            error={showError('password')}
           />
 
           <AuthFormHelperRow>
             <Link href="/forgot-password">Forgot password?</Link>
           </AuthFormHelperRow>
 
-          {apiError && <AuthFormError>{apiError}</AuthFormError>}
+          {apiError && <AuthFormError role="alert">{apiError}</AuthFormError>}
 
           {showResend && (
             <GoogleBtn type="button" disabled={resending} onClick={handleResend}>
@@ -120,21 +151,31 @@ export const LoginScreen = () => {
             </GoogleBtn>
           )}
 
-          <AuthSubmitBtn type="submit" $loading={isSubmitting} disabled={isSubmitting}>
+          <AuthSubmitBtn
+            type="submit"
+            $loading={isSubmitting}
+            disabled={isSubmitting}
+            aria-busy={isSubmitting}
+            data-analytics-id="landing.modal.submit.signin"
+          >
             {isSubmitting ? 'Signing in...' : 'Sign in'}
           </AuthSubmitBtn>
 
-          <AuthDivider>or</AuthDivider>
-
-          <GoogleBtn type="button" onClick={handleGoogle}>
-            Continue with Google
-          </GoogleBtn>
-
           <AuthFormFooter>
-            Don&apos;t have an account? <Link href={signupHref}>Sign up</Link>
+            Don&apos;t have an account?{' '}
+            <a
+              href="#"
+              onClick={(e) => {
+                e.preventDefault();
+                onSwitchMode('signup');
+              }}
+            >
+              Sign up
+            </a>
           </AuthFormFooter>
         </AuthForm>
-      )}
+        );
+      }}
     </Formik>
   );
 };

@@ -18,7 +18,9 @@ export {
   AuthFormHelperRow,
   AuthSubmitBtn,
   AuthDivider,
+  AuthPasswordRulesSlot,
   GoogleBtn,
+  GoogleIcon,
   AuthMoment,
 } from './AuthForm';
 export { PasswordRequirements } from './PasswordRequirements';
@@ -30,6 +32,7 @@ export { Stepper } from './Stepper';
 export { TextLoader } from './TextLoader';
 export { Accordion, AccordionItem } from './Accordion';
 export { KbChatPanel } from './KbChatPanel';
+export { PublicTopBar } from './PublicTopBar';
 
 // Data Display
 export { Badge } from './Badge';

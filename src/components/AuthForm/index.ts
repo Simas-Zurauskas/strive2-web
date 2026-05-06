@@ -7,5 +7,7 @@ export {
   SubmitBtn as AuthSubmitBtn,
   Divider as AuthDivider,
   GoogleBtn as GoogleBtn,
+  PasswordRulesSlot as AuthPasswordRulesSlot,
 } from './AuthForm.styles';
+export { GoogleIcon } from './GoogleIcon';
 export * as AuthMoment from './AuthMoment.styles';

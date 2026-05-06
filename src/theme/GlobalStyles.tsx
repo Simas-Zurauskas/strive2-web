@@ -44,6 +44,9 @@ export const GlobalStyles = createGlobalStyle`
     --space-8: 2rem;
     --space-10: 2.5rem;
     --space-12: 3rem;
+    --space-16: 4rem;
+    --space-20: 5rem;
+    --space-24: 6rem;
 
     /* Shadows — used sparingly */
     --shadow-card: 0 1px 3px rgba(0, 0, 0, 0.04);

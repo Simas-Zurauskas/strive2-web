@@ -136,12 +136,11 @@ const summariseTools = (tools: ToolInvocation[]): ToolSummary[] => {
     const baseLabel = getToolDisplay({ toolName, isActive: hasActive });
     const detail =
       !hasActive && count === 1 ? getToolDetail({ toolName, output: latestOutput }) : '';
-    const countSuffix = count > 1 ? ` (${count})` : '';
     return {
       toolName,
       count,
       isActive: hasActive,
-      label: `${baseLabel}${countSuffix}${detail}`,
+      label: `${baseLabel}${detail}`,
     };
   });
 };

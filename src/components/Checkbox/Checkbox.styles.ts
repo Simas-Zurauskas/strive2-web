@@ -60,6 +60,20 @@ export const Text = styled.span`
   font-size: 0.8125rem;
   font-weight: 500;
   line-height: 1.3;
+
+  /* Inline links inside the label (e.g. Terms / Privacy) need to be
+     visually distinct from the body text — otherwise the user can't
+     tell what's clickable vs what just toggles the checkbox. */
+  a {
+    color: ${(p) => p.theme.colors.accent};
+    text-decoration: underline;
+    text-underline-offset: 2px;
+    font-weight: 600;
+
+    &:hover {
+      text-decoration-thickness: 2px;
+    }
+  }
 `;
 
 export const Description = styled.span`

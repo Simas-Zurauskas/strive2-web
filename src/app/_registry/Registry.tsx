@@ -13,7 +13,7 @@ import { LessonStreamProvider } from '@/hooks/useLessonStream';
 import { SocketProvider } from '@/hooks/useSocket';
 import { fireInsufficientCredits } from '@/lib/creditModalBus';
 import { ColorScheme } from '@/theme';
-import { AuthTokenSync, StyledRegistry, ThemeSessionSync } from './comps';
+import { AuthTokenSync, GlobalErrorListener, StyledRegistry, ThemeSessionSync } from './comps';
 
 const defaultOptions: DefaultOptions = {
   queries: {
@@ -91,6 +91,9 @@ const Registry = ({ children }: { children: React.ReactNode }) => {
 
   return (
     <SessionProvider>
+      {/* Routes window.error and unhandledrejection through the central
+          reporter; outermost so it captures errors anywhere in the tree. */}
+      <GlobalErrorListener />
       {/* Mirrors session.token into the api/client's bearer-token store
           synchronously during render, before any descendant's React Query
           query function runs. Without this, queries gated on

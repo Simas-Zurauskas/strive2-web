@@ -1,11 +1,13 @@
 'use client';
 
-import { InputHTMLAttributes } from 'react';
+import { InputHTMLAttributes, ReactNode } from 'react';
 import * as S from './Checkbox.styles';
 
 interface CheckboxProps extends Omit<InputHTMLAttributes<HTMLInputElement>, 'type'> {
-  label: string;
-  description?: string;
+  // ReactNode (not string) so callers can embed inline links — e.g. the
+  // signup terms-acceptance checkbox: "I agree to <Link>Terms</Link>...".
+  label: ReactNode;
+  description?: ReactNode;
   checked: boolean;
   onChange: (e: React.ChangeEvent<HTMLInputElement>) => void;
 }

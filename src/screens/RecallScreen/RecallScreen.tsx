@@ -3,6 +3,7 @@
 import { useRouter } from 'next/navigation';
 import { useEffect, useMemo, useState } from 'react';
 import { PageLayout, Button } from '@/components';
+import { ROUTES } from '@/constants/routes';
 import {
   useRecallQueue,
   useRecallStats,
@@ -127,7 +128,7 @@ export const RecallScreen = () => {
               showing up here once spaced repetition has work to do.
             </S.EmptyText>
             <S.EmptyAction>
-              <Button variant="primary" onClick={() => router.push('/')}>
+              <Button variant="primary" onClick={() => router.push(ROUTES.home())}>
                 Go to courses
               </Button>
             </S.EmptyAction>

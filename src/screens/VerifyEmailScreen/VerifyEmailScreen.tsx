@@ -99,14 +99,15 @@ export const VerifyEmailScreen = () => {
     } else {
       // Forward the redirect into the login screen so it survives one more hop.
       const target = stashed
-        ? `/login?redirect=${encodeURIComponent(stashed)}`
-        : '/login';
+        ? `/?redirect=${encodeURIComponent(stashed)}`
+        : '/';
       router.push(target);
     }
   };
 
   if (status === 'verifying') {
     return (
+      <AuthMoment.Centered>
       <AuthMoment.Wrap>
         <AuthMoment.VerifyingTrack aria-hidden>
           <AuthMoment.VerifyingFill />
@@ -115,6 +116,7 @@ export const VerifyEmailScreen = () => {
         <AuthMoment.Title>Verifying your email.</AuthMoment.Title>
         <AuthMoment.Lead>This usually takes a second.</AuthMoment.Lead>
       </AuthMoment.Wrap>
+      </AuthMoment.Centered>
     );
   }
 
@@ -122,6 +124,7 @@ export const VerifyEmailScreen = () => {
   const lead = errorOverride && status === 'error' ? errorOverride : copy.lead;
 
   return (
+    <AuthMoment.Centered>
     <AuthMoment.Wrap>
       <AuthMoment.Rule aria-hidden />
       <AuthMoment.Eyebrow>{copy.eyebrow}</AuthMoment.Eyebrow>
@@ -135,13 +138,13 @@ export const VerifyEmailScreen = () => {
       )}
 
       {status === 'expired' && (
-        <Link href="/login" passHref legacyBehavior>
+        <Link href="/" passHref legacyBehavior>
           <AuthMoment.PrimaryButton as="a">Back to sign in</AuthMoment.PrimaryButton>
         </Link>
       )}
 
       {status === 'error' && (
-        <Link href="/signup" passHref legacyBehavior>
+        <Link href="/" passHref legacyBehavior>
           <AuthMoment.PrimaryButton as="a">Back to sign up</AuthMoment.PrimaryButton>
         </Link>
       )}
@@ -152,5 +155,6 @@ export const VerifyEmailScreen = () => {
         </AuthMoment.FootLine>
       )}
     </AuthMoment.Wrap>
+    </AuthMoment.Centered>
   );
 };

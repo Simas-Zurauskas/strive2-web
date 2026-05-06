@@ -172,13 +172,3 @@ export const Body = styled.div`
   background: ${(p) => p.theme.colors.background};
 `;
 
-export const Footnote = styled.div`
-  padding: 0.5rem 1rem;
-  font-size: 0.6875rem;
-  letter-spacing: 0.04em;
-  color: ${(p) => p.theme.colors.muted};
-  border-top: 1px solid ${(p) => p.theme.colors.border};
-  background: ${(p) => p.theme.colors.surface};
-  text-align: center;
-`;
-
