@@ -26,7 +26,7 @@ import { Chat, type ChatMessageData } from '@/components/Chat';
 import { NEXT_PUBLIC_API_URL } from '@/conf/env';
 import * as S from './KbChatPanel.styles';
 
-const SUGGESTED_PROMPTS = [
+const DEFAULT_SUGGESTED_PROMPTS = [
   'What is Strive?',
   'How does spaced review work?',
   'What plans and pricing do you offer?',
@@ -47,9 +47,17 @@ const fabMotion = {
   transition: { duration: 0.18, ease: [0.16, 1, 0.3, 1] as const },
 };
 
-export const KbChatPanel = () => {
+interface KbChatPanelProps {
+  // Override the default suggested prompt set when the chat is mounted
+  // outside the help center — e.g. on the landing page, where prompts
+  // should reflect first-visitor concerns rather than help-center context.
+  suggestedPrompts?: readonly string[];
+}
+
+export const KbChatPanel = ({ suggestedPrompts }: KbChatPanelProps = {}) => {
   const [open, setOpen] = useState(false);
   const { data: session } = useSession();
+  const prompts = suggestedPrompts ?? DEFAULT_SUGGESTED_PROMPTS;
 
   // Live chat state. Hosted at the panel level so collapsing the widget
   // (and even navigating between /help articles when this is mounted at
@@ -90,7 +98,7 @@ export const KbChatPanel = () => {
       <AnimatePresence initial={false} mode="wait">
         {open ? (
           <motion.div key="widget" {...widgetMotion} style={{ transformOrigin: 'bottom right' }}>
-            <ExpandedPanel onClose={() => setOpen(false)} chat={chat} />
+            <ExpandedPanel onClose={() => setOpen(false)} chat={chat} prompts={prompts} />
           </motion.div>
         ) : (
           <motion.div key="fab" {...fabMotion} style={{ transformOrigin: 'bottom right' }}>
@@ -108,9 +116,10 @@ export const KbChatPanel = () => {
 interface ExpandedPanelProps {
   onClose: () => void;
   chat: ReturnType<typeof useChat>;
+  prompts: readonly string[];
 }
 
-const ExpandedPanel = ({ onClose, chat }: ExpandedPanelProps) => (
+const ExpandedPanel = ({ onClose, chat, prompts }: ExpandedPanelProps) => (
   <S.Widget role="dialog" aria-label="Strive guide chat">
     <S.Header>
       <S.HeaderAvatar aria-hidden="true">
@@ -124,17 +133,17 @@ const ExpandedPanel = ({ onClose, chat }: ExpandedPanelProps) => (
       </S.HeaderAction>
     </S.Header>
     <S.Body>
-      <ChatBody chat={chat} />
+      <ChatBody chat={chat} prompts={prompts} />
     </S.Body>
-    <S.Footnote>Chats aren&rsquo;t saved between sessions.</S.Footnote>
   </S.Widget>
 );
 
 interface ChatBodyProps {
   chat: ReturnType<typeof useChat>;
+  prompts: readonly string[];
 }
 
-const ChatBody = ({ chat }: ChatBodyProps) => {
+const ChatBody = ({ chat, prompts }: ChatBodyProps) => {
   const { messages, sendMessage, status, error, stop } = chat;
   const [inputValue, setInputValue] = useState('');
 
@@ -165,7 +174,7 @@ const ChatBody = ({ chat }: ChatBodyProps) => {
       onInputChange={setInputValue}
       onSubmit={handleSubmit}
       onSuggestedPromptClick={handleSuggestedPromptClick}
-      suggestedPrompts={SUGGESTED_PROMPTS}
+      suggestedPrompts={prompts}
       placeholder="Ask about Strive..."
       isStreaming={isStreaming}
       isThinking={isThinking}

@@ -25,7 +25,7 @@ export const useAuth = () => {
   // (revoked tokenVersion, deleted user, etc.) and the session is dead.
   useEffect(() => {
     if (session?.error === 'GoogleAuthFailed' || session?.error === 'RefreshFailed') {
-      nextAuthSignOut({ callbackUrl: '/login' });
+      nextAuthSignOut({ callbackUrl: '/' });
     }
   }, [session?.error]);
 

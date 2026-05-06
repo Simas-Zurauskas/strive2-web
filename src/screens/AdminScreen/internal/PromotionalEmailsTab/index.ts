@@ -1,0 +1,1 @@
+export { PromotionalEmailsTab } from './PromotionalEmailsTab';

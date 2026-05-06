@@ -15,8 +15,10 @@ export const useGamificationProfile = () => {
     queryKey: [QKeys.GAMIFICATION_PROFILE],
     queryFn: getGamificationProfile,
     enabled: status === 'authenticated',
-    staleTime: 0,
-    refetchOnWindowFocus: true,
+    // XP/streak updates arrive via socket gamification events — the refetch
+    // on focus is a fallback. 60s of staleness is invisible to the user and
+    // keeps tab-cycling cheap.
+    staleTime: 60_000,
   });
 };
 

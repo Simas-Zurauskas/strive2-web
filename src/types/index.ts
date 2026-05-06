@@ -29,4 +29,5 @@ export enum QKeys {
   BILLING_SUMMARY = 'billingSummary',
   BILLING_LEDGER = 'billingLedger',
   NARRATION_VOICES = 'narrationVoices',
+  MARKETING_PREFERENCE = 'marketingPreference',
 }

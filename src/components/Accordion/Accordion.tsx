@@ -1,16 +1,19 @@
 'use client';
 
-import { ChevronDown } from 'lucide-react';
-import { useId, useState } from 'react';
+import { useId, useState, type ReactNode } from 'react';
 import * as S from './Accordion.styles';
 
 interface AccordionItemProps {
   question: string;
-  children: React.ReactNode;
+  children: ReactNode;
   defaultOpen?: boolean;
 }
 
-export const AccordionItem = ({ question, children, defaultOpen = false }: AccordionItemProps) => {
+export const AccordionItem = ({
+  question,
+  children,
+  defaultOpen = false,
+}: AccordionItemProps) => {
   const [open, setOpen] = useState(defaultOpen);
   const headingId = useId();
   const panelId = useId();
@@ -22,22 +25,21 @@ export const AccordionItem = ({ question, children, defaultOpen = false }: Accor
         aria-expanded={open}
         aria-controls={panelId}
         onClick={() => setOpen((v) => !v)}
-        $open={open}
       >
         <S.TriggerLabel>{question}</S.TriggerLabel>
-        <S.TriggerIcon $open={open} aria-hidden="true">
-          <ChevronDown size={18} />
-        </S.TriggerIcon>
+        <S.TriggerIcon aria-hidden="true">{open ? '–' : '+'}</S.TriggerIcon>
       </S.Trigger>
       <S.Body id={panelId} role="region" aria-labelledby={headingId} $open={open}>
-        {children}
+        <S.BodyClip>
+          <S.BodyInner>{children}</S.BodyInner>
+        </S.BodyClip>
       </S.Body>
     </S.Item>
   );
 };
 
 interface AccordionProps {
-  children: React.ReactNode;
+  children: ReactNode;
 }
 
-export const Accordion = ({ children }: AccordionProps) => <div>{children}</div>;
+export const Accordion = ({ children }: AccordionProps) => <S.Root>{children}</S.Root>;

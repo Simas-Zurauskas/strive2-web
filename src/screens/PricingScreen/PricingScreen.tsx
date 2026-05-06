@@ -10,7 +10,7 @@ import {
   startCheckout,
   startPortal,
 } from '@/api/routes/billing';
-import { AlertDialog, Button } from '@/components';
+import { Accordion, AccordionItem, AlertDialog, Button } from '@/components';
 import { ROUTES } from '@/constants/routes';
 import { useAuth } from '@/hooks/useAuth';
 import { useBillingPlans, useBillingSummary } from '@/hooks/useBilling';
@@ -178,7 +178,12 @@ export const PricingScreen: React.FC = () => {
   const handleCtaClick = (plan: BillingPlan) => {
     const cta = buildCheckoutCta({ planKey: plan.key, currentPlan, isAuthenticated });
     if (cta.action === 'signup') {
-      router.push(`${ROUTES.signup()}?redirect=${encodeURIComponent(ROUTES.pricing())}`);
+      // `auth=signup` is read by the landing's server component and threads
+      // an `initialAuthMode` prop into LandingScreen — the auth modal opens
+      // immediately on arrival rather than making the visitor click again.
+      router.push(
+        `${ROUTES.signup()}?auth=signup&redirect=${encodeURIComponent(ROUTES.pricing())}`,
+      );
       return;
     }
 
@@ -254,13 +259,63 @@ export const PricingScreen: React.FC = () => {
         </S.CadenceToggle>
       </S.Header>
 
-      {!isCatalogLoading && catalog && (
+      {isCatalogLoading && (
+        // Skeleton uses the SAME real wrappers (PlanName / PlanDescription /
+        // PriceRow / AllowanceBlock / CardFooter) so layout is computed by
+        // the exact same elements that render the real cards. Placeholder
+        // text fills each line; the `<S.SkBar>` spans inside become the
+        // visible skeleton bars (inline-block, sized as % of their parent).
+        // No wrapper-level width tricks needed — everything inherits the
+        // grid cell width from <S.Card>.
+        <S.Grid aria-hidden="true">
+          {Array.from({ length: 4 }, (_, i) => (
+            <S.Card key={i}>
+              <S.PlanName>
+                <S.SkBar $w="55%" />
+              </S.PlanName>
+              <S.PlanDescription>
+                <S.SkBar $w="100%" />
+                <S.SkBar $w="100%" />
+                <S.SkBar $w="94%" />
+                <S.SkBar $w="82%" />
+                <S.SkBar $w="68%" />
+              </S.PlanDescription>
+              <S.PriceRow>
+                <S.Price>
+                  <S.SkBar $w="65%" />
+                </S.Price>
+              </S.PriceRow>
+              <S.AllowanceBlock>
+                <S.AllowanceNumber>
+                  <S.SkBar $w="40%" />
+                </S.AllowanceNumber>
+                <S.AllowanceUnit>
+                  <S.SkBar $w="70%" />
+                </S.AllowanceUnit>
+              </S.AllowanceBlock>
+              <S.CardFooter>
+                <S.SkBar $w="100%" $h="2.5rem" $radius="6px" />
+              </S.CardFooter>
+            </S.Card>
+          ))}
+        </S.Grid>
+      )}
+
+      {!isCatalogLoading && catalog && (() => {
+        // 1 allowance := Free's monthly grant. Read from the same catalog
+        // response rather than a hardcoded constant so backend changes to
+        // ALLOWANCE_UNIT silently rescale generation headroom without
+        // shifting the displayed `×` multipliers (1×, 5×, 12×, 30×).
+        const allowanceUnit =
+          catalog.plans.find((p) => p.key === 'free')?.monthlyAllowance ?? 0;
+
+        return (
         <S.Grid>
           {catalog.plans.map((plan) => {
             const priceMonthly = cadence === 'monthly' ? plan.monthlyUsd : plan.annualMonthlyUsd;
             const cta = buildCheckoutCta({ planKey: plan.key, currentPlan, isAuthenticated });
             const isPro = plan.key === 'pro';
-            const allowanceLabel = formatAllowance(plan.monthlyAllowance);
+            const allowanceLabel = formatAllowance(plan.monthlyAllowance, allowanceUnit);
             // "×" suffix on paid plans compares to Free (1× by definition).
             // Free shows just "1" without the multiplier since there's nothing
             // to compare against.
@@ -306,82 +361,70 @@ export const PricingScreen: React.FC = () => {
             );
           })}
         </S.Grid>
-      )}
+        );
+      })()}
 
       <S.FaqSection>
         <S.FaqTitle>Common questions</S.FaqTitle>
 
-        <S.FaqItem>
-          <summary>What can I actually do on each plan?</summary>
-          <p>
-            Allowance translates roughly to <strong>full courses generated end-to-end</strong>. Free is enough to
-            try one short course or generate a handful of individual lessons. Starter covers a few personalized
-            courses a month. Pro is the comfortable middle for someone studying or building consistently. Studio
-            is for power users — multiple parallel courses, heavy regeneration, in-depth modules. Every plan
-            unlocks the same features; tiers only change how much you can generate.
-          </p>
-        </S.FaqItem>
-
-        <S.FaqItem>
-          <summary>Will I lose my courses if I cancel or downgrade?</summary>
-          <p>
-            No. Your courses, lessons, notes, bookmarks, quiz attempts, and recall progress all stay with your
-            account regardless of plan. You just won&rsquo;t be able to <em>generate</em> new content beyond your
-            current tier&rsquo;s allowance. Reading and reviewing existing courses is always free.
-          </p>
-        </S.FaqItem>
-
-        <S.FaqItem>
-          <summary>What happens if I run out mid-month?</summary>
-          <p>
-            Two options. Upgrade to a higher tier and the new allowance is granted immediately — no waiting for
-            the next cycle. Or top up any whole-dollar amount from the Billing tab; top-up balance never expires
-            and is spent after your monthly allowance is drained.
-          </p>
-        </S.FaqItem>
-
-        <S.FaqItem>
-          <summary>What if a generation fails?</summary>
-          <p>
-            Allowance is fully refunded on any failure — network drop, provider outage, timeout, cancellation.
-            You only pay for generations that finish and persist. The same applies if you cancel a job
-            mid-flight.
-          </p>
-        </S.FaqItem>
-
-        <S.FaqItem>
-          <summary>Can I cancel anytime?</summary>
-          <p>
-            Yes. Cancel from the Billing portal and you keep full access plus your remaining allowance through
-            the end of the current billing period, then drop to Free. No partial-month refunds, but no
-            commitment beyond the current cycle either.
-          </p>
-        </S.FaqItem>
-
-        <S.FaqItem>
-          <summary>Is there a free trial?</summary>
-          <p>
-            The Free plan <em>is</em> the trial. Sign up, get a baseline monthly allowance, generate a real
-            course, and decide whether you want more. No credit card required to start.
-          </p>
-        </S.FaqItem>
-
-        <S.FaqItem>
-          <summary>Monthly or annual — which should I pick?</summary>
-          <p>
-            Annual saves about 20% on the price, but the allowance is granted <strong>once per year</strong>, not
-            split across 12 monthly refreshes. Pick monthly if you want predictable per-month allowance refreshes;
-            pick annual if you generate in bursts and want the lower price.
-          </p>
-        </S.FaqItem>
-
-        <S.FaqItem>
-          <summary>What about taxes?</summary>
-          <p>
-            Prices are listed in USD. Stripe handles any applicable VAT or sales tax at checkout based on your
-            billing address — the line item is added to your invoice, not bundled into the headline price.
-          </p>
-        </S.FaqItem>
+        <Accordion>
+          <AccordionItem question="What can I actually do on each plan?">
+            <p>
+              Allowance translates roughly to <strong>full courses generated end-to-end</strong>. Free is enough to
+              try one short course or generate a handful of individual lessons. Starter covers a few personalized
+              courses a month. Pro is the comfortable middle for someone studying or building consistently. Studio
+              is for power users — multiple parallel courses, heavy regeneration, in-depth modules. Every plan
+              unlocks the same features; tiers only change how much you can generate.
+            </p>
+          </AccordionItem>
+          <AccordionItem question="Will I lose my courses if I cancel or downgrade?">
+            <p>
+              No. Your courses, lessons, notes, bookmarks, quiz attempts, and recall progress all stay with your
+              account regardless of plan. You just won&rsquo;t be able to <em>generate</em> new content beyond your
+              current tier&rsquo;s allowance. Reading and reviewing existing courses is always free.
+            </p>
+          </AccordionItem>
+          <AccordionItem question="What happens if I run out mid-month?">
+            <p>
+              Two options. Upgrade to a higher tier and the new allowance is granted immediately — no waiting for
+              the next cycle. Or top up any whole-dollar amount from the Billing tab; top-up balance never expires
+              and is spent after your monthly allowance is drained.
+            </p>
+          </AccordionItem>
+          <AccordionItem question="What if a generation fails?">
+            <p>
+              Allowance is fully refunded on any failure — network drop, provider outage, timeout, cancellation.
+              You only pay for generations that finish and persist. The same applies if you cancel a job
+              mid-flight.
+            </p>
+          </AccordionItem>
+          <AccordionItem question="Can I cancel anytime?">
+            <p>
+              Yes. Cancel from the Billing portal and you keep full access plus your remaining allowance through
+              the end of the current billing period, then drop to Free. No partial-month refunds, but no
+              commitment beyond the current cycle either.
+            </p>
+          </AccordionItem>
+          <AccordionItem question="Is there a free trial?">
+            <p>
+              The Free plan <em>is</em> the trial. Sign up, get a baseline monthly allowance, generate a real
+              course, and decide whether you want more. No credit card required to start.
+            </p>
+          </AccordionItem>
+          <AccordionItem question="Monthly or annual — which should I pick?">
+            <p>
+              Annual saves about 20% on the price, but the allowance is granted <strong>once per year</strong>, not
+              split across 12 monthly refreshes. Pick monthly if you want predictable per-month allowance
+              refreshes; pick annual if you generate in bursts and want the lower price.
+            </p>
+          </AccordionItem>
+          <AccordionItem question="What about taxes?">
+            <p>
+              Prices are listed in USD. Stripe handles any applicable VAT or sales tax at checkout based on your
+              billing address — the line item is added to your invoice, not bundled into the headline price.
+            </p>
+          </AccordionItem>
+        </Accordion>
       </S.FaqSection>
 
       {/* Confirmation for the two no-charge, scheduled-at-period-end actions */}

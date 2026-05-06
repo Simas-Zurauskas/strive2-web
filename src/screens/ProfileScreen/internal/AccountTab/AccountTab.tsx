@@ -9,6 +9,7 @@ import { useAuth } from '@/hooks';
 import { useBillingPlans, useBillingSummary } from '@/hooks/useBilling';
 import { formatDate } from '@/lib/formatDate';
 import * as S from './AccountTab.styles';
+import { MarketingPreference } from './internal/MarketingPreference';
 import { NarrationPreferences } from './internal/NarrationPreferences';
 import { PasswordModal } from './internal/PasswordModal';
 
@@ -134,6 +135,8 @@ export const AccountTab: React.FC = () => {
       />
 
       <NarrationPreferences />
+
+      <MarketingPreference />
 
       <S.Section>
         <S.SectionTitle>Legal</S.SectionTitle>

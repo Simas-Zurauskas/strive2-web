@@ -2,10 +2,11 @@
 // slug-vs-id or path change has a single source of truth.
 
 export const ROUTES = {
-  home: () => '/',
+  home: () => '/home',
   library: (tab?: 'courses' | 'bookmarks') => (tab ? `/library?tab=${tab}` : '/library'),
-  login: () => '/login',
-  signup: () => '/signup',
+  // Combined sign-in / sign-up lives at root and toggles client-side.
+  login: () => '/',
+  signup: () => '/',
   checkEmail: () => '/signup/check-email',
 
   pricing: () => '/pricing',
@@ -23,6 +24,11 @@ export const ROUTES = {
   // target='recall' resolves here; the wire string is 'recall'
   // for back-compat with stored mentor sessions).
   recall: () => '/recall',
+
+  // Operator console. Lives in its own (admin) route group with a server
+  // component layout that hard-redirects non-admins; no nav link surfaces
+  // it. Admins type the URL directly.
+  admin: (tab?: 'promotional-emails') => (tab ? `/admin?tab=${tab}` : '/admin'),
 
   course: (slugOrId: string | null | undefined, fallbackId: string) =>
     `/course/${slugOrId ?? fallbackId}`,

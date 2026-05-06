@@ -17,6 +17,19 @@ const fadeIn = keyframes`
   to   { opacity: 1; transform: translateY(0); }
 `;
 
+/** Centring shell for the small-card auth screens (forgot/reset/verify
+ *  /check-email/signup-check-email). The (auth) layout no longer
+ *  flex-centres its children — the landing page needs full width — so
+ *  each card-screen wraps itself in this. */
+export const Centered = styled.div`
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 2rem;
+  min-height: 100%;
+`;
+
 export const Wrap = styled.div`
   display: flex;
   flex-direction: column;

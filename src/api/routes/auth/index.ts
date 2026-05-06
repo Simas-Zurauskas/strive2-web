@@ -150,3 +150,32 @@ export const requestSecurityActionCode = (params: RequestSecurityActionCodeBody)
     data: params,
   }).then((res) => res.data.data);
 };
+
+// ── Marketing email preference ──────────────────────────────
+
+// Reads/writes through to Mailjet's "promotional" contact list. The
+// email-link unsubscribe path (Mailjet's hosted page) writes to the same
+// record, so the checkbox reflects whichever path most recently changed
+// state — no local sync needed.
+type GetMarketingPreferenceResponse =
+  paths['/api/auth/me/marketing-preference']['get']['responses']['200']['content']['application/json'];
+
+export const getMarketingPreference = () => {
+  return client<GetMarketingPreferenceResponse>({
+    url: '/auth/me/marketing-preference',
+    method: 'GET',
+  }).then((res) => res.data.data);
+};
+
+type UpdateMarketingPreferenceBody =
+  paths['/api/auth/me/marketing-preference']['patch']['requestBody']['content']['application/json'];
+type UpdateMarketingPreferenceResponse =
+  paths['/api/auth/me/marketing-preference']['patch']['responses']['200']['content']['application/json'];
+
+export const updateMarketingPreference = (params: UpdateMarketingPreferenceBody) => {
+  return client<UpdateMarketingPreferenceResponse>({
+    url: '/auth/me/marketing-preference',
+    method: 'PATCH',
+    data: params,
+  }).then((res) => res.data.data);
+};

@@ -32,6 +32,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
     <html lang="en" suppressHydrationWarning>
       <head>
         <script dangerouslySetInnerHTML={{ __html: themeBootstrap }} />
+        <script async src="https://w.appzi.io/w.js?token=vYiQf"></script>
       </head>
       <body className={`${inter.variable} ${newsreader.variable}`} suppressHydrationWarning>
         <Registry>{children}</Registry>

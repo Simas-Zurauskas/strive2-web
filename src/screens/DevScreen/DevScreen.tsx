@@ -3,6 +3,7 @@
 import { useRouter } from 'next/navigation';
 import { useEffect } from 'react';
 import { DEV_MODE } from '@/conf/env';
+import { ROUTES } from '@/constants/routes';
 import * as S from './DevScreen.styles';
 
 const FIRST_STEPS_SVG = `<svg viewBox="0 0 400 400" xmlns="http://www.w3.org/2000/svg">
@@ -166,7 +167,7 @@ export const DevScreen: React.FC = () => {
   const router = useRouter();
 
   useEffect(() => {
-    if (!DEV_MODE) router.replace('/');
+    if (!DEV_MODE) router.replace(ROUTES.home());
   }, [router]);
 
   if (!DEV_MODE) return null;

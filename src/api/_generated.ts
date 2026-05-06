@@ -4,6 +4,87 @@
  */
 
 export interface paths {
+    "/api/admin/email/send-promotional-test": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Send a promotional email template to an arbitrary address (admin-only)
+         * @description Operator backdoor for previewing promotional templates against real
+         *     inboxes. Sends synchronously and returns the Mailjet round-trip
+         *     outcome — failures bubble up as 500s so the operator sees the
+         *     problem immediately rather than discovering it via Sentry.
+         *
+         *     Gated by `protect → requireVerified → requireAdmin`. Not exposed
+         *     through any UI affordance to non-admins.
+         */
+        post: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path?: never;
+                cookie?: never;
+            };
+            requestBody: {
+                content: {
+                    "application/json": {
+                        /** Format: email */
+                        to: string;
+                        /** @enum {string} */
+                        template: "old_user_relaunch";
+                    };
+                };
+            };
+            responses: {
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": {
+                            data: {
+                                sent: boolean;
+                            };
+                        };
+                    };
+                };
+                400: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ApiError"];
+                    };
+                };
+                401: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ApiError"];
+                    };
+                };
+                403: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ApiError"];
+                    };
+                };
+            };
+        };
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/auth/change-password": {
         parameters: {
             query?: never;
@@ -209,6 +290,87 @@ export interface paths {
         options?: never;
         head?: never;
         patch?: never;
+        trace?: never;
+    };
+    "/api/auth/me/marketing-preference": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Get the authenticated user's promotional-email subscription state
+         * @description Reads the user's subscription status on the Mailjet "promotional"
+         *     contact list. The Mailjet record is the source of truth — clicks
+         *     on the unsubscribe link in any promotional email also write to it,
+         *     so this endpoint and the email-link path stay consistent without
+         *     sync logic.
+         */
+        get: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path?: never;
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": {
+                            data: {
+                                subscribed: boolean;
+                            };
+                        };
+                    };
+                };
+            };
+        };
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        /**
+         * Toggle the authenticated user's promotional-email subscription
+         * @description Writes the new state to the user's record on the Mailjet
+         *     "promotional" contact list. `true` upserts the contact and clears
+         *     the unsubscribe flag; `false` flags it unsubscribed (matching what
+         *     the email-link unsubscribe does on Mailjet's hosted page).
+         */
+        patch: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path?: never;
+                cookie?: never;
+            };
+            requestBody: {
+                content: {
+                    "application/json": {
+                        subscribed: boolean;
+                    };
+                };
+            };
+            responses: {
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": {
+                            data: {
+                                subscribed: boolean;
+                            };
+                        };
+                    };
+                };
+            };
+        };
         trace?: never;
     };
     "/api/auth/me": {

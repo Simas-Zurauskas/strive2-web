@@ -68,6 +68,7 @@ export const HaloGold = styled(Halo)`
 
 export const BigNum = styled.div`
   font-family: var(--font-heading-serif), Georgia, serif;
+  font-style: italic;
   font-size: 2.375rem;
   font-weight: 700;
   line-height: 1;

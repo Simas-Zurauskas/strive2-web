@@ -33,8 +33,10 @@ export const useRecallQueue = ({
     queryKey: [QKeys.RECALL_QUEUE, currentCourseId ?? null],
     queryFn: () => getRecallQueue({ currentCourseId }),
     enabled: status === 'authenticated',
-    staleTime: 0,
-    refetchOnWindowFocus: true,
+    // The socket pushes `recall_cards_saved` updates in real time, so the
+    // refetch-on-focus path is a coarse fallback — a 30s window keeps quick
+    // tab cycles cheap without letting the queue drift on long absences.
+    staleTime: 30_000,
   });
 };
 

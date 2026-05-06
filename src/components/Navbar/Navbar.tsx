@@ -153,6 +153,7 @@ export const Navbar = () => {
             $active={resolvedTheme === 'light'}
             onClick={() => setTheme('light')}
             title="Light mode"
+            aria-label="Light mode"
             aria-pressed={resolvedTheme === 'light'}
           >
             <SunIcon />
@@ -162,15 +163,26 @@ export const Navbar = () => {
             $active={resolvedTheme === 'dark'}
             onClick={() => setTheme('dark')}
             title="Dark mode"
+            aria-label="Dark mode"
             aria-pressed={resolvedTheme === 'dark'}
           >
             <MoonIcon />
           </S.ThemeOption>
         </S.ThemeSwitch>
-        <S.ThemeToggle onClick={() => router.push('/help')} title="Help">
+        <S.ThemeToggle
+          type="button"
+          onClick={() => router.push('/help')}
+          title="Help"
+          aria-label="Help"
+        >
           <QuestionIcon />
         </S.ThemeToggle>
-        <S.ThemeToggle onClick={() => router.push('/profile')} title={user?.email ?? 'Profile'}>
+        <S.ThemeToggle
+          type="button"
+          onClick={() => router.push('/profile')}
+          title={user?.email ?? 'Profile'}
+          aria-label={user?.email ? `Account: ${user.email}` : 'Profile'}
+        >
           <User />
         </S.ThemeToggle>
       </S.Right>

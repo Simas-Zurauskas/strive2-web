@@ -16,6 +16,7 @@ interface InputProps {
   autoFocus?: boolean;
   onChange: (e: React.ChangeEvent<HTMLInputElement>) => void;
   onBlur?: (e: React.FocusEvent<HTMLInputElement>) => void;
+  onFocus?: (e: React.FocusEvent<HTMLInputElement>) => void;
   error?: string;
 }
 
@@ -33,6 +34,7 @@ export const Input = ({
   autoFocus,
   onChange,
   onBlur,
+  onFocus,
   error,
 }: InputProps) => {
   return (
@@ -52,6 +54,7 @@ export const Input = ({
         autoFocus={autoFocus}
         onChange={onChange}
         onBlur={onBlur}
+        onFocus={onFocus}
       />
       {error && <S.Error>{error}</S.Error>}
     </S.Wrapper>

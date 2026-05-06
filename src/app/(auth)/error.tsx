@@ -19,7 +19,7 @@ export default function AuthError({ error, reset }: { error: Error & { digest?: 
         </S.Body>
         <S.Actions>
           <Button onClick={() => reset()}>Try again</Button>
-          <Button variant="secondary" onClick={() => (window.location.href = '/login')}>
+          <Button variant="secondary" onClick={() => (window.location.href = '/')}>
             Back to login
           </Button>
         </S.Actions>

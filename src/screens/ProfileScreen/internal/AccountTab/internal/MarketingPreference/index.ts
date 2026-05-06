@@ -1,0 +1,1 @@
+export { MarketingPreference } from './MarketingPreference';

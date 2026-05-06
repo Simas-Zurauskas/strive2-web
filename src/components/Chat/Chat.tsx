@@ -33,7 +33,7 @@ export interface ChatProps {
   inputValue: string;
   onInputChange: (value: string) => void;
   onSubmit: () => void;
-  suggestedPrompts?: string[];
+  suggestedPrompts?: readonly string[];
   onSuggestedPromptClick?: (prompt: string) => void;
   placeholder?: string;
   /** Disables both the input and any suggested-prompt buttons. */
