@@ -33,6 +33,8 @@ export { TextLoader } from './TextLoader';
 export { Accordion, AccordionItem } from './Accordion';
 export { KbChatPanel } from './KbChatPanel';
 export { PublicTopBar } from './PublicTopBar';
+export { ConceptModal } from './ConceptsModal';
+export { HelpAnchor } from './HelpAnchor';
 
 // Data Display
 export { Badge } from './Badge';
@@ -55,5 +57,4 @@ export type { LessonIndicatorState } from './LessonIndicator';
 export { BillingPanel } from './BillingPanel';
 export { CreditPill } from './CreditPill';
 export { OutOfCreditsModal } from './OutOfCreditsModal';
-export { LowCreditBanner } from './LowCreditBanner';
 export { TopupControl } from './TopupControl';

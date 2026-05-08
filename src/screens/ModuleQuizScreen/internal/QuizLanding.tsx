@@ -1,5 +1,5 @@
 import { ArrowRight } from 'lucide-react';
-import { Button, Eyebrow } from '@/components';
+import { Button, Eyebrow, HelpAnchor } from '@/components';
 import { plural } from '@/lib/strings';
 import { QuizGenerationPanel } from './QuizGenerationPanel';
 import * as S from '../ModuleQuizScreen.styles';
@@ -65,7 +65,10 @@ export const QuizLanding = ({
         </S.TopRail>
 
         <S.HeaderSection>
-          <Eyebrow>{isReviewMode ? 'Spaced review' : `Module ${moduleIndex + 1} · Quiz`}</Eyebrow>
+          <S.EyebrowRow>
+            <Eyebrow>{isReviewMode ? 'Spaced review' : `Module ${moduleIndex + 1} · Quiz`}</Eyebrow>
+            <HelpAnchor concept="quiz-types" size="sm" />
+          </S.EyebrowRow>
           <S.Title>{mod.name}</S.Title>
         </S.HeaderSection>
 

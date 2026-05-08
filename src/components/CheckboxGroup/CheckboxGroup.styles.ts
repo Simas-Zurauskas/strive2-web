@@ -1,4 +1,5 @@
 import styled from 'styled-components';
+import { onAccent } from '@/theme';
 
 export const Wrapper = styled.div`
   display: flex;
@@ -51,7 +52,7 @@ export const Indicator = styled.span<{ $selected: boolean }>`
   &::after {
     content: '\\2713';
     display: ${(p) => (p.$selected ? 'block' : 'none')};
-    color: #fff;
+    color: ${onAccent};
     font-size: 0.6875rem;
     font-weight: 700;
     position: absolute;

@@ -86,6 +86,7 @@ export const PricingTeaser = ({ onOpenSignUp }: PricingTeaserProps) => {
                   <S.TierAllowance>
                     {formatAllowance(plan.monthlyAllowance, allowanceUnit)} allowances / month
                   </S.TierAllowance>
+                  <S.TierGuidance>{copy.guidance}</S.TierGuidance>
                   <S.TierTagline>{copy.tagline}</S.TierTagline>
 
                   <S.CtaSlot>

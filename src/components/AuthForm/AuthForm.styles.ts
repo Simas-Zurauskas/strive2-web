@@ -1,4 +1,5 @@
 import styled from 'styled-components';
+import { onAccent } from '@/theme';
 
 export const Form = styled.form`
   display: flex;
@@ -63,7 +64,7 @@ export const SubmitBtn = styled.button<{ $loading?: boolean }>`
   border: 1px solid ${(p) => p.theme.colors.accent};
   border-radius: 8px;
   background: ${(p) => p.theme.colors.accent};
-  color: #fff;
+  color: ${onAccent};
   font-size: 0.875rem;
   font-weight: 600;
   cursor: ${(p) => (p.$loading ? 'not-allowed' : 'pointer')};

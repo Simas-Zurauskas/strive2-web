@@ -282,11 +282,28 @@ export const EmptyState = styled.div`
   align-items: center;
   justify-content: center;
   text-align: center;
-  padding: 4rem 2rem;
+  padding: 3rem 2rem 3.5rem;
   gap: 0.75rem;
   border: 1px solid ${(p) => p.theme.colors.surfaceBorder};
   border-radius: var(--radius-xl);
   background: ${(p) => p.theme.colors.surface};
+`;
+
+export const EmptyPreviewSlot = styled.div`
+  width: 100%;
+  margin-bottom: 1.25rem;
+`;
+
+export const EmptyEyebrow = styled.span`
+  font-size: 0.6875rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.18em;
+  color: ${(p) => p.theme.colors.tertiary};
+`;
+
+export const EmptyAction = styled.div`
+  margin-top: 1rem;
 `;
 
 export const EmptyRule = styled.span`
@@ -298,20 +315,23 @@ export const EmptyRule = styled.span`
   margin-bottom: 0.25rem;
 `;
 
+/** Non-italic serif: the page header above already carries the single
+ *  italic moment, two italic serif lines stacked feels crowded.
+ *  Mirrors RecallScreen's empty title. */
 export const EmptyTitle = styled.h2`
   font-family: var(--font-heading-serif), Georgia, serif;
-  font-style: italic;
   font-size: 1.5rem;
-  font-weight: 400;
-  letter-spacing: -0.02em;
+  font-weight: 500;
+  letter-spacing: -0.01em;
+  line-height: 1.2;
   color: ${(p) => p.theme.colors.foreground};
-  margin: 0;
+  margin: 0.25rem 0 0;
 `;
 
 export const EmptyText = styled.p`
-  font-size: 0.875rem;
+  font-size: 0.9375rem;
   color: ${(p) => p.theme.colors.muted};
   margin: 0;
-  max-width: 32ch;
-  line-height: 1.55;
+  max-width: 44ch;
+  line-height: 1.6;
 `;

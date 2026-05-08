@@ -125,12 +125,34 @@ export const GeneratingText = styled.p`
   font-weight: 500;
 `;
 
+/** Wrapper that pairs the small "Optional" caption with the options card. */
+export const GenerateOptionsBlock = styled.div`
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.5rem;
+  width: 100%;
+  max-width: 380px;
+`;
+
+/** Small uppercase caption above the options card; sits next to the help "?" so
+ *  the question mark has a labelled home instead of floating in body prose. */
+export const GenerateOptionsCaption = styled.span`
+  display: inline-flex;
+  align-items: center;
+  gap: 0.375rem;
+  font-size: 0.625rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.14em;
+  color: ${(p) => p.theme.colors.muted};
+`;
+
 /** Two checkbox rows in a slim hairline-bordered card. */
 export const GenerateOptions = styled.div`
   display: flex;
   flex-direction: column;
   width: 100%;
-  max-width: 380px;
   border-radius: var(--radius-md);
   border: 1px solid ${(p) => p.theme.colors.surfaceBorder};
   background: ${(p) => p.theme.colors.background};
@@ -227,6 +249,7 @@ export const CompleteSection = styled.div`
   display: flex;
   align-items: center;
   justify-content: center;
+  gap: 0.75rem;
   padding: 2rem 0 0;
   border-top: 1px solid ${(p) => p.theme.colors.border};
 `;
@@ -242,7 +265,7 @@ export const CompleteButton = styled.button`
   border-radius: var(--radius-md);
   border: 1px solid ${(p) => p.theme.colors.accent};
   background: ${(p) => p.theme.colors.accent};
-  color: #ffffff;
+  color: var(--on-accent);
   font-size: 0.875rem;
   font-weight: 500;
   font-family: inherit;
@@ -365,7 +388,7 @@ export const NavButton = styled.button<{ $hidden?: boolean; $direction?: 'prev' 
 
   &:hover {
     border-color: ${(p) => p.theme.colors.accent};
-    box-shadow: 0 4px 16px rgba(0, 0, 0, 0.06);
+    box-shadow: var(--shadow-pop);
     transform: translateY(-2px);
   }
 

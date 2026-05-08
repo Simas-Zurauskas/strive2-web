@@ -13,7 +13,7 @@ const slideUp = keyframes`
 export const Backdrop = styled.div`
   position: fixed;
   inset: 0;
-  background: rgba(0, 0, 0, 0.25);
+  background: var(--scrim-light);
   backdrop-filter: blur(2px);
   z-index: 100;
   animation: ${fadeIn} 0.15s ease-out;
@@ -34,9 +34,7 @@ export const Dialog = styled.div`
   display: flex;
   flex-direction: column;
   gap: 1.25rem;
-  box-shadow:
-    0 8px 30px rgba(0, 0, 0, 0.12),
-    0 2px 8px rgba(0, 0, 0, 0.06);
+  box-shadow: var(--shadow-modal);
   animation: ${slideUp} 0.2s ease-out;
 `;
 

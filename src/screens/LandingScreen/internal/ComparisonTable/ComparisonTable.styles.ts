@@ -142,7 +142,7 @@ export const YesPill = styled.span<{ $strive?: boolean }>`
     p.$strive
       ? p.theme.colors.accent
       : `color-mix(in oklab, ${p.theme.colors.success} 14%, transparent)`};
-  color: ${(p) => (p.$strive ? '#fff' : p.theme.colors.success)};
+  color: ${(p) => (p.$strive ? 'var(--on-accent)' : p.theme.colors.success)};
   border: 1px solid
     ${(p) =>
       p.$strive

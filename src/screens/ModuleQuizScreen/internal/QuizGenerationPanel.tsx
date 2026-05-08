@@ -36,8 +36,8 @@ export const QuizGenerationPanel = () => {
       <S.GeneratingEyebrow>Drafting</S.GeneratingEyebrow>
       <S.GeneratingTitle>Writing your quiz.</S.GeneratingTitle>
       <S.GeneratingLead>
-        Building questions tied to the lessons you&rsquo;ve worked through. Around 30 seconds —
-        feel free to step away.
+        Building questions tied to the lessons you&rsquo;ve worked through. Usually a minute or
+        so &mdash; feel free to step away.
       </S.GeneratingLead>
       <S.GeneratingPhase aria-live="polite">
         <S.GeneratingDots aria-hidden>

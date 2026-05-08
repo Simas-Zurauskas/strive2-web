@@ -5,6 +5,7 @@ import { useMemo, useState } from 'react';
 import { toast } from 'sonner';
 import { updatePreferences } from '@/api/routes/auth';
 import { getNarrationVoices } from '@/api/routes/course';
+import { HelpAnchor } from '@/components';
 import { useAuth } from '@/hooks';
 import { QKeys } from '@/types';
 import * as S from './NarrationPreferences.styles';
@@ -73,7 +74,9 @@ export const NarrationPreferences = () => {
 
   return (
     <S.Section>
-      <S.SectionTitle>Lesson narration</S.SectionTitle>
+      <S.SectionTitle>
+        Lesson narration <HelpAnchor concept="narration" size="sm" />
+      </S.SectionTitle>
       <S.Description>
         Your default voice and speaking rate for audio narration. Each lesson can override these
         from the player.

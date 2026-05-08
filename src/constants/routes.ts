@@ -2,7 +2,11 @@
 // slug-vs-id or path change has a single source of truth.
 
 export const ROUTES = {
-  home: () => '/home',
+  // Home dashboard is served at `/` for authed users via a rewrite in
+  // middleware.ts; the URL bar shows `/`. Visiting `/home` directly
+  // 307-redirects here, so this single canonical builder is correct
+  // everywhere.
+  home: () => '/',
   library: (tab?: 'courses' | 'bookmarks') => (tab ? `/library?tab=${tab}` : '/library'),
   // Combined sign-in / sign-up lives at root and toggles client-side.
   login: () => '/',

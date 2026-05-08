@@ -94,6 +94,28 @@ export const AuthModal = ({ open, mode, redirect, onClose, onModeChange }: AuthM
   if (typeof document === 'undefined') return null;
 
   const titleId = 'auth-modal-title';
+  const signupTabId = 'auth-modal-tab-signup';
+  const signinTabId = 'auth-modal-tab-signin';
+  const signupPanelId = 'auth-modal-panel-signup';
+  const signinPanelId = 'auth-modal-panel-signin';
+
+  // Roving-tabindex + arrow-key navigation across the two tabs (WAI-ARIA
+  // tab pattern). Left/Right cycle modes; Home/End jump to first/last.
+  const onTabListKeyDown = (e: React.KeyboardEvent<HTMLDivElement>) => {
+    if (e.key === 'ArrowLeft' || e.key === 'ArrowUp') {
+      e.preventDefault();
+      onModeChange(mode === 'signup' ? 'signin' : 'signup');
+    } else if (e.key === 'ArrowRight' || e.key === 'ArrowDown') {
+      e.preventDefault();
+      onModeChange(mode === 'signup' ? 'signin' : 'signup');
+    } else if (e.key === 'Home') {
+      e.preventDefault();
+      onModeChange('signup');
+    } else if (e.key === 'End') {
+      e.preventDefault();
+      onModeChange('signin');
+    }
+  };
 
   return createPortal(
     <S.Backdrop
@@ -115,11 +137,14 @@ export const AuthModal = ({ open, mode, redirect, onClose, onModeChange }: AuthM
           </S.CloseButton>
         </S.Header>
 
-        <S.TabList role="tablist" aria-label="Authentication mode">
+        <S.TabList role="tablist" aria-label="Authentication mode" onKeyDown={onTabListKeyDown}>
           <S.Tab
+            id={signupTabId}
             type="button"
             role="tab"
             aria-selected={mode === 'signup'}
+            aria-controls={signupPanelId}
+            tabIndex={mode === 'signup' ? 0 : -1}
             $active={mode === 'signup'}
             onClick={() => onModeChange('signup')}
             data-analytics-id="landing.modal.tab.signup"
@@ -127,9 +152,12 @@ export const AuthModal = ({ open, mode, redirect, onClose, onModeChange }: AuthM
             Sign up
           </S.Tab>
           <S.Tab
+            id={signinTabId}
             type="button"
             role="tab"
             aria-selected={mode === 'signin'}
+            aria-controls={signinPanelId}
+            tabIndex={mode === 'signin' ? 0 : -1}
             $active={mode === 'signin'}
             onClick={() => onModeChange('signin')}
             data-analytics-id="landing.modal.tab.signin"
@@ -139,11 +167,23 @@ export const AuthModal = ({ open, mode, redirect, onClose, onModeChange }: AuthM
         </S.TabList>
 
         <S.FormArea>
-          <S.FormSlot $active={mode === 'signup'} aria-hidden={mode !== 'signup'}>
-            <SignUpForm redirect={redirect} onSwitchMode={onModeChange} />
+          <S.FormSlot
+            id={signupPanelId}
+            role="tabpanel"
+            aria-labelledby={signupTabId}
+            $active={mode === 'signup'}
+            hidden={mode !== 'signup'}
+          >
+            {mode === 'signup' && <SignUpForm redirect={redirect} onSwitchMode={onModeChange} />}
           </S.FormSlot>
-          <S.FormSlot $active={mode === 'signin'} aria-hidden={mode !== 'signin'}>
-            <SignInForm redirect={redirect} onSwitchMode={onModeChange} />
+          <S.FormSlot
+            id={signinPanelId}
+            role="tabpanel"
+            aria-labelledby={signinTabId}
+            $active={mode === 'signin'}
+            hidden={mode !== 'signin'}
+          >
+            {mode === 'signin' && <SignInForm redirect={redirect} onSwitchMode={onModeChange} />}
           </S.FormSlot>
         </S.FormArea>
 

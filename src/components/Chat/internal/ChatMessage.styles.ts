@@ -1,4 +1,5 @@
 import styled, { keyframes } from 'styled-components';
+import { onAccent, onColorWashes } from '@/theme';
 
 const toolFadeIn = keyframes`
   from { opacity: 0; transform: scale(0.92); }
@@ -23,7 +24,7 @@ export const MessageWrapper = styled.div<{ $isUser: boolean }>`
 export const MessageBubble = styled.div<{ $isUser: boolean }>`
   font-size: 0.875rem;
   line-height: 1.55;
-  color: ${(p) => (p.$isUser ? '#fff' : p.theme.colors.foreground)};
+  color: ${(p) => (p.$isUser ? onAccent : p.theme.colors.foreground)};
 
   ${(p) =>
     p.$isUser
@@ -69,7 +70,7 @@ export const MessageBubble = styled.div<{ $isUser: boolean }>`
   code {
     font-size: 0.8125rem;
     background: ${(p) =>
-      p.$isUser ? 'rgba(255, 255, 255, 0.15)' : p.theme.colors.surface};
+      p.$isUser ? onColorWashes.inlineCodeBg : p.theme.colors.surface};
     padding: 0.125rem 0.375rem;
     border-radius: 0.25rem;
   }

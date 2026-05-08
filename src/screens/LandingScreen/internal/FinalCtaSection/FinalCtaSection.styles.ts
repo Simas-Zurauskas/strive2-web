@@ -46,7 +46,7 @@ export const Cta = styled.button`
   font-weight: 600;
   border: 1px solid ${(p) => p.theme.colors.accent};
   background: ${(p) => p.theme.colors.accent};
-  color: #fff;
+  color: var(--on-accent);
   border-radius: var(--radius-md);
   cursor: pointer;
   box-shadow: var(--shadow-btn);

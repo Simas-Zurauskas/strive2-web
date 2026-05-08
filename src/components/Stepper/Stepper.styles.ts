@@ -1,4 +1,5 @@
 import styled from 'styled-components';
+import { onAccent } from '@/theme';
 
 export const Wrapper = styled.div`
   display: flex;
@@ -11,6 +12,27 @@ export const Step = styled.div`
   display: flex;
   align-items: center;
   gap: 0.5rem;
+`;
+
+// Wraps the Circle + Label of a navigable step so keyboard users get a
+// single tab stop per step. Resets default button chrome so the inner
+// Circle/Label spans keep rendering as before.
+export const StepButton = styled.button`
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0;
+  border: none;
+  background: transparent;
+  font: inherit;
+  color: inherit;
+  cursor: pointer;
+  border-radius: var(--radius-md);
+
+  &:focus-visible {
+    outline: 2px solid ${(p) => p.theme.colors.accent};
+    outline-offset: 4px;
+  }
 `;
 
 export const Circle = styled.span<{ $state: 'completed' | 'active' | 'navigable' | 'future'; $clickable: boolean }>`
@@ -35,7 +57,7 @@ export const Circle = styled.span<{ $state: 'completed' | 'active' | 'navigable'
   }};
 
   color: ${(p) => {
-    if (p.$state === 'active') return '#fff';
+    if (p.$state === 'active') return onAccent;
     if (p.$state === 'completed') return p.theme.colors.foreground;
     if (p.$state === 'navigable') return p.theme.colors.accent;
     return p.theme.colors.muted;
@@ -49,8 +71,8 @@ export const Circle = styled.span<{ $state: 'completed' | 'active' | 'navigable'
       return p.theme.colorsLib.gray400;
     }};
 
-  &:hover {
-    opacity: ${(p) => (p.$clickable ? 0.8 : 1)};
+  ${StepButton}:hover & {
+    opacity: 0.8;
   }
 `;
 

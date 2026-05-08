@@ -5,7 +5,7 @@ export const CodeContainer = styled.div`
   border-radius: 12px;
   border: 1px solid ${(p) => p.theme.colors.border};
   overflow: hidden;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06);
+  box-shadow: var(--shadow-card-soft);
 `;
 
 export const CodeHeader = styled.div`

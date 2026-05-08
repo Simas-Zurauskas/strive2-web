@@ -10,7 +10,7 @@ import {
   startCheckout,
   startPortal,
 } from '@/api/routes/billing';
-import { Accordion, AccordionItem, AlertDialog, Button } from '@/components';
+import { Accordion, AccordionItem, AlertDialog, Button, HelpAnchor } from '@/components';
 import { ROUTES } from '@/constants/routes';
 import { useAuth } from '@/hooks/useAuth';
 import { useBillingPlans, useBillingSummary } from '@/hooks/useBilling';
@@ -26,6 +26,18 @@ import type { BillingCadence, BillingPlan, ClientApiError, PlanKey } from '@/api
 // confirmation on every plan switch.
 const PLAN_RANK: Record<PlanKey, number> = { free: 0, starter: 1, pro: 2, studio: 3 };
 const cap = (s: string) => s[0].toUpperCase() + s.slice(1);
+
+// Plain-language translation of the abstract allowance count into typical
+// usage shapes per tier. Lifted (condensed) from the "What can I actually
+// do on each plan?" FAQ accordion below — keep both in lockstep when the
+// wording is revised. Mirrored in `PRICING_TEASER.cards.{free,pro}.guidance`
+// on the landing teaser; align all three together.
+const ALLOWANCE_GUIDANCE: Record<PlanKey, string> = {
+  free: '≈ one short course end-to-end, or a handful of lessons',
+  starter: '≈ a few full courses each month',
+  pro: '≈ ongoing course building, with comfortable headroom',
+  studio: '≈ multiple parallel courses, heavy regeneration',
+};
 
 const buildCheckoutCta = ({
   planKey,
@@ -243,7 +255,10 @@ export const PricingScreen: React.FC = () => {
   return (
     <S.Layout>
       <S.Header>
-        <S.Title>One app. Pick your allowance.</S.Title>
+        <S.Title>
+          One app. Pick your allowance.{' '}
+          <HelpAnchor concept="credits" />
+        </S.Title>
         <S.Subtitle>
           Every plan unlocks the entire platform — the only thing that changes is how much monthly allowance you get. Allowance is used up as you generate courses, lessons, and quizzes, and refunded in full on any failure.
         </S.Subtitle>
@@ -292,6 +307,9 @@ export const PricingScreen: React.FC = () => {
                 <S.AllowanceUnit>
                   <S.SkBar $w="70%" />
                 </S.AllowanceUnit>
+                <S.AllowanceGuidance>
+                  <S.SkBar $w="85%" />
+                </S.AllowanceGuidance>
               </S.AllowanceBlock>
               <S.CardFooter>
                 <S.SkBar $w="100%" $h="2.5rem" $radius="6px" />
@@ -345,6 +363,7 @@ export const PricingScreen: React.FC = () => {
                   <S.AllowanceUnit>
                     {isFree ? 'Baseline usage / month' : 'Baseline usage'}
                   </S.AllowanceUnit>
+                  <S.AllowanceGuidance>{ALLOWANCE_GUIDANCE[plan.key]}</S.AllowanceGuidance>
                 </S.AllowanceBlock>
 
                 <S.CardFooter>

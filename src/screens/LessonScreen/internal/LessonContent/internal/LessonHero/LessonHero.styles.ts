@@ -59,8 +59,11 @@ export const BookmarkButton = styled.button<{ $active: boolean }>`
   border-radius: 50%;
   border: none;
   background: ${(p) =>
-    p.$active ? `${p.theme.colors.tertiary}30` : 'rgba(0, 0, 0, 0.3)'};
-  color: ${(p) => (p.$active ? p.theme.colors.tertiary : 'rgba(255, 255, 255, 0.9)')};
+    p.$active ? `${p.theme.colors.tertiary}30` : 'var(--scrim-light)'};
+  color: ${(p) =>
+    p.$active
+      ? p.theme.colors.tertiary
+      : 'color-mix(in srgb, var(--on-accent) 90%, transparent)'};
   cursor: pointer;
   flex-shrink: 0;
   backdrop-filter: blur(8px);
@@ -71,7 +74,7 @@ export const BookmarkButton = styled.button<{ $active: boolean }>`
 
   &:hover {
     background: ${(p) =>
-      p.$active ? `${p.theme.colors.tertiary}40` : 'rgba(0, 0, 0, 0.45)'};
+      p.$active ? `${p.theme.colors.tertiary}40` : 'var(--scrim-strong)'};
     transform: scale(1.05);
   }
 

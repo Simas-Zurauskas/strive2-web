@@ -3,10 +3,10 @@
 // re-verify counts (e.g. "six WaveNet voices") against current wiki.
 
 export const HERO = {
-  eyebrow: 'Personal courses, built by AI',
+  eyebrow: 'Your private tutor. Your own course.',
   headline: 'A real course on anything you want to learn.',
   subhead:
-    'Strive turns any goal into a personalised curriculum — modules, lessons, quizzes, daily recall — generated live as you read. Powered by Anthropic Claude.',
+    'Tell Strive your goal and what you already know. Minutes later, you have a full course — modules, lessons, quizzes, and daily recall — built around exactly where you are, adapting as you progress.',
   ctaPrimary: 'Build my first course — free',
   ctaMicrocopy: 'Free tier included. No credit card.',
   ctaSecondary: 'See how it works',
@@ -381,10 +381,15 @@ export const PRICING_TEASER = {
   cards: {
     free: {
       tagline: 'Try Strive end-to-end. No credit card needed.',
+      // Per-tier translation of the abstract allowance count into a typical
+      // usage shape. Lifted (condensed) from the "What can I actually do on
+      // each plan?" FAQ on /pricing so the teaser and the FAQ stay in lockstep.
+      guidance: '≈ one short course end-to-end, or a handful of lessons',
       cta: 'Start free',
     },
     pro: {
       tagline: 'Most chosen by daily learners. Generate as you go.',
+      guidance: '≈ ongoing course building, with comfortable headroom',
       cta: 'Get Pro',
     },
   },

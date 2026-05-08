@@ -79,13 +79,16 @@ export const EmptyState = styled.section`
   border: 1px solid ${(p) => p.theme.colors.surfaceBorder};
   border-radius: var(--radius-xl);
   background: ${(p) => p.theme.colors.surface};
-  max-width: 720px;
   width: 100%;
-  align-self: center;
 
   ${(p) => p.theme.media.tablet} {
     padding: 2.5rem 1.5rem;
   }
+`;
+
+export const EmptyPreviewSlot = styled.div`
+  width: 100%;
+  margin-bottom: 1.25rem;
 `;
 
 export const EmptyRule = styled.span`

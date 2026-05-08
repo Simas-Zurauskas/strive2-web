@@ -21,7 +21,7 @@ export const Avatar = styled.div`
   border-radius: 50%;
   border: 2px solid ${(p) => p.theme.colors.tertiary};
   background: ${(p) => p.theme.colors.accent};
-  color: #fff;
+  color: var(--on-accent);
   font-family: var(--font-heading-serif), Georgia, serif;
   font-size: 1.5rem;
   font-weight: 600;

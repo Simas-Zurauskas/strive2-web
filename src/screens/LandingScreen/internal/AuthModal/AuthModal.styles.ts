@@ -21,7 +21,9 @@ export const Backdrop = styled.div`
   position: fixed;
   inset: 0;
   z-index: 100;
-  background: rgba(0, 0, 0, 0.32);
+  /* The scrim CSS variable is theme-aware (lighter under light, deeper
+     under dark) so we no longer need a separate dark-mode override. */
+  background: var(--scrim-light);
   backdrop-filter: blur(4px);
   -webkit-backdrop-filter: blur(4px);
   animation: ${backdropFade} 0.18s linear;
@@ -29,10 +31,6 @@ export const Backdrop = styled.div`
   align-items: center;
   justify-content: center;
   padding: 1rem;
-
-  [data-theme='dark'] & {
-    background: rgba(0, 0, 0, 0.6);
-  }
 
   ${(p) => p.theme.media.mobile} {
     padding: 0;

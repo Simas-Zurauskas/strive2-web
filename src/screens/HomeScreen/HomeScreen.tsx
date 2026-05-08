@@ -2,13 +2,14 @@
 
 import { useRouter } from 'next/navigation';
 import { useMemo } from 'react';
-import { Button } from '@/components';
+import { Button, HelpAnchor } from '@/components';
 import { useCourses, useProgressSummary } from '@/hooks';
 import { useJobManager } from '@/hooks/useJobManager';
 import * as S from './HomeScreen.styles';
 import { ContinueLearningCard } from './internal/ContinueLearningCard/ContinueLearningCard';
 import { DraftCard } from './internal/DraftCard/DraftCard';
 import { Greeting } from './internal/Greeting/Greeting';
+import { HomeGhostPreview } from './internal/HomeGhostPreview/HomeGhostPreview';
 import { LibrarySection } from './internal/LibrarySection/LibrarySection';
 import { StatBento } from './internal/StatBento/StatBento';
 import { TodayReview } from './internal/TodayReview/TodayReview';
@@ -57,12 +58,7 @@ export const HomeScreen: React.FC = () => {
     [realCourses],
   );
 
-  /**
-   * First-run state: only render the welcome hero once we know there are
-   * no courses. Until courses resolve, fall through to the normal home
-   * layout (which renders skeletons everywhere) — better than flashing
-   * the welcome hero just to swap it out a moment later.
-   */
+  /** Empty state: rendered when the user has no courses. */
   const isFirstRun = !coursesLoading && !!courses && courses.length === 0;
 
   if (isFirstRun) {
@@ -71,14 +67,23 @@ export const HomeScreen: React.FC = () => {
         <S.Container>
           <Greeting />
           <S.EmptyState>
-            <S.EmptyTitle>Start with a question.</S.EmptyTitle>
+            <S.EmptyPreviewSlot>
+              <HomeGhostPreview />
+            </S.EmptyPreviewSlot>
+            <S.EmptyRule aria-hidden />
+            <S.EmptyEyebrow>Start with a goal</S.EmptyEyebrow>
+            <S.EmptyTitle>
+              Tell Strive what you want to learn. <HelpAnchor concept="how-strive-works" />
+            </S.EmptyTitle>
             <S.EmptyText>
-              Any topic, any depth. Tell us what you want to learn — we&rsquo;ll generate the modules,
-              lessons, and quizzes around it. Courses take about a minute.
+              Strive turns it into a real course — modules, lessons, quizzes, and daily recall —
+              shaped around what you already know.
             </S.EmptyText>
-            <Button variant="primary" onClick={() => router.push('/courses/new')}>
-              Generate your first course
-            </Button>
+            <S.EmptyAction>
+              <Button variant="primary" onClick={() => router.push('/courses/new')}>
+                Generate your first course
+              </Button>
+            </S.EmptyAction>
           </S.EmptyState>
         </S.Container>
       </S.Layout>

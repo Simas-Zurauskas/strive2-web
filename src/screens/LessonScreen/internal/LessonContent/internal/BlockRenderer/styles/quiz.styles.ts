@@ -10,7 +10,7 @@ export const QuizContainer = styled.div`
   border-radius: 12px;
   border: 1px solid ${(p) => p.theme.colors.border};
   overflow: hidden;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+  box-shadow: var(--shadow-card-soft);
   animation: ${fadeIn} 0.3s ease-out;
 `;
 
@@ -126,7 +126,7 @@ export const QuizOptionLetter = styled.span<{ $state: QuizOptionState }>`
       case 'selected':
       case 'correct':
       case 'incorrect':
-        return '#fff';
+        return 'var(--on-accent)';
       case 'dimmed': return p.theme.colors.border;
       default: return p.theme.colors.muted;
     }
@@ -157,7 +157,7 @@ export const QuizConfirmButton = styled.button`
 
   &:hover {
     background: ${(p) => p.theme.colors.accent};
-    color: #fff;
+    color: var(--on-accent);
   }
 
   &:active {

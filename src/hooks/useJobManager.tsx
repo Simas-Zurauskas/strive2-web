@@ -7,6 +7,7 @@ import { toast } from 'sonner';
 import { getJobStatus } from '@/api/routes/course';
 import { Course, JobStartedEvent, JobStatusEvent } from '@/api/types';
 import { TOASTS, toastMessage } from '@/constants/toasts';
+import { fireInsufficientCredits } from '@/lib/creditModalBus';
 import { QKeys } from '@/types';
 import { useSocket } from './useSocket';
 
@@ -191,7 +192,25 @@ export const JobManagerProvider = ({ children }: { children: React.ReactNode }) 
         }
       } else if (event.status === 'failed') {
         if (entry) clearTimeout(entry.timer);
-        toast.error(toastMessage({ dynamic: event.error, fallback: TOASTS.GENERATION_FAILED_RETRY }));
+        // Race-loss path: requireCredits passed at request time but the
+        // in-runner re-check at submitJob lost — surface the same modal
+        // the synchronous 402 path uses instead of a generic toast.
+        // The errorCode/errorMeta fields land on the FE type only after
+        // `yarn codegen`; until then we read them through a structural
+        // cast so the runtime check still works.
+        const failed = event as JobStatusEvent & {
+          errorCode?: string;
+          errorMeta?: { need?: number; have?: number } | Record<string, unknown>;
+        };
+        if (failed.errorCode === 'INSUFFICIENT_CREDITS') {
+          const meta = failed.errorMeta as { need?: number; have?: number } | undefined;
+          fireInsufficientCredits({
+            need: typeof meta?.need === 'number' ? meta.need : 0,
+            have: typeof meta?.have === 'number' ? meta.have : 0,
+          });
+        } else {
+          toast.error(toastMessage({ dynamic: event.error, fallback: TOASTS.GENERATION_FAILED_RETRY }));
+        }
       }
       if (entry) callbacksRef.current.delete(event.jobId);
 

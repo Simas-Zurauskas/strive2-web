@@ -16,9 +16,12 @@ import {
   courseMentorChatUrl,
 } from '@/api/routes/course';
 import { Chat } from '@/components/Chat';
+import { HelpAnchor } from '@/components/HelpAnchor';
 import { TOASTS } from '@/constants/toasts';
 import { useJobManager } from '@/hooks/useJobManager';
 import { useLessonContent } from '@/hooks/useLessonContent';
+import { creditAwareFetch } from '@/lib/creditAwareFetch';
+import { isInsufficientCreditsError } from '@/lib/insufficientCreditsError';
 import * as S from './ChatPanel.styles';
 import { buildPartsFromPersistedMessage, uiMessagesToChatData } from './mentorMessages';
 import type { AttachmentChipData, ChatMessageAttachment, ChatMessageData } from '@/components/Chat';
@@ -230,7 +233,9 @@ const LessonChatPanel = ({ contextLabel, courseSlug, moduleIndex, lessonIndex, o
         <ChevronRight size={18} />
       </S.CollapseButton>
       <S.HeaderText>
-        <S.HeaderEyebrow>Mentor</S.HeaderEyebrow>
+        <S.HeaderEyebrow>
+          Mentor <HelpAnchor concept="mentor-chat" size="sm" />
+        </S.HeaderEyebrow>
         {contextLabel && <S.HeaderContext>{contextLabel}</S.HeaderContext>}
       </S.HeaderText>
       {lessonGenerated === true && hasMessages && (
@@ -331,6 +336,11 @@ const LessonChatPanelInner = ({
     () =>
       new DefaultChatTransport({
         api: lessonMentorChatUrl({ courseId: courseSlug, moduleIndex, lessonIndex }),
+        // creditAwareFetch fires the global Out-of-Credits modal on 402
+        // before the SDK throws. Without it, the streaming surface bypasses
+        // our axios client + React Query MutationCache and the modal never
+        // opens for paid-action 402s on the mentor stream.
+        fetch: creditAwareFetch,
         headers: () => ({
           Authorization: `Bearer ${session?.token ?? ''}`,
         }),
@@ -346,6 +356,10 @@ const LessonChatPanelInner = ({
       console.error('[MentorPanel] onError —', err);
     },
   });
+
+  // The modal owns the 402 UX; muting the inline banner here keeps the
+  // panel from doubling up with a redundant "API error" string.
+  const displayError = error && !isInsufficientCreditsError(error) ? error.message : null;
 
   const hasMessages = messages.length > 0;
   useEffect(() => {
@@ -437,7 +451,7 @@ const LessonChatPanelInner = ({
       placeholder="Ask your mentor..."
       isStreaming={isStreaming}
       isThinking={isSubmitted}
-      error={error?.message ?? null}
+      error={displayError}
       attachment={
         attachment
           ? {
@@ -542,7 +556,9 @@ const CourseChatPanel = ({ contextLabel, courseSlug, onClose }: CourseChatPanelP
         <ChevronRight size={18} />
       </S.CollapseButton>
       <S.HeaderText>
-        <S.HeaderEyebrow>Guide</S.HeaderEyebrow>
+        <S.HeaderEyebrow>
+          Guide <HelpAnchor concept="mentor-chat" size="sm" />
+        </S.HeaderEyebrow>
         {contextLabel && <S.HeaderContext>{contextLabel}</S.HeaderContext>}
       </S.HeaderText>
       {courseGenerated === true && hasMessages && (
@@ -621,6 +637,10 @@ const CourseChatPanelInner = ({
     () =>
       new DefaultChatTransport({
         api: courseMentorChatUrl(courseSlug),
+        // See LessonChatPanelInner above for the rationale — the global
+        // Out-of-Credits modal lives behind the React Query mutation cache,
+        // and streaming chat surfaces would otherwise dodge it on 402.
+        fetch: creditAwareFetch,
         headers: () => ({
           Authorization: `Bearer ${session?.token ?? ''}`,
         }),
@@ -636,6 +656,8 @@ const CourseChatPanelInner = ({
       console.error('[GuidePanel] onError —', err);
     },
   });
+
+  const displayError = error && !isInsufficientCreditsError(error) ? error.message : null;
 
   const hasMessages = messages.length > 0;
   useEffect(() => {
@@ -669,7 +691,7 @@ const CourseChatPanelInner = ({
       placeholder="Ask your guide..."
       isStreaming={isStreaming}
       isThinking={isSubmitted}
-      error={error?.message ?? null}
+      error={displayError}
       onStop={stop}
       courseSlug={courseSlug}
     />

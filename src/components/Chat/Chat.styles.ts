@@ -1,5 +1,5 @@
 import styled, { keyframes } from 'styled-components';
-import { thinScrollbar } from '@/theme';
+import { thinScrollbar, onAccent } from '@/theme';
 
 const fadeIn = keyframes`
   from { opacity: 0; transform: translateY(4px); }
@@ -77,7 +77,7 @@ export const ScrollDownButton = styled.button`
   display: flex;
   align-items: center;
   justify-content: center;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+  box-shadow: var(--shadow-card-soft);
   transition:
     opacity 0.25s ease,
     background 0.15s ease;
@@ -237,7 +237,7 @@ export const SendButton = styled.button`
   border: none;
   border-radius: 50%;
   background: ${(p) => p.theme.colors.accent};
-  color: #fff;
+  color: ${onAccent};
   cursor: pointer;
   padding: 0;
   transition:

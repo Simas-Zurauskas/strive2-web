@@ -175,7 +175,7 @@ export const MermaidBlock = ({ content }: { content: string }) => {
             style={{
               padding: '0.5rem 0.75rem',
               fontSize: '0.75rem',
-              color: '#ef4444',
+              color: 'var(--error)',
               borderTop: '1px solid var(--border)',
             }}
           >

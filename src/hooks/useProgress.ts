@@ -149,6 +149,9 @@ export const useSubmitQuizAttempt = () => {
         queryKey: [QKeys.REVIEWS_DUE],
       });
       queryClient.invalidateQueries({
+        queryKey: [QKeys.UNATTEMPTED_QUIZ_COUNT],
+      });
+      queryClient.invalidateQueries({
         queryKey: [QKeys.GAMIFICATION_PROFILE],
       });
     },
@@ -174,6 +177,9 @@ export const useResetModuleQuiz = () => {
       });
       queryClient.invalidateQueries({
         queryKey: [QKeys.REVIEWS_DUE],
+      });
+      queryClient.invalidateQueries({
+        queryKey: [QKeys.UNATTEMPTED_QUIZ_COUNT],
       });
     },
     meta: { errorMessage: 'Failed to reset quiz' },

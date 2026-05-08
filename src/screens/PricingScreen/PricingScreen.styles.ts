@@ -68,7 +68,7 @@ export const CadenceBtn = styled.button<{ $active: boolean }>`
     css`
       background: ${p.theme.colors.background};
       color: ${p.theme.colors.foreground};
-      box-shadow: 0 1px 2px rgba(0, 0, 0, 0.06);
+      box-shadow: var(--shadow-card);
     `}
 `;
 
@@ -116,7 +116,7 @@ export const Card = styled.div<{ $highlighted?: boolean }>`
     p.$highlighted &&
     css`
       border-color: ${p.theme.colors.accent};
-      box-shadow: 0 6px 24px rgba(0, 0, 0, 0.06);
+      box-shadow: var(--shadow-pop);
     `}
 `;
 
@@ -211,6 +211,17 @@ export const AllowanceUnit = styled.div`
   line-height: 1.5;
   color: ${(p) => p.theme.colors.muted};
   letter-spacing: 0.01em;
+`;
+
+// Per-tier plain-language translation of the abstract allowance count
+// (e.g. "≈ one short course end-to-end"). Sits beneath AllowanceUnit
+// inside the same bordered AllowanceBlock. The `≈` prefix carries the
+// "approximate" semantic without italics.
+export const AllowanceGuidance = styled.div`
+  font-size: 0.8125rem;
+  line-height: 1.5;
+  color: ${(p) => p.theme.colors.muted};
+  margin-top: 0.4rem;
 `;
 
 export const CardFooter = styled.div`

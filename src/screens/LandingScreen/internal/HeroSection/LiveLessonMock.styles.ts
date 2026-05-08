@@ -1,6 +1,7 @@
 'use client';
 
 import styled, { keyframes } from 'styled-components';
+import { codeTokens } from '@/theme';
 
 const blink = keyframes`
   0%, 49% { opacity: 1; }
@@ -173,7 +174,7 @@ export const CodeBlock = styled.div`
   font-family: ui-monospace, SFMono-Regular, 'Geist Mono', monospace;
   font-size: 0.6875rem;
   line-height: 1.7;
-  color: #e6e7ec;
+  color: ${codeTokens.text};
   overflow: hidden;
 `;
 
@@ -185,19 +186,19 @@ export const Tok = styled.span<{ $kind: string }>`
   color: ${(p) => {
     switch (p.$kind) {
       case 'kw':
-        return '#c4a265'; // tertiary-ish
+        return codeTokens.keyword;
       case 'str':
-        return '#9ec99e';
+        return codeTokens.string;
       case 'fn':
-        return '#9ad6c8';
+        return codeTokens.function;
       case 'num':
-        return '#d4a96b';
+        return codeTokens.number;
       case 'comment':
-        return '#7a7a85';
+        return codeTokens.comment;
       case 'tag':
-        return '#e07a8a';
+        return codeTokens.operator;
       default:
-        return '#e6e7ec';
+        return codeTokens.text;
     }
   }};
   ${(p) => p.$kind === 'comment' && 'font-style: italic;'}

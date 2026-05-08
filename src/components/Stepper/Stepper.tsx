@@ -36,19 +36,48 @@ export const Stepper = ({ currentStep, totalSteps, labels, completedSteps = [], 
   };
 
   return (
-    <S.Wrapper>
+    <S.Wrapper role="list">
       {steps.map((step, i) => {
         const state = getState(step);
         const clickable = isClickable(step);
+        const stepLabel = labels?.[i] ?? `Step ${step}`;
+        const ariaLabel = `${stepLabel} (step ${step} of ${totalSteps})`;
+
+        // When the step is clickable we render Circle + Label as a single
+        // grouping <button> so keyboard users get one tab stop per step
+        // with both the number badge and the textual label inside one
+        // accessible name. Non-clickable steps stay as inert spans.
+        if (clickable) {
+          return (
+            <S.Step key={step} role="listitem">
+              {i > 0 && <S.Connector $completed={state !== 'future'} aria-hidden="true" />}
+              <S.StepButton
+                type="button"
+                onClick={() => handleClick(step)}
+                aria-label={ariaLabel}
+                aria-current={state === 'active' ? 'step' : undefined}
+              >
+                <S.Circle as="span" $state={state} $clickable aria-hidden="true">
+                  {state === 'completed' ? '✓' : step}
+                </S.Circle>
+                {labels?.[i] && (
+                  <S.Label as="span" $state={state} $clickable aria-hidden="true">
+                    {labels[i]}
+                  </S.Label>
+                )}
+              </S.StepButton>
+            </S.Step>
+          );
+        }
 
         return (
-          <S.Step key={step}>
-            {i > 0 && <S.Connector $completed={state !== 'future'} />}
-            <S.Circle $state={state} $clickable={clickable} onClick={() => handleClick(step)}>
+          <S.Step key={step} role="listitem" aria-current={state === 'active' ? 'step' : undefined}>
+            {i > 0 && <S.Connector $completed={state !== 'future'} aria-hidden="true" />}
+            <S.Circle as="span" $state={state} $clickable={false} aria-hidden="true">
               {state === 'completed' ? '✓' : step}
             </S.Circle>
             {labels?.[i] && (
-              <S.Label $state={state} $clickable={clickable} onClick={() => handleClick(step)}>
+              <S.Label as="span" $state={state} $clickable={false}>
                 {labels[i]}
               </S.Label>
             )}

@@ -18,7 +18,7 @@
 
 import { useChat } from '@ai-sdk/react';
 import { DefaultChatTransport, type UIMessage } from 'ai';
-import { AnimatePresence, motion } from 'framer-motion';
+import { AnimatePresence, motion, useReducedMotion } from 'framer-motion';
 import { ChevronDown, MessageCircle, Sparkles } from 'lucide-react';
 import { useSession } from 'next-auth/react';
 import { useMemo, useState } from 'react';
@@ -33,18 +33,28 @@ const DEFAULT_SUGGESTED_PROMPTS = [
   'How do I create my first course?',
 ];
 
-const widgetMotion = {
+const widgetMotionFull = {
   initial: { opacity: 0, scale: 0.85, y: 12 },
   animate: { opacity: 1, scale: 1, y: 0 },
   exit: { opacity: 0, scale: 0.9, y: 8 },
   transition: { duration: 0.22, ease: [0.16, 1, 0.3, 1] as const },
 };
 
-const fabMotion = {
+const fabMotionFull = {
   initial: { opacity: 0, scale: 0.7 },
   animate: { opacity: 1, scale: 1 },
   exit: { opacity: 0, scale: 0.7 },
   transition: { duration: 0.18, ease: [0.16, 1, 0.3, 1] as const },
+};
+
+// prefers-reduced-motion: drop the scale/translate transforms and shrink
+// the duration. Opacity-only transitions are exempt from the WCAG 2.3.3
+// concern (no parallax / vestibular triggers).
+const reducedMotion = {
+  initial: { opacity: 0 },
+  animate: { opacity: 1 },
+  exit: { opacity: 0 },
+  transition: { duration: 0.12 },
 };
 
 interface KbChatPanelProps {
@@ -58,6 +68,9 @@ export const KbChatPanel = ({ suggestedPrompts }: KbChatPanelProps = {}) => {
   const [open, setOpen] = useState(false);
   const { data: session } = useSession();
   const prompts = suggestedPrompts ?? DEFAULT_SUGGESTED_PROMPTS;
+  const prefersReduced = useReducedMotion() ?? false;
+  const widgetMotion = prefersReduced ? reducedMotion : widgetMotionFull;
+  const fabMotion = prefersReduced ? reducedMotion : fabMotionFull;
 
   // Live chat state. Hosted at the panel level so collapsing the widget
   // (and even navigating between /help articles when this is mounted at

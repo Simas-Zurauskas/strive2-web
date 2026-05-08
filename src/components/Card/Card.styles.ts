@@ -5,7 +5,7 @@ export const Container = styled.div`
   border: 1px solid ${(p) => p.theme.colors.surfaceBorder};
   border-radius: 8px;
   padding: 1.75rem;
-  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.04);
+  box-shadow: var(--shadow-card);
   transition: box-shadow 0.2s, transform 0.2s;
 `;
 

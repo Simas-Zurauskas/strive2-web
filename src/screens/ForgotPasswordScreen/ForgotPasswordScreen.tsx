@@ -65,7 +65,25 @@ export const ForgotPasswordScreen = () => {
       validationSchema={forgotPasswordSchema}
       onSubmit={(values) => mutation.mutate(values)}
     >
-      {({ handleSubmit, handleChange, handleBlur, values, errors, touched }) => (
+      {({
+        handleSubmit,
+        handleChange,
+        handleBlur,
+        values,
+        errors,
+        touched,
+        submitCount,
+      }) => {
+        // Same error-gating rule as the auth modal forms: never on first
+        // render, all errors after submit, format errors on blur with
+        // content.
+        const showEmailError =
+          submitCount > 0
+            ? errors.email
+            : touched.email && values.email && errors.email
+            ? errors.email
+            : undefined;
+        return (
         <AuthForm onSubmit={handleSubmit}>
           <AuthFormTitle>Forgot password?</AuthFormTitle>
           <AuthFormFooter>
@@ -76,10 +94,12 @@ export const ForgotPasswordScreen = () => {
             name="email"
             type="email"
             placeholder="Email"
+            autoComplete="email"
+            autoFocus
             value={values.email}
             onChange={handleChange}
             onBlur={handleBlur}
-            error={touched.email ? errors.email : undefined}
+            error={showEmailError}
           />
 
           <AuthSubmitBtn
@@ -94,7 +114,8 @@ export const ForgotPasswordScreen = () => {
             Remembered it? <Link href="/">Sign in</Link>
           </AuthFormFooter>
         </AuthForm>
-      )}
+        );
+      }}
     </Formik>
     </AuthMoment.Centered>
   );

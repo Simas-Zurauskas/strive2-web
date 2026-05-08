@@ -10,7 +10,7 @@ export const ExerciseContainer = styled.div`
   border-radius: 12px;
   border: 1px solid ${(p) => p.theme.colors.border};
   overflow: hidden;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+  box-shadow: var(--shadow-card-soft);
   animation: ${fadeIn} 0.3s ease-out;
 `;
 

@@ -2,7 +2,7 @@
 
 import styled from 'styled-components';
 import { SectionLabel, TextAction } from '@/components';
-import { thinScrollbar } from '@/theme';
+import { thinScrollbar, onAccent } from '@/theme';
 import type { QuizMasteryTier } from '@/api/types';
 import type { QuizIconVariant } from '@/types';
 
@@ -105,7 +105,7 @@ export const ContinueButton = styled.button`
   border-radius: 6px;
   border: none;
   background: ${(p) => p.theme.colors.accent};
-  color: #fff;
+  color: ${onAccent};
   font-size: 0.8125rem;
   font-weight: 600;
   font-family: inherit;

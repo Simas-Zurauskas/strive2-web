@@ -25,5 +25,58 @@ export const DEV_MODE = process.env.NEXT_PUBLIC_DEV_MODE === 'true';
  * metadata. Defaults to `http://localhost:3000` in dev; set
  * `NEXT_PUBLIC_SITE_URL` (no trailing slash) in production.
  */
-export const NEXT_PUBLIC_SITE_URL =
-  process.env.NEXT_PUBLIC_SITE_URL?.replace(/\/$/, '') ?? 'http://localhost:3000';
+export const NEXT_PUBLIC_SITE_URL = process.env.NEXT_PUBLIC_SITE_URL?.replace(/\/$/, '') ?? 'http://localhost:3000';
+
+/**
+ * Google Ads conversion tag, e.g. `AW-1234567890`. Required — drives the
+ * gtag bootstrap and any future `adsConversion()` calls. Format-validated
+ * so a typo fails fast at module load rather than silently mis-attributing.
+ */
+const _adsId = process.env.NEXT_PUBLIC_GOOGLE_ADS_ID;
+
+if (!_adsId) {
+  throw new Error('Missing required environment variable: NEXT_PUBLIC_GOOGLE_ADS_ID');
+}
+
+export const NEXT_PUBLIC_GOOGLE_ADS_ID = _adsId;
+
+/**
+ * GA4 Measurement ID, e.g. `G-XXXXXXXXXX`. Required — registered in the
+ * gtag bootstrap as a second `config` call so pageviews and events
+ * broadcast to GA4 alongside the Ads tag. Format-validated.
+ */
+const _gaId = process.env.NEXT_PUBLIC_GA_MEASUREMENT_ID;
+
+if (!_gaId) {
+  throw new Error('Missing required environment variable: NEXT_PUBLIC_GA_MEASUREMENT_ID');
+}
+
+export const NEXT_PUBLIC_GA_MEASUREMENT_ID = _gaId;
+
+/**
+ * Mixpanel project token. Same value as the api's MIXPANEL_PROJECT_TOKEN —
+ * project tokens are write-only and safe to expose to the browser.
+ * Required so the wrapper at `lib/analytics.ts` can initialise without
+ * runtime guards.
+ */
+const _mpToken = process.env.NEXT_PUBLIC_MIXPANEL_TOKEN;
+
+if (!_mpToken) {
+  throw new Error('Missing required environment variable: NEXT_PUBLIC_MIXPANEL_TOKEN');
+}
+
+export const NEXT_PUBLIC_MIXPANEL_TOKEN = _mpToken;
+
+/**
+ * Appzi feedback widget button GUID. Optional — when set, the navbar
+ * Feedback button calls `window.appzi.openWidget(<guid>)` to surface the
+ * configured widget. Get the GUID from the Appzi dashboard: Buttons →
+ * Embed → "Trigger from a Custom Element". Without it the button hides.
+ */
+const _appziButtonId = process.env.NEXT_PUBLIC_APPZI_BUTTON_ID;
+
+if (!_appziButtonId) {
+  throw new Error('Missing required environment variable: NEXT_PUBLIC_APPZI_BUTTON_ID');
+}
+
+export const NEXT_PUBLIC_APPZI_BUTTON_ID = _appziButtonId;

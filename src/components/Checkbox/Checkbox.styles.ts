@@ -1,4 +1,5 @@
 import styled from 'styled-components';
+import { onAccent } from '@/theme';
 
 export const Label = styled.label`
   display: inline-flex;
@@ -36,7 +37,7 @@ export const Indicator = styled.span<{ $checked: boolean }>`
   &::after {
     content: '\\2713';
     display: ${(p) => (p.$checked ? 'block' : 'none')};
-    color: #fff;
+    color: ${onAccent};
     font-size: 0.6875rem;
     font-weight: 700;
     position: absolute;

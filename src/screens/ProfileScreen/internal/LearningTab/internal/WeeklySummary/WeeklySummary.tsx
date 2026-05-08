@@ -1,3 +1,4 @@
+import { HelpAnchor } from '@/components';
 import * as S from './WeeklySummary.styles';
 import type { WeeklySummaryPeriod } from '@/api/types';
 
@@ -59,7 +60,9 @@ export const WeeklySummary: React.FC<WeeklySummaryProps> = ({ thisWeek, lastWeek
   return (
     <S.Wrap>
       <S.Header>
-        <S.Eyebrow>This week</S.Eyebrow>
+        <S.Eyebrow>
+          This week <HelpAnchor concept="xp-and-streaks" size="sm" />
+        </S.Eyebrow>
         <S.Sub>vs last week</S.Sub>
       </S.Header>
       <S.Grid>

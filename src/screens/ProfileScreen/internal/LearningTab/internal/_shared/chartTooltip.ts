@@ -38,7 +38,7 @@ export const tooltipShellStyle = (colors: ColorsSet): string =>
   `border-radius:var(--radius-lg);` +
   `padding:0.625rem 0.75rem;` +
   `min-width:11rem;` +
-  `box-shadow:0 1px 2px rgba(0,0,0,0.05),0 6px 18px rgba(0,0,0,0.08);` +
+  `box-shadow:var(--shadow-pop);` +
   `color:${colors.foreground};` +
   `font-size:0.75rem;line-height:1.5;`;
 

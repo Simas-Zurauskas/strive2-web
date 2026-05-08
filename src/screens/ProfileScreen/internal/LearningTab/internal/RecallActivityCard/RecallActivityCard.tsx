@@ -7,7 +7,7 @@ import Skeleton from 'react-loading-skeleton';
 import { useTheme } from 'styled-components';
 import { useRecallStats } from '@/hooks';
 import { formatDate } from '@/lib/formatDate';
-import { themeColors } from '@/theme';
+import { recallBoxPalette, themeColors } from '@/theme';
 import * as S from './RecallActivityCard.styles';
 import { buildTooltipHtml, type TooltipRow } from '../_shared/chartTooltip';
 import {
@@ -76,18 +76,17 @@ export const RecallActivityCard: React.FC = () => {
   const c = themeColors[scheme];
   const { data, isLoading } = useRecallStats();
 
-  // Leitner tier palette — cohesive earth-tone ramp, monotonically darker and
-  // more saturated from New → Mastered. Hand-picked rather than pulled from
-  // theme tokens because no existing token set gives a clean 5-stop sequence
-  // without clashing hues (amber/bright-green against the brand's muted greens).
+  // Leitner tier palette — cohesive earth-tone ramp, monotonically darker
+  // and more saturated from New → Mastered. Defined in `theme/theme.ts` as
+  // `recallBoxPalette` so the same 5-stop sequence is shared with the
+  // recall-progress chart tooltips and any future surfaces.
   const tiers: BoxInfo[] = useMemo(
-    () => [
-      { box: 0, label: BOX_LABELS[0], color: '#d6cfc3' }, // warm bone
-      { box: 1, label: BOX_LABELS[1], color: '#c4a265' }, // muted gold
-      { box: 2, label: BOX_LABELS[2], color: '#8a9562' }, // olive-sage
-      { box: 3, label: BOX_LABELS[3], color: '#4a8a72' }, // sage green
-      { box: 4, label: BOX_LABELS[4], color: '#2c5545' }, // deep forest
-    ],
+    () =>
+      recallBoxPalette.map((color, box) => ({
+        box,
+        label: BOX_LABELS[box],
+        color,
+      })),
     [],
   );
 

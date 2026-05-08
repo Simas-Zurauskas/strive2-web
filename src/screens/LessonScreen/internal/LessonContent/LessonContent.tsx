@@ -1,8 +1,8 @@
 'use client';
 
-import { AnimatePresence, motion } from 'framer-motion';
+import { AnimatePresence, motion, useReducedMotion } from 'framer-motion';
 import { useState } from 'react';
-import { Button, Checkbox, TextLoader } from '@/components';
+import { Button, Checkbox, HelpAnchor, TextLoader } from '@/components';
 import {
   useJobManager,
   useLessonContent,
@@ -74,6 +74,7 @@ export const LessonContent = ({
 }: LessonContentProps) => {
   const { generatingLesson } = useJobManager();
   const [fontScale, setFontScale] = useState(getSavedScale);
+  const prefersReducedMotion = useReducedMotion() ?? false;
 
   const handleFontScale = (scale: number) => {
     setFontScale(scale);
@@ -290,24 +291,29 @@ export const LessonContent = ({
                   </S.PlaceholderLead>
                 </S.PlaceholderHeader>
 
-                <S.GenerateOptions>
-                  <S.GenerateOptionRow>
-                    <Checkbox
-                      label="Hero image"
-                      description="Decorative cover image for the lesson"
-                      checked={stream.includeImage}
-                      onChange={(e) => stream.handleIncludeImage(e.target.checked)}
-                    />
-                  </S.GenerateOptionRow>
-                  <S.GenerateOptionRow>
-                    <Checkbox
-                      label="Further reading"
-                      description="AI-curated links to deepen your understanding"
-                      checked={stream.includeLinks}
-                      onChange={(e) => stream.handleIncludeLinks(e.target.checked)}
-                    />
-                  </S.GenerateOptionRow>
-                </S.GenerateOptions>
+                <S.GenerateOptionsBlock>
+                  <S.GenerateOptionsCaption>
+                    Optional <HelpAnchor concept="lesson-extras" size="sm" />
+                  </S.GenerateOptionsCaption>
+                  <S.GenerateOptions>
+                    <S.GenerateOptionRow>
+                      <Checkbox
+                        label="Hero image"
+                        description="Decorative cover image for the lesson"
+                        checked={stream.includeImage}
+                        onChange={(e) => stream.handleIncludeImage(e.target.checked)}
+                      />
+                    </S.GenerateOptionRow>
+                    <S.GenerateOptionRow>
+                      <Checkbox
+                        label="Further reading"
+                        description="AI-curated links to deepen your understanding"
+                        checked={stream.includeLinks}
+                        onChange={(e) => stream.handleIncludeLinks(e.target.checked)}
+                      />
+                    </S.GenerateOptionRow>
+                  </S.GenerateOptions>
+                </S.GenerateOptionsBlock>
 
                 <Button onClick={stream.handleGenerate} disabled={stream.isAnyLessonGenerating || !affordable}>
                   {stream.isAnyLessonGenerating
@@ -342,9 +348,9 @@ export const LessonContent = ({
               {completion.isCompleted ? (
                 <motion.div
                   key="finished"
-                  initial={{ opacity: 0, y: 6 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  transition={{ duration: 0.3, ease: 'easeOut' }}
+                  initial={prefersReducedMotion ? { opacity: 0 } : { opacity: 0, y: 6 }}
+                  animate={prefersReducedMotion ? { opacity: 1 } : { opacity: 1, y: 0 }}
+                  transition={{ duration: prefersReducedMotion ? 0.12 : 0.3, ease: 'easeOut' }}
                 >
                   <S.CompletedBanner>
                     <svg
@@ -361,7 +367,11 @@ export const LessonContent = ({
                   </S.CompletedBanner>
                 </motion.div>
               ) : (
-                <motion.div key="unfinished" exit={{ opacity: 0, scale: 0.95 }} transition={{ duration: 0.15 }}>
+                <motion.div
+                  key="unfinished"
+                  exit={prefersReducedMotion ? { opacity: 0 } : { opacity: 0, scale: 0.95 }}
+                  transition={{ duration: prefersReducedMotion ? 0.1 : 0.15 }}
+                >
                   <S.CompleteButton
                     onClick={completion.handleMarkComplete}
                     disabled={completion.upsertProgress.isPending}
@@ -403,6 +413,7 @@ export const LessonContent = ({
                 </motion.div>
               )}
             </AnimatePresence>
+            <HelpAnchor concept="lesson-completion" size="sm" />
           </S.CompleteSection>
         )}
       </S.ScaledContent>

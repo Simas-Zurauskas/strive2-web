@@ -1,11 +1,12 @@
 'use client';
 
-import { User } from 'lucide-react';
+import { MessageSquare, User } from 'lucide-react';
 import Link from 'next/link';
 import { usePathname, useRouter } from 'next/navigation';
 import { useTheme } from 'next-themes';
 import { useEffect, useLayoutEffect, useRef, useState } from 'react';
 import { CreditPill } from '@/components/CreditPill';
+import { NEXT_PUBLIC_APPZI_BUTTON_ID } from '@/conf/env';
 import { useAuth } from '@/hooks';
 import * as S from './Navbar.styles';
 
@@ -60,6 +61,7 @@ const QuestionIcon = () => (
 
 const useHideOnScroll = () => {
   const [hidden, setHidden] = useState(false);
+  const [scrolled, setScrolled] = useState(false);
   const lastScrollY = useRef(typeof window !== 'undefined' ? window.scrollY : 0);
   const pathname = usePathname();
 
@@ -85,6 +87,7 @@ const useHideOnScroll = () => {
       ticking = true;
       requestAnimationFrame(() => {
         const y = window.scrollY;
+        setScrolled(y > 24);
         if (y < 56) {
           setHidden(false);
         } else {
@@ -96,6 +99,7 @@ const useHideOnScroll = () => {
         ticking = false;
       });
     };
+    onScroll();
     window.addEventListener('scroll', onScroll, { passive: true });
     return () => window.removeEventListener('scroll', onScroll);
   }, []);
@@ -104,7 +108,7 @@ const useHideOnScroll = () => {
     document.documentElement.style.setProperty('--navbar-offset', hidden ? '0px' : '56px');
   }, [hidden]);
 
-  return hidden;
+  return { hidden, scrolled };
 };
 
 export const Navbar = () => {
@@ -112,10 +116,10 @@ export const Navbar = () => {
   const pathname = usePathname();
   const { user } = useAuth();
   const { resolvedTheme, setTheme } = useTheme();
-  const hidden = useHideOnScroll();
+  const { hidden, scrolled } = useHideOnScroll();
 
   return (
-    <S.Nav $hidden={hidden}>
+    <S.Nav $hidden={hidden} $scrolled={scrolled}>
       <S.LeftCluster>
         <Link href="/" passHref legacyBehavior>
           <S.Logo>Strive</S.Logo>
@@ -169,6 +173,17 @@ export const Navbar = () => {
             <MoonIcon />
           </S.ThemeOption>
         </S.ThemeSwitch>
+        {NEXT_PUBLIC_APPZI_BUTTON_ID && (
+          <S.FeedbackButton
+            type="button"
+            onClick={() => window.appzi?.openWidget?.(NEXT_PUBLIC_APPZI_BUTTON_ID)}
+            title="Share feedback"
+            aria-label="Share feedback"
+          >
+            <MessageSquare />
+            <span>Feedback</span>
+          </S.FeedbackButton>
+        )}
         <S.ThemeToggle
           type="button"
           onClick={() => router.push('/help')}

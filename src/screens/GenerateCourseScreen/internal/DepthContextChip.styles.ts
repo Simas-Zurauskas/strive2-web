@@ -18,8 +18,8 @@ const variantStyles = (variant: ChipVariant) => {
       `;
     case 'strongly-off':
       return css`
-        background: rgba(245, 158, 11, 0.08);
-        border-color: rgba(245, 158, 11, 0.45);
+        background: color-mix(in srgb, ${(p) => p.theme.colors.warning} 8%, transparent);
+        border-color: color-mix(in srgb, ${(p) => p.theme.colors.warning} 45%, transparent);
         color: ${(p) => p.theme.colors.foreground};
       `;
   }
@@ -50,8 +50,8 @@ export const ChipIcon = styled.span`
   font-weight: 700;
   font-style: italic;
   font-family: 'Times New Roman', Georgia, serif;
-  background: rgba(245, 158, 11, 0.18);
-  color: rgb(180, 100, 5);
+  background: color-mix(in srgb, ${(p) => p.theme.colors.warning} 18%, transparent);
+  color: color-mix(in srgb, ${(p) => p.theme.colors.warning} 80%, ${(p) => p.theme.colors.foreground});
 `;
 
 export const ChipBody = styled.div`

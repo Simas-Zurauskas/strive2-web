@@ -93,7 +93,7 @@ export const PopularBadge = styled.span`
   font-weight: 700;
   text-transform: uppercase;
   letter-spacing: 0.14em;
-  color: #fff;
+  color: var(--on-accent);
   background: ${(p) => p.theme.colors.accent};
   border-radius: var(--radius-pill);
   white-space: nowrap;
@@ -122,6 +122,19 @@ export const TierAllowance = styled.span`
   color: ${(p) => p.theme.colors.muted};
   line-height: 1.4;
   margin-top: 2px;
+`;
+
+// Per-tier plain-language translation of the allowance count (e.g.
+// "≈ one short course end-to-end"). Sits between the dry "X allowances /
+// month" line and the brand tagline. Same muted token; the `≈` prefix
+// carries the "approximate" semantic without italics.
+export const TierGuidance = styled.span`
+  font-size: 0.75rem;
+  color: ${(p) => p.theme.colors.muted};
+  line-height: 1.45;
+  margin-top: 4px;
+  max-width: 28ch;
+  text-align: center;
 `;
 
 export const TierTagline = styled.p`

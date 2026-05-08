@@ -29,6 +29,12 @@ export const Field = styled.textarea`
 
   &:focus {
     border-color: ${(p) => p.theme.colors.accent};
+    box-shadow: 0 0 0 3px ${(p) => p.theme.colorsLib.primary}10;
+  }
+
+  &:focus-visible {
+    outline: 2px solid ${(p) => p.theme.colors.accent};
+    outline-offset: 2px;
   }
 
   &::placeholder {
