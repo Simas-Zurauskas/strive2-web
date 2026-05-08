@@ -21,37 +21,65 @@ export const Container = styled.div`
 `;
 
 // ── Empty / first-run state ────────────────────────────
+// Mirrors the chrome on RecallScreen / QuizzesScreen empty states
+// (rule + eyebrow + non-italic serif title) so the three "nothing here
+// yet" moments across the app read as the same family.
 
-export const EmptyState = styled.div`
+export const EmptyState = styled.section`
   display: flex;
   flex-direction: column;
   align-items: center;
   justify-content: center;
   text-align: center;
-  padding: 5rem 2rem;
-  gap: 1.25rem;
+  padding: 3rem 2rem 3.5rem;
+  gap: 0.75rem;
   background: ${(p) => p.theme.colors.surface};
   border: 1px solid ${(p) => p.theme.colors.surfaceBorder};
   border-radius: var(--radius-xl);
 `;
 
+export const EmptyPreviewSlot = styled.div`
+  width: 100%;
+  margin-bottom: 1.25rem;
+`;
+
+export const EmptyRule = styled.span`
+  display: block;
+  width: 36px;
+  height: 1px;
+  background: ${(p) =>
+    `color-mix(in oklab, ${p.theme.colors.tertiary} 50%, ${p.theme.colors.surfaceBorder})`};
+  margin-bottom: 0.5rem;
+`;
+
+export const EmptyEyebrow = styled.span`
+  font-size: 0.6875rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.18em;
+  color: ${(p) => p.theme.colors.tertiary};
+`;
+
 export const EmptyTitle = styled.h2`
   font-family: var(--font-heading-serif), Georgia, serif;
-  font-style: italic;
-  font-size: 2.25rem;
-  font-weight: 400;
-  letter-spacing: -0.025em;
-  line-height: 1.05;
-  margin: 0;
+  font-size: 1.5rem;
+  font-weight: 500;
+  letter-spacing: -0.01em;
+  line-height: 1.2;
+  margin: 0.25rem 0 0;
   color: ${(p) => p.theme.colors.foreground};
 `;
 
 export const EmptyText = styled.p`
   font-size: 0.9375rem;
   color: ${(p) => p.theme.colors.muted};
-  max-width: 56ch;
+  max-width: 44ch;
   line-height: 1.6;
   margin: 0;
+`;
+
+export const EmptyAction = styled.div`
+  margin-top: 1rem;
 `;
 
 // ── Drafts inline rail ────────────────────────────────

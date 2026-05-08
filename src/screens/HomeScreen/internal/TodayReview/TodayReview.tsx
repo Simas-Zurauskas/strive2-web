@@ -165,38 +165,42 @@ export const TodayReview = () => {
   const renderCell = (cell: CellData) => {
     if (cell.kind === 'calm') {
       return (
-        <S.Cell $passive type="button" tabIndex={-1}>
-          <S.CountIcon>
-            <Check size={18} strokeWidth={1.75} />
-          </S.CountIcon>
-          <S.Body>
-            <S.TopRow>
-              <S.CellLabel>{cell.label}</S.CellLabel>
-            </S.TopRow>
-            <S.CellTitleCalm>{cell.title}</S.CellTitleCalm>
-            <S.CellSub>{cell.sub}</S.CellSub>
-          </S.Body>
-        </S.Cell>
+        <S.CellWrap>
+          <S.Cell $passive type="button" tabIndex={-1}>
+            <S.CountIcon>
+              <Check size={18} strokeWidth={1.75} />
+            </S.CountIcon>
+            <S.Body>
+              <S.TopRow>
+                <S.CellLabel>{cell.label}</S.CellLabel>
+              </S.TopRow>
+              <S.CellTitleCalm>{cell.title}</S.CellTitleCalm>
+              <S.CellSub>{cell.sub}</S.CellSub>
+            </S.Body>
+          </S.Cell>
+        </S.CellWrap>
       );
     }
 
     return (
-      <S.Cell onClick={() => router.push(cell.href)} aria-label={cell.ariaLabel}>
-        <S.Count $tone="active">{cell.count}</S.Count>
-        <S.Body>
-          <S.TopRow>
-            <S.CellLabel>
-              {cell.pulse && <S.PulseDot aria-label="Overdue" />}
-              {cell.label}
-            </S.CellLabel>
-          </S.TopRow>
-          <S.CellTitle>{cell.title}</S.CellTitle>
-          <S.CellSub>{cell.sub}</S.CellSub>
-        </S.Body>
-        <S.Arrow>
-          <ArrowRight size={16} strokeWidth={1.75} />
-        </S.Arrow>
-      </S.Cell>
+      <S.CellWrap>
+        <S.Cell onClick={() => router.push(cell.href)} aria-label={cell.ariaLabel}>
+          <S.Count $tone="active">{cell.count}</S.Count>
+          <S.Body>
+            <S.TopRow>
+              <S.CellLabel>
+                {cell.pulse && <S.PulseDot aria-label="Overdue" />}
+                {cell.label}
+              </S.CellLabel>
+            </S.TopRow>
+            <S.CellTitle>{cell.title}</S.CellTitle>
+            <S.CellSub>{cell.sub}</S.CellSub>
+          </S.Body>
+          <S.Arrow>
+            <ArrowRight size={16} strokeWidth={1.75} />
+          </S.Arrow>
+        </S.Cell>
+      </S.CellWrap>
     );
   };
 

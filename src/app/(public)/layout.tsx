@@ -15,6 +15,7 @@ export default function PublicLayout({ children }: { children: React.ReactNode }
       <>
         <PublicTopBar />
         <main
+          id="main-content"
           style={{
             minHeight: 'calc(100vh - 56px)',
             display: 'flex',
@@ -22,8 +23,8 @@ export default function PublicLayout({ children }: { children: React.ReactNode }
           }}
         >
           {children}
-          <Footer />
         </main>
+        <Footer />
       </>
     );
   }
@@ -32,6 +33,7 @@ export default function PublicLayout({ children }: { children: React.ReactNode }
     <>
       <Navbar />
       <main
+        id="main-content"
         style={{
           paddingTop: '56px',
           minHeight: 'calc(100vh - 56px)',
@@ -40,8 +42,8 @@ export default function PublicLayout({ children }: { children: React.ReactNode }
         }}
       >
         {children}
-        <Footer />
       </main>
+      <Footer />
     </>
   );
 }

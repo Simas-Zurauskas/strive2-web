@@ -2,7 +2,7 @@
 
 import { useEffect, useMemo, useState } from 'react';
 import { ClarifyQuestion, GoalType } from '@/api/types';
-import { RadioGroup, CheckboxGroup, Textarea, Button, Card, Eyebrow } from '@/components';
+import { RadioGroup, CheckboxGroup, Textarea, Button, Card, Eyebrow, HelpAnchor } from '@/components';
 import * as S from './ClarifyStep.styles';
 
 type AnswerValue = string | string[];
@@ -146,6 +146,7 @@ export const ClarifyStep = ({
         <S.GoalTypeBlock>
           <S.GoalTypeLabel>
             Designed as a course to <strong>{verb}</strong> <strong>{noun}</strong>.
+            {' '}<HelpAnchor concept="goal-types" size="sm" />
           </S.GoalTypeLabel>
           <S.GoalTypeChips>
             {GOAL_TYPE_OPTIONS.map((t) => (

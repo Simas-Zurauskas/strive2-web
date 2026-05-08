@@ -3,7 +3,6 @@
 import { useMutation } from '@tanstack/react-query';
 import { Formik } from 'formik';
 import Link from 'next/link';
-import { useRouter } from 'next/navigation';
 import { signIn } from 'next-auth/react';
 import { useState } from 'react';
 import { toast } from 'sonner';
@@ -31,7 +30,6 @@ interface SignInFormProps {
 const initialValues: SignInValues = { email: '', password: '' };
 
 export const SignInForm = ({ redirect, onSwitchMode }: SignInFormProps) => {
-  const router = useRouter();
   const [apiError, setApiError] = useState('');
   const [showResend, setShowResend] = useState(false);
   const [lastCredentials, setLastCredentials] = useState<SignInValues | null>(null);
@@ -64,8 +62,13 @@ export const SignInForm = ({ redirect, onSwitchMode }: SignInFormProps) => {
       return;
     }
 
-    router.push(redirect);
-    router.refresh();
+    // Hard navigation, not router.push: when redirect is `/` (the common
+    // case) the user is already there, so a soft push is a no-op. We
+    // need a fresh request so middleware re-evaluates with the now-set
+    // NextAuth cookie and rewrites `/` to the home dashboard. A soft
+    // refresh would re-run middleware but can't cleanly swap the
+    // (auth) → (protected) route-group layout in place.
+    window.location.assign(safeRedirect(redirect, '/'));
   };
 
   const handleResend = () => {
@@ -78,7 +81,7 @@ export const SignInForm = ({ redirect, onSwitchMode }: SignInFormProps) => {
   // unvalidated redirect into this prop. safeRedirect guarantees a same-origin
   // path even if the upstream gate is bypassed.
   const handleGoogle = () =>
-    signIn('google', { callbackUrl: safeRedirect(redirect, '/home') });
+    signIn('google', { callbackUrl: safeRedirect(redirect, '/') });
 
   return (
     <Formik

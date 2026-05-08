@@ -1,88 +1,136 @@
+import { colorsLib, themeColors } from '@/theme';
+
+/**
+ * Mermaid.js consumes a flat theme-variables object — it doesn't read CSS
+ * variables, so this map has to be resolved to literal hex/rgba strings
+ * at render time. We derive every value from `colorsLib` + `themeColors`
+ * where there's a brand match, and define a small set of named constants
+ * for the diagram-specific tones (mindmap branch tints, surface washes)
+ * that don't already exist as theme tokens.
+ */
+
+// ── Diagram-specific tones (no theme-token equivalent) ────────────────
+
+// Light-mode soft surface fills — used for primary/secondary/tertiary node
+// backgrounds and the 8-stop mindmap palette. Each is a barely-tinted wash
+// off the cream surface, picked to read as "category" without competing
+// with the diagram's structural ink.
+const LIGHT_SURFACE_GREEN = '#e2ede7';
+const LIGHT_SURFACE_GOLD = '#f0e8d8';
+const LIGHT_SURFACE_NEUTRAL = '#f0eeec';
+const LIGHT_SURFACE_BLUE = '#dde7f0';
+const LIGHT_SURFACE_PINK = '#f0e2e4';
+const LIGHT_SURFACE_LIME = '#e4f0e2';
+const LIGHT_SURFACE_LILAC = '#eae2f0';
+const LIGHT_SURFACE_MINT = '#e2f0ec';
+const LIGHT_LINE = '#c4bdb5';
+
+// Dark-mode node fills — gray800-ish base with hue tilt. Each is a hairline
+// shift away from the surface so the nodes stay readable on the dark
+// canvas without burying the structural ink.
+const DARK_FILL_GREEN = '#2a3833';
+const DARK_FILL_GOLD = '#332d24';
+const DARK_FILL_NEUTRAL = '#302d2a';
+const DARK_FILL_BLUE = '#2a2f38';
+const DARK_FILL_PINK = '#33292a';
+const DARK_FILL_LIME = '#2d332a';
+const DARK_FILL_LILAC = '#302a33';
+const DARK_FILL_MINT = '#2a3330';
+const DARK_CLUSTER_BG = '#232120';
+const DARK_CLUSTER_BORDER = '#3a3735';
+const DARK_PEER_GREEN = '#4a8a72';
+const DARK_PEER_GOLD = '#8a7245';
+const DARK_PEER_BLUE = '#5a7088';
+const DARK_PEER_PINK = '#88555a';
+const DARK_PEER_LIME = '#5a8855';
+const DARK_PEER_LILAC = '#7a5a88';
+const DARK_PEER_MINT = '#558878';
+
 export const getMermaidThemeVars = (isDark: boolean) =>
   isDark
     ? {
-        primaryColor: '#2a3833',
-        primaryTextColor: '#d5d0cb',
-        primaryBorderColor: '#4a8a72',
-        secondaryColor: '#332d24',
-        secondaryTextColor: '#d5d0cb',
-        secondaryBorderColor: '#8a7245',
-        tertiaryColor: '#302d2a',
-        tertiaryTextColor: '#d5d0cb',
-        tertiaryBorderColor: '#4a4543',
-        lineColor: '#4a4543',
-        textColor: '#d5d0cb',
-        mainBkg: '#2a3833',
-        nodeBorder: '#4a8a72',
-        clusterBkg: '#232120',
-        clusterBorder: '#3a3735',
-        titleColor: '#d5d0cb',
-        edgeLabelBackground: '#1a1816',
-        noteBkgColor: '#302d2a',
-        noteTextColor: '#d5d0cb',
-        noteBorderColor: '#4a4543',
+        primaryColor: DARK_FILL_GREEN,
+        primaryTextColor: themeColors.dark.foreground,
+        primaryBorderColor: themeColors.dark.accent,
+        secondaryColor: DARK_FILL_GOLD,
+        secondaryTextColor: themeColors.dark.foreground,
+        secondaryBorderColor: DARK_PEER_GOLD,
+        tertiaryColor: DARK_FILL_NEUTRAL,
+        tertiaryTextColor: themeColors.dark.foreground,
+        tertiaryBorderColor: colorsLib.gray700,
+        lineColor: colorsLib.gray700,
+        textColor: themeColors.dark.foreground,
+        mainBkg: DARK_FILL_GREEN,
+        nodeBorder: themeColors.dark.accent,
+        clusterBkg: DARK_CLUSTER_BG,
+        clusterBorder: DARK_CLUSTER_BORDER,
+        titleColor: themeColors.dark.foreground,
+        edgeLabelBackground: themeColors.dark.background,
+        noteBkgColor: DARK_FILL_NEUTRAL,
+        noteTextColor: themeColors.dark.foreground,
+        noteBorderColor: colorsLib.gray700,
         // Mindmap / pie branch colors
-        cScale0: '#2a3833',
-        cScale1: '#332d24',
-        cScale2: '#302d2a',
-        cScale3: '#2a2f38',
-        cScale4: '#33292a',
-        cScale5: '#2d332a',
-        cScale6: '#302a33',
-        cScale7: '#2a3330',
-        cScaleLabel0: '#d5d0cb',
-        cScaleLabel1: '#d5d0cb',
-        cScaleLabel2: '#d5d0cb',
-        cScaleLabel3: '#d5d0cb',
-        cScaleLabel4: '#d5d0cb',
-        cScaleLabel5: '#d5d0cb',
-        cScaleLabel6: '#d5d0cb',
-        cScaleLabel7: '#d5d0cb',
-        cScalePeer0: '#4a8a72',
-        cScalePeer1: '#8a7245',
-        cScalePeer2: '#4a4543',
-        cScalePeer3: '#5a7088',
-        cScalePeer4: '#88555a',
-        cScalePeer5: '#5a8855',
-        cScalePeer6: '#7a5a88',
-        cScalePeer7: '#558878',
+        cScale0: DARK_FILL_GREEN,
+        cScale1: DARK_FILL_GOLD,
+        cScale2: DARK_FILL_NEUTRAL,
+        cScale3: DARK_FILL_BLUE,
+        cScale4: DARK_FILL_PINK,
+        cScale5: DARK_FILL_LIME,
+        cScale6: DARK_FILL_LILAC,
+        cScale7: DARK_FILL_MINT,
+        cScaleLabel0: themeColors.dark.foreground,
+        cScaleLabel1: themeColors.dark.foreground,
+        cScaleLabel2: themeColors.dark.foreground,
+        cScaleLabel3: themeColors.dark.foreground,
+        cScaleLabel4: themeColors.dark.foreground,
+        cScaleLabel5: themeColors.dark.foreground,
+        cScaleLabel6: themeColors.dark.foreground,
+        cScaleLabel7: themeColors.dark.foreground,
+        cScalePeer0: DARK_PEER_GREEN,
+        cScalePeer1: DARK_PEER_GOLD,
+        cScalePeer2: colorsLib.gray700,
+        cScalePeer3: DARK_PEER_BLUE,
+        cScalePeer4: DARK_PEER_PINK,
+        cScalePeer5: DARK_PEER_LIME,
+        cScalePeer6: DARK_PEER_LILAC,
+        cScalePeer7: DARK_PEER_MINT,
       }
     : {
-        primaryColor: '#e2ede7',
-        primaryTextColor: '#0f172a',
-        primaryBorderColor: '#2c5545',
-        secondaryColor: '#f0e8d8',
-        secondaryTextColor: '#0f172a',
-        secondaryBorderColor: '#96793e',
-        tertiaryColor: '#f0eeec',
-        tertiaryTextColor: '#0f172a',
-        tertiaryBorderColor: '#dfd9d3',
-        lineColor: '#c4bdb5',
-        textColor: '#0f172a',
-        mainBkg: '#e2ede7',
-        nodeBorder: '#2c5545',
-        clusterBkg: '#ffffff',
-        clusterBorder: '#dfd9d3',
-        titleColor: '#0f172a',
-        edgeLabelBackground: '#faf9f7',
-        noteBkgColor: '#ffffff',
-        noteTextColor: '#0f172a',
-        noteBorderColor: '#dfd9d3',
+        primaryColor: LIGHT_SURFACE_GREEN,
+        primaryTextColor: colorsLib.gray900,
+        primaryBorderColor: colorsLib.primary,
+        secondaryColor: LIGHT_SURFACE_GOLD,
+        secondaryTextColor: colorsLib.gray900,
+        secondaryBorderColor: colorsLib.secondary,
+        tertiaryColor: LIGHT_SURFACE_NEUTRAL,
+        tertiaryTextColor: colorsLib.gray900,
+        tertiaryBorderColor: colorsLib.gray200,
+        lineColor: LIGHT_LINE,
+        textColor: colorsLib.gray900,
+        mainBkg: LIGHT_SURFACE_GREEN,
+        nodeBorder: colorsLib.primary,
+        clusterBkg: colorsLib.white,
+        clusterBorder: colorsLib.gray200,
+        titleColor: colorsLib.gray900,
+        edgeLabelBackground: colorsLib.cream,
+        noteBkgColor: colorsLib.white,
+        noteTextColor: colorsLib.gray900,
+        noteBorderColor: colorsLib.gray200,
         // Mindmap / pie branch colors
-        cScale0: '#e2ede7',
-        cScale1: '#f0e8d8',
-        cScale2: '#f0eeec',
-        cScale3: '#dde7f0',
-        cScale4: '#f0e2e4',
-        cScale5: '#e4f0e2',
-        cScale6: '#eae2f0',
-        cScale7: '#e2f0ec',
-        cScaleLabel0: '#0f172a',
-        cScaleLabel1: '#0f172a',
-        cScaleLabel2: '#0f172a',
-        cScaleLabel3: '#0f172a',
-        cScaleLabel4: '#0f172a',
-        cScaleLabel5: '#0f172a',
-        cScaleLabel6: '#0f172a',
-        cScaleLabel7: '#0f172a',
+        cScale0: LIGHT_SURFACE_GREEN,
+        cScale1: LIGHT_SURFACE_GOLD,
+        cScale2: LIGHT_SURFACE_NEUTRAL,
+        cScale3: LIGHT_SURFACE_BLUE,
+        cScale4: LIGHT_SURFACE_PINK,
+        cScale5: LIGHT_SURFACE_LIME,
+        cScale6: LIGHT_SURFACE_LILAC,
+        cScale7: LIGHT_SURFACE_MINT,
+        cScaleLabel0: colorsLib.gray900,
+        cScaleLabel1: colorsLib.gray900,
+        cScaleLabel2: colorsLib.gray900,
+        cScaleLabel3: colorsLib.gray900,
+        cScaleLabel4: colorsLib.gray900,
+        cScaleLabel5: colorsLib.gray900,
+        cScaleLabel6: colorsLib.gray900,
+        cScaleLabel7: colorsLib.gray900,
       };

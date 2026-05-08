@@ -109,6 +109,12 @@ export const HeaderSection = styled.header`
   gap: 0.625rem;
 `;
 
+export const EyebrowRow = styled.div`
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+`;
+
 export const Title = styled.h1`
   font-family: var(--font-heading-serif), Georgia, serif;
   font-style: italic;
@@ -409,7 +415,7 @@ export const OptionLetter = styled.span<{ $state: QuizOptionState }>`
           : 'transparent'};
   color: ${(p) =>
     p.$state === 'selected' || p.$state === 'correct' || p.$state === 'incorrect'
-      ? '#fff'
+      ? 'var(--on-accent)'
       : p.theme.colors.muted};
   border: 1px solid
     ${(p) =>
@@ -610,7 +616,7 @@ export const ResultIndicator = styled.span<{ $correct: boolean }>`
   border-radius: var(--radius-pill);
   margin-top: 2px;
   background: ${(p) => (p.$correct ? p.theme.colors.success : p.theme.colors.error)};
-  color: #fff;
+  color: var(--on-accent);
 `;
 
 export const ResultBody = styled.div`

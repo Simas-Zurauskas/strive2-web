@@ -8,6 +8,7 @@ import { TopupControl } from '@/components/TopupControl';
 import { ROUTES } from '@/constants/routes';
 import { useBillingSummary } from '@/hooks/useBilling';
 import { registerCreditModalListener } from '@/lib/creditModalBus';
+import { TopupBar } from './TopupBar';
 import * as S from './OutOfCreditsModal.styles';
 import type { PlanKey } from '@/api/types';
 
@@ -25,22 +26,21 @@ const nextPlanLabel = (plan: PlanKey): string => {
   return ''; // Studio has no upgrade path
 };
 
+type TabKey = 'upgrade' | 'topup';
+
 /**
  * Out-of-Credits modal. Subscribes to `creditModalBus` at mount time so the
  * global `MutationCache.onError` in Registry can fire it without needing
  * React-context access.
  *
- * Designed to be bulletproof in the "user is mid-flow" sense:
- *   - Dismissible via Esc / backdrop click / explicit X.
- *   - Reentrant: a second 402 while the modal is open simply replaces the
- *     payload (newer need/have numbers win) rather than stacking modals.
- *   - Plan-aware CTAs: Studio users see top-ups + reset only; Free users
- *     see "See plans"; paid users see "Upgrade to <next>".
- *   - Top-up mutations `meta.silent = true` so if they themselves fail we
- *     toast the error outside this modal's context — no recursive 402 loops.
+ * UX shape: the user has a binary decision — subscribe (or upgrade) for a
+ * bigger monthly pool, or buy a one-off top-up. We surface that as a pill
+ * tab toggle so each path gets its own focused panel with a single primary
+ * CTA. Studio users (no upgrade path) skip the tabs and see top-up alone.
  */
 export const OutOfCreditsModal = () => {
   const [open, setOpen] = useState(false);
+  const [tab, setTab] = useState<TabKey>('upgrade');
   const { data: summary } = useBillingSummary();
   const router = useRouter();
 
@@ -72,12 +72,22 @@ export const OutOfCreditsModal = () => {
     };
   }, [open, close]);
 
-  if (!open) return null;
-
   const plan: PlanKey = summary?.plan ?? 'free';
-  const resetDays = daysUntil(summary?.credits.periodEnd);
   const upgradeLabel = nextPlanLabel(plan);
   const canUpgrade = upgradeLabel.length > 0;
+
+  // Whenever the modal opens, default to the most-likely path. Studio
+  // users skip straight to top-up because they have nothing higher to
+  // upgrade into.
+  useEffect(() => {
+    if (!open) return;
+    setTab(canUpgrade ? 'upgrade' : 'topup');
+  }, [open, canUpgrade]);
+
+  if (!open) return null;
+
+  const resetDays = daysUntil(summary?.credits.periodEnd);
+  const activeTab: TabKey = canUpgrade ? tab : 'topup';
 
   return createPortal(
     <>
@@ -85,30 +95,63 @@ export const OutOfCreditsModal = () => {
       <S.Dialog role="alertdialog" aria-labelledby="out-of-credits-title" aria-modal="true">
         <S.CloseBtn onClick={close} aria-label="Close">×</S.CloseBtn>
 
-        <div>
+        <S.Header>
+          <TopupBar />
           <S.Title id="out-of-credits-title">You&rsquo;re out of allowance</S.Title>
           <S.Lede>
-            You don&rsquo;t have enough allowance left for this action.
             {canUpgrade
-              ? ' Upgrade your plan for a bigger monthly pool, or top up below.'
-              : ' Top up below to keep going — your existing Studio allowance still refreshes at the period end.'}
+              ? 'Pick up where you left off — upgrade for a bigger monthly pool, or buy a one-off top-up.'
+              : 'Top up to keep going. Your monthly Studio allowance still refreshes at the period end.'}
           </S.Lede>
-        </div>
+        </S.Header>
 
-        <S.CtaGroup>
-          {canUpgrade && (
-            <Button variant="primary" onClick={() => { close(); router.push(ROUTES.pricing()); }}>
-              {upgradeLabel}
-            </Button>
+        {canUpgrade && (
+          <S.Tabs role="tablist" aria-label="Continue with…">
+            <S.Tab
+              type="button"
+              role="tab"
+              aria-selected={activeTab === 'upgrade'}
+              $active={activeTab === 'upgrade'}
+              onClick={() => setTab('upgrade')}
+            >
+              Upgrade plan
+            </S.Tab>
+            <S.Tab
+              type="button"
+              role="tab"
+              aria-selected={activeTab === 'topup'}
+              $active={activeTab === 'topup'}
+              onClick={() => setTab('topup')}
+            >
+              Top up once
+            </S.Tab>
+          </S.Tabs>
+        )}
+
+        <S.TabPanel key={activeTab}>
+          {activeTab === 'upgrade' ? (
+            <S.UpgradeContent>
+              <S.UpgradeBlurb>
+                A bigger monthly pool, no expiring credits while subscribed, all generation features.
+              </S.UpgradeBlurb>
+              <Button
+                variant="primary"
+                onClick={() => {
+                  close();
+                  router.push(ROUTES.pricing());
+                }}
+              >
+                {upgradeLabel} →
+              </Button>
+            </S.UpgradeContent>
+          ) : (
+            <TopupControl stacked compact onRedirect={close} />
           )}
-
-          <S.SectionLabel>Or top up any amount</S.SectionLabel>
-          <TopupControl stacked onRedirect={close} />
-        </S.CtaGroup>
+        </S.TabPanel>
 
         {resetDays !== null && resetDays > 0 && (
           <S.ResetNote>
-            Monthly allowance refreshes {resetDays === 1 ? 'tomorrow' : `in ${resetDays} days`}.
+            Allowance refreshes {resetDays === 1 ? 'tomorrow' : `in ${resetDays} days`}.
           </S.ResetNote>
         )}
       </S.Dialog>

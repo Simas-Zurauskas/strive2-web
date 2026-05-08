@@ -11,8 +11,9 @@ import {
   setRecallMode,
   skipRecall,
 } from '@/api/routes/recall';
+import { fireInsufficientCredits } from '@/lib/creditModalBus';
 import { QKeys } from '@/types';
-import type { RecallMode, RecallRating } from '@/api/types';
+import type { ClientApiError, RecallMode, RecallRating } from '@/api/types';
 
 // ── Queries ──────────────────────────────────────────────
 
@@ -73,9 +74,12 @@ export const useRateRecall = () => {
       queryClient.invalidateQueries({ queryKey: [QKeys.RECALL_DUE_COUNT] });
       queryClient.invalidateQueries({ queryKey: [QKeys.GAMIFICATION_PROFILE] });
       queryClient.invalidateQueries({ queryKey: [QKeys.GAMIFICATION_STATS] });
-      // Don't invalidate RECALL_QUEUE — the in-flight session renders the
-      // local queue state to prevent the card under the user's finger from
-      // reshuffling mid-review. Refetch on next mount/focus.
+      // Mark RECALL_QUEUE stale WITHOUT triggering a mid-session refetch:
+      // the in-flight session renders local queue state to prevent the
+      // card under the user's finger from reshuffling. `refetchType:
+      // 'none'` ensures only inactive observers (e.g. Home's TodayReview
+      // after the user navigates away) refetch on next mount.
+      queryClient.invalidateQueries({ queryKey: [QKeys.RECALL_QUEUE], refetchType: 'none' });
     },
     meta: { errorMessage: 'Failed to save rating' },
   });
@@ -88,6 +92,7 @@ export const useSkipRecall = () => {
     mutationFn: (recallCardId: string) => skipRecall(recallCardId),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: [QKeys.RECALL_DUE_COUNT] });
+      queryClient.invalidateQueries({ queryKey: [QKeys.RECALL_QUEUE], refetchType: 'none' });
     },
     meta: { errorMessage: 'Failed to skip recall card' },
   });
@@ -108,6 +113,19 @@ export const useGradeRecallAnswer = () => {
   return useMutation({
     mutationFn: (params: { recallCardId: string; userAnswer: string }) => gradeRecallAnswer(params),
     // Grading errors should be silent — the card falls back to self-rating.
+    // The one exception is INSUFFICIENT_CREDITS: the user has hit a paid
+    // wall, not a transient grading hiccup, and they need the modal to
+    // know they can keep going by topping up.
+    onError: (err) => {
+      const apiErr = err as ClientApiError;
+      if (apiErr.status === 402 && apiErr.errorCode === 'INSUFFICIENT_CREDITS') {
+        const meta = (apiErr as { meta?: { need?: number; have?: number } }).meta;
+        fireInsufficientCredits({
+          need: typeof meta?.need === 'number' ? meta.need : 0,
+          have: typeof meta?.have === 'number' ? meta.have : 0,
+        });
+      }
+    },
     meta: { silent: true },
   });
 };

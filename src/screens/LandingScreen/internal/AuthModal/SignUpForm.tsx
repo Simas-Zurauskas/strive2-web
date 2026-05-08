@@ -75,7 +75,7 @@ export const SignUpForm = ({ redirect, onSwitchMode }: SignUpFormProps) => {
   // Defense-in-depth: re-validate before handing the value to NextAuth, even
   // though the upstream entry point already gates this through safeRedirect.
   const handleGoogle = () =>
-    signIn('google', { callbackUrl: safeRedirect(redirect, '/home') });
+    signIn('google', { callbackUrl: safeRedirect(redirect, '/') });
 
   return (
     <Formik

@@ -2,7 +2,7 @@
 
 import { useCallback, useMemo, useState } from 'react';
 import { CourseModule } from '@/api/types';
-import { Card, Button, Badge, Eyebrow } from '@/components';
+import { Card, Button, Badge, Eyebrow, HelpAnchor } from '@/components';
 import { useJobManager } from '@/hooks/useJobManager';
 import { plural } from '@/lib/strings';
 import { ChatPanel } from './ChatPanel';
@@ -49,7 +49,9 @@ export const StructureStep = ({
     <S.Container>
       <S.Header>
         <Eyebrow>Structure</Eyebrow>
-        <S.Title>Your Course Structure</S.Title>
+        <S.Title>
+          Your Course Structure <HelpAnchor concept="modules-and-lessons" />
+        </S.Title>
         <S.Subtitle>
           Review the modules and lessons below. Use the chat to make changes &mdash; add or remove topics, reorder
           modules, adjust scope, or ask why something was included. When you&apos;re happy with it, accept to start learning.
@@ -105,7 +107,13 @@ export const StructureStep = ({
         </S.StructureColumn>
 
         <S.ChatColumn>
-          <ChatPanel courseId={courseId} onStructureModified={onStructureModified} onModifying={handleModifying} />
+          <S.ChatHeader>
+            <Eyebrow>Refine</Eyebrow>
+            <HelpAnchor concept="design-chat" size="sm" />
+          </S.ChatHeader>
+          <S.ChatPanelSlot>
+            <ChatPanel courseId={courseId} onStructureModified={onStructureModified} onModifying={handleModifying} />
+          </S.ChatPanelSlot>
         </S.ChatColumn>
       </S.TwoColumn>
     </S.Container>

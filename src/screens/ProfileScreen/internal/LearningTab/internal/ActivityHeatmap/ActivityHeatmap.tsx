@@ -3,7 +3,7 @@ import { ActivityCalendar, type Activity, type ThemeInput } from 'react-activity
 import Skeleton from 'react-loading-skeleton';
 import { useTheme } from 'styled-components';
 import { plural } from '@/lib/strings';
-import { themeColors } from '@/theme';
+import { activityHeatmapPalette } from '@/theme';
 import * as S from './ActivityHeatmap.styles';
 import { Section, SectionHeader, SectionEyebrow, SectionMeta } from '../_shared/styles';
 import type { XpDayEntry } from '@/api/types';
@@ -58,7 +58,6 @@ const computeBridgedWeekdays = (activeSet: Set<string>): Set<string> => {
 export const ActivityHeatmap: React.FC<ActivityHeatmapProps> = ({ data, activeDates, loading }) => {
   const theme = useTheme();
   const scheme = theme.scheme === 'dark' ? 'dark' : 'light';
-  const c = themeColors[scheme];
 
   const { activities, activeDays } = useMemo(() => {
     if (!data) return { activities: [], activeDays: 0 };
@@ -102,10 +101,10 @@ export const ActivityHeatmap: React.FC<ActivityHeatmapProps> = ({ data, activeDa
 
   const calendarTheme: ThemeInput = useMemo(
     () => ({
-      dark: ['#373331', '#4d6b5c', '#3e7057', '#4e9e74', '#6cd49a'],
-      light: ['#00000008', '#2c554570', '#2c554599', '#2c5545c2', c.accent],
+      dark: [...activityHeatmapPalette.dark],
+      light: [...activityHeatmapPalette.light],
     }),
-    [c],
+    [],
   );
 
   const isLoading = loading && activities.length === 0;

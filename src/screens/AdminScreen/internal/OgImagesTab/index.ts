@@ -1,0 +1,1 @@
+export { OgImagesTab } from './OgImagesTab';

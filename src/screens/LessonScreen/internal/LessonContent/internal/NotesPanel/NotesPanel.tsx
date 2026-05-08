@@ -1,6 +1,6 @@
 'use client';
 
-import { AnimatePresence, motion } from 'framer-motion';
+import { AnimatePresence, motion, useReducedMotion } from 'framer-motion';
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { upsertLessonProgress } from '@/api/routes/course';
 import { useUpsertProgress } from '@/hooks';
@@ -57,6 +57,7 @@ export const NotesPanel = ({ courseId, moduleIndex, lessonIndex, initialNotes }:
   const textRef = useRef(text);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
   const upsertProgress = useUpsertProgress();
+  const prefersReducedMotion = useReducedMotion() ?? false;
 
   // Keep textRef in sync for use in cleanup effects
   useEffect(() => {
@@ -164,7 +165,7 @@ export const NotesPanel = ({ courseId, moduleIndex, lessonIndex, initialNotes }:
             initial="collapsed"
             animate="expanded"
             exit="collapsed"
-            transition={bodyTransition}
+            transition={prefersReducedMotion ? { duration: 0.12 } : bodyTransition}
             style={{ overflow: 'hidden' }}
           >
             {/* paddingTop on this inner element (not the motion.div) so the

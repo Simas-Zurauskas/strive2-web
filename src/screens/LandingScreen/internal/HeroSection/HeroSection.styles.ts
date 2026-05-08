@@ -71,6 +71,7 @@ export const Subhead = styled.p`
   color: ${(p) => p.theme.colors.muted};
   margin: 0;
   max-width: 52ch;
+  text-wrap: pretty;
 `;
 
 export const CtaRow = styled.div`
@@ -93,7 +94,7 @@ export const PrimaryCta = styled.button`
   font-weight: 600;
   border: 1px solid ${(p) => p.theme.colors.accent};
   background: ${(p) => p.theme.colors.accent};
-  color: #fff;
+  color: var(--on-accent);
   border-radius: var(--radius-md);
   cursor: pointer;
   box-shadow: var(--shadow-btn);

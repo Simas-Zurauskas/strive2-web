@@ -3,7 +3,7 @@
 import { AlertCircle, CheckCircle, Lock, Sparkles, Trophy } from 'lucide-react';
 import { useRouter } from 'next/navigation';
 import { useMemo } from 'react';
-import { Badge, LessonIndicator, TextAction, computeLessonIndicatorState } from '@/components';
+import { Badge, HelpAnchor, LessonIndicator, TextAction, computeLessonIndicatorState } from '@/components';
 import { plural } from '@/lib/strings';
 import { useCourseContext } from '@/screens/CourseShell';
 import * as S from './CourseOverviewScreen.styles';
@@ -204,7 +204,9 @@ export const CourseOverviewScreen = () => {
       )}
 
       {/* Course outline */}
-      <S.SectionTitle>Course Outline</S.SectionTitle>
+      <S.SectionTitle>
+        Course Outline <HelpAnchor concept="modules-and-lessons" size="sm" />
+      </S.SectionTitle>
       {modules.map((mod, mi) => {
         const mp = getModuleProgress(mi);
         const isModuleComplete = mp.completed === mp.total && mp.total > 0;

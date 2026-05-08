@@ -4,6 +4,7 @@ import { useMutation } from '@tanstack/react-query';
 import { useRouter } from 'next/navigation';
 import { startPortal } from '@/api/routes/billing';
 import { Button } from '@/components/Button';
+import { HelpAnchor } from '@/components/HelpAnchor';
 import { TopupControl } from '@/components/TopupControl';
 import { ROUTES } from '@/constants/routes';
 import { useBillingPlans, useBillingSummary } from '@/hooks/useBilling';
@@ -212,7 +213,9 @@ export const BillingPanel: React.FC = () => {
 
       {/* ── Allowance ───────────────────────────────────── */}
       <S.AllowanceCard>
-        <S.AllowanceEyebrow>Allowance this period</S.AllowanceEyebrow>
+        <S.AllowanceEyebrow>
+          Allowance this period <HelpAnchor concept="credits" size="sm" />
+        </S.AllowanceEyebrow>
         <S.AllowanceHero>
           <S.AllowanceValue>{Math.round(pctRemaining)}%</S.AllowanceValue>
           <S.AllowanceLabel>remaining</S.AllowanceLabel>

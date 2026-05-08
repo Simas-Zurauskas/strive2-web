@@ -1,6 +1,6 @@
 'use client';
 
-import { AnimatePresence, motion } from 'framer-motion';
+import { AnimatePresence, motion, useReducedMotion } from 'framer-motion';
 import { Check, X } from 'lucide-react';
 import { useState } from 'react';
 import { LessonMarkdown } from '../LessonMarkdown';
@@ -24,6 +24,7 @@ export const QuizBlock = ({
 }) => {
   const [selected, setSelected] = useState<number | null>(savedResponse?.selectedOption ?? null);
   const [confirmed, setConfirmed] = useState(savedResponse != null);
+  const prefersReducedMotion = useReducedMotion() ?? false;
 
   // Parse + validate metadata at the boundary. Malformed or empty shapes
   // (LLM drift, legacy lessons) render no quiz instead of a half-broken
@@ -91,10 +92,10 @@ export const QuizBlock = ({
           {selected !== null && !confirmed && (
             <motion.div
               key="confirm"
-              initial={{ opacity: 0, y: 4 }}
-              animate={{ opacity: 1, y: 0 }}
+              initial={prefersReducedMotion ? { opacity: 0 } : { opacity: 0, y: 4 }}
+              animate={prefersReducedMotion ? { opacity: 1 } : { opacity: 1, y: 0 }}
               exit={{ opacity: 0 }}
-              transition={{ duration: 0.15 }}
+              transition={{ duration: prefersReducedMotion ? 0.1 : 0.15 }}
             >
               <S.QuizConfirmButton onClick={handleConfirm}>Confirm Answer</S.QuizConfirmButton>
             </motion.div>
@@ -102,9 +103,9 @@ export const QuizBlock = ({
           {confirmed && (
             <motion.div
               key="result"
-              initial={{ opacity: 0, y: 4 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.25, ease: 'easeOut' }}
+              initial={prefersReducedMotion ? { opacity: 0 } : { opacity: 0, y: 4 }}
+              animate={prefersReducedMotion ? { opacity: 1 } : { opacity: 1, y: 0 }}
+              transition={{ duration: prefersReducedMotion ? 0.12 : 0.25, ease: 'easeOut' }}
             >
               <S.QuizResult $correct={selected === correctIndex}>
                 {selected === correctIndex ? 'Correct' : 'Incorrect'}

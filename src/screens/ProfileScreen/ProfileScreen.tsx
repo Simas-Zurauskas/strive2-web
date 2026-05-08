@@ -24,7 +24,7 @@ export const ProfileScreen: React.FC = () => {
 
   // URL is the source of truth for which tab is active so:
   //   1. Direct deep links (/profile?tab=billing) work from anywhere (pill,
-  //      LowCreditBanner, OutOfCreditsModal, etc.)
+  //      OutOfCreditsModal, etc.)
   //   2. Browser back/forward syncs the UI without extra state machinery.
   //   3. Shareable URLs Just Work.
   // Invalid/unknown tab values fall back to 'learning' rather than error.

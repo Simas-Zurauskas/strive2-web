@@ -28,6 +28,11 @@ export const Trigger = styled.button`
     color: ${(p) => p.theme.colors.foreground};
     background: ${(p) => p.theme.colors.background};
   }
+
+  &:focus-visible {
+    outline: 2px solid ${(p) => p.theme.colors.accent};
+    outline-offset: 2px;
+  }
 `;
 
 export const Menu = styled.div`
@@ -39,7 +44,7 @@ export const Menu = styled.div`
   border-radius: 8px;
   background: ${(p) => p.theme.colors.surface};
   border: 1px solid ${(p) => p.theme.colors.border};
-  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.12);
+  box-shadow: var(--shadow-lift-strong);
   z-index: 50;
   animation: ${fadeIn} 120ms ease-out;
 `;
@@ -60,7 +65,13 @@ export const MenuItem = styled.button<{ $variant?: 'default' | 'danger' }>`
   text-align: left;
   transition: background 0.15s;
 
-  &:hover {
+  &:hover,
+  &:focus-visible {
     background: ${(p) => p.theme.colors.background};
+  }
+
+  &:focus-visible {
+    outline: 2px solid ${(p) => p.theme.colors.accent};
+    outline-offset: -2px;
   }
 `;

@@ -1,4 +1,5 @@
 import styled from 'styled-components';
+import { onAccent } from '@/theme';
 
 // ── Fixed root anchor ──────────────────────────────────────
 //
@@ -31,15 +32,13 @@ export const Fab = styled.button`
   border: none;
   border-radius: 999px;
   background: ${(p) => p.theme.colors.accent};
-  color: #fff;
+  color: ${onAccent};
   font-family: inherit;
   font-size: 0.875rem;
   font-weight: 600;
   letter-spacing: 0.02em;
   cursor: pointer;
-  box-shadow:
-    0 6px 20px rgba(0, 0, 0, 0.18),
-    0 1px 3px rgba(0, 0, 0, 0.1);
+  box-shadow: var(--shadow-panel);
   transition:
     background 0.15s,
     box-shadow 0.15s,
@@ -47,9 +46,7 @@ export const Fab = styled.button`
 
   &:hover {
     background: ${(p) => p.theme.colors.accentHover};
-    box-shadow:
-      0 8px 24px rgba(0, 0, 0, 0.22),
-      0 1px 3px rgba(0, 0, 0, 0.1);
+    box-shadow: var(--shadow-panel-hover);
     transform: translateY(-1px);
   }
 
@@ -86,9 +83,7 @@ export const Widget = styled.div`
   border-radius: 16px;
   background: ${(p) => p.theme.colors.surface};
   border: 1px solid ${(p) => p.theme.colors.surfaceBorder};
-  box-shadow:
-    0 24px 48px rgba(0, 0, 0, 0.18),
-    0 4px 12px rgba(0, 0, 0, 0.08);
+  box-shadow: var(--shadow-panel-lg);
   overflow: hidden;
   transform-origin: bottom right;
 

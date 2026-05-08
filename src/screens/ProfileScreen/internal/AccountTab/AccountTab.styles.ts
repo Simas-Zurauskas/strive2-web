@@ -180,13 +180,14 @@ export const DangerButton = styled.button<{ $loading?: boolean }>`
   opacity: ${(p) => (p.$loading || p.disabled ? 0.6 : 1)};
   transition: opacity 0.15s, background 0.15s, box-shadow 0.15s;
   background: ${(p) => p.theme.colors.error};
-  color: #fff;
+  color: var(--on-accent);
   border: 1px solid transparent;
-  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.06);
+  box-shadow: var(--shadow-card);
 
   &:hover:not(:disabled) {
     opacity: 0.92;
-    box-shadow: 0 2px 6px rgba(220, 38, 38, 0.18);
+    box-shadow: 0 2px 6px ${(p) =>
+      `color-mix(in srgb, ${p.theme.colors.error} 18%, transparent)`};
   }
 
   &:focus-visible {

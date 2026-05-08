@@ -4,7 +4,7 @@ export const LinksContainer = styled.div`
   border-radius: 12px;
   border: 1px solid ${(p) => p.theme.colors.border};
   overflow: hidden;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+  box-shadow: var(--shadow-card-soft);
 `;
 
 export const LinksHeader = styled.div`

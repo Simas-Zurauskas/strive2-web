@@ -4,7 +4,9 @@ import { useQueryClient } from '@tanstack/react-query';
 import { createContext, useCallback, useContext, useEffect, useState } from 'react';
 import { toast } from 'sonner';
 import { generateLesson } from '@/api/routes/course';
+import { ClientApiError } from '@/api/types';
 import { TOASTS, toastMessage } from '@/constants/toasts';
+import { fireInsufficientCredits } from '@/lib/creditModalBus';
 import { QKeys } from '@/types';
 import { useJobManager } from './useJobManager';
 import { useSocket } from './useSocket';
@@ -311,6 +313,21 @@ export const LessonStreamProvider = ({ children }: { children: React.ReactNode }
       } catch (err: unknown) {
         setActive(null);
         setGeneratingLesson(null);
+
+        // generateLesson is a bare API call (not a useMutation), so the
+        // global MutationCache 402 handler doesn't see it. Route the
+        // INSUFFICIENT_CREDITS case to the same modal the rest of the app
+        // uses; everything else falls through to the toast.
+        const apiErr = err as ClientApiError;
+        if (apiErr.status === 402 && apiErr.errorCode === 'INSUFFICIENT_CREDITS') {
+          const meta = (apiErr as { meta?: { need?: number; have?: number } }).meta;
+          fireInsufficientCredits({
+            need: typeof meta?.need === 'number' ? meta.need : 0,
+            have: typeof meta?.have === 'number' ? meta.have : 0,
+          });
+          return;
+        }
+
         const msg =
           err instanceof Error ? err.message : typeof err === 'string' ? err : TOASTS.GENERATION_FAILED;
         toast.error(toastMessage({ dynamic: msg, fallback: TOASTS.GENERATION_FAILED }));

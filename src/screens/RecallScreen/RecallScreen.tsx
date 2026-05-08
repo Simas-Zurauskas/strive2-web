@@ -2,7 +2,7 @@
 
 import { useRouter } from 'next/navigation';
 import { useEffect, useMemo, useState } from 'react';
-import { PageLayout, Button } from '@/components';
+import { PageLayout, Button, HelpAnchor } from '@/components';
 import { ROUTES } from '@/constants/routes';
 import {
   useRecallQueue,
@@ -13,6 +13,7 @@ import {
 } from '@/hooks';
 import { QueueHeader } from './internal/QueueHeader/QueueHeader';
 import { RecallCard } from './internal/RecallCard/RecallCard';
+import { RecallGhostPreview } from './internal/RecallGhostPreview/RecallGhostPreview';
 import { RecallLoadingShell } from './internal/RecallLoadingShell';
 import * as S from './RecallScreen.styles';
 import type { RecallMode, RecallQueueItem, RecallRating } from '@/api/types';
@@ -112,7 +113,9 @@ export const RecallScreen = () => {
         <S.ContentWrap>
           <S.PageHeader>
             <S.Eyebrow>Recall</S.Eyebrow>
-            <S.Title>Where reading turns into knowing.</S.Title>
+            <S.Title>
+              Where reading turns into knowing. <HelpAnchor concept="spaced-recall" />
+            </S.Title>
             <S.Subtitle>
               Tiny prompts pulled from your lessons, scheduled at intervals proven to outlast
               forgetting. A few minutes of recall a day is what makes the work compound.
@@ -120,6 +123,9 @@ export const RecallScreen = () => {
           </S.PageHeader>
 
           <S.EmptyState>
+            <S.EmptyPreviewSlot>
+              <RecallGhostPreview />
+            </S.EmptyPreviewSlot>
             <S.EmptyRule aria-hidden />
             <S.EmptyEyebrow>Nothing to review yet</S.EmptyEyebrow>
             <S.EmptyTitle>Cards appear once you&rsquo;ve read.</S.EmptyTitle>
@@ -146,7 +152,9 @@ export const RecallScreen = () => {
         <S.ContentWrap>
           <S.PageHeader>
             <S.Eyebrow>Recall</S.Eyebrow>
-            <S.Title>Where reading turns into knowing.</S.Title>
+            <S.Title>
+              Where reading turns into knowing. <HelpAnchor concept="spaced-recall" />
+            </S.Title>
           </S.PageHeader>
 
           <S.EmptyState>
@@ -177,7 +185,9 @@ export const RecallScreen = () => {
       <S.ContentWrap>
         <S.PageHeader>
           <S.Eyebrow>Recall</S.Eyebrow>
-          <S.Title>Where reading turns into knowing.</S.Title>
+          <S.Title>
+            Where reading turns into knowing. <HelpAnchor concept="spaced-recall" />
+          </S.Title>
           <S.Subtitle>
             Recall the answer first, then rate how well it came back. The scheduler handles the
             rest.

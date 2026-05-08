@@ -6,14 +6,14 @@ import { ThemeProvider as NextThemeProvider } from 'next-themes';
 import React, { useState } from 'react';
 import { toast } from 'sonner';
 import { ClientApiError } from '@/api/types';
-import { AppToaster, OutOfCreditsModal } from '@/components';
+import { AppToaster, ConceptModal, OutOfCreditsModal } from '@/components';
 import { useCreditsSocketSync } from '@/hooks/useCreditsSocketSync';
 import { JobManagerProvider } from '@/hooks/useJobManager';
 import { LessonStreamProvider } from '@/hooks/useLessonStream';
 import { SocketProvider } from '@/hooks/useSocket';
 import { fireInsufficientCredits } from '@/lib/creditModalBus';
 import { ColorScheme } from '@/theme';
-import { AuthTokenSync, GlobalErrorListener, StyledRegistry, ThemeSessionSync } from './comps';
+import { AuthTokenSync, GAPageviewListener, GlobalErrorListener, StyledRegistry, ThemeSessionSync } from './comps';
 
 const defaultOptions: DefaultOptions = {
   queries: {
@@ -94,6 +94,11 @@ const Registry = ({ children }: { children: React.ReactNode }) => {
       {/* Routes window.error and unhandledrejection through the central
           reporter; outermost so it captures errors anywhere in the tree. */}
       <GlobalErrorListener />
+      {/* Owns gtag page_view emission across SPA navigation. The gtag
+          config in layout.tsx disables auto pageviews so this listener is
+          the single source of truth — initial load + every subsequent
+          client-side route change. */}
+      <GAPageviewListener />
       {/* Mirrors session.token into the api/client's bearer-token store
           synchronously during render, before any descendant's React Query
           query function runs. Without this, queries gated on
@@ -122,6 +127,10 @@ const Registry = ({ children }: { children: React.ReactNode }) => {
             {/* Global 402 handler — must live outside SocketProvider so it
                 renders even when the socket is down (e.g. reconnecting). */}
             <OutOfCreditsModal />
+            {/* Singleton concept-tutorial modal, opened from any HelpAnchor
+                via conceptModalBus. Mounted at the same layer as the credits
+                modal — visible across every authenticated and public route. */}
+            <ConceptModal />
             <AppToaster />
           </StyledRegistry>
         </NextThemeProvider>

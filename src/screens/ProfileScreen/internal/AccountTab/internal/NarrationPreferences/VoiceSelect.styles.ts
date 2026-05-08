@@ -107,9 +107,7 @@ export const Panel = styled.div`
   border-radius: var(--radius-lg);
   border: 1px solid ${(p) => p.theme.colors.surfaceBorder};
   background: ${(p) => p.theme.colors.surface};
-  box-shadow:
-    0 1px 2px rgba(0, 0, 0, 0.04),
-    0 8px 28px rgba(0, 0, 0, 0.1);
+  box-shadow: var(--shadow-pop);
   animation: ${fadeIn} 0.14s ease-out;
 `;
 

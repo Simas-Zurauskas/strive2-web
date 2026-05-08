@@ -32,12 +32,29 @@ export const ChatColumn = styled.div`
   overflow: hidden;
   display: flex;
   flex-direction: column;
+  gap: 0.5rem;
 
   ${(p) => p.theme.media.tabletLarge} {
     position: static;
     height: 500px;
     overflow: visible;
   }
+`;
+
+export const ChatHeader = styled.div`
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.5rem;
+  flex-shrink: 0;
+  padding: 0 0.25rem;
+`;
+
+export const ChatPanelSlot = styled.div`
+  flex: 1;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
 `;
 
 export const Header = styled.div`
@@ -97,7 +114,7 @@ export const ModifyingOverlay = styled.div`
   border-radius: 2rem;
   background: ${(p) => p.theme.colors.surface};
   border: 1px solid ${(p) => p.theme.colors.border};
-  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.06);
+  box-shadow: var(--shadow-pop);
   font-size: 0.875rem;
   font-weight: 500;
   color: ${(p) => p.theme.colors.foreground};

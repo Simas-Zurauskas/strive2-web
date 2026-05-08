@@ -2,6 +2,7 @@
 
 import { ArrowUpRight, Loader2 } from 'lucide-react';
 import { useEffect, useRef, useState } from 'react';
+import { HelpAnchor } from '@/components';
 import { useGradeRecallAnswer } from '@/hooks';
 import { InlineCode } from './InlineCode';
 import * as S from './RecallCard.styles';
@@ -214,6 +215,11 @@ export const RecallCard = ({
             </S.AnswerText>
           </S.AnswerBlock>
 
+          <S.RatingBarRow>
+            <S.RatingBarLabel>
+              How well did you recall? <HelpAnchor concept="recall-ratings" size="sm" />
+            </S.RatingBarLabel>
+          </S.RatingBarRow>
           <RatingBar onRate={handleRate} disabled={isRating} />
         </>
       )}

@@ -3,8 +3,10 @@
 import { ArrowRight } from 'lucide-react';
 import { useRouter } from 'next/navigation';
 import { useMemo, useState } from 'react';
-import { FilterTabs, FilterTab, PageLayout } from '@/components';
+import { FilterTabs, FilterTab, PageLayout, Button, HelpAnchor } from '@/components';
+import { ROUTES } from '@/constants/routes';
 import { useReviewsDue, useUnattemptedQuizzes } from '@/hooks';
+import { QuizzesGhostPreview } from './internal/QuizzesGhostPreview/QuizzesGhostPreview';
 import * as S from './QuizzesScreen.styles';
 import type { QuizMasteryTier } from '@/api/types';
 
@@ -134,7 +136,9 @@ export const QuizzesScreen: React.FC = () => {
       <S.ContentWrap>
         <S.PageHeader>
           <S.Eyebrow>Practice</S.Eyebrow>
-          <S.Title>A quiet way to make what you read stick.</S.Title>
+          <S.Title>
+            A quiet way to make what you read stick. <HelpAnchor concept="quiz-types" />
+          </S.Title>
           <S.Subtitle>
             Each module ends with a quiz that checks your understanding. Reviews come back on a
             spaced schedule, so the work compounds instead of fading.
@@ -170,12 +174,21 @@ export const QuizzesScreen: React.FC = () => {
 
         {!isLoading && totalCount === 0 && (
           <S.EmptyState>
+            <S.EmptyPreviewSlot>
+              <QuizzesGhostPreview />
+            </S.EmptyPreviewSlot>
             <S.EmptyRule aria-hidden />
-            <S.EmptyTitle>All caught up.</S.EmptyTitle>
+            <S.EmptyEyebrow>Nothing to practice yet</S.EmptyEyebrow>
+            <S.EmptyTitle>Quizzes appear after a module.</S.EmptyTitle>
             <S.EmptyText>
-              Complete module quizzes to unlock spaced reviews. They&rsquo;ll appear here when it&rsquo;s
-              time to revisit them.
+              Each module ends with a short quiz. They show up here, then come back on a spaced
+              schedule so the work compounds.
             </S.EmptyText>
+            <S.EmptyAction>
+              <Button variant="primary" onClick={() => router.push(ROUTES.home())}>
+                Browse courses
+              </Button>
+            </S.EmptyAction>
           </S.EmptyState>
         )}
 

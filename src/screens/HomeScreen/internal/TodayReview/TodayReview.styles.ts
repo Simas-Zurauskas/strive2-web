@@ -49,6 +49,14 @@ export const Divider = styled.span`
   }
 `;
 
+// Per-cell wrapper. Hosts an absolutely-positioned HelpAnchor in the
+// top-right corner without nesting it inside the cell's <button>
+// Sits in the Strip's grid as a 1fr column; inner Cell stretches to fill.
+export const CellWrap = styled.div`
+  display: flex;
+  min-width: 0;
+`;
+
 export const Cell = styled.button<{ $passive?: boolean }>`
   text-align: left;
   padding: 1.125rem 1.375rem;

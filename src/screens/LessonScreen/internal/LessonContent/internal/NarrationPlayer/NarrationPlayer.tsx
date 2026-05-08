@@ -6,7 +6,7 @@ import { Headphones, Pause, Play, Volume2 } from 'lucide-react';
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { toast } from 'sonner';
 import { deleteLessonNarration, generateLessonNarration, getNarrationVoices } from '@/api/routes/course';
-import { DropdownMenu } from '@/components';
+import { DropdownMenu, HelpAnchor } from '@/components';
 import { TOASTS, toastMessage } from '@/constants/toasts';
 import { useAuth, useJobManager } from '@/hooks';
 import { useSocket } from '@/hooks/useSocket';
@@ -259,7 +259,9 @@ export const NarrationPlayer = ({
         </S.EmptyIcon>
         <S.EmptyBody>
           <S.EmptyEyebrow>Audio narration</S.EmptyEyebrow>
-          <S.EmptyTitle>Listen to this lesson</S.EmptyTitle>
+          <S.EmptyTitle>
+            Listen to this lesson <HelpAnchor concept="narration" size="sm" />
+          </S.EmptyTitle>
         </S.EmptyBody>
         <S.PrimaryButton onClick={handleGenerate} disabled={generateMutation.isPending} type="button">
           {generateMutation.isPending ? 'Starting…' : 'Generate'}

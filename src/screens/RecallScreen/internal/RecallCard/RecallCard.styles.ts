@@ -1,4 +1,5 @@
 import styled, { keyframes } from 'styled-components';
+import { onAccent } from '@/theme';
 import type { GradeVerdict } from '@/api/types';
 
 const fadeIn = keyframes`
@@ -373,7 +374,7 @@ export const TypedSubmit = styled.button`
   border-radius: var(--radius-md);
   border: 1px solid ${(p) => p.theme.colors.accent};
   background: ${(p) => p.theme.colors.accent};
-  color: #fff;
+  color: ${onAccent};
   font-family: inherit;
   font-weight: 600;
   font-size: 0.8125rem;
@@ -486,4 +487,21 @@ export const VerdictFeedback = styled.p`
   line-height: 1.55;
   color: ${(p) => p.theme.colors.foreground};
   margin: 0;
+`;
+
+// Inline label above the rating bar — hosts the recall-ratings HelpAnchor
+// without disturbing the existing 4-button grid layout.
+export const RatingBarRow = styled.div`
+  display: flex;
+  justify-content: flex-start;
+  margin-bottom: 0.375rem;
+`;
+
+export const RatingBarLabel = styled.span`
+  font-size: 0.75rem;
+  font-weight: 500;
+  color: ${(p) => p.theme.colors.muted};
+  display: inline-flex;
+  align-items: center;
+  gap: 0.375rem;
 `;

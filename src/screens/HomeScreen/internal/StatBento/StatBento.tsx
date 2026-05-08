@@ -2,6 +2,7 @@
 
 import { CheckCircle2, Star } from 'lucide-react';
 import { useMemo } from 'react';
+import { HelpAnchor } from '@/components';
 import { useGamificationProfile, useGamificationStats } from '@/hooks/useGamification';
 import * as S from './StatBento.styles';
 import { SkeletonBlock } from '../_skeleton/skeleton.styles';
@@ -125,7 +126,9 @@ export const StatBento = ({ totalCourses }: StatBentoProps) => {
       {/* ── This week ─────────────────────────── */}
       <S.Card>
         <S.TopRow>
-          <S.Label>This week</S.Label>
+          <S.Label>
+            This week <HelpAnchor concept="xp-and-streaks" size="sm" />
+          </S.Label>
           <S.Halo>
             <CheckCircle2 size={14} strokeWidth={1.75} />
           </S.Halo>

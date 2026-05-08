@@ -37,9 +37,7 @@ export const ToasterGlobalStyle = createGlobalStyle`
     gap: 0.625rem;
     border-radius: var(--border-radius);
     border: 1px solid var(--normal-border);
-    box-shadow:
-      0 8px 24px rgba(0, 0, 0, 0.08),
-      0 2px 6px rgba(0, 0, 0, 0.05);
+    box-shadow: var(--shadow-toast);
   }
 
   /* ── Exit animation: slide out right + fade (mirrors bottom-right entry) ── */
@@ -104,11 +102,9 @@ export const ToasterGlobalStyle = createGlobalStyle`
     text-transform: uppercase;
     letter-spacing: 0.05em;
     background: ${(p) => p.theme.colors.accent};
-    color: #fff;
+    color: var(--on-accent);
     border: 1px solid transparent;
-    box-shadow:
-      0 1px 3px rgba(0, 0, 0, 0.12),
-      0 1px 2px rgba(0, 0, 0, 0.08);
+    box-shadow: var(--shadow-btn);
     transition:
       background 0.15s,
       box-shadow 0.15s,

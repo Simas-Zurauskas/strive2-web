@@ -48,6 +48,11 @@ export const FilterTab = styled.button<{ $active?: boolean }>`
   &:hover {
     color: ${(p) => p.theme.colors.foreground};
   }
+
+  &:focus-visible {
+    outline: 2px solid ${(p) => p.theme.colors.accent};
+    outline-offset: 2px;
+  }
 `;
 
 // ── Top-level tabs ─────────────────────────────────
@@ -74,6 +79,12 @@ export const TopTab = styled.button<{ $active?: boolean }>`
 
   &:hover {
     color: ${(p) => p.theme.colors.foreground};
+  }
+
+  &:focus-visible {
+    outline: 2px solid ${(p) => p.theme.colors.accent};
+    outline-offset: 2px;
+    border-radius: var(--radius-sm);
   }
 `;
 
@@ -110,5 +121,12 @@ export const TextAction = styled.button<{ $variant?: 'default' | 'danger' }>`
   &:hover {
     color: ${(p) => (p.$variant === 'danger' ? p.theme.colors.error : p.theme.colors.foreground)};
     text-decoration: underline;
+  }
+
+  &:focus-visible {
+    outline: 2px solid
+      ${(p) => (p.$variant === 'danger' ? p.theme.colors.error : p.theme.colors.accent)};
+    outline-offset: 2px;
+    border-radius: var(--radius-sm);
   }
 `;

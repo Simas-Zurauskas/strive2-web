@@ -78,8 +78,8 @@ export const DepthCard = styled.button<{ $selected: boolean }>`
   gap: 1rem;
   box-shadow: ${(p) =>
     p.$selected
-      ? `0 0 0 1px ${p.theme.colors.tertiary}, 0 4px 12px rgba(0, 0, 0, 0.08)`
-      : '0 1px 3px rgba(0, 0, 0, 0.04)'};
+      ? `0 0 0 1px ${p.theme.colors.tertiary}, var(--shadow-lift)`
+      : 'var(--shadow-card)'};
   transition:
     border-color 0.15s ease,
     box-shadow 0.2s ease,
@@ -90,8 +90,8 @@ export const DepthCard = styled.button<{ $selected: boolean }>`
     border-color: ${(p) => (p.$selected ? p.theme.colors.tertiary : p.theme.colors.muted)};
     box-shadow: ${(p) =>
       p.$selected
-        ? `0 0 0 1px ${p.theme.colors.tertiary}, 0 4px 12px rgba(0, 0, 0, 0.08)`
-        : '0 4px 12px rgba(0, 0, 0, 0.08)'};
+        ? `0 0 0 1px ${p.theme.colors.tertiary}, var(--shadow-lift)`
+        : 'var(--shadow-lift)'};
     transform: ${(p) => (p.$selected ? 'none' : 'translateY(-1px)')};
   }
 

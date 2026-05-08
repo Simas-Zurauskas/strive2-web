@@ -24,7 +24,7 @@ type PageProps = {
 
 export default async function Page({ searchParams }: PageProps) {
   const params = await searchParams;
-  const redirect = safeRedirect(params.redirect, '/home');
+  const redirect = safeRedirect(params.redirect, '/');
   // `?auth=signin|signup` lets external callers (e.g. /pricing CTA buttons,
   // /terms or /privacy "Sign in" link from PublicTopBar) deep-link into the
   // landing with the auth modal already open, instead of dumping the visitor

@@ -2,6 +2,7 @@
 
 import { motion } from 'framer-motion';
 import styled, { keyframes } from 'styled-components';
+import { codeTokens, colorsLib, onAccent } from '@/theme';
 
 export const Wrap = styled.section`
   width: 100%;
@@ -22,7 +23,7 @@ export const Inner = styled.div`
   gap: var(--space-10);
 `;
 
-export const SectionHeader = styled.div`
+export const SectionHeader = styled(motion.div)`
   display: flex;
   flex-direction: column;
   gap: var(--space-2);
@@ -304,16 +305,21 @@ export const StreamCaret = styled.span`
 
 // ── Code tile ───────────────────────────────────────────
 
+// Code editor surface stays dark in both themes. The syntax-token colors
+// below (kw/str/fn/comment/tag/default) are tuned for a near-black
+// background — pinning to gray900 keeps them readable when the app is in
+// dark mode (where theme.foreground flips to a light taupe and would
+// otherwise produce a near-cream background that hides the tokens).
 export const CodeCard = styled.div`
   margin: 0;
   padding: var(--space-3);
   background: ${(p) =>
-    `color-mix(in oklab, ${p.theme.colors.foreground} 96%, ${p.theme.colors.tertiary})`};
+    `color-mix(in oklab, ${colorsLib.gray900} 96%, ${p.theme.colors.tertiary})`};
   border-radius: var(--radius-md);
   font-family: ui-monospace, SFMono-Regular, 'Geist Mono', monospace;
   font-size: 0.6875rem;
   line-height: 1.7;
-  color: #e6e7ec;
+  color: ${codeTokens.text};
   overflow: hidden;
 `;
 
@@ -325,17 +331,17 @@ export const CodeTok = styled.span<{ $kind: string }>`
   color: ${(p) => {
     switch (p.$kind) {
       case 'kw':
-        return '#c4a265';
+        return codeTokens.keyword;
       case 'str':
-        return '#9ec99e';
+        return codeTokens.string;
       case 'fn':
-        return '#9ad6c8';
+        return codeTokens.function;
       case 'comment':
-        return '#7a7a85';
+        return codeTokens.comment;
       case 'tag':
-        return '#e07a8a';
+        return codeTokens.operator;
       default:
-        return '#e6e7ec';
+        return codeTokens.text;
     }
   }};
   ${(p) => p.$kind === 'comment' && 'font-style: italic;'}
@@ -396,7 +402,7 @@ export const VoiceAvatar = styled.div`
   border-radius: 50%;
   background: ${(p) =>
     `linear-gradient(135deg, ${p.theme.colors.tertiary} 0%, ${p.theme.colors.accent} 100%)`};
-  color: #fff;
+  color: ${onAccent};
   display: flex;
   align-items: center;
   justify-content: center;

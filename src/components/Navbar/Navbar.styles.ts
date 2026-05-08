@@ -1,7 +1,7 @@
 import Link from 'next/link';
 import styled from 'styled-components';
 
-export const Nav = styled.nav<{ $hidden?: boolean }>`
+export const Nav = styled.nav<{ $hidden?: boolean; $scrolled?: boolean }>`
   position: fixed;
   top: 0;
   left: 0;
@@ -11,12 +11,20 @@ export const Nav = styled.nav<{ $hidden?: boolean }>`
   align-items: center;
   justify-content: space-between;
   padding: 0 2rem;
-  background: ${(p) => p.theme.colors.background};
-  border-bottom: none;
-  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.06);
+  background: ${(p) =>
+    p.$scrolled
+      ? `color-mix(in oklab, ${p.theme.colors.background} 65%, transparent)`
+      : `color-mix(in oklab, ${p.theme.colors.background} 80%, transparent)`};
+  backdrop-filter: blur(14px) saturate(140%);
+  -webkit-backdrop-filter: blur(14px) saturate(140%);
+  border-bottom: 1px solid
+    ${(p) => (p.$scrolled ? p.theme.colors.surfaceBorder : 'transparent')};
   z-index: 50;
   transform: translateY(${(p) => (p.$hidden ? '-100%' : '0%')});
-  transition: transform 0.3s ease;
+  transition:
+    transform 0.3s ease,
+    background 0.2s,
+    border-color 0.2s;
   will-change: transform;
 
   ${(p) => p.theme.media.tablet} {
@@ -99,10 +107,13 @@ export const Right = styled.div`
 `;
 
 export const ThemeToggle = styled.button`
+  /* Mirrors ThemeSwitch's quiet container language: surfaceBorder ring,
+     transparent fill, muted icon. Hover only warms the icon — no fill,
+     no lift, no shadow — so these stay calm next to the segmented switch. */
   width: 32px;
   height: 32px;
   border-radius: 50%;
-  border: 1px solid ${(p) => p.theme.colors.border};
+  border: 1px solid ${(p) => p.theme.colors.surfaceBorder};
   background: transparent;
   color: ${(p) => p.theme.colors.muted};
   display: flex;
@@ -110,17 +121,100 @@ export const ThemeToggle = styled.button`
   justify-content: center;
   cursor: pointer;
   transition:
-    border-color 0.15s,
-    color 0.15s;
-
-  &:hover {
-    border-color: ${(p) => p.theme.colors.accent};
-    color: ${(p) => p.theme.colors.foreground};
-  }
+    color 180ms cubic-bezier(0.22, 0.61, 0.36, 1),
+    border-color 180ms cubic-bezier(0.22, 0.61, 0.36, 1),
+    transform 120ms cubic-bezier(0.22, 0.61, 0.36, 1);
 
   svg {
     width: 16px;
     height: 16px;
+  }
+
+  &:hover {
+    color: ${(p) => p.theme.colors.foreground};
+    border-color: ${(p) => p.theme.colors.border};
+  }
+
+  &:active {
+    transform: scale(0.95);
+    transition-duration: 80ms;
+  }
+
+  &:focus-visible {
+    outline: 2px solid ${(p) => p.theme.colors.accent};
+    outline-offset: 2px;
+  }
+`;
+
+export const FeedbackButton = styled.button`
+  /* Same-hue tinted-pill language as CreditPill's warning/danger states:
+     muted accent fill + accent-tinted border + saturated accent text/icon.
+     Hover lifts to a solid accent fill with surface-colored content. */
+  height: 32px;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.45rem;
+  padding: 0 0.85rem 0 0.75rem;
+  border-radius: 9999px;
+  border: 1px solid color-mix(in srgb, ${(p) => p.theme.colors.accent} 40%, transparent);
+  background: color-mix(in srgb, ${(p) => p.theme.colors.accent} 15%, transparent);
+  color: ${(p) => p.theme.colors.accent};
+  font-family: inherit;
+  font-size: 0.8125rem;
+  font-weight: 600;
+  letter-spacing: 0.005em;
+  line-height: 1;
+  cursor: pointer;
+  white-space: nowrap;
+  transition:
+    background 220ms cubic-bezier(0.22, 0.61, 0.36, 1),
+    color 220ms cubic-bezier(0.22, 0.61, 0.36, 1),
+    border-color 220ms cubic-bezier(0.22, 0.61, 0.36, 1),
+    box-shadow 220ms cubic-bezier(0.22, 0.61, 0.36, 1),
+    transform 160ms cubic-bezier(0.22, 0.61, 0.36, 1);
+
+  svg {
+    width: 14px;
+    height: 14px;
+    color: currentColor;
+    transition: transform 260ms cubic-bezier(0.22, 0.61, 0.36, 1);
+  }
+
+  &:hover {
+    background: ${(p) => p.theme.colors.accent};
+    color: ${(p) => p.theme.colors.surface};
+    border-color: ${(p) => p.theme.colors.accent};
+    box-shadow:
+      0 2px 10px ${(p) => p.theme.colors.accentMuted},
+      var(--shadow-card);
+    transform: translateY(-0.5px);
+  }
+
+  &:hover svg {
+    transform: translateX(-1px);
+  }
+
+  &:active {
+    transform: translateY(0) scale(0.97);
+    transition-duration: 80ms;
+  }
+
+  &:focus-visible {
+    outline: 2px solid ${(p) => p.theme.colors.accent};
+    outline-offset: 2px;
+  }
+
+  ${(p) => p.theme.media.tablet} {
+    /* Drop the label on narrow screens — the icon + tooltip carry the meaning. */
+    padding: 0;
+    width: 32px;
+    justify-content: center;
+    border-radius: 50%;
+    gap: 0;
+
+    span {
+      display: none;
+    }
   }
 `;
 

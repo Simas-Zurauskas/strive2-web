@@ -65,7 +65,7 @@ export const ContinueLearningCard = () => {
   const courseUrl = ROUTES.course(courseSlug, courseId);
 
   return (
-    <S.Container onClick={() => router.push(lessonUrl)} role="button" tabIndex={0}>
+    <S.Container>
       <S.Body>
         <S.Eyebrow>Continue learning</S.Eyebrow>
         <S.Title>{lessonName}</S.Title>
@@ -79,23 +79,11 @@ export const ContinueLearningCard = () => {
           </span>
         </S.Meta>
         <S.Actions>
-          <Button
-            variant="primary"
-            onClick={(e) => {
-              e.stopPropagation();
-              router.push(lessonUrl);
-            }}
-          >
+          <Button variant="primary" onClick={() => router.push(lessonUrl)}>
             Resume lesson
             <ArrowRight size={15} style={{ marginLeft: '0.375rem' }} />
           </Button>
-          <Button
-            variant="secondary"
-            onClick={(e) => {
-              e.stopPropagation();
-              router.push(courseUrl);
-            }}
-          >
+          <Button variant="secondary" onClick={() => router.push(courseUrl)}>
             See module
           </Button>
         </S.Actions>

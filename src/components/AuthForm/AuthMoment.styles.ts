@@ -1,4 +1,5 @@
 import styled, { css, keyframes } from 'styled-components';
+import { onAccent } from '@/theme';
 
 /**
  * Shared editorial vocabulary for post-action "moment" screens in the
@@ -136,7 +137,7 @@ export const PrimaryButton = styled.button`
   ${buttonBase};
   border: 1px solid ${(p) => p.theme.colors.accent};
   background: ${(p) => p.theme.colors.accent};
-  color: ${(p) => (p.theme.scheme === 'dark' ? p.theme.colors.background : '#fff')};
+  color: ${(p) => (p.theme.scheme === 'dark' ? p.theme.colors.background : onAccent)};
 
   &:hover {
     background: ${(p) => p.theme.colors.accentHover};

@@ -1,4 +1,5 @@
 import styled from 'styled-components';
+import { courseCardInk, defaultCourseGradient } from '@/theme';
 
 export const Container = styled.div`
   display: grid;
@@ -13,20 +14,23 @@ export const Container = styled.div`
   border: 1px solid ${(p) => p.theme.colors.surfaceBorder};
   border-radius: var(--radius-xl);
   overflow: hidden;
-  cursor: pointer;
   transition:
     border-color 160ms ease,
-    box-shadow 160ms ease;
+    box-shadow 160ms ease,
+    transform 220ms ease;
 
   &:hover {
     border-color: ${(p) =>
       `color-mix(in oklab, ${p.theme.colors.accent} 35%, ${p.theme.colors.surfaceBorder})`};
     box-shadow: var(--shadow-lift);
+    transform: translateY(-2px);
   }
 
-  &:focus-visible {
-    outline: 2px solid ${(p) => p.theme.colors.accent};
-    outline-offset: 2px;
+  @media (prefers-reduced-motion: reduce) {
+    transition: border-color 160ms ease, box-shadow 160ms ease;
+    &:hover {
+      transform: none;
+    }
   }
 
   ${(p) => p.theme.media.tablet} {
@@ -115,7 +119,7 @@ export const Cover = styled.div<{ $imageUrl?: string | null }>`
   background: ${(p) =>
     p.$imageUrl
       ? `url('${p.$imageUrl}') center / cover no-repeat`
-      : 'linear-gradient(135deg, #2c5545 0%, #1e3d31 100%)'};
+      : defaultCourseGradient};
 
   /* Two scrims:
      - When NO image: warm radial highlights to give the flat gradient depth.
@@ -129,10 +133,10 @@ export const Cover = styled.div<{ $imageUrl?: string | null }>`
     pointer-events: none;
     background-image: ${(p) =>
       p.$imageUrl
-        ? `radial-gradient(ellipse at 0% 0%, rgba(0, 0, 0, 0.55) 0%, transparent 45%),
-           radial-gradient(ellipse at 100% 100%, rgba(0, 0, 0, 0.58) 0%, transparent 48%)`
-        : `radial-gradient(circle at 70% 30%, rgba(255, 255, 255, 0.15) 0%, transparent 60%),
-           radial-gradient(circle at 20% 80%, rgba(255, 255, 255, 0.08) 0%, transparent 50%)`};
+        ? `radial-gradient(ellipse at 0% 0%, ${courseCardInk.activeShadeStart} 0%, transparent 45%),
+           radial-gradient(ellipse at 100% 100%, ${courseCardInk.activeShadeEnd} 0%, transparent 48%)`
+        : `radial-gradient(circle at 70% 30%, ${courseCardInk.litHighlightSoft} 0%, transparent 60%),
+           radial-gradient(circle at 20% 80%, ${courseCardInk.borderRest} 0%, transparent 50%)`};
   }
 
   ${(p) => p.theme.media.tablet} {
@@ -150,11 +154,11 @@ export const CoverLabel = styled.span`
   left: 1.75rem;
   top: 1.5rem;
   font-size: 0.6875rem;
-  color: rgba(255, 255, 255, 0.95);
+  color: ${courseCardInk.activeText};
   font-weight: 600;
   text-transform: uppercase;
   letter-spacing: 0.1em;
-  text-shadow: 0 1px 8px rgba(0, 0, 0, 0.55);
+  text-shadow: var(--text-shadow-on-image-strong);
   z-index: 1;
 
   ${(p) => p.theme.media.tablet} {
@@ -176,12 +180,12 @@ export const CoverNumber = styled.span`
   font-family: var(--font-heading-serif), Georgia, serif;
   font-style: italic;
   font-size: 5.5rem;
-  color: rgba(255, 255, 255, 0.42);
+  color: ${courseCardInk.activeMuted};
   font-weight: 500;
   line-height: 1;
   letter-spacing: -0.02em;
   font-variant-numeric: tabular-nums;
-  text-shadow: 0 2px 18px rgba(0, 0, 0, 0.5);
+  text-shadow: var(--text-shadow-on-image-strong);
   z-index: 1;
 
   ${(p) => p.theme.media.tablet} {

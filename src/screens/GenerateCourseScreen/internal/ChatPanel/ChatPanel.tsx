@@ -10,6 +10,8 @@ import { getChatHistory } from '@/api/routes/course';
 import { Chat } from '@/components/Chat';
 import { NEXT_PUBLIC_API_URL } from '@/conf/env';
 import { TOASTS } from '@/constants/toasts';
+import { creditAwareFetch } from '@/lib/creditAwareFetch';
+import { isInsufficientCreditsError } from '@/lib/insufficientCreditsError';
 import * as S from './ChatPanel.styles';
 import type { ChatMessageData } from '@/components/Chat';
 
@@ -134,6 +136,11 @@ const ChatPanelInner = ({
     () =>
       new DefaultChatTransport({
         api: `${NEXT_PUBLIC_API_URL}/api/course/${courseId}/chat`,
+        // creditAwareFetch fires the global Out-of-Credits modal on 402
+        // before the SDK throws — this streaming surface bypasses the
+        // axios client + React Query MutationCache that otherwise route
+        // INSUFFICIENT_CREDITS to the modal.
+        fetch: creditAwareFetch,
         headers: () => ({
           Authorization: `Bearer ${session?.token ?? ''}`,
         }),
@@ -252,6 +259,10 @@ const ChatPanelInner = ({
     sendMessage({ text: prompt });
   };
 
+  // Modal owns the 402 UX; mute the inline banner so the panel doesn't
+  // double up with a redundant error string while the modal is open.
+  const displayError = error && !isInsufficientCreditsError(error) ? error.message : null;
+
   return (
     <S.Container>
       <Chat
@@ -264,7 +275,7 @@ const ChatPanelInner = ({
         placeholder="Ask about the structure or request changes..."
         isStreaming={isStreaming}
         isThinking={isSubmitted}
-        error={error?.message ?? null}
+        error={displayError}
       />
     </S.Container>
   );

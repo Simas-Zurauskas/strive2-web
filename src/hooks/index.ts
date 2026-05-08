@@ -31,3 +31,4 @@ export {
   useSetRecallMode,
   useGradeRecallAnswer,
 } from './useRecall';
+export { useConceptViewed, markConceptViewed } from './useConceptViewed';

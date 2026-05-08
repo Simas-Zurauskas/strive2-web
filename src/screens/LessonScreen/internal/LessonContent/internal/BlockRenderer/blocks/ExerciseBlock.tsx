@@ -4,7 +4,9 @@ import { useMutation } from '@tanstack/react-query';
 import { useTheme } from 'next-themes';
 import { useEffect, useRef, useState } from 'react';
 import { executeCode } from '@/api/routes/course';
+import { ClientApiError } from '@/api/types';
 import { Button } from '@/components';
+import { fireInsufficientCredits } from '@/lib/creditModalBus';
 import { LessonMarkdown } from '../LessonMarkdown';
 import { parseExerciseMetadata } from './blockMetadata';
 import * as S from '../styles/exercise.styles';
@@ -43,6 +45,19 @@ export const ExerciseBlock = ({
       onAttempt?.({ blockId, code, passed });
     },
     onError: (err) => {
+      // Surface INSUFFICIENT_CREDITS through the global modal — `silent: true`
+      // below would otherwise let the global 402 handler skip this mutation
+      // and the user would only see "Execution failed" text in the output
+      // pane. Modal opens; output stays clean so they can retry post top-up.
+      const apiErr = err as ClientApiError;
+      if (apiErr.status === 402 && apiErr.errorCode === 'INSUFFICIENT_CREDITS') {
+        const meta = (apiErr as { meta?: { need?: number; have?: number } }).meta;
+        fireInsufficientCredits({
+          need: typeof meta?.need === 'number' ? meta.need : 0,
+          have: typeof meta?.have === 'number' ? meta.have : 0,
+        });
+        return;
+      }
       setOutput({ stdout: null, stderr: err instanceof Error ? err.message : 'Execution failed', status: 'Error' });
     },
     meta: { silent: true },

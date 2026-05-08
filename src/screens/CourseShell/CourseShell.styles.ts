@@ -125,7 +125,7 @@ export const Backdrop = styled.div`
     position: fixed;
     inset: 0;
     z-index: 30;
-    background: rgba(0, 0, 0, 0.4);
+    background: var(--scrim-light);
   }
 `;
 
@@ -201,7 +201,7 @@ const iconButtonBase = css`
 
   &:hover {
     background: ${(p: { theme: { colors: Record<string, string> } }) => p.theme.colors.surface};
-    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06);
+    box-shadow: var(--shadow-card-soft);
   }
 
   &:active {
@@ -240,7 +240,7 @@ export const ChatEdgeTab = styled(motion.button)`
   background: ${(p) => p.theme.colors.surface};
   color: ${(p) => p.theme.colors.muted};
   cursor: pointer;
-  box-shadow: -2px 0 8px rgba(0, 0, 0, 0.04);
+  box-shadow: var(--shadow-drawer-l);
   transition:
     background 0.2s ease,
     color 0.2s ease,
@@ -253,7 +253,7 @@ export const ChatEdgeTab = styled(motion.button)`
     width: 42px;
     background: ${(p) => p.theme.colors.accentMuted};
     color: ${(p) => p.theme.colors.accent};
-    box-shadow: -6px 0 18px rgba(0, 0, 0, 0.08);
+    box-shadow: var(--shadow-drawer-l-hover);
     outline: none;
   }
 
@@ -293,7 +293,7 @@ export const SidebarEdgeTab = styled(motion.button)`
   background: ${(p) => p.theme.colors.surface};
   color: ${(p) => p.theme.colors.muted};
   cursor: pointer;
-  box-shadow: 2px 0 8px rgba(0, 0, 0, 0.04);
+  box-shadow: var(--shadow-drawer-r);
   transition:
     background 0.2s ease,
     color 0.2s ease,
@@ -306,7 +306,7 @@ export const SidebarEdgeTab = styled(motion.button)`
     width: 42px;
     background: ${(p) => p.theme.colors.accentMuted};
     color: ${(p) => p.theme.colors.accent};
-    box-shadow: 6px 0 18px rgba(0, 0, 0, 0.08);
+    box-shadow: var(--shadow-drawer-r-hover);
     outline: none;
   }
 
