@@ -15,6 +15,12 @@ const panelEnter = keyframes`
   to   { opacity: 1; transform: translateY(0); }
 `;
 
+const apexPulse = keyframes`
+  0%   { transform: translate(-50%, -36px) scale(1); }
+  50%  { transform: translate(-50%, -36px) scale(1.18); }
+  100% { transform: translate(-50%, -36px) scale(1); }
+`;
+
 export const Backdrop = styled.div`
   position: fixed;
   inset: 0;
