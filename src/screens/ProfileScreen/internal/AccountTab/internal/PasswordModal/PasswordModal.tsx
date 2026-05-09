@@ -3,7 +3,7 @@
 import { useMutation } from '@tanstack/react-query';
 import { Formik } from 'formik';
 import { useSession } from 'next-auth/react';
-import { useEffect, useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 import { createPortal } from 'react-dom';
 import { toast } from 'sonner';
 import {
@@ -13,6 +13,7 @@ import {
 } from '@/api/routes/auth';
 import { ClientApiError } from '@/api/types';
 import { Button, Input, PasswordRequirements } from '@/components';
+import { useDialog } from '@/hooks';
 import { TOASTS } from '@/constants/toasts';
 import {
   changePasswordSchema,
@@ -95,20 +96,15 @@ export const PasswordModal = ({ open, mode, onClose }: PasswordModalProps) => {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [open]);
 
-  useEffect(() => {
-    if (!open) return;
-    const onKey = (e: KeyboardEvent) => {
-      if (e.key === 'Escape' && !submitMutation.isPending && !requestCodeMutation.isPending) {
-        onClose();
-      }
-    };
-    document.addEventListener('keydown', onKey);
-    document.body.style.overflow = 'hidden';
-    return () => {
-      document.removeEventListener('keydown', onKey);
-      document.body.style.overflow = '';
-    };
-  }, [open, submitMutation.isPending, requestCodeMutation.isPending, onClose]);
+  // Block close while a mutation is in flight (otherwise the OTP step
+  // would lose the inflight state on Escape and the user would have to
+  // re-request the code). Replaces the inline scroll-lock that lacked a
+  // prev-overflow restore and missed focus trap + return-focus.
+  const handleEscape = useCallback(() => {
+    if (submitMutation.isPending || requestCodeMutation.isPending) return;
+    onClose();
+  }, [submitMutation.isPending, requestCodeMutation.isPending, onClose]);
+  const dialogRef = useDialog<HTMLDivElement>({ open, onClose: handleEscape });
 
   if (!open) return null;
 
@@ -138,7 +134,7 @@ export const PasswordModal = ({ open, mode, onClose }: PasswordModalProps) => {
   return createPortal(
     <>
       <S.Backdrop onClick={submitMutation.isPending ? undefined : onClose} />
-      <S.Dialog role="dialog" aria-labelledby="password-modal-title">
+      <S.Dialog ref={dialogRef} role="dialog" aria-modal="true" aria-labelledby="password-modal-title">
         <S.Title id="password-modal-title">{isSet ? 'Set a password' : 'Change password'}</S.Title>
         <S.Description>
           {step === 'password'

@@ -35,6 +35,7 @@ export { KbChatPanel } from './KbChatPanel';
 export { PublicTopBar } from './PublicTopBar';
 export { ConceptModal } from './ConceptsModal';
 export { HelpAnchor } from './HelpAnchor';
+export { CookieBanner } from './CookieBanner';
 
 // Data Display
 export { Badge } from './Badge';

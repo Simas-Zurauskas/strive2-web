@@ -8,6 +8,7 @@ import { upsertLessonProgress } from '@/api/routes/course';
 import { NEXT_PUBLIC_API_URL } from '@/conf/env';
 import { ROUTES } from '@/constants/routes';
 import { useCourseContext } from '@/screens/CourseShell';
+import { analytics } from '@/lib/analytics';
 import { QKeys } from '@/types';
 import { LessonContent } from './internal';
 
@@ -71,6 +72,23 @@ export const LessonScreen = () => {
       queryClient.invalidateQueries({ queryKey: [QKeys.CONTINUE_LEARNING] });
       queryClient.invalidateQueries({ queryKey: [QKeys.PROGRESS_SUMMARY] });
     }).catch(() => {});
+
+    // Mixpanel: lesson_opened. `is_first_view` is inferred at the server
+    // side (status='in_progress' write only happens once for a brand-new
+    // attempt — Mongo upserts do not distinguish create from update for us
+    // here without a follow-up read). Approximated via the progressData
+    // snapshot already in scope; cheaper + good enough for the funnel.
+    const lessonProgress = progressData?.lessons?.find(
+      (p) => p.moduleIndex === moduleIndex && p.lessonIndex === lessonIndex,
+    );
+    const isFirstView = !lessonProgress;
+    analytics.track('lesson_opened', {
+      course_id: course?._id,
+      lesson_id: course?._id ? `${course._id}-${moduleIndex}-${lessonIndex}` : undefined,
+      module_index: moduleIndex,
+      lesson_index: lessonIndex,
+      is_first_view: isFirstView,
+    });
 
     timeRef.current = 0;
     const interval = setInterval(() => {

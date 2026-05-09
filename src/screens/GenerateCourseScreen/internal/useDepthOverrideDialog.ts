@@ -1,6 +1,7 @@
 'use client';
 
 import { useCallback, useState } from 'react';
+import { analytics } from '@/lib/analytics';
 import type { DepthOverridePayload } from '@/components/DepthOverrideDialog';
 
 interface UseDepthOverrideDialog {
@@ -44,8 +45,18 @@ export const useDepthOverrideDialog = (): UseDepthOverrideDialog => {
   }, [state]);
 
   const onCancel = useCallback(() => {
+    if (state) {
+      const direction = state.payload.code === 'DEPTH_UNDERCOMMIT_REQUIRES_ACK'
+        ? 'undercommit'
+        : 'override';
+      analytics.track('wizard_depth_gate_resolved', {
+        direction,
+        outcome: 'reverted',
+        chosen_tier: state.payload.selectedDepth,
+      });
+    }
     setState(null);
-  }, []);
+  }, [state]);
 
   return {
     open: state !== null,

@@ -109,11 +109,9 @@ export const PricingTeaser = ({ onOpenSignUp }: PricingTeaserProps) => {
         )}
 
         <S.Body>{PRICING_TEASER.body}</S.Body>
-        <Link href={PRICING_TEASER.comparisonCta.href} passHref legacyBehavior>
-          <S.CtaLink data-analytics-id="landing.pricing.see-plans">
-            {PRICING_TEASER.comparisonCta.label} →
-          </S.CtaLink>
-        </Link>
+        <S.CtaLink as={Link} href={PRICING_TEASER.comparisonCta.href} data-analytics-id="landing.pricing.see-plans">
+          {PRICING_TEASER.comparisonCta.label} →
+        </S.CtaLink>
       </S.Inner>
     </S.Wrap>
   );

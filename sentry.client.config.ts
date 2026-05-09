@@ -17,6 +17,12 @@ if (dsn) {
   Sentry.init({
     dsn,
     environment: process.env.NEXT_PUBLIC_SENTRY_ENV ?? 'production',
+    // Defensive hygiene: explicitly opt out of the default-PII auto-capture
+    // (IP address, headers, etc.). The current @sentry/nextjs default is
+    // already false, but pinning it here insulates us against an SDK
+    // upgrade that flips the default. Mirrors the server config at
+    // api/src/conf/sentry.ts.
+    sendDefaultPii: false,
     // Tracing is opt-in to keep bundle weight and event volume down. Flip
     // to a non-zero value once budgeting is decided.
     tracesSampleRate: 0,

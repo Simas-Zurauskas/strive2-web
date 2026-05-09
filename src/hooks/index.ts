@@ -32,3 +32,4 @@ export {
   useGradeRecallAnswer,
 } from './useRecall';
 export { useConceptViewed, markConceptViewed } from './useConceptViewed';
+export { useDialog } from './useDialog';

@@ -1,52 +1,106 @@
 export const PRIVACY_CONTENT = `
-## 1. Information We Collect
+Strive ("we", "us") is operated by **MB Kūrybinis kodas**, a small partnership registered
+in the Republic of Lithuania. We are the data controller for the personal data described
+below. Contact: **admin@strive-learning.com**.
 
-- **Account information**: Name, email address, and authentication provider details when you create an account.
-- **Usage data**: How you interact with the platform, including courses created, lessons completed, and quiz results.
-- **Device information**: Browser type, operating system, and IP address for security and analytics purposes.
+## 1. Data we process
 
-## 2. How We Use Your Information
+| Category | Examples | Legal basis (GDPR Art. 6) |
+| --- | --- | --- |
+| Account data | name, email, hashed password, OAuth identifiers, marketing-email preference | Contract (Art. 6(1)(b)) |
+| Usage data | learning goals, courses created, lessons completed, quiz answers, review ratings, notes | Contract |
+| Inputs to AI | the prompts and answers you submit to generate or refine course content | Contract |
+| Billing data | plan, billing cycle, Stripe customer + subscription IDs, payment status | Contract; legal obligation for tax records |
+| Device & technical data | IP address, browser, device type, request IDs, error events | Legitimate interest (security, fraud prevention, debugging) |
+| Cookie / analytics data | Mixpanel events, Google Analytics 4 hits, Google Ads conversions, page views | Consent (Art. 6(1)(a)) — see § 6 |
 
-We use the information we collect to:
+We do not knowingly process special-category data (health, biometrics, religion, etc.).
+Do not submit such data through course goals, notes, or chats.
 
-- Provide and maintain the Strive platform.
-- Personalize your learning experience.
-- Generate AI-powered course content tailored to your goals.
-- Communicate with you about your account and platform updates.
-- Improve and develop new features.
+## 2. Why we process it
 
-## 3. AI-Generated Content
+To provide and operate the service, run AI-generated lessons, gate paid features, send
+account and security email, prevent abuse, comply with tax and accounting law, and — with
+your consent — measure how the product is used and acquired.
 
-Strive uses third-party AI services (including Anthropic and OpenAI) to generate course content. Your learning goals and preferences may be sent to these services to create personalized content. We do not share your personal account information with AI providers.
+## 3. Recipients (sub-processors)
 
-## 4. Data Sharing
+Personal data is shared only with the third parties strictly required to deliver the
+service. Each is bound by a data-processing agreement under GDPR Art. 28.
 
-We do not sell your personal information. We may share data with:
+| Sub-processor | Purpose | Region |
+| --- | --- | --- |
+| Anthropic (Claude) | LLM that generates course, lesson, quiz and chat content | United States (SCCs / DPF) |
+| OpenAI | Embeddings used by retrieval-augmented chat | United States (SCCs / DPF) |
+| Black Forest Labs (BFL) | Image-generation model for lesson hero illustrations | Germany (HQ); API region pending verification |
+| Pinecone | Vector store for retrieval-augmented chat | United States (SCCs / DPF) |
+| Amazon Web Services (S3) | Hosting of generated assets (audio, images) | EU |
+| MongoDB Atlas | Primary database | EU |
+| Stripe | Payments and subscription billing | EU + United States (SCCs / DPF) |
+| Mailjet | Transactional email always; marketing email only after explicit opt-in via the profile toggle | EU |
+| Mixpanel | Product analytics (consent-gated) | EU host |
+| Google Analytics 4 + Google Ads | Web analytics and conversion tracking (consent-gated) | United States (SCCs / DPF) |
+| Sentry | Error reporting and performance monitoring | EU |
+| Google Cloud (Text-to-Speech) | Lesson narration audio synthesis | EU/US (SCCs / DPF) |
+| Judge0 | Code execution sandbox for code-running exercises | EU |
+| Tavily, Jina | External web search and content retrieval for AI agents | United States (SCCs) |
+| Appzi | In-app feedback widget (consent-gated) | United States (SCCs) |
 
-- **Service providers**: Third-party services that help us operate the platform (e.g., hosting, email, analytics).
-- **Legal requirements**: When required by law or to protect our rights.
+We do not sell personal data and do not share it for any third-party advertising other
+than the conversion tracking listed above.
 
-## 5. Data Storage & Security
+## 4. International transfers
 
-Your data is stored securely using industry-standard practices. We use encryption for data in transit and implement access controls to protect your information.
+Where a sub-processor is outside the European Economic Area, we rely on the EU
+Standard Contractual Clauses and, where the recipient is certified, the EU–US Data
+Privacy Framework.
 
-## 6. Your Rights
+## 5. Retention
 
-You have the right to:
+Account, usage, billing and AI-input data are kept while your account exists and for up
+to 30 days after deletion to allow recovery. Billing-related records are kept for **10
+years** from issuance as required by Lithuanian accounting law. Sentry error events
+expire automatically after 30 days. Mixpanel events for deleted users are removed via
+GDPR right-to-erasure within 30 days of account deletion.
 
-- Access the personal data we hold about you.
-- Request correction of inaccurate data.
-- Delete your account and associated data at any time from your profile page.
+## 6. Cookies
 
-## 7. Cookies
+| Category | Purpose | Always on? |
+| --- | --- | --- |
+| Strictly necessary | Authentication session, theme persistence, security headers, error reporting | Yes |
+| Analytics | Mixpanel, Google Analytics 4 | Only with consent |
+| Marketing | Google Ads conversion tracking | Only with consent |
 
-Strive uses essential cookies for authentication and session management. We do not use third-party advertising cookies.
+You can change your choice at any time by clearing the \`strive:cookie-consent\` key
+in your browser's storage; the banner will reappear on your next visit.
 
-## 8. Changes to This Policy
+## 7. Your rights
 
-We may update this privacy policy from time to time. We will notify you of significant changes through the platform.
+Under the GDPR you have the right to: access, rectify, erase, restrict, object to, and
+port your personal data; to withdraw any consent you have given; and to lodge a
+complaint with a supervisory authority. Most of these you can exercise yourself from
+**Profile → Account** (export, edit, delete). For everything else, email
+**admin@strive-learning.com** and we will respond within 30 days.
 
-## 9. Contact
+The Lithuanian supervisory authority is the **State Data Protection Inspectorate**
+(Valstybinė duomenų apsaugos inspekcija, **vdai.lrv.lt**). You can also lodge a
+complaint with the supervisory authority of the EU/EEA member state where you live or
+work.
 
-If you have questions about this privacy policy, please contact us at **privacy@strive.com**.
+## 8. Automated decision-making
+
+Strive does not make automated decisions that produce legal or similarly significant
+effects on you (Art. 22 GDPR). The AI generates course content and grades free-recall
+answers, but you remain in full control of how you use these outputs.
+
+## 9. Children
+
+Strive is not directed at children under **16**. We do not knowingly create accounts for
+children under that age. If you believe a child has registered, contact us and we will
+delete the account.
+
+## 10. Changes to this policy
+
+We may update this policy. The "last updated" date at the top reflects the current
+version. Material changes will be notified by email or in-product before they take effect.
 `;

@@ -11,6 +11,7 @@
  *  - CourseShell lesson-screen mentor panel (placeholder, until wired)
  */
 
+import { AnimatePresence } from 'framer-motion';
 import { ArrowDown, ArrowUp, Loader, Paperclip, Square, X } from 'lucide-react';
 import { useEffect, useRef, useState } from 'react';
 import { StickToBottom, useStickToBottomContext } from 'use-stick-to-bottom';
@@ -71,11 +72,26 @@ export interface ChatProps {
 
 const ScrollDownBtn = () => {
   const { isAtBottom, scrollToBottom } = useStickToBottomContext();
-  if (isAtBottom) return null;
   return (
-    <S.ScrollDownButton onClick={() => scrollToBottom()} aria-label="Scroll to bottom">
-      <ArrowDown size={14} />
-    </S.ScrollDownButton>
+    <AnimatePresence>
+      {!isAtBottom && (
+        <S.ScrollDownButton
+          /* The button is centered horizontally via `left: 50%` plus a
+             -50% X transform — framer-motion's transform overrides
+             would otherwise drop that centering, so we bake it into
+             every variant alongside the scale + y movement. */
+          initial={{ opacity: 0, x: '-50%', scale: 0.6, y: 8 }}
+          animate={{ opacity: 1, x: '-50%', scale: 1, y: 0 }}
+          exit={{ opacity: 0, x: '-50%', scale: 0.6, y: 8 }}
+          transition={{ duration: 0.22, ease: [0.32, 0.72, 0, 1] }}
+          whileTap={{ scale: 0.92 }}
+          onClick={() => scrollToBottom()}
+          aria-label="Scroll to bottom"
+        >
+          <ArrowDown size={14} />
+        </S.ScrollDownButton>
+      )}
+    </AnimatePresence>
   );
 };
 

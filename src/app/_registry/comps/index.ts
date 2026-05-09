@@ -3,3 +3,7 @@ export { ThemeSessionSync } from './ThemeSessionSync';
 export { AuthTokenSync } from './AuthTokenSync';
 export { GlobalErrorListener } from './GlobalErrorListener';
 export { GAPageviewListener } from './GAPageviewListener';
+export { AnalyticsBootstrap } from './AnalyticsBootstrap';
+export { AnalyticsIdentitySync } from './AnalyticsIdentitySync';
+export { CookieConsentBootstrap } from './CookieConsentBootstrap';
+export { AppziLoader } from './AppziLoader';

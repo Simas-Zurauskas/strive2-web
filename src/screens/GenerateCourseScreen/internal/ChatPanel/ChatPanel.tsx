@@ -3,11 +3,13 @@
 import { useChat } from '@ai-sdk/react';
 import { UIMessage } from 'ai';
 import { DefaultChatTransport } from 'ai';
+import { ChevronRight } from 'lucide-react';
 import { useSession } from 'next-auth/react';
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { toast } from 'sonner';
 import { getChatHistory } from '@/api/routes/course';
 import { Chat } from '@/components/Chat';
+import { HelpAnchor } from '@/components/HelpAnchor';
 import { NEXT_PUBLIC_API_URL } from '@/conf/env';
 import { TOASTS } from '@/constants/toasts';
 import { creditAwareFetch } from '@/lib/creditAwareFetch';
@@ -19,7 +21,31 @@ interface ChatPanelProps {
   courseId: string;
   onStructureModified: () => void;
   onModifying?: (active: boolean) => void;
+  /** Optional close handler. Renders a chevron-right collapse button in
+   *  the header when provided — used by the tablet drawer host. Desktop
+   *  hosts (persistent right rail) typically omit this. */
+  onClose?: () => void;
 }
+
+// Header shared by both the loading and ready states. Mirrors the
+// lesson mentor's panel chrome — eyebrow + help anchor in the middle,
+// collapse chevron at the inner edge — so users perceive "one chat
+// panel pattern" across the app.
+const RefineHeader = ({ onClose }: { onClose?: () => void }) => (
+  <S.Header>
+    {onClose && (
+      <S.CollapseButton onClick={onClose} aria-label="Collapse refine panel" title="Collapse">
+        <ChevronRight size={18} />
+      </S.CollapseButton>
+    )}
+    <S.HeaderText>
+      <S.HeaderEyebrow>
+        Refine <HelpAnchor concept="design-chat" size="sm" />
+      </S.HeaderEyebrow>
+      <S.HeaderContext>Adjust modules, scope, or order</S.HeaderContext>
+    </S.HeaderText>
+  </S.Header>
+);
 
 /**
  * Last-resort fallback if the server response somehow omits
@@ -38,7 +64,7 @@ let idCounter = 0;
 const nextId = () => `history-${++idCounter}`;
 
 /** Outer wrapper — fetches history, then mounts the chat once ready. */
-export const ChatPanel = ({ courseId, onStructureModified, onModifying }: ChatPanelProps) => {
+export const ChatPanel = ({ courseId, onStructureModified, onModifying, onClose }: ChatPanelProps) => {
   const { data: session } = useSession();
   const [initialMessages, setInitialMessages] = useState<UIMessage[] | null>(null);
   const [historyLoaded, setHistoryLoaded] = useState(false);
@@ -97,15 +123,18 @@ export const ChatPanel = ({ courseId, onStructureModified, onModifying }: ChatPa
   if (!historyLoaded) {
     return (
       <S.Container>
-        <Chat
-          messages={[]}
-          inputValue=""
-          onInputChange={() => {}}
-          onSubmit={() => {}}
-          isThinking
-          disabled
-          placeholder="Loading chat..."
-        />
+        <RefineHeader onClose={onClose} />
+        <S.Body>
+          <Chat
+            messages={[]}
+            inputValue=""
+            onInputChange={() => {}}
+            onSubmit={() => {}}
+            isThinking
+            disabled
+            placeholder="Loading chat..."
+          />
+        </S.Body>
       </S.Container>
     );
   }
@@ -115,6 +144,7 @@ export const ChatPanel = ({ courseId, onStructureModified, onModifying }: ChatPa
       courseId={courseId}
       onStructureModified={handleStructureModified}
       onModifying={onModifying}
+      onClose={onClose}
       initialMessages={initialMessages ?? undefined}
       suggestedPrompts={suggestedPrompts}
     />
@@ -126,6 +156,7 @@ const ChatPanelInner = ({
   courseId,
   onStructureModified,
   onModifying,
+  onClose,
   initialMessages,
   suggestedPrompts,
 }: ChatPanelProps & { initialMessages?: UIMessage[]; suggestedPrompts: string[] }) => {
@@ -148,7 +179,7 @@ const ChatPanelInner = ({
     [courseId, session?.token],
   );
 
-  const { messages, sendMessage, status, error } = useChat({
+  const { messages, sendMessage, status, error, stop } = useChat({
     id: `course-design-${courseId}`,
     transport,
     ...(initialMessages ? { messages: initialMessages } : {}),
@@ -265,18 +296,22 @@ const ChatPanelInner = ({
 
   return (
     <S.Container>
-      <Chat
-        messages={chatMessages}
-        inputValue={inputValue}
-        onInputChange={setInputValue}
-        onSubmit={handleSubmit}
-        suggestedPrompts={suggestedPrompts}
-        onSuggestedPromptClick={handleSuggestedPrompt}
-        placeholder="Ask about the structure or request changes..."
-        isStreaming={isStreaming}
-        isThinking={isSubmitted}
-        error={displayError}
-      />
+      <RefineHeader onClose={onClose} />
+      <S.Body>
+        <Chat
+          messages={chatMessages}
+          inputValue={inputValue}
+          onInputChange={setInputValue}
+          onSubmit={handleSubmit}
+          suggestedPrompts={suggestedPrompts}
+          onSuggestedPromptClick={handleSuggestedPrompt}
+          placeholder="Ask about the structure or request changes..."
+          isStreaming={isStreaming}
+          isThinking={isSubmitted}
+          error={displayError}
+          onStop={stop}
+        />
+      </S.Body>
     </S.Container>
   );
 };

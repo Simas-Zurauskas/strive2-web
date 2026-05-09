@@ -1,8 +1,9 @@
 'use client';
 
-import { useEffect, useCallback } from 'react';
+import { useCallback } from 'react';
 import { createPortal } from 'react-dom';
 import { Button } from '@/components/Button';
+import { useDialog } from '@/hooks';
 import * as S from './AlertDialog.styles';
 
 interface AlertDialogProps {
@@ -35,29 +36,26 @@ export const AlertDialog = ({
   onConfirm,
   onCancel,
 }: AlertDialogProps) => {
-  const handleKeyDown = useCallback(
-    (e: KeyboardEvent) => {
-      if (e.key === 'Escape' && !loading) onCancel();
-    },
-    [loading, onCancel],
-  );
+  // Disable close while a destructive action is in flight — the user
+  // shouldn't be able to dismiss the confirmation mid-mutation.
+  const handleEscape = useCallback(() => {
+    if (!loading) onCancel();
+  }, [loading, onCancel]);
 
-  useEffect(() => {
-    if (!open) return;
-    document.addEventListener('keydown', handleKeyDown);
-    document.body.style.overflow = 'hidden';
-    return () => {
-      document.removeEventListener('keydown', handleKeyDown);
-      document.body.style.overflow = '';
-    };
-  }, [open, handleKeyDown]);
+  const dialogRef = useDialog<HTMLDivElement>({ open, onClose: handleEscape });
 
   if (!open) return null;
 
   return createPortal(
     <>
       <S.Backdrop onClick={loading ? undefined : onCancel} />
-      <S.Dialog role="alertdialog" aria-labelledby="alert-title" aria-describedby="alert-desc">
+      <S.Dialog
+        ref={dialogRef}
+        role="alertdialog"
+        aria-modal="true"
+        aria-labelledby="alert-title"
+        aria-describedby="alert-desc"
+      >
         <S.Body>
           <S.Title id="alert-title">{title}</S.Title>
           <S.Description id="alert-desc">{description}</S.Description>

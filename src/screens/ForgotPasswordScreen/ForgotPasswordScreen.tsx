@@ -29,31 +29,29 @@ export const ForgotPasswordScreen = () => {
   if (mutation.isSuccess || mutation.isError) {
     return (
       <AuthMoment.Centered>
-      <AuthMoment.Wrap>
-        <AuthMoment.Rule aria-hidden />
-        <AuthMoment.Eyebrow>Check your inbox</AuthMoment.Eyebrow>
-        <AuthMoment.Title>Reset link on the way.</AuthMoment.Title>
-        <AuthMoment.Lead>
-          If an account exists for
-          {submittedEmail ? (
-            <>
-              {' '}
-              <AuthMoment.InlineMark>{submittedEmail}</AuthMoment.InlineMark>
-            </>
-          ) : (
-            ' that email'
-          )}
-          , a reset link is on its way. Click it to choose a new password.
-        </AuthMoment.Lead>
+        <AuthMoment.Wrap>
+          <AuthMoment.Rule aria-hidden />
+          <AuthMoment.Eyebrow>Check your inbox</AuthMoment.Eyebrow>
+          <AuthMoment.Title>Reset link on the way.</AuthMoment.Title>
+          <AuthMoment.Lead>
+            If an account exists for
+            {submittedEmail ? (
+              <>
+                {' '}
+                <AuthMoment.InlineMark>{submittedEmail}</AuthMoment.InlineMark>
+              </>
+            ) : (
+              ' that email'
+            )}
+            , a reset link is on its way. Click it to choose a new password.
+          </AuthMoment.Lead>
 
-        <AuthMoment.Hint>
-          Didn&rsquo;t get it? Check your spam folder. Links expire after 1 hour.
-        </AuthMoment.Hint>
+          <AuthMoment.Hint>
+            Didn&rsquo;t get it? Check your spam folder. Links expire after 1 hour.
+          </AuthMoment.Hint>
 
-        <Link href="/" passHref legacyBehavior>
-          <AuthMoment.PrimaryButton as="a">Back to sign in</AuthMoment.PrimaryButton>
-        </Link>
-      </AuthMoment.Wrap>
+          <AuthMoment.PrimaryButton as={Link} href="/">Back to sign in</AuthMoment.PrimaryButton>
+        </AuthMoment.Wrap>
       </AuthMoment.Centered>
     );
   }

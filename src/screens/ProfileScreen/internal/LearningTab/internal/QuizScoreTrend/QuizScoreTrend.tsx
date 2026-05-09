@@ -1,5 +1,6 @@
 import Highcharts from 'highcharts';
 import HighchartsReact from 'highcharts-react-official';
+import '../_shared/highchartsSetup';
 import { useMemo } from 'react';
 import { useTheme } from 'styled-components';
 import { themeColors } from '@/theme';

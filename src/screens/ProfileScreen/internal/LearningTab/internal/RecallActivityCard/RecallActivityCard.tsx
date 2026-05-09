@@ -2,6 +2,7 @@
 
 import Highcharts from 'highcharts';
 import HighchartsReact from 'highcharts-react-official';
+import '../_shared/highchartsSetup';
 import { useMemo } from 'react';
 import Skeleton from 'react-loading-skeleton';
 import { useTheme } from 'styled-components';

@@ -125,36 +125,32 @@ export const VerifyEmailScreen = () => {
 
   return (
     <AuthMoment.Centered>
-    <AuthMoment.Wrap>
-      <AuthMoment.Rule aria-hidden />
-      <AuthMoment.Eyebrow>{copy.eyebrow}</AuthMoment.Eyebrow>
-      <AuthMoment.Title>{copy.title}</AuthMoment.Title>
-      <AuthMoment.Lead>{lead}</AuthMoment.Lead>
+      <AuthMoment.Wrap>
+        <AuthMoment.Rule aria-hidden />
+        <AuthMoment.Eyebrow>{copy.eyebrow}</AuthMoment.Eyebrow>
+        <AuthMoment.Title>{copy.title}</AuthMoment.Title>
+        <AuthMoment.Lead>{lead}</AuthMoment.Lead>
 
-      {(status === 'success' || status === 'already-verified') && (
-        <AuthMoment.PrimaryButton type="button" onClick={handleContinue}>
-          {isAuthenticated ? 'Continue' : 'Continue to sign in'}
-        </AuthMoment.PrimaryButton>
-      )}
+        {(status === 'success' || status === 'already-verified') && (
+          <AuthMoment.PrimaryButton type="button" onClick={handleContinue}>
+            {isAuthenticated ? 'Continue' : 'Continue to sign in'}
+          </AuthMoment.PrimaryButton>
+        )}
 
-      {status === 'expired' && (
-        <Link href="/" passHref legacyBehavior>
-          <AuthMoment.PrimaryButton as="a">Back to sign in</AuthMoment.PrimaryButton>
-        </Link>
-      )}
+        {status === 'expired' && (
+          <AuthMoment.PrimaryButton as={Link} href="/">Back to sign in</AuthMoment.PrimaryButton>
+        )}
 
-      {status === 'error' && (
-        <Link href="/" passHref legacyBehavior>
-          <AuthMoment.PrimaryButton as="a">Back to sign up</AuthMoment.PrimaryButton>
-        </Link>
-      )}
+        {status === 'error' && (
+          <AuthMoment.PrimaryButton as={Link} href="/">Back to sign up</AuthMoment.PrimaryButton>
+        )}
 
-      {(status === 'expired' || status === 'error') && (
-        <AuthMoment.FootLine>
-          Need help? <Link href="/help">Visit the help center</Link>
-        </AuthMoment.FootLine>
-      )}
-    </AuthMoment.Wrap>
+        {(status === 'expired' || status === 'error') && (
+          <AuthMoment.FootLine>
+            Need help? <Link href="/help">Visit the help center</Link>
+          </AuthMoment.FootLine>
+        )}
+      </AuthMoment.Wrap>
     </AuthMoment.Centered>
   );
 };

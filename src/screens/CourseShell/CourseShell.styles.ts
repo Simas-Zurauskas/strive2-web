@@ -22,6 +22,7 @@ export const Layout = styled.div`
   color: ${(p) => p.theme.colors.foreground};
 `;
 
+
 // ── Sidebar slot ───────────────────────────────────────
 // Mirror of ChatSlot: empty grid placeholder, animates `width` so the
 // lesson content reflows when the sidebar opens/closes. The visible
@@ -56,11 +57,13 @@ export const SidebarPanelFixed = styled(motion.div)`
   display: flex;
 
   ${(p) => p.theme.media.desktop} {
-    top: 0;
+    /* Keep the panel anchored BELOW the navbar so the panel's own header
+       (with its close button) is reachable. Previously top:0 hid the
+       header behind the navbar (z:50) and left users with no escape. */
+    top: var(--navbar-offset, 56px);
     bottom: 0;
     width: 100%;
     z-index: 40;
-    transition: none;
   }
 `;
 
@@ -107,11 +110,12 @@ export const ChatPanelFixed = styled(motion.div)`
   display: flex;
 
   ${(p) => p.theme.media.desktop} {
-    top: 0;
+    /* Same rationale as SidebarPanelFixed — anchor below navbar so the
+       collapse/close button in the panel's header isn't hidden behind it. */
+    top: var(--navbar-offset, 56px);
     bottom: 0;
     width: 100%;
     z-index: 40;
-    transition: none;
   }
 `;
 
@@ -123,7 +127,12 @@ export const Backdrop = styled.div`
   ${(p) => p.theme.media.desktop} {
     display: block;
     position: fixed;
-    inset: 0;
+    /* Match the panel's top offset — leaves the navbar tappable while
+       the panel is open, so the user always has an escape hatch. */
+    top: var(--navbar-offset, 56px);
+    right: 0;
+    bottom: 0;
+    left: 0;
     z-index: 30;
     background: var(--scrim-light);
   }
@@ -142,6 +151,10 @@ export const ContentSlot = styled.main`
   display: flex;
   flex-direction: column;
   min-height: calc(100dvh - 56px);
+  /* The parent <main> in (protected)/layout.tsx pads its own top by
+     var(--navbar-offset) — covering the nav row + any extension slot
+     (e.g. our lesson bar). No additional top padding needed here, and
+     adding any would double-count. */
   padding: 0 2rem;
 
   ${(p) => p.theme.media.desktop} {
@@ -153,60 +166,84 @@ export const ContentSlot = styled.main`
   }
 `;
 
-// ── Mobile top bar ─────────────────────────────────────
+// ── Lesson bar ─────────────────────────────────────────
+// Rendered inside the main navbar's NavExtensionSlot via React portal.
+// No own positioning, no own background, no own border — it just lays
+// out its hamburger / title / chat icon in a horizontal row. The parent
+// Nav supplies the fixed positioning, translucent fill, blur, and
+// hide-on-scroll transform, so the lesson bar shares all of those as a
+// single visual surface with the navbar above it.
 
-export const TopBar = styled.div`
-  display: none;
+export const LessonBar = styled.div`
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  /* Three-tier gutter matching NavRow above and ContentSlot below — so
+     "Strive" (NavRow), the hamburger (here), and the lesson hero image
+     (ContentSlot) all share the same x at every breakpoint. */
+  padding: 0.5rem 2rem;
 
   ${(p) => p.theme.media.desktop} {
-    display: flex;
-    align-items: center;
-    gap: 0.75rem;
-    padding: 0.875rem 1.25rem;
-    border-bottom: 1px solid ${(p) => p.theme.colors.border};
-    background: ${(p) => `${p.theme.colors.surface}ee`};
-    backdrop-filter: blur(12px);
-    position: sticky;
-    top: 0;
-    z-index: 20;
+    padding: 0.5rem 1.25rem;
+  }
+
+  ${(p) => p.theme.media.tablet} {
+    padding: 0.5rem 0.75rem;
   }
 `;
 
-export const TopBarTitle = styled.span`
+export const LessonBarTitle = styled.span`
   flex: 1;
   font-family: var(--font-heading-serif), Georgia, serif;
+  font-style: italic;
   font-size: 0.875rem;
-  font-weight: 500;
-  color: ${(p) => p.theme.colors.foreground};
+  font-weight: 400;
+  color: ${(p) => p.theme.colors.muted};
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
 `;
 
+// Mirrors the app navbar's quiet icon-button language (ThemeToggle in
+// Navbar.styles.ts): round 32px chip, surfaceBorder ring, transparent
+// fill, muted icon that warms to foreground on hover. No filled
+// background, no card shadow — keeps the lesson bar reading as a thin
+// translucent strip rather than a row of opaque chiclets.
 const iconButtonBase = css`
   display: flex;
   align-items: center;
   justify-content: center;
-  width: 36px;
-  height: 36px;
-  border-radius: 8px;
-  border: 1px solid ${(p: { theme: { colors: Record<string, string> } }) => p.theme.colors.border};
-  background: ${(p: { theme: { colors: Record<string, string> } }) => p.theme.colors.background};
-  color: ${(p: { theme: { colors: Record<string, string> } }) => p.theme.colors.foreground};
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  border: 1px solid ${(p: { theme: { colors: Record<string, string> } }) => p.theme.colors.surfaceBorder};
+  background: transparent;
+  color: ${(p: { theme: { colors: Record<string, string> } }) => p.theme.colors.muted};
   cursor: pointer;
   flex-shrink: 0;
   transition:
-    background 0.15s,
-    box-shadow 0.2s ease;
+    color 180ms cubic-bezier(0.22, 0.61, 0.36, 1),
+    border-color 180ms cubic-bezier(0.22, 0.61, 0.36, 1),
+    transform 120ms cubic-bezier(0.22, 0.61, 0.36, 1);
+
+  svg {
+    width: 16px;
+    height: 16px;
+  }
 
   &:hover {
-    background: ${(p: { theme: { colors: Record<string, string> } }) => p.theme.colors.surface};
-    box-shadow: var(--shadow-card-soft);
+    color: ${(p: { theme: { colors: Record<string, string> } }) => p.theme.colors.foreground};
+    border-color: ${(p: { theme: { colors: Record<string, string> } }) => p.theme.colors.border};
   }
 
   &:active {
     transform: scale(0.95);
-    box-shadow: none;
+    transition-duration: 80ms;
+  }
+
+  &:focus-visible {
+    outline: 2px solid ${(p: { theme: { colors: Record<string, string> } }) => p.theme.colors.accent};
+    outline-offset: 2px;
   }
 `;
 

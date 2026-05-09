@@ -10,6 +10,7 @@ import { DropdownMenu, HelpAnchor } from '@/components';
 import { TOASTS, toastMessage } from '@/constants/toasts';
 import { useAuth, useJobManager } from '@/hooks';
 import { useSocket } from '@/hooks/useSocket';
+import { analytics } from '@/lib/analytics';
 import { QKeys } from '@/types';
 import * as S from './NarrationPlayer.styles';
 import type { JobStatusEvent } from '@/api/types';
@@ -198,8 +199,19 @@ export const NarrationPlayer = ({
     if (!el) return;
     if (el.paused) {
       el.play().catch(() => {});
+      analytics.track('narration_started', {
+        course_id: courseId,
+        lesson_id: `${courseId}-${moduleIndex}-${lessonIndex}`,
+        ...(audioVoice && { voice: audioVoice }),
+        position_seconds: Math.round(el.currentTime),
+      });
     } else {
       el.pause();
+      analytics.track('narration_pause_clicked', {
+        course_id: courseId,
+        lesson_id: `${courseId}-${moduleIndex}-${lessonIndex}`,
+        position_seconds: Math.round(el.currentTime),
+      });
     }
   };
 
@@ -312,9 +324,17 @@ export const NarrationPlayer = ({
             }}
             onPlay={() => setIsPlaying(true)}
             onPause={() => setIsPlaying(false)}
-            onEnded={() => {
+            onEnded={(e) => {
               setIsPlaying(false);
               localStorage.removeItem(positionKey);
+              const dur = Number.isFinite(e.currentTarget.duration) ? e.currentTarget.duration : 0;
+              analytics.track('narration_completed', {
+                course_id: courseId,
+                lesson_id: `${courseId}-${moduleIndex}-${lessonIndex}`,
+                ...(audioVoice && { voice: audioVoice }),
+                playback_duration_seconds: Math.round(dur),
+                pct_listened: 100,
+              });
             }}
           />
           <S.PlayButton

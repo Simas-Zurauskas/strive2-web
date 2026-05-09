@@ -104,9 +104,26 @@ const themeBootstrap = `(function(){try{var s=sessionStorage.getItem('theme');if
 // fire from useEffect without racing the async gtag.js load. Auto pageviews
 // are disabled (send_page_view: false) — the listener emits all page_view
 // events including the initial one to avoid double-counting.
+//
+// Consent Mode v2: every storage signal defaults to 'denied' BEFORE the two
+// `config` calls. Until the user accepts cookies via the banner, gtag.js
+// runs in cookieless / signal-only mode (no ad_storage, no analytics_storage,
+// no user-data identifiers). `CookieConsentBootstrap` flips these to
+// 'granted' on accept; the same component reverts them on a later "essential
+// only" choice. `wait_for_update: 500` gives the bootstrap a tick to read
+// localStorage before the first hits go out.
 const gtagBootstrap = `
 window.dataLayer = window.dataLayer || [];
 function gtag(){dataLayer.push(arguments);}
+gtag('consent', 'default', {
+  ad_storage: 'denied',
+  ad_user_data: 'denied',
+  ad_personalization: 'denied',
+  analytics_storage: 'denied',
+  functionality_storage: 'granted',
+  security_storage: 'granted',
+  wait_for_update: 500
+});
 gtag('js', new Date());
 gtag('config', '${NEXT_PUBLIC_GOOGLE_ADS_ID}', { send_page_view: false });
 gtag('config', '${NEXT_PUBLIC_GA_MEASUREMENT_ID}', { send_page_view: false });
@@ -118,11 +135,15 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
       <head>
         <script dangerouslySetInnerHTML={{ __html: themeBootstrap }} />
         <meta name="apple-mobile-web-app-title" content="Strive" />
-        <script dangerouslySetInnerHTML={{ __html: gtagBootstrap }} />
-        <Script
-          src={`https://www.googletagmanager.com/gtag/js?id=${NEXT_PUBLIC_GOOGLE_ADS_ID}`}
-          strategy="afterInteractive"
-        />
+        {!process.env.NEXT_PUBLIC_DEV_MODE && (
+          <>
+            <script dangerouslySetInnerHTML={{ __html: gtagBootstrap }} />
+            <Script
+              src={`https://www.googletagmanager.com/gtag/js?id=${NEXT_PUBLIC_GOOGLE_ADS_ID}`}
+              strategy="afterInteractive"
+            />
+          </>
+        )}
       </head>
       <body className={`${inter.variable} ${newsreader.variable}`} suppressHydrationWarning>
         <a href="#main-content" className="skip-to-content">

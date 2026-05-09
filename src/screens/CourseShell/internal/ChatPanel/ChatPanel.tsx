@@ -20,6 +20,7 @@ import { HelpAnchor } from '@/components/HelpAnchor';
 import { TOASTS } from '@/constants/toasts';
 import { useJobManager } from '@/hooks/useJobManager';
 import { useLessonContent } from '@/hooks/useLessonContent';
+import { analytics } from '@/lib/analytics';
 import { creditAwareFetch } from '@/lib/creditAwareFetch';
 import { isInsufficientCreditsError } from '@/lib/insufficientCreditsError';
 import * as S from './ChatPanel.styles';
@@ -431,12 +432,30 @@ const LessonChatPanelInner = ({
       ];
     }
 
+    analytics.track('mentor_chat_message_sent', {
+      course_id: courseSlug,
+      module_index: moduleIndex,
+      lesson_index: lessonIndex,
+      lesson_id: `${courseSlug}-${moduleIndex}-${lessonIndex}`,
+      message_length_chars: typed.length,
+      has_attachment: !!ready,
+      chat_message_count: messages.length + 1,
+    });
     sendMessage({ text: typed }, { body: { attachmentIds: ready ? [attachment.id] : [] } });
     setInputValue('');
     setAttachment(undefined);
   };
 
   const handleSuggestedPrompt = (prompt: string) => {
+    analytics.track('mentor_chat_message_sent', {
+      course_id: courseSlug,
+      module_index: moduleIndex,
+      lesson_index: lessonIndex,
+      lesson_id: `${courseSlug}-${moduleIndex}-${lessonIndex}`,
+      message_length_chars: prompt.length,
+      from_suggested_prompt: true,
+      chat_message_count: messages.length + 1,
+    });
     sendMessage({ text: prompt });
   };
 

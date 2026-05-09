@@ -6,14 +6,23 @@ import { ThemeProvider as NextThemeProvider } from 'next-themes';
 import React, { useState } from 'react';
 import { toast } from 'sonner';
 import { ClientApiError } from '@/api/types';
-import { AppToaster, ConceptModal, OutOfCreditsModal } from '@/components';
+import { AppToaster, ConceptModal, CookieBanner, OutOfCreditsModal } from '@/components';
 import { useCreditsSocketSync } from '@/hooks/useCreditsSocketSync';
 import { JobManagerProvider } from '@/hooks/useJobManager';
 import { LessonStreamProvider } from '@/hooks/useLessonStream';
 import { SocketProvider } from '@/hooks/useSocket';
 import { fireInsufficientCredits } from '@/lib/creditModalBus';
 import { ColorScheme } from '@/theme';
-import { AuthTokenSync, GAPageviewListener, GlobalErrorListener, StyledRegistry, ThemeSessionSync } from './comps';
+import {
+  AnalyticsBootstrap,
+  AnalyticsIdentitySync,
+  AuthTokenSync,
+  CookieConsentBootstrap,
+  GAPageviewListener,
+  GlobalErrorListener,
+  StyledRegistry,
+  ThemeSessionSync,
+} from './comps';
 
 const defaultOptions: DefaultOptions = {
   queries: {
@@ -106,6 +115,15 @@ const Registry = ({ children }: { children: React.ReactNode }) => {
           useEffect propagated the token, hit 401, and the response
           interceptor's auto-signOut evicted the user. */}
       <AuthTokenSync />
+      {/* Registers Mixpanel super-properties (`platform`, `app_version`)
+          before any analytics event fires. Independent of auth state.
+          Mixpanel itself stays uninitialised until cookie consent is
+          granted — see lib/analytics.ts. */}
+      <AnalyticsBootstrap />
+      {/* Bridges localStorage cookie-consent flag → gtag Consent Mode v2
+          update. Default state (set inline by app/layout.tsx) is denied;
+          this flips to granted when the user accepts the banner. */}
+      <CookieConsentBootstrap />
       <QueryClientProvider client={queryClient}>
         <NextThemeProvider
           enableSystem
@@ -115,6 +133,10 @@ const Registry = ({ children }: { children: React.ReactNode }) => {
           themes={['light', 'dark', 'system'] satisfies ColorScheme[]}
         >
           <ThemeSessionSync />
+          {/* Mirrors useAuth().user._id into Mixpanel's distinct id —
+              identify on signin/return, reset on logout. Mounts inside
+              QueryClientProvider so it can read the React Query cache. */}
+          <AnalyticsIdentitySync />
           <StyledRegistry>
             <SocketProvider>
               <CreditsSocketSync />
@@ -131,6 +153,7 @@ const Registry = ({ children }: { children: React.ReactNode }) => {
                 via conceptModalBus. Mounted at the same layer as the credits
                 modal — visible across every authenticated and public route. */}
             <ConceptModal />
+            <CookieBanner />
             <AppToaster />
           </StyledRegistry>
         </NextThemeProvider>

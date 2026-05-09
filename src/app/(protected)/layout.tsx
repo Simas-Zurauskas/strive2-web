@@ -1,9 +1,9 @@
 'use client';
 
 import { usePathname, useRouter } from 'next/navigation';
-import Script from 'next/script';
 import { useEffect, useRef } from 'react';
 import { Navbar, Footer, TextLoader } from '@/components';
+import { AppziLoader } from '@/app/_registry/comps';
 import { ROUTES } from '@/constants/routes';
 import { useAuth } from '@/hooks';
 
@@ -48,16 +48,28 @@ export default function SignedInLayout({ children }: { children: React.ReactNode
 
   return (
     <>
-      {/* Appzi feedback widget — loaded only in the signed-in tree so it
-          doesn't ship to anonymous landing/auth/public visitors. The Navbar
-          Feedback button (`window.appzi.openWidget(...)`) is the sole sanctioned
-          trigger; the auto-injected floating button is suppressed via a CSS
-          rule in theme/GlobalStyles.tsx. */}
-      <Script id="appzi" src="https://w.appzi.io/w.js?token=vYiQf" strategy="lazyOnload" />
+      {/* Appzi feedback widget — loaded only in the signed-in tree AND only
+          after the user grants analytics-cookie consent (Appzi sets cookies
+          on script execution). The Navbar Feedback button is the sole
+          sanctioned trigger; the auto-injected floating button is suppressed
+          via a CSS rule in theme/GlobalStyles.tsx. */}
+      <AppziLoader />
       <Navbar />
       <main
         id="main-content"
-        style={{ paddingTop: '56px', minHeight: 'calc(100vh - 56px)', display: 'flex', flexDirection: 'column' }}
+        style={{
+          // Tracks the live visible bottom edge of the navbar so content
+          // always sits flush below whatever's on-screen — the navbar
+          // alone (56px), or navbar + a route-extension like CourseShell's
+          // lesson bar (~105px), or just the lesson bar when the nav row
+          // tucks away on hide-on-scroll. The CSS variable is written by
+          // the Navbar's hide-on-scroll effect and transitions in lockstep.
+          paddingTop: 'var(--navbar-offset, 56px)',
+          transition: 'padding-top 0.3s ease',
+          minHeight: 'calc(100vh - 56px)',
+          display: 'flex',
+          flexDirection: 'column',
+        }}
       >
         {children}
       </main>

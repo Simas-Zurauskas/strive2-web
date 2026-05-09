@@ -1,6 +1,5 @@
 'use client';
 
-import { HelpAnchor } from '@/components';
 import { useMotion } from '@/theme/motionPresets';
 import * as S from './HowItWorksSection.styles';
 import { HOW_IT_WORKS } from '../../constants';
@@ -77,10 +76,7 @@ export const HowItWorksSection = () => {
           >
             <S.StepCopy>
               <S.StepNumber>Step {step.n}</S.StepNumber>
-              <S.StepTitle>
-                {step.title}
-                {step.n === 3 && <> <HelpAnchor concept="spaced-recall" /></>}
-              </S.StepTitle>
+              <S.StepTitle>{step.title}</S.StepTitle>
               <S.StepBody>{step.body}</S.StepBody>
             </S.StepCopy>
             <S.StepVisual aria-hidden="true">{VISUAL_BY_STEP[step.n]}</S.StepVisual>

@@ -1,3 +1,4 @@
+import { motion } from 'framer-motion';
 import styled, { keyframes } from 'styled-components';
 import { thinScrollbar, onAccent } from '@/theme';
 
@@ -62,11 +63,13 @@ export const Messages = styled.div`
   padding: 1rem;
 `;
 
-export const ScrollDownButton = styled.button`
+// motion.button so framer-motion can drive the enter/exit animation in
+// Chat.tsx (AnimatePresence-wrapped). Static styles here, motion props
+// applied at the call site.
+export const ScrollDownButton = styled(motion.button)`
   position: absolute;
   bottom: 0.75rem;
   left: 50%;
-  transform: translateX(-50%);
   width: 32px;
   height: 32px;
   border-radius: 50%;
@@ -78,17 +81,11 @@ export const ScrollDownButton = styled.button`
   align-items: center;
   justify-content: center;
   box-shadow: var(--shadow-card-soft);
-  transition:
-    opacity 0.25s ease,
-    background 0.15s ease;
+  transition: background 0.15s ease;
   z-index: 2;
 
   &:hover {
     background: ${(p) => p.theme.colors.surface};
-  }
-
-  &:active {
-    transform: translateX(-50%) scale(0.95);
   }
 `;
 
@@ -352,6 +349,26 @@ export const AttachLoading = styled.span`
   animation: ${spin} 0.8s linear infinite;
 `;
 
+// Pulsing ring around the stop button — communicates "something's
+// happening right now, tap to interrupt". Slow + low-amplitude so it
+// reads as a heartbeat rather than a flash.
+const stopPulse = keyframes`
+  0% {
+    box-shadow: 0 0 0 0 color-mix(in srgb, var(--accent) 40%, transparent);
+  }
+  70% {
+    box-shadow: 0 0 0 6px color-mix(in srgb, var(--accent) 0%, transparent);
+  }
+  100% {
+    box-shadow: 0 0 0 0 color-mix(in srgb, var(--accent) 0%, transparent);
+  }
+`;
+
+// Stops in-flight generation. Sits in the same composer slot as
+// SendButton, so we keep its size + accent fill identical to avoid a
+// jarring color flip when the send→stop swap happens. The square icon
+// + the soft accent halo (stopPulse) is the differentiation: same
+// button frame, new state.
 export const StopButton = styled.button`
   flex-shrink: 0;
   display: flex;
@@ -363,19 +380,26 @@ export const StopButton = styled.button`
   min-height: 36px;
   border: none;
   border-radius: 50%;
-  background: ${(p) => p.theme.colors.foreground};
-  color: ${(p) => p.theme.colors.background};
+  background: ${(p) => p.theme.colors.accent};
+  color: ${onAccent};
   cursor: pointer;
   padding: 0;
+  animation: ${stopPulse} 1.6s ease-out infinite;
   transition:
     background 0.2s ease,
     transform 0.15s ease;
 
   &:hover:not(:disabled) {
+    background: ${(p) => p.theme.colors.accentHover};
     transform: scale(1.05);
   }
 
   &:active:not(:disabled) {
     transform: scale(0.95);
+  }
+
+  &:focus-visible {
+    outline: 2px solid ${(p) => p.theme.colors.accent};
+    outline-offset: 2px;
   }
 `;

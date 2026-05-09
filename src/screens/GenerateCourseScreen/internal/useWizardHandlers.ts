@@ -1,6 +1,7 @@
 import { useRouter } from 'next/navigation';
 import { useCallback, useEffect, useRef } from 'react';
 import { useJobManager } from '@/hooks/useJobManager';
+import { analytics } from '@/lib/analytics';
 import { QKeys } from '@/types';
 import type { useDepthOverrideDialog } from './useDepthOverrideDialog';
 import type { useWizardMutations } from './useWizardMutations';
@@ -96,6 +97,10 @@ export const useWizardHandlers = ({
       setDepth(null);
       setGoal(goalValue);
 
+      analytics.track('wizard_step_1_goal_submitted', {
+        goal_length_chars: goalValue.length,
+      });
+
       if (courseId) {
         queryClient.setQueryData<Course>([QKeys.COURSE, courseId], (old) =>
           old
@@ -181,6 +186,10 @@ export const useWizardHandlers = ({
   const executeGoalTypeSwitch = useCallback(
     (newGoalType: GoalType) => {
       if (!courseId) return;
+      analytics.track('wizard_step_2_goal_type_switched', {
+        from_goal_type: course?.goalType ?? null,
+        to_goal_type: newGoalType,
+      });
       setAnswers({} as Record<string, string | string[]>);
       setDepth(null);
 
@@ -253,6 +262,9 @@ export const useWizardHandlers = ({
   const executeClarifySubmit = useCallback(
     (answersValue: Record<string, string | string[]>) => {
       if (!courseId) return;
+      analytics.track('wizard_step_2_questions_completed', {
+        n_questions: Object.keys(answersValue).length,
+      });
       setAnswers(answersValue);
       setDepth(null);
 
@@ -335,6 +347,15 @@ export const useWizardHandlers = ({
       const acknowledged = options?.acknowledged ?? false;
       const previousDepth = (course?.depth as CourseDepth | null) ?? null;
 
+      // Don't double-fire on the post-acknowledgement retry — the user
+      // already saw the gate and the dialog itself fires
+      // `wizard_depth_gate_resolved` with the outcome.
+      if (!acknowledged) {
+        analytics.track('wizard_step_3_depth_selected', {
+          depth_tier: depthValue,
+        });
+      }
+
       setDepth(depthValue);
 
       // `depthOverrideAcknowledged` is a transport-only flag not yet surfaced
@@ -354,10 +375,24 @@ export const useWizardHandlers = ({
             const gatePayload = parseDepthOverrideError(err);
             if (!gatePayload) return; // non-gate errors fall through to global toast
 
+            const direction = gatePayload.code === 'DEPTH_UNDERCOMMIT_REQUIRES_ACK'
+              ? 'undercommit'
+              : 'override';
+            analytics.track('wizard_depth_gate_shown', {
+              direction,
+              chosen_tier: depthValue,
+              ...(gatePayload.recommended && { recommended_tier: gatePayload.recommended }),
+            });
+
             // Revert the depth-selector UI so the user can see their old
             // selection while the dialog is open. The retry will re-set it.
             setDepth(previousDepth);
             depthOverrideDialog.showDialog(gatePayload, () => {
+              analytics.track('wizard_depth_gate_resolved', {
+                direction,
+                outcome: 'accepted',
+                chosen_tier: depthValue,
+              });
               executeDepthConfirmRef.current?.(depthValue, { acknowledged: true });
             });
           },
@@ -405,6 +440,23 @@ export const useWizardHandlers = ({
         onSuccess: () => {
           queryClient.invalidateQueries({ queryKey: [QKeys.COURSES] });
           queryClient.invalidateQueries({ queryKey: [QKeys.COURSE, courseId] });
+          // Mixpanel — accept is the wizard funnel's terminal success step.
+          // Plan ideal: emit server-side from the status='ready' PATCH so the
+          // event survives a tab close mid-redirect. The client emit here
+          // covers the common path; deferred until the controller can attach
+          // the analytics call.
+          const moduleCount = course?.structure?.modules?.length ?? 0;
+          const lessonCount = (course?.structure?.modules ?? []).reduce(
+            (sum, m) => sum + ((m as { lessons?: unknown[] }).lessons?.length ?? 0),
+            0,
+          );
+          analytics.track('wizard_course_accepted', {
+            course_id: courseId,
+            module_count: moduleCount,
+            lesson_count: lessonCount,
+            ...(course?.depth && { depth_tier: course.depth }),
+            ...(course?.goalType && { goal_type: course.goalType }),
+          });
           // Course-ready toast intentionally omitted — the redirect to the
           // course page IS the confirmation. A toast on top would be noise.
           router.push(`/course/${course?.slug ?? courseId}`);

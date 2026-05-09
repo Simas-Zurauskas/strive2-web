@@ -4,6 +4,7 @@ import { useParams, useRouter, useSearchParams } from 'next/navigation';
 import { useEffect } from 'react';
 import { ROUTES } from '@/constants/routes';
 import { useCourse } from '@/hooks';
+import { analytics } from '@/lib/analytics';
 import { useQuizState, QuizResults, QuizQuestion, QuizLanding, QuizLoadingShell } from './internal';
 
 export const ModuleQuizScreen = () => {
@@ -107,7 +108,14 @@ export const ModuleQuizScreen = () => {
       isReviewMode={isReviewMode}
       isGenerating={quiz.isGenerating}
       hasQuizContent={!!quiz.quizContent && !quiz.quizStarted}
-      onStart={() => quiz.setQuizStarted(true)}
+      onStart={() => {
+        analytics.track('module_quiz_started', {
+          course_id: course?._id,
+          module_index: moduleIndex,
+          is_retake: (quiz.quizProgress?.attempts?.length ?? 0) > 0,
+        });
+        quiz.setQuizStarted(true);
+      }}
       onGenerate={quiz.handleGenerate}
       backLabel={backLabel}
       onBack={onBack}

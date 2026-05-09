@@ -2,6 +2,7 @@ import { useCallback } from 'react';
 import { toast } from 'sonner';
 import { TOASTS } from '@/constants/toasts';
 import { useUpsertProgress } from '@/hooks';
+import { analytics } from '@/lib/analytics';
 import { celebrateLessonComplete, celebrateModuleComplete, celebrateCourseComplete } from '@/lib/celebrations';
 import type { CourseProgressResponse } from '@/api/routes/course';
 
@@ -44,6 +45,15 @@ export const useLessonCompletion = ({
       { courseId, moduleIndex, lessonIndex, data: { status: 'completed' } },
       {
         onSuccess: () => {
+          analytics.track('lesson_completed', {
+            course_id: courseId,
+            lesson_id: `${courseId}-${moduleIndex}-${lessonIndex}`,
+            module_index: moduleIndex,
+            lesson_index: lessonIndex,
+            ...(typeof currentLessonProgress?.timeSpentSeconds === 'number' && {
+              time_on_lesson_seconds: currentLessonProgress.timeSpentSeconds,
+            }),
+          });
           const totalLessons = modules.reduce((sum, m) => sum + (m.lessons?.length ?? 0), 0);
           const completedBefore = progressData?.stats?.completed ?? 0;
           const completedNow = completedBefore + 1;

@@ -18,6 +18,7 @@ import {
   Input,
   PasswordRequirements,
 } from '@/components';
+import { analytics } from '@/lib/analytics';
 import { safeRedirect } from '@/lib/safeRedirect';
 import { signUpSchema, SignUpValues } from '@/validation';
 
@@ -45,6 +46,11 @@ export const SignUpForm = ({ redirect, onSwitchMode }: SignUpFormProps) => {
 
   const handleSignUp = async (values: SignUpValues) => {
     setApiError('');
+
+    analytics.track('signup_attempted', {
+      auth_method: 'credentials',
+      marketing_optin: false,
+    });
 
     // `acceptTerms` is a frontend-only consent gate — the backend's signup
     // payload doesn't accept it. Strip before forwarding to next-auth.

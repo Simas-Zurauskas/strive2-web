@@ -44,7 +44,12 @@ export const Top = styled.div`
   gap: 4rem;
   align-items: start;
 
-  ${(p) => p.theme.media.tablet} {
+  /* Stack at tablet (≤1024) and below — at intermediate tablet widths
+     the right-side ColumnGrid's three "auto" tracks pull a lot of
+     width, squeezing the 1fr Brand column down to its minimum content
+     size and producing the awkward word-per-line tagline wrap. Single
+     column gives Brand its natural full-width flow. */
+  ${(p) => p.theme.media.desktop} {
     grid-template-columns: 1fr;
     gap: 2rem;
   }
@@ -91,6 +96,14 @@ export const ColumnGrid = styled.div`
   grid-template-columns: repeat(3, auto);
   gap: 1rem 4rem;
   align-items: start;
+
+  /* Three even tracks at tablet (Brand has stacked above, so the row
+     can use the full content width). Drop to two at small tablet, one
+     at mobile. */
+  ${(p) => p.theme.media.desktop} {
+    grid-template-columns: repeat(3, 1fr);
+    gap: 1.5rem 2rem;
+  }
 
   ${(p) => p.theme.media.tablet} {
     grid-template-columns: repeat(2, 1fr);
