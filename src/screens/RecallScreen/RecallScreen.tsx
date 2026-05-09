@@ -1,7 +1,7 @@
 'use client';
 
 import { useRouter } from 'next/navigation';
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import { PageLayout, Button, HelpAnchor } from '@/components';
 import { ROUTES } from '@/constants/routes';
 import {
@@ -11,6 +11,7 @@ import {
   useSetRecallMode,
   useSkipRecall,
 } from '@/hooks';
+import { analytics } from '@/lib/analytics';
 import { QueueHeader } from './internal/QueueHeader/QueueHeader';
 import { RecallCard } from './internal/RecallCard/RecallCard';
 import { RecallGhostPreview } from './internal/RecallGhostPreview/RecallGhostPreview';
@@ -44,6 +45,15 @@ export const RecallScreen = () => {
 
   const [progressedIds, setProgressedIds] = useState<string[]>([]);
   const [modeOverrides, setModeOverrides] = useState<Record<string, RecallMode>>({});
+  // Mixpanel session telemetry — wire from the queue lifecycle:
+  //   - sessionStarted fires on the first card render
+  //   - sessionCompleted fires once the user clears the queue (currentRaw
+  //     becomes null while total > 0)
+  // Refs because we want exactly one fire per page mount.
+  const sessionStartRef = useRef<number>(Date.now());
+  const sessionStartedFiredRef = useRef(false);
+  const sessionCompletedFiredRef = useRef(false);
+  const skippedCountRef = useRef(0);
   // Lazy initializer pulls the saved mode from localStorage once on mount.
   // SSR-safe: readSavedMode short-circuits to null when window is absent,
   // and the lazy callback only runs client-side anyway because this is a
@@ -73,6 +83,55 @@ export const RecallScreen = () => {
     setMode({ recallCardId: currentRaw.recallCardId, mode: preferredMode });
   }, [currentRaw, preferredMode, modeOverrides, setMode]);
 
+  // Mixpanel: fire `recall_session_started` exactly once when the queue is
+  // first non-empty, then `recall_card_shown` for every card the user
+  // actually sees. `entry_point` defaults to 'recall_screen' here; the
+  // home-page `TodayReview` route would need its own emit (defer).
+  useEffect(() => {
+    if (!current || sessionStartedFiredRef.current) return;
+    sessionStartedFiredRef.current = true;
+    analytics.track('recall_session_started', {
+      cards_due_count: queue?.counts.dueTotal ?? sessionQueue.length,
+      mode: preferredMode ?? current.mode,
+      entry_point: 'recall_screen',
+    });
+  }, [current, queue, sessionQueue, preferredMode]);
+
+  useEffect(() => {
+    if (!current) return;
+    // `dueAt` is null for fresh cards (never reviewed). Use it to derive
+    // an approximation of days_since_last_review for due cards. The
+    // server is the canonical place for "days since last review";
+    // approximating from `dueAt` is good enough for funnel-shape analyses.
+    const dueAtMs = current.dueAt ? new Date(current.dueAt).getTime() : null;
+    const daysSinceDue = dueAtMs ? Math.max(0, Math.round((Date.now() - dueAtMs) / (24 * 60 * 60 * 1000))) : null;
+    analytics.track('recall_card_shown', {
+      card_id: current.recallCardId,
+      course_id: current.courseId,
+      box: current.box,
+      mode: current.mode,
+      is_new: current.isNew,
+      ...(daysSinceDue !== null && { days_since_due: daysSinceDue }),
+    });
+  }, [current?.recallCardId]); // eslint-disable-line react-hooks/exhaustive-deps
+
+  // Mixpanel: `recall_session_completed` when the user clears the queue.
+  // Fires exactly once per session.
+  useEffect(() => {
+    if (sessionCompletedFiredRef.current) return;
+    if (sessionQueue.length === 0) return;
+    if (current) return;
+    sessionCompletedFiredRef.current = true;
+    analytics.track('recall_session_completed', {
+      cards_reviewed: progressedIds.length - skippedCountRef.current,
+      cards_skipped: skippedCountRef.current,
+      session_duration_seconds: Math.max(
+        0,
+        Math.round((Date.now() - sessionStartRef.current) / 1000),
+      ),
+    });
+  }, [current, sessionQueue.length, progressedIds.length]);
+
   const handleRate = ({ rating, typedMatch }: { rating: RecallRating; typedMatch?: number | null }) => {
     if (!current) return;
     const id = current.recallCardId;
@@ -84,12 +143,17 @@ export const RecallScreen = () => {
     if (!current) return;
     const id = current.recallCardId;
     skip(id);
+    skippedCountRef.current += 1;
     setProgressedIds((prev) => [...prev, id]);
   };
 
   const handleToggleMode = () => {
     if (!current) return;
     const nextMode: RecallMode = current.mode === 'tap-reveal' ? 'typed-recall' : 'tap-reveal';
+    analytics.track('recall_mode_changed', {
+      from_mode: current.mode,
+      to_mode: nextMode,
+    });
     setModeOverrides((prev) => ({ ...prev, [current.recallCardId]: nextMode }));
     setMode({ recallCardId: current.recallCardId, mode: nextMode });
     setPreferredMode(nextMode);

@@ -7,6 +7,8 @@ import { Button } from '@/components/Button';
 import { TopupControl } from '@/components/TopupControl';
 import { ROUTES } from '@/constants/routes';
 import { useBillingSummary } from '@/hooks/useBilling';
+import { useDialog } from '@/hooks';
+import { analytics } from '@/lib/analytics';
 import { registerCreditModalListener } from '@/lib/creditModalBus';
 import { TopupBar } from './TopupBar';
 import * as S from './OutOfCreditsModal.styles';
@@ -44,33 +46,40 @@ export const OutOfCreditsModal = () => {
   const { data: summary } = useBillingSummary();
   const router = useRouter();
 
+  // Tracks how the user resolved the modal so dismiss-without-action
+  // shows up cleanly in `out_of_allowance_resolved`.
+  const [resolution, setResolution] = useState<'pending' | 'resolved'>('pending');
+
   useEffect(() => {
     // Bus payload (need/have) is intentionally discarded — the dialog no
     // longer surfaces raw credit numbers to the user. Presence of a 402 is
     // enough to open the modal; the user decides to upgrade or top up.
     return registerCreditModalListener(() => {
       setOpen(true);
+      setResolution('pending');
+      analytics.track('out_of_allowance_modal_shown', {
+        current_plan: summary?.plan ?? 'free',
+        ...(typeof summary?.credits?.bonus === 'number' && {
+          top_up_balance: summary.credits.bonus,
+        }),
+      });
     });
+    // `summary` intentionally omitted — listener is registered once at
+    // mount and reads the latest summary via closure on each invocation.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   const close = useCallback(() => {
+    if (resolution === 'pending') {
+      analytics.track('out_of_allowance_resolved', { outcome: 'dismissed' });
+    }
     setOpen(false);
-  }, []);
+  }, [resolution]);
 
-  // Esc + body scroll lock mirror the AlertDialog behavior in this repo.
-  useEffect(() => {
-    if (!open) return;
-    const onKey = (e: KeyboardEvent) => {
-      if (e.key === 'Escape') close();
-    };
-    document.addEventListener('keydown', onKey);
-    const prevOverflow = document.body.style.overflow;
-    document.body.style.overflow = 'hidden';
-    return () => {
-      document.removeEventListener('keydown', onKey);
-      document.body.style.overflow = prevOverflow;
-    };
-  }, [open, close]);
+  // Focus trap + scroll lock + Esc handler + return-focus, all wired by
+  // the shared hook. Replaces the previous inline scroll-lock + escape
+  // handler (which lacked the focus trap and return-focus).
+  const dialogRef = useDialog<HTMLDivElement>({ open, onClose: close });
 
   const plan: PlanKey = summary?.plan ?? 'free';
   const upgradeLabel = nextPlanLabel(plan);
@@ -92,7 +101,7 @@ export const OutOfCreditsModal = () => {
   return createPortal(
     <>
       <S.Backdrop onClick={close} />
-      <S.Dialog role="alertdialog" aria-labelledby="out-of-credits-title" aria-modal="true">
+      <S.Dialog ref={dialogRef} role="alertdialog" aria-labelledby="out-of-credits-title" aria-modal="true">
         <S.CloseBtn onClick={close} aria-label="Close">×</S.CloseBtn>
 
         <S.Header>
@@ -137,6 +146,8 @@ export const OutOfCreditsModal = () => {
               <Button
                 variant="primary"
                 onClick={() => {
+                  setResolution('resolved');
+                  analytics.track('out_of_allowance_resolved', { outcome: 'upgrade_clicked' });
                   close();
                   router.push(ROUTES.pricing());
                 }}
@@ -145,7 +156,15 @@ export const OutOfCreditsModal = () => {
               </Button>
             </S.UpgradeContent>
           ) : (
-            <TopupControl stacked compact onRedirect={close} />
+            <TopupControl
+              stacked
+              compact
+              onRedirect={() => {
+                setResolution('resolved');
+                analytics.track('out_of_allowance_resolved', { outcome: 'topup_clicked' });
+                close();
+              }}
+            />
           )}
         </S.TabPanel>
 

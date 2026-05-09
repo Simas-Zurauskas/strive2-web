@@ -5,6 +5,7 @@ import { createPortal } from 'react-dom';
 import { X } from 'lucide-react';
 import { Button } from '@/components/Button';
 import { markConceptViewed } from '@/hooks/useConceptViewed';
+import { useDialog } from '@/hooks';
 import { registerConceptModalListener } from '@/lib/conceptModalBus';
 import * as S from './ConceptModal.styles';
 import { CONCEPTS, type ConceptId } from './registry';
@@ -31,19 +32,9 @@ export const ConceptModal = () => {
     setActiveId(null);
   }, [activeId]);
 
-  useEffect(() => {
-    if (!activeId) return;
-    const onKey = (e: KeyboardEvent) => {
-      if (e.key === 'Escape') close();
-    };
-    document.addEventListener('keydown', onKey);
-    const prevOverflow = document.body.style.overflow;
-    document.body.style.overflow = 'hidden';
-    return () => {
-      document.removeEventListener('keydown', onKey);
-      document.body.style.overflow = prevOverflow;
-    };
-  }, [activeId, close]);
+  // Focus trap + scroll lock + Esc + return-focus, all in one hook.
+  // Capture-and-restore on overflow (M10) is now handled inside useDialog.
+  const dialogRef = useDialog<HTMLDivElement>({ open: !!activeId, onClose: close });
 
   if (!activeId) return null;
 
@@ -54,6 +45,7 @@ export const ConceptModal = () => {
     <>
       <S.Backdrop onClick={close} />
       <S.Dialog
+        ref={dialogRef}
         role="dialog"
         aria-modal="true"
         aria-labelledby={`concept-title-${concept.id}`}

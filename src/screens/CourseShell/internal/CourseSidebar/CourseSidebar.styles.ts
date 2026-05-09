@@ -90,6 +90,11 @@ export const CourseNameLink = styled.button`
   text-decoration-color: transparent;
   text-underline-offset: 3px;
   text-decoration-thickness: 1px;
+  /* Shrink to text width — without this the button stretches to fill
+     the column-flex cross-axis of HeaderContent and the hover area
+     extends across the entire empty space to the right of the title. */
+  align-self: flex-start;
+  max-width: 100%;
   transition:
     text-decoration-color 0.15s,
     color 0.15s;

@@ -1,7 +1,7 @@
 'use client';
 
 import { useSession } from 'next-auth/react';
-import { createContext, useContext, useEffect, useRef, useState } from 'react';
+import { createContext, useContext, useEffect, useMemo, useRef, useState } from 'react';
 import { io, Socket } from 'socket.io-client';
 import { toast } from 'sonner';
 import { NEXT_PUBLIC_API_URL } from '@/conf/env';
@@ -81,7 +81,10 @@ export const SocketProvider = ({ children }: { children: React.ReactNode }) => {
     };
   }, [session?.token]);
 
-  return (
-    <SocketContext.Provider value={{ socket, disconnected }}>{children}</SocketContext.Provider>
-  );
+  // Stable identity across parent renders — without useMemo, every render
+  // of SocketProvider's parent would hand consumers a new value object and
+  // force them to re-render even when socket+disconnected are unchanged.
+  const value = useMemo(() => ({ socket, disconnected }), [socket, disconnected]);
+
+  return <SocketContext.Provider value={value}>{children}</SocketContext.Provider>;
 };

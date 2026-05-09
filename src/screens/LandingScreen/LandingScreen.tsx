@@ -1,7 +1,8 @@
 'use client';
 
-import { useCallback, useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 import { KbChatPanel } from '@/components';
+import { analytics } from '@/lib/analytics';
 import { AuthModal, AuthMode } from './internal/AuthModal/AuthModal';
 import { ComparisonTable } from './internal/ComparisonTable/ComparisonTable';
 import { FaqSection } from './internal/FaqSection/FaqSection';
@@ -34,34 +35,59 @@ interface LandingScreenProps {
   initialAuthMode?: AuthMode | null;
 }
 
+type AuthSource =
+  | 'hero'
+  | 'top_bar'
+  | 'pricing_teaser'
+  | 'final_cta'
+  | 'deep_link'
+  | 'unknown';
+
 export const LandingScreen = ({ redirect, initialAuthMode }: LandingScreenProps) => {
   const [modalOpen, setModalOpen] = useState(initialAuthMode !== null && initialAuthMode !== undefined);
   const [mode, setMode] = useState<AuthMode>(initialAuthMode ?? 'signup');
 
-  const openSignUp = useCallback(() => {
-    setMode('signup');
+  // Track WHICH CTA opened the modal so the funnel split-by-source view
+  // doesn't have to guess. `deep_link` covers `?auth=signin|signup`
+  // arrivals from /pricing's CTA buttons or the PublicTopBar Sign in link.
+  const openModal = useCallback((nextMode: AuthMode, nextSource: AuthSource) => {
+    setMode(nextMode);
     setModalOpen(true);
+    analytics.track('auth_modal_opened', { mode: nextMode, source: nextSource });
   }, []);
 
-  const openSignIn = useCallback(() => {
-    setMode('signin');
-    setModalOpen(true);
-  }, []);
+  const openSignUpFromHero = useCallback(() => openModal('signup', 'hero'), [openModal]);
+  const openSignUpFromPricing = useCallback(() => openModal('signup', 'pricing_teaser'), [openModal]);
+  const openSignUpFromFinal = useCallback(() => openModal('signup', 'final_cta'), [openModal]);
+  const openSignInFromTopBar = useCallback(() => openModal('signin', 'top_bar'), [openModal]);
 
-  const onClose = useCallback(() => setModalOpen(false), []);
+  const onClose = useCallback(() => {
+    setModalOpen(false);
+    analytics.track('auth_modal_dismissed', { mode });
+  }, [mode]);
+
+  // Deep-link arrivals (e.g. `/?auth=signup` from the public top-bar) skip
+  // the openModal callback path, so fire `auth_modal_opened` here too.
+  // Effect runs exactly once on mount when initialAuthMode was set.
+  useEffect(() => {
+    if (initialAuthMode) {
+      analytics.track('auth_modal_opened', { mode: initialAuthMode, source: 'deep_link' });
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   return (
     <S.Page>
-      <LandingTopBar onOpenSignIn={openSignIn} />
-      <HeroSection onOpenSignUp={openSignUp} />
+      <LandingTopBar onOpenSignIn={openSignInFromTopBar} />
+      <HeroSection onOpenSignUp={openSignUpFromHero} />
       <GoalTypesSection />
       <ProblemSection />
       <HowItWorksSection />
       <FeatureBento />
       <ComparisonTable />
-      <PricingTeaser onOpenSignUp={openSignUp} />
+      <PricingTeaser onOpenSignUp={openSignUpFromPricing} />
       <FaqSection />
-      <FinalCtaSection onOpenSignUp={openSignUp} />
+      <FinalCtaSection onOpenSignUp={openSignUpFromFinal} />
 
       <AuthModal
         open={modalOpen}

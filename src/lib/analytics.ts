@@ -21,11 +21,20 @@
 
 import mixpanel from 'mixpanel-browser';
 import { NEXT_PUBLIC_MIXPANEL_TOKEN } from '@/conf/env';
+import { hasAnalyticsConsent } from '@/lib/cookieConsent';
 
 let initialised = false;
 
-const ensureInit = (): void => {
-  if (initialised || typeof window === 'undefined') return;
+/**
+ * Mixpanel is gated behind cookie consent (`'all'`). Without consent
+ * every export below is a no-op — no init, no localStorage write, no
+ * network call. The consent bridge re-runs initialisation when the
+ * user grants consent later (see `_registry/comps/CookieConsentBootstrap`).
+ */
+const ensureInit = (): boolean => {
+  if (typeof window === 'undefined') return false;
+  if (!hasAnalyticsConsent()) return false;
+  if (initialised) return true;
   mixpanel.init(NEXT_PUBLIC_MIXPANEL_TOKEN, {
     persistence: 'localStorage',
     track_pageview: false,
@@ -33,6 +42,7 @@ const ensureInit = (): void => {
     api_host: 'https://api-eu.mixpanel.com',
   });
   initialised = true;
+  return true;
 };
 
 export const analytics = {
@@ -42,8 +52,7 @@ export const analytics = {
    * merge into this user's timeline.
    */
   identify: (userId: string, isNew = false): void => {
-    ensureInit();
-    if (typeof window === 'undefined') return;
+    if (!ensureInit()) return;
     if (isNew) mixpanel.alias(userId);
     mixpanel.identify(userId);
   },
@@ -55,15 +64,13 @@ export const analytics = {
   },
 
   track: (event: string, props: Record<string, unknown> = {}): void => {
-    ensureInit();
-    if (typeof window === 'undefined') return;
+    if (!ensureInit()) return;
     mixpanel.track(event, props);
   },
 
   /** Set people properties (`$set`). Use for plan, email_verified, etc. */
   setUserProps: (props: Record<string, unknown>): void => {
-    ensureInit();
-    if (typeof window === 'undefined') return;
+    if (!ensureInit()) return;
     mixpanel.people.set(props);
   },
 
@@ -73,8 +80,7 @@ export const analytics = {
    * aggregation to use as a cohort filter.
    */
   incrementUserProp: (prop: string, by = 1): void => {
-    ensureInit();
-    if (typeof window === 'undefined') return;
+    if (!ensureInit()) return;
     mixpanel.people.increment(prop, by);
   },
 
@@ -83,8 +89,7 @@ export const analytics = {
    * fired afterwards from this device. Use for app version, platform.
    */
   registerSuper: (props: Record<string, unknown>): void => {
-    ensureInit();
-    if (typeof window === 'undefined') return;
+    if (!ensureInit()) return;
     mixpanel.register(props);
   },
 };

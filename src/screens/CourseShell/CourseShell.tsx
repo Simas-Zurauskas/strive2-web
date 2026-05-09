@@ -9,24 +9,27 @@
  * through a route-group layout rather than a `page.tsx`.
  */
 import { useMutation, useQueryClient } from '@tanstack/react-query';
-import { AnimatePresence } from 'framer-motion';
-import { Menu, MessageCircle } from 'lucide-react';
+import { AnimatePresence, animate as motionAnimate, useMotionValue } from 'framer-motion';
+import { List, MessageCircle } from 'lucide-react';
 import { useParams, useRouter } from 'next/navigation';
-import { useCallback, useEffect, useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { createPortal } from 'react-dom';
 import { toast } from 'sonner';
 import { deleteCourse, updateCourse } from '@/api/routes/course';
 import { AlertDialog, TextLoader } from '@/components';
 import { ROUTES } from '@/constants/routes';
 import { TOASTS } from '@/constants/toasts';
 import { useCourse, useCourseProgress, useGeneratedLessons } from '@/hooks';
+import { analytics } from '@/lib/analytics';
 import { breakpoints } from '@/theme';
 import { QKeys } from '@/types';
 import { CourseContextProvider } from './CourseContext';
 import * as S from './CourseShell.styles';
 import { CourseSidebar, ChatPanel } from './internal';
 import {
-  leftPanelVariants,
-  rightPanelVariants,
+  PANEL_CLOSE_TRANSITION,
+  PANEL_OPEN_TRANSITION,
+  PANEL_PARALLAX_OFFSET,
   slotVariants,
   tabEnterTransition,
   tabExitTransition,
@@ -145,6 +148,20 @@ export const CourseShell = ({ children }: CourseShellProps) => {
     }
   }, [chatOpen]);
 
+  // Mixpanel: emit `mentor_chat_opened` exactly when the panel transitions
+  // from closed to open. The persisted `chatOpen=true` from a prior session
+  // doesn't fire on the initial mount — useEffect's deps capture the
+  // post-mount transition only via `prevChatOpenRef`.
+  const prevChatOpenRef = useRef(chatOpen);
+  useEffect(() => {
+    if (chatOpen && !prevChatOpenRef.current) {
+      analytics.track('mentor_chat_opened', {
+        course_id: course?._id,
+      });
+    }
+    prevChatOpenRef.current = chatOpen;
+  }, [chatOpen, course?._id]);
+
   useEffect(() => {
     try {
       window.localStorage.setItem(SIDEBAR_OPEN_STORAGE_KEY, String(sidebarOpen));
@@ -152,6 +169,83 @@ export const CourseShell = ({ children }: CourseShellProps) => {
       // non-fatal.
     }
   }, [sidebarOpen]);
+
+  // ── Side-panel drag (tablet only) ─────────────────────
+  // Drag and the open/close animation share a single motion value per
+  // panel. Without this, the `animate` prop's variant target reasserts
+  // `x: 0` every frame and tugs the drag value back — so the panel
+  // appears not to follow the finger. Owning the motion value here
+  // means drag updates it directly during the gesture; on release we
+  // either commit (state change → effect animates motion value to
+  // target) or snap back via motionAnimate.
+  //
+  // Targets are kept in PIXELS (not percentages or `calc()` strings)
+  // because drag updates the motion value with pixel deltas, and
+  // framer-motion can't interpolate from a pixel value to a string
+  // target. We measure each panel's offsetWidth via ResizeObserver and
+  // store closed-position pixel values in refs.
+  //
+  // Initial value branches on the initial open/closed state so panels
+  // that mount in the closed state render off-screen on first paint,
+  // not at x:0 (which produced a brief flash where both side panels
+  // were visible at once over the lesson content).
+  const sidebarX = useMotionValue(sidebarOpen ? 0 : -2000);
+  const chatX = useMotionValue(chatOpen ? 0 : 2000);
+  const sidebarRef = useRef<HTMLDivElement | null>(null);
+  const chatRef = useRef<HTMLDivElement | null>(null);
+  const sidebarClosedX = useRef(-2000);
+  const chatClosedX = useRef(2000);
+
+  useEffect(() => {
+    if (!sidebarRef.current || typeof ResizeObserver === 'undefined') return;
+    const node = sidebarRef.current;
+    const ro = new ResizeObserver(() => {
+      // Closed = full width off-screen + parallax overshoot (same
+      // magnitude as panelMotion.PANEL_PARALLAX_OFFSET so the
+      // leading-edge slide reads identically to the variant-driven
+      // animation we used before).
+      sidebarClosedX.current = -(node.offsetWidth + PANEL_PARALLAX_OFFSET);
+      // If the panel is currently closed, snap the motion value to
+      // the freshly-measured closed offset so a viewport resize
+      // doesn't strand it mid-transit.
+      if (!sidebarOpen) sidebarX.set(sidebarClosedX.current);
+    });
+    ro.observe(node);
+    return () => ro.disconnect();
+  }, [sidebarOpen, sidebarX]);
+
+  useEffect(() => {
+    if (!chatRef.current || typeof ResizeObserver === 'undefined') return;
+    const node = chatRef.current;
+    const ro = new ResizeObserver(() => {
+      chatClosedX.current = node.offsetWidth + PANEL_PARALLAX_OFFSET;
+      if (!chatOpen) chatX.set(chatClosedX.current);
+    });
+    ro.observe(node);
+    return () => ro.disconnect();
+  }, [chatOpen, chatX]);
+
+  // Use the same iOS-decelerating ease + duration vocabulary the rest
+  // of the app uses for these panels (PANEL_OPEN_TRANSITION /
+  // PANEL_CLOSE_TRANSITION in panelMotion.ts) so the move from
+  // variant-driven animation to motion-value-driven animation doesn't
+  // change the panel's perceived feel.
+  useEffect(() => {
+    motionAnimate(
+      sidebarX,
+      sidebarOpen ? 0 : sidebarClosedX.current,
+      sidebarOpen ? PANEL_OPEN_TRANSITION : PANEL_CLOSE_TRANSITION,
+    );
+  }, [sidebarOpen, sidebarX]);
+
+  useEffect(() => {
+    motionAnimate(
+      chatX,
+      chatOpen ? 0 : chatClosedX.current,
+      chatOpen ? PANEL_OPEN_TRANSITION : PANEL_CLOSE_TRANSITION,
+    );
+  }, [chatOpen, chatX]);
+
 
   // ── Keep fixed sidebars above the global footer ──────
   // Both sidebars are position: fixed with bottom: 0 — without this they'd
@@ -187,6 +281,19 @@ export const CourseShell = ({ children }: CourseShellProps) => {
       window.removeEventListener('resize', onScroll);
       if (raf !== null) cancelAnimationFrame(raf);
       root.style.setProperty('--shell-bottom-offset', '0px');
+    };
+  }, []);
+
+  // ── Tag the body while the course shell is mounted ──
+  // The lesson TopBar at tablet/mobile sits directly under the main
+  // navbar and supplies its own bottom border. Without this flag the
+  // navbar's scrolled-state border stacks on top, reading as a clumsy
+  // double seam. Navbar.styles.ts watches this body class and drops
+  // its border-bottom inside the matching media range.
+  useEffect(() => {
+    document.body.classList.add('in-course-shell');
+    return () => {
+      document.body.classList.remove('in-course-shell');
     };
   }, []);
 
@@ -228,12 +335,11 @@ export const CourseShell = ({ children }: CourseShellProps) => {
   }, [isDesktop]);
 
   // ── Mobile top bar title ─────────────────────────────
-  const topBarTitle = useMemo(() => {
-    if (moduleIndex !== undefined && lessonIndex !== undefined) {
-      return modules[moduleIndex]?.lessons?.[lessonIndex]?.name ?? 'Lesson';
-    }
-    return course?.name ?? 'Course';
-  }, [moduleIndex, lessonIndex, modules, course?.name]);
+  // Always shows the course name. The lesson title is already the H1 on
+  // the page, so duplicating it in the sticky bar is just visual noise.
+  // Showing the course name instead gives a "where am I" anchor while
+  // scrolling deep into a lesson.
+  const topBarTitle = course?.name ?? 'Course';
 
   // ── Chat context label ───────────────────────────────
   const chatContextLabel = useMemo(() => {
@@ -271,6 +377,17 @@ export const CourseShell = ({ children }: CourseShellProps) => {
     ],
   );
 
+  // Mount the lesson bar inside the main navbar's extension slot. Living
+  // in the same DOM element as the navbar means the two share the same
+  // transform on hide-on-scroll and the same backdrop-filter — no possible
+  // visual seam, no timing drift between two animated elements.
+  // (Hooks declared above any early returns to satisfy Rules of Hooks.)
+  const [navExtensionEl, setNavExtensionEl] = useState<Element | null>(null);
+  useEffect(() => {
+    setNavExtensionEl(document.getElementById('navbar-extension-slot'));
+  }, []);
+
+
   // ── Loading state ────────────────────────────────────
   if (isLoading) {
     return (
@@ -286,20 +403,47 @@ export const CourseShell = ({ children }: CourseShellProps) => {
 
   const showBackdrop = !isDesktop && (sidebarOpen || chatOpen);
 
+  const lessonBar = !isDesktop && (
+    <S.LessonBar>
+      <S.IconButton
+        onClick={() => {
+          /* Toggle: pressing while open closes; pressing while closed
+             opens this panel and dismisses the other (the two are
+             full-width overlays at tablet and would otherwise stack). */
+          if (sidebarOpen) {
+            setSidebarOpen(false);
+          } else {
+            setSidebarOpen(true);
+            setChatOpen(false);
+          }
+        }}
+        aria-label={sidebarOpen ? 'Close course navigation' : 'Open course navigation'}
+        aria-expanded={sidebarOpen}
+      >
+        <List size={18} />
+      </S.IconButton>
+      <S.LessonBarTitle>{topBarTitle}</S.LessonBarTitle>
+      <S.IconButton
+        onClick={() => {
+          if (chatOpen) {
+            setChatOpen(false);
+          } else {
+            setChatOpen(true);
+            setSidebarOpen(false);
+          }
+        }}
+        aria-label={chatOpen ? 'Close AI chat' : 'Open AI chat'}
+        aria-expanded={chatOpen}
+      >
+        <MessageCircle size={18} />
+      </S.IconButton>
+    </S.LessonBar>
+  );
+
   return (
     <CourseContextProvider value={contextValue}>
+      {navExtensionEl && lessonBar && createPortal(lessonBar, navExtensionEl)}
       <S.Layout>
-        {/* Mobile top bar */}
-        <S.TopBar>
-          <S.IconButton onClick={() => setSidebarOpen(true)} aria-label="Open course navigation">
-            <Menu size={18} />
-          </S.IconButton>
-          <S.TopBarTitle>{topBarTitle}</S.TopBarTitle>
-          <S.IconButton onClick={() => setChatOpen(true)} aria-label="Open AI chat">
-            <MessageCircle size={18} />
-          </S.IconButton>
-        </S.TopBar>
-
         {/* Backdrop for mobile overlays */}
         {showBackdrop && <S.Backdrop onClick={closeOverlays} />}
 
@@ -313,10 +457,29 @@ export const CourseShell = ({ children }: CourseShellProps) => {
           animate={sidebarOpen ? 'open' : 'closed'}
         />
         <S.SidebarPanelFixed
-          initial={false}
-          variants={leftPanelVariants}
-          animate={sidebarOpen ? 'open' : 'closed'}
+          ref={sidebarRef}
+          style={{ x: sidebarX }}
           aria-hidden={!sidebarOpen}
+          /* Drag-to-close: enabled only at tablet/below. The panel's
+             transform is a useMotionValue we own — drag updates it
+             directly during the gesture (so it follows the finger),
+             and the `animate` effect above re-takes control on
+             open/close state changes. dragConstraints clamp leftward
+             travel to one panel width; `dragElastic: 0` keeps the
+             motion 1:1 with the finger inside the bounds. On release
+             we either commit close (state flip → effect animates to
+             closed) or snap back via motionAnimate. */
+          drag={!isDesktop && sidebarOpen ? 'x' : false}
+          dragConstraints={{ left: -440, right: 0 }}
+          dragElastic={0}
+          dragMomentum={false}
+          onDragEnd={(_e, info) => {
+            if (info.offset.x < -100 || info.velocity.x < -400) {
+              setSidebarOpen(false);
+            } else {
+              motionAnimate(sidebarX, 0, PANEL_CLOSE_TRANSITION);
+            }
+          }}
         >
           <CourseSidebar
             courseBasePath={courseBasePath}
@@ -355,10 +518,22 @@ export const CourseShell = ({ children }: CourseShellProps) => {
           animate={chatOpen ? 'open' : 'closed'}
         />
         <S.ChatPanelFixed
-          initial={false}
-          variants={rightPanelVariants}
-          animate={chatOpen ? 'open' : 'closed'}
+          ref={chatRef}
+          style={{ x: chatX }}
           aria-hidden={!chatOpen}
+          /* Drag-to-close — mirror of the sidebar pattern on the
+             right edge. See SidebarPanelFixed for rationale. */
+          drag={!isDesktop && chatOpen ? 'x' : false}
+          dragConstraints={{ left: 0, right: 440 }}
+          dragElastic={0}
+          dragMomentum={false}
+          onDragEnd={(_e, info) => {
+            if (info.offset.x > 100 || info.velocity.x > 400) {
+              setChatOpen(false);
+            } else {
+              motionAnimate(chatX, 0, PANEL_CLOSE_TRANSITION);
+            }
+          }}
         >
           <ChatPanel
           key={`${moduleIndex}-${lessonIndex}`}

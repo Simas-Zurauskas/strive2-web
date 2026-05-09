@@ -87,8 +87,13 @@ export const Widget = styled.div`
   overflow: hidden;
   transform-origin: bottom right;
 
+  /* Stay at the 380px default at tablet — full-width-minus-margin only
+     kicks in at mobile, where the widget genuinely needs every pixel.
+     At tablet/large-tablet the widget anchors to the bottom-right
+     corner with the rest of the page visible around it; previously the
+     ≤640 rule made the widget span almost the whole viewport with the
+     left edge butted against the screen edge. */
   ${(p) => p.theme.media.tablet} {
-    width: calc(100vw - 2rem);
     height: min(620px, calc(100vh - 2rem));
   }
 
@@ -107,17 +112,6 @@ export const Header = styled.div`
   background: ${(p) => p.theme.colors.surface};
 `;
 
-export const HeaderAvatar = styled.div`
-  width: 32px;
-  height: 32px;
-  border-radius: 8px;
-  background: ${(p) => p.theme.colors.tertiaryMuted};
-  color: ${(p) => p.theme.colors.tertiary};
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  flex-shrink: 0;
-`;
 
 export const HeaderText = styled.div`
   flex: 1;

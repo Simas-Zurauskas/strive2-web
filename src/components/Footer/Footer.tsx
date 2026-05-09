@@ -1,6 +1,7 @@
 'use client';
 
 import Link from 'next/link';
+import { clearConsent } from '@/lib/cookieConsent';
 import * as S from './Footer.styles';
 
 /**
@@ -61,6 +62,27 @@ export const Footer = () => {
                   {link.label}
                 </S.FooterLink>
               ))}
+              {/* GDPR Art. 7(3): withdrawal must be as easy as giving consent.
+                  Clears the local choice → CookieBanner re-mounts on next
+                  render and re-prompts. Already-loaded scripts (Mixpanel/gtag/
+                  Appzi) stay live until reload — the banner copy mentions
+                  this trade-off. */}
+              <S.FooterLink
+                as="button"
+                type="button"
+                onClick={() => clearConsent()}
+                style={{
+                  background: 'transparent',
+                  border: 0,
+                  padding: 0,
+                  cursor: 'pointer',
+                  font: 'inherit',
+                  color: 'inherit',
+                  textAlign: 'left',
+                }}
+              >
+                Cookie preferences
+              </S.FooterLink>
             </S.Column>
 
             <S.Column>

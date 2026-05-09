@@ -8,7 +8,7 @@ export const TermsScreen: React.FC = () => {
   return (
     <S.Layout>
       <S.Title>Terms of Service</S.Title>
-      <S.LastUpdated>Last updated: April 9, 2026</S.LastUpdated>
+      <S.LastUpdated>Last updated: May 9, 2026</S.LastUpdated>
       <S.MarkdownBody>
         <Markdown>{TERMS_CONTENT}</Markdown>
       </S.MarkdownBody>

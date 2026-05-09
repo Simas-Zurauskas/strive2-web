@@ -1,3 +1,4 @@
+import { motion } from 'framer-motion';
 import styled, { keyframes } from 'styled-components';
 
 export const Container = styled.div`
@@ -11,7 +12,10 @@ export const TwoColumn = styled.div`
   grid-template-columns: 1fr 1fr;
   gap: 2.5rem;
 
-  ${(p) => p.theme.media.tabletLarge} {
+  /* At tablet (≤1024) the chat moves out of the grid into a fixed slide-in
+     drawer (see ChatColumn). The structure column takes full width here so
+     the user can browse modules without competing for horizontal space. */
+  ${(p) => p.theme.media.desktop} {
     grid-template-columns: 1fr;
   }
 `;
@@ -23,7 +27,14 @@ export const StructureColumn = styled.div`
   min-width: 0;
 `;
 
-export const ChatColumn = styled.div`
+// Dual-mode container.
+//   Desktop: persistent right rail; sticky-positioned, scrolls with the
+//   page within a viewport-sized box, and shares the structure column's
+//   width on a 1:1 grid.
+//   Tablet/mobile (≤1024): pulled out of the grid via position: fixed,
+//   slides in from the right edge on user trigger ("Refine with AI"
+//   button). Backdrop and drag-to-close come from the surrounding markup.
+export const ChatColumn = styled(motion.div)`
   position: sticky;
   top: calc(56px + 1.5rem);
   align-self: start;
@@ -34,28 +45,112 @@ export const ChatColumn = styled.div`
   flex-direction: column;
   gap: 0.5rem;
 
-  ${(p) => p.theme.media.tabletLarge} {
-    position: static;
-    height: 500px;
-    overflow: visible;
+  ${(p) => p.theme.media.desktop} {
+    position: fixed;
+    top: var(--navbar-offset, 56px);
+    right: 0;
+    bottom: 0;
+    left: auto;
+    align-self: auto;
+    width: min(440px, 100%);
+    height: auto;
+    z-index: 60;
+    background: ${(p) => p.theme.colors.surface};
+    border-left: 1px solid ${(p) => p.theme.colors.surfaceBorder};
+    box-shadow: var(--shadow-drawer-l);
+    /* No padding here — the inner ChatPanel now owns its own header
+       chrome (eyebrow strip with help anchor + collapse chevron, body,
+       composer). Wrapper padding would stack with the panel's own
+       padding and produce a visible inner frame. */
+    padding: 0;
+    gap: 0;
+    /* Match the navbar's 0.3s hide-on-scroll slide so the drawer's top
+       edge tracks --navbar-offset smoothly (same pattern as the lesson
+       side panels). framer-motion only animates transform here, so a
+       CSS top-transition layers cleanly without conflicting. */
+    transition: top 0.3s ease;
   }
 `;
 
-export const ChatHeader = styled.div`
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 0.5rem;
-  flex-shrink: 0;
-  padding: 0 0.25rem;
+// Scrim shown behind the drawer at tablet only. Anchors below the
+// navbar (same as the drawer) so the navbar stays tappable while the
+// drawer is open and the scrim doesn't paint over it.
+export const ChatBackdrop = styled.div<{ $open: boolean }>`
+  display: none;
+
+  ${(p) => p.theme.media.desktop} {
+    display: block;
+    position: fixed;
+    top: var(--navbar-offset, 56px);
+    right: 0;
+    bottom: 0;
+    left: 0;
+    z-index: 59;
+    background: var(--scrim-light);
+    opacity: ${(p) => (p.$open ? 1 : 0)};
+    pointer-events: ${(p) => (p.$open ? 'auto' : 'none')};
+    transition:
+      opacity 0.3s ease,
+      top 0.3s ease;
+  }
 `;
 
-export const ChatPanelSlot = styled.div`
-  flex: 1;
-  min-height: 0;
-  display: flex;
-  flex-direction: column;
+// Inline trigger that opens the chat drawer at tablet. Hidden at desktop
+// (chat is always visible there, so the trigger is redundant).
+export const RefineTrigger = styled.button`
+  display: none;
+
+  ${(p) => p.theme.media.desktop} {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+    padding: 0.625rem 1rem;
+    border-radius: 9999px;
+    /* Same accent-tinted pill as Navbar's FeedbackButton — invites
+       engagement without competing with the primary "Accept" button. */
+    border: 1px solid color-mix(in srgb, ${(p) => p.theme.colors.accent} 40%, transparent);
+    background: color-mix(in srgb, ${(p) => p.theme.colors.accent} 15%, transparent);
+    color: ${(p) => p.theme.colors.accent};
+    font-family: inherit;
+    font-size: 0.9375rem;
+    font-weight: 600;
+    line-height: 1;
+    cursor: pointer;
+    white-space: nowrap;
+    transition:
+      background 220ms cubic-bezier(0.22, 0.61, 0.36, 1),
+      color 220ms cubic-bezier(0.22, 0.61, 0.36, 1),
+      border-color 220ms cubic-bezier(0.22, 0.61, 0.36, 1),
+      box-shadow 220ms cubic-bezier(0.22, 0.61, 0.36, 1),
+      transform 160ms cubic-bezier(0.22, 0.61, 0.36, 1);
+
+    svg {
+      width: 16px;
+      height: 16px;
+    }
+
+    &:hover {
+      background: ${(p) => p.theme.colors.accent};
+      color: ${(p) => p.theme.colors.surface};
+      border-color: ${(p) => p.theme.colors.accent};
+      box-shadow:
+        0 2px 10px ${(p) => p.theme.colors.accentMuted},
+        var(--shadow-card);
+      transform: translateY(-0.5px);
+    }
+
+    &:active {
+      transform: translateY(0) scale(0.97);
+      transition-duration: 80ms;
+    }
+
+    &:focus-visible {
+      outline: 2px solid ${(p) => p.theme.colors.accent};
+      outline-offset: 2px;
+    }
+  }
 `;
+
 
 export const Header = styled.div`
   display: flex;

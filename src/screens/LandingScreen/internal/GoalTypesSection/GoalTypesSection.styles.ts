@@ -52,6 +52,14 @@ export const Heading = styled.h2`
   }
 `;
 
+export const Subhead = styled.p`
+  max-width: 560px;
+  margin: 0 auto;
+  font-size: 1.0625rem;
+  line-height: 1.6;
+  color: ${(p) => p.theme.colors.muted};
+`;
+
 export const Grid = styled.div`
   display: grid;
   grid-template-columns: repeat(5, 1fr);
@@ -75,8 +83,10 @@ export const Grid = styled.div`
 export const Card = styled(motion.div)`
   display: flex;
   flex-direction: column;
+  align-items: center;
+  text-align: center;
   gap: var(--space-2);
-  padding: var(--space-4) var(--space-4) var(--space-5);
+  padding: var(--space-5) var(--space-4);
   background: ${(p) => p.theme.colors.surface};
   border: 1px solid ${(p) => p.theme.colors.surfaceBorder};
   border-radius: var(--radius-lg);
@@ -88,18 +98,6 @@ export const Card = styled(motion.div)`
     box-shadow: var(--shadow-card);
     transform: translateY(-1px);
   }
-`;
-
-export const IconWrap = styled.div`
-  width: 36px;
-  height: 36px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  border-radius: var(--radius-md);
-  background: ${(p) => p.theme.colors.tertiaryMuted};
-  color: ${(p) => p.theme.colors.tertiary};
-  margin-bottom: var(--space-1);
 `;
 
 export const Label = styled.span`
@@ -126,17 +124,14 @@ export const Example = styled.p`
   line-height: 1.5;
   color: ${(p) => p.theme.colors.muted};
   margin: 0;
-  display: flex;
-  align-items: flex-start;
-  gap: 6px;
 
   &::before {
     content: '"';
+    display: block;
     font-family: var(--font-heading-serif), Georgia, serif;
     font-size: 1.25rem;
     line-height: 1;
     color: ${(p) => p.theme.colors.tertiary};
-    flex-shrink: 0;
-    margin-top: -2px;
+    margin-bottom: 2px;
   }
 `;

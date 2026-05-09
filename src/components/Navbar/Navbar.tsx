@@ -1,6 +1,18 @@
 'use client';
 
-import { MessageSquare, User } from 'lucide-react';
+import { useAnimation } from 'framer-motion';
+import { PANEL_CLOSE_TRANSITION, PANEL_OPEN_TRANSITION } from '@/theme/motionPresets';
+import {
+  HelpCircle,
+  Home,
+  LayoutGrid,
+  MessageSquare,
+  Plus,
+  RefreshCcw,
+  SquareCheck,
+  User,
+  X,
+} from 'lucide-react';
 import Link from 'next/link';
 import { usePathname, useRouter } from 'next/navigation';
 import { useTheme } from 'next-themes';
@@ -59,7 +71,7 @@ const QuestionIcon = () => (
   </svg>
 );
 
-const useHideOnScroll = () => {
+const useHideOnScroll = (navRef: React.RefObject<HTMLElement | null>) => {
   const [hidden, setHidden] = useState(false);
   const [scrolled, setScrolled] = useState(false);
   const lastScrollY = useRef(typeof window !== 'undefined' ? window.scrollY : 0);
@@ -104,9 +116,27 @@ const useHideOnScroll = () => {
     return () => window.removeEventListener('scroll', onScroll);
   }, []);
 
+  // --navbar-offset = current visible bottom edge of the Nav element.
+  // The Nav is now a flex-column: a 56px nav row plus an optional
+  // route-extension slot (e.g. CourseShell's ~49px lesson bar). On
+  // hide-on-scroll only the nav row tucks away (translate Y -56px), so
+  // the visible portion is `fullHeight - 56` when hidden, `fullHeight`
+  // when visible. ResizeObserver covers the case where the extension's
+  // content changes mid-session.
   useIsomorphicLayoutEffect(() => {
-    document.documentElement.style.setProperty('--navbar-offset', hidden ? '0px' : '56px');
-  }, [hidden]);
+    const root = document.documentElement;
+    const apply = () => {
+      const h = navRef.current?.offsetHeight ?? 56;
+      const visible = hidden ? Math.max(0, h - 56) : h;
+      root.style.setProperty('--navbar-offset', `${visible}px`);
+    };
+    apply();
+    const node = navRef.current;
+    if (!node || typeof ResizeObserver === 'undefined') return;
+    const ro = new ResizeObserver(apply);
+    ro.observe(node);
+    return () => ro.disconnect();
+  }, [hidden, navRef]);
 
   return { hidden, scrolled };
 };
@@ -116,14 +146,61 @@ export const Navbar = () => {
   const pathname = usePathname();
   const { user } = useAuth();
   const { resolvedTheme, setTheme } = useTheme();
-  const { hidden, scrolled } = useHideOnScroll();
+  const navRef = useRef<HTMLElement>(null);
+  const { hidden, scrolled } = useHideOnScroll(navRef);
+
+  // App drawer (tablet/below). Closed on every route change so a deep
+  // link from the drawer doesn't leave the panel hanging open over the
+  // newly-loaded screen.
+  const [drawerOpen, setDrawerOpen] = useState(false);
+  useEffect(() => setDrawerOpen(false), [pathname]); // eslint-disable-line react-hooks/set-state-in-effect -- close on route change is the intent
+
+  // Driver-style animation control: drag-to-close needs an explicit
+  // snap-back (otherwise framer can leave the drawer wherever the
+  // pointer released). We drive open/closed transitions through a
+  // single `useAnimation` controller — the same controller commits the
+  // close on drag-end-past-threshold or replays the open animation
+  // when the gesture is too small to dismiss.
+  const drawerControls = useAnimation();
+  useEffect(() => {
+    drawerControls.start(
+      drawerOpen ? 'open' : 'closed',
+      drawerOpen ? PANEL_OPEN_TRANSITION : PANEL_CLOSE_TRANSITION,
+    );
+  }, [drawerOpen, drawerControls]);
+
+  // Esc closes the drawer.
+  useEffect(() => {
+    if (!drawerOpen) return;
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') setDrawerOpen(false);
+    };
+    window.addEventListener('keydown', onKey);
+    return () => window.removeEventListener('keydown', onKey);
+  }, [drawerOpen]);
+
+  const navItems: Array<{ href: string; label: string; icon: React.ReactNode }> = [
+    { href: '/', label: 'Home', icon: <Home /> },
+    { href: '/courses/new', label: 'Create', icon: <Plus /> },
+    { href: '/recall', label: 'Recall', icon: <RefreshCcw /> },
+    { href: '/quizzes', label: 'Quizzes', icon: <SquareCheck /> },
+  ];
 
   return (
-    <S.Nav $hidden={hidden} $scrolled={scrolled}>
+    <>
+    <S.Nav ref={navRef} $hidden={hidden} $scrolled={scrolled}>
+      <S.NavRow>
       <S.LeftCluster>
-        <Link href="/" passHref legacyBehavior>
-          <S.Logo>Strive</S.Logo>
-        </Link>
+        <S.HamburgerButton
+          type="button"
+          onClick={() => setDrawerOpen(true)}
+          aria-label="Open menu"
+          aria-expanded={drawerOpen}
+          aria-controls="app-nav-drawer"
+        >
+          <LayoutGrid />
+        </S.HamburgerButton>
+        <S.Logo as={Link} href="/">Strive</S.Logo>
         <S.Divider />
         <S.Links>
           <S.NavLink href="/" $active={pathname === '/'}>
@@ -145,12 +222,12 @@ export const Navbar = () => {
           )} */}
         </S.Links>
       </S.LeftCluster>
-
       <S.Right>
         {/* Credit balance pill — hidden until billing summary loads (unauthed
             or loading users see nothing here, consistent with the other
             account-scoped actions below). */}
         {user && <CreditPill />}
+        <S.DesktopOnlyCluster>
         <S.ThemeSwitch role="group" aria-label="Theme">
           <S.ThemeOption
             type="button"
@@ -192,6 +269,7 @@ export const Navbar = () => {
         >
           <QuestionIcon />
         </S.ThemeToggle>
+        </S.DesktopOnlyCluster>
         <S.ThemeToggle
           type="button"
           onClick={() => router.push('/profile')}
@@ -201,6 +279,136 @@ export const Navbar = () => {
           <User />
         </S.ThemeToggle>
       </S.Right>
+      </S.NavRow>
+      {/* Per-route extension slot. CourseShell portals its lesson bar
+          here so the lesson bar shares the navbar's transform + blur
+          (no possible drift from the nav row above). */}
+      <S.NavExtensionSlot id="navbar-extension-slot" />
     </S.Nav>
+
+      {/* App nav drawer (tablet/below). Rendered as a sibling of <S.Nav>
+          rather than inside it because <S.Nav> applies backdrop-filter,
+          which establishes a containing block for any fixed-positioned
+          descendants — that would clip the drawer to the navbar's
+          bounds instead of letting it span the viewport. Sibling
+          placement positions the drawer against the viewport. Renders
+          unconditionally so the CSS exit animation has somewhere to
+          play out. */}
+      <S.DrawerBackdrop
+        $open={drawerOpen}
+        onClick={() => setDrawerOpen(false)}
+        aria-hidden
+      />
+      <S.Drawer
+        id="app-nav-drawer"
+        aria-hidden={!drawerOpen}
+        aria-label="App menu"
+        initial="closed"
+        animate={drawerControls}
+        variants={{
+          open: { x: '0%' },
+          closed: { x: '-100%' },
+        }}
+        /* Default transition for variant changes is overridden per-call
+           by `drawerControls.start(...)` in the useEffect above so open
+           and close use the app-wide PANEL_OPEN/CLOSE_TRANSITION
+           durations. This prop covers any other animate flips. */
+        transition={PANEL_CLOSE_TRANSITION}
+        /* Drag-to-close. Drag is constrained between the open position
+           (x:0) and ~one drawer width left of it. Releasing past 100px
+           leftward OR with a fast leftward velocity commits the close;
+           otherwise we explicitly replay the open animation so the
+           drawer always lands at one of two positions — never mid-drag.
+           dragElastic:0 + dragMomentum:false → weighted feel, no
+           bounce, no inertia overshoot. */
+        drag="x"
+        dragConstraints={{ left: -360, right: 0 }}
+        dragElastic={0}
+        dragMomentum={false}
+        onDragEnd={(_e, info) => {
+          if (info.offset.x < -100 || info.velocity.x < -400) {
+            setDrawerOpen(false);
+          } else {
+            drawerControls.start('open', PANEL_CLOSE_TRANSITION);
+          }
+        }}
+      >
+        <S.DrawerHeader>
+          <S.Logo as={Link} href="/" onClick={() => setDrawerOpen(false)}>
+            Strive
+          </S.Logo>
+          <S.DrawerCloseButton
+            type="button"
+            onClick={() => setDrawerOpen(false)}
+            aria-label="Close menu"
+          >
+            <X />
+          </S.DrawerCloseButton>
+        </S.DrawerHeader>
+
+        <S.DrawerSection aria-label="Navigation">
+          {navItems.map((item) => (
+            <S.DrawerLink
+              key={item.href}
+              href={item.href}
+              $active={pathname === item.href}
+              onClick={() => setDrawerOpen(false)}
+            >
+              {item.icon}
+              {item.label}
+            </S.DrawerLink>
+          ))}
+        </S.DrawerSection>
+
+        <S.DrawerSection aria-label="Tools">
+          <S.DrawerSectionLabel>Appearance</S.DrawerSectionLabel>
+          <S.DrawerThemeRow>
+            <S.DrawerThemeLabel>Theme</S.DrawerThemeLabel>
+            <S.ThemeSwitch role="group" aria-label="Theme">
+              <S.ThemeOption
+                type="button"
+                $active={resolvedTheme === 'light'}
+                onClick={() => setTheme('light')}
+                aria-label="Light mode"
+                aria-pressed={resolvedTheme === 'light'}
+              >
+                <SunIcon />
+              </S.ThemeOption>
+              <S.ThemeOption
+                type="button"
+                $active={resolvedTheme === 'dark'}
+                onClick={() => setTheme('dark')}
+                aria-label="Dark mode"
+                aria-pressed={resolvedTheme === 'dark'}
+              >
+                <MoonIcon />
+              </S.ThemeOption>
+            </S.ThemeSwitch>
+          </S.DrawerThemeRow>
+
+          <S.DrawerSectionLabel>Support</S.DrawerSectionLabel>
+          <S.DrawerLink
+            href="/help"
+            $active={pathname === '/help'}
+            onClick={() => setDrawerOpen(false)}
+          >
+            <HelpCircle />
+            Help center
+          </S.DrawerLink>
+          {NEXT_PUBLIC_APPZI_BUTTON_ID && (
+            <S.DrawerAction
+              type="button"
+              onClick={() => {
+                setDrawerOpen(false);
+                window.appzi?.openWidget?.(NEXT_PUBLIC_APPZI_BUTTON_ID);
+              }}
+            >
+              <MessageSquare />
+              Send feedback
+            </S.DrawerAction>
+          )}
+        </S.DrawerSection>
+      </S.Drawer>
+    </>
   );
 };

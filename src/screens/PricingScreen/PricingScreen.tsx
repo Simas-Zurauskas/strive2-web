@@ -2,7 +2,7 @@
 
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { useRouter } from 'next/navigation';
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { toast } from 'sonner';
 import {
   cancelSubscription,
@@ -14,6 +14,7 @@ import { Accordion, AccordionItem, AlertDialog, Button, HelpAnchor } from '@/com
 import { ROUTES } from '@/constants/routes';
 import { useAuth } from '@/hooks/useAuth';
 import { useBillingPlans, useBillingSummary } from '@/hooks/useBilling';
+import { analytics } from '@/lib/analytics';
 import { formatAllowance } from '@/lib/allowance';
 import { formatDate } from '@/lib/formatDate';
 import { QKeys } from '@/types';
@@ -105,6 +106,35 @@ export const PricingScreen: React.FC = () => {
 
   const isAuthenticated = Boolean(user);
   const currentPlan = summary?.plan;
+
+  // Fire `pricing_page_viewed` once per mount. `from` is inferred from the
+  // document referrer host vs. our own origin — accurate enough for the
+  // landing-vs-direct split and avoids prop-drilling. SSR guard via the
+  // empty-effect-deps useEffect (runs in the browser only).
+  useEffect(() => {
+    const referrer = typeof document !== 'undefined' ? document.referrer : '';
+    let from: 'landing' | 'top_bar' | 'modal' | 'direct' = 'direct';
+    try {
+      if (referrer) {
+        const ref = new URL(referrer);
+        const here = window.location;
+        if (ref.host === here.host) {
+          // Same-origin referrer: most likely the public landing or top-bar.
+          from = ref.pathname === '/' ? 'landing' : 'top_bar';
+        }
+      }
+    } catch {
+      // Malformed referrer — treat as direct.
+    }
+    analytics.track('pricing_page_viewed', { from });
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+  const handleCadenceToggle = (next: BillingCadence) => {
+    if (next === cadence) return;
+    setCadence(next);
+    analytics.track('pricing_billing_cycle_toggled', { cycle: next });
+  };
   // Tracks the specific plan card whose CTA is mid-flight, so only that
   // button shows the spinner. The others stay enabled-but-disabled (no
   // visual loading) — clicking another mid-redirect would race the Stripe
@@ -189,6 +219,12 @@ export const PricingScreen: React.FC = () => {
 
   const handleCtaClick = (plan: BillingPlan) => {
     const cta = buildCheckoutCta({ planKey: plan.key, currentPlan, isAuthenticated });
+    analytics.track('pricing_plan_cta_clicked', {
+      plan: plan.key,
+      cycle: cadence,
+      cta_label: cta.label,
+      action: cta.action,
+    });
     if (cta.action === 'signup') {
       // `auth=signup` is read by the landing's server component and threads
       // an `initialAuthMode` prop into LandingScreen — the auth modal opens
@@ -213,6 +249,11 @@ export const PricingScreen: React.FC = () => {
     const done = () => setBusyPlan((curr) => (curr === plan.key ? null : curr));
 
     if (cta.action === 'checkout' || cta.action === 'upgrade') {
+      analytics.track('checkout_started', {
+        plan: plan.key,
+        cycle: cadence,
+        intent: cta.action === 'upgrade' ? 'upgrade' : 'new',
+      });
       // Both flows use the same Checkout mutation; `replaceCurrentSubscription`
       // tells the server to skip the duplicate-subscription guard and cancel
       // the existing sub when the new one activates (upgrade path only).
@@ -264,10 +305,10 @@ export const PricingScreen: React.FC = () => {
         </S.Subtitle>
 
         <S.CadenceToggle role="tablist" aria-label="Billing cadence">
-          <S.CadenceBtn $active={cadence === 'monthly'} onClick={() => setCadence('monthly')} role="tab" aria-selected={cadence === 'monthly'}>
+          <S.CadenceBtn $active={cadence === 'monthly'} onClick={() => handleCadenceToggle('monthly')} role="tab" aria-selected={cadence === 'monthly'}>
             Monthly
           </S.CadenceBtn>
-          <S.CadenceBtn $active={cadence === 'annual'} onClick={() => setCadence('annual')} role="tab" aria-selected={cadence === 'annual'}>
+          <S.CadenceBtn $active={cadence === 'annual'} onClick={() => handleCadenceToggle('annual')} role="tab" aria-selected={cadence === 'annual'}>
             Annual
             <S.SavingsChip>Save 20%</S.SavingsChip>
           </S.CadenceBtn>

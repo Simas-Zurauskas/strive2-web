@@ -180,46 +180,41 @@ export type GoalTypeKey = 'master' | 'monetize' | 'pass' | 'build' | 'fluency';
 export const GOAL_TYPES_SECTION = {
   eyebrow: 'Built for any reason',
   heading: 'We build courses for five reasons. Pick yours.',
+  subhead: "We tune the course to what you'll do with it.",
 } as const;
 
 export const GOAL_TYPES: {
   key: GoalTypeKey;
-  icon: 'Telescope' | 'TrendingUp' | 'GraduationCap' | 'Hammer' | 'Languages';
   label: string;
   verb: string;
   example: string;
 }[] = [
   {
     key: 'master',
-    icon: 'Telescope',
     label: 'Master',
     verb: 'Go deep on a topic',
     example: 'Understand how transformers actually work',
   },
   {
     key: 'monetize',
-    icon: 'TrendingUp',
     label: 'Monetize',
     verb: 'Learn a skill that pays',
     example: 'Run Meta Ads for my jewellery store',
   },
   {
     key: 'pass',
-    icon: 'GraduationCap',
     label: 'Pass',
     verb: 'Prep for an exam',
     example: 'Pass the JEE Mains physics paper',
   },
   {
     key: 'build',
-    icon: 'Hammer',
     label: 'Build',
     verb: 'Ship something concrete',
     example: 'Ship a React Native side project',
   },
   {
     key: 'fluency',
-    icon: 'Languages',
     label: 'Fluency',
     verb: 'Get conversational',
     example: 'Order coffee in Spanish by July',

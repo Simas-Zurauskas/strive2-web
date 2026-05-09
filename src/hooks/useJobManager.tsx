@@ -2,7 +2,7 @@
 
 import { useQueryClient } from '@tanstack/react-query';
 import { usePathname, useRouter } from 'next/navigation';
-import { createContext, useCallback, useContext, useEffect, useRef, useState } from 'react';
+import { createContext, useCallback, useContext, useEffect, useMemo, useRef, useState } from 'react';
 import { toast } from 'sonner';
 import { getJobStatus } from '@/api/routes/course';
 import { Course, JobStartedEvent, JobStatusEvent } from '@/api/types';
@@ -304,7 +304,15 @@ export const JobManagerProvider = ({ children }: { children: React.ReactNode }) 
     };
   }, [socket, queryClient, cleanupJob]);
 
-  return (
-    <JobManagerContext.Provider value={{ trackJob, isJobRunningForCourse, generatingLesson, setGeneratingLesson }}>{children}</JobManagerContext.Provider>
+  // Stable identity. `trackJob` + `isJobRunningForCourse` are useCallback-wrapped
+  // above; `setGeneratingLesson` is React's stable setter; `generatingLesson`
+  // is the only changing dep, so consumers re-render only when it actually
+  // flips. Without useMemo, the entire authed tree re-rendered on every
+  // parent render of JobManagerProvider.
+  const value = useMemo(
+    () => ({ trackJob, isJobRunningForCourse, generatingLesson, setGeneratingLesson }),
+    [trackJob, isJobRunningForCourse, generatingLesson],
   );
+
+  return <JobManagerContext.Provider value={value}>{children}</JobManagerContext.Provider>;
 };

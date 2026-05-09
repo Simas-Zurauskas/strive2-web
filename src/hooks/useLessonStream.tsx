@@ -1,7 +1,7 @@
 'use client';
 
 import { useQueryClient } from '@tanstack/react-query';
-import { createContext, useCallback, useContext, useEffect, useState } from 'react';
+import { createContext, useCallback, useContext, useEffect, useMemo, useState } from 'react';
 import { toast } from 'sonner';
 import { generateLesson } from '@/api/routes/course';
 import { ClientApiError } from '@/api/types';
@@ -336,12 +336,16 @@ export const LessonStreamProvider = ({ children }: { children: React.ReactNode }
     [setGeneratingLesson],
   );
 
+  // Stable identity (see useSocket / useJobManager for rationale).
+  // `start` is useCallback-wrapped above; the two setters are stable;
+  // `active`/`includeImage`/`includeLinks` are the only changing deps.
+  const value = useMemo(
+    () => ({ active, start, includeImage, includeLinks, setIncludeImage, setIncludeLinks }),
+    [active, start, includeImage, includeLinks],
+  );
+
   return (
-    <LessonStreamContext.Provider
-      value={{ active, start, includeImage, includeLinks, setIncludeImage, setIncludeLinks }}
-    >
-      {children}
-    </LessonStreamContext.Provider>
+    <LessonStreamContext.Provider value={value}>{children}</LessonStreamContext.Provider>
   );
 };
 

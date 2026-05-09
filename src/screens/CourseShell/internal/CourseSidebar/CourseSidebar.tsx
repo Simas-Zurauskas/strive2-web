@@ -14,6 +14,7 @@ import { useRouter } from 'next/navigation';
 import { useEffect, useMemo, useRef } from 'react';
 import { Badge, LessonIndicator, computeLessonIndicatorState } from '@/components';
 import { plural } from '@/lib/strings';
+import { useCourseContext } from '../../CourseContext';
 import * as S from './CourseSidebar.styles';
 import type { CourseProgressResponse } from '@/api/routes/course';
 import type { Course, CourseQuizProgressItem } from '@/api/types';
@@ -66,6 +67,16 @@ export const CourseSidebar = ({
 }: CourseSidebarProps) => {
   const router = useRouter();
   const activeRef = useRef<HTMLButtonElement>(null);
+  const { isDesktop, setSidebarOpen } = useCourseContext();
+
+  // Tablet/mobile: tapping the course title should both navigate AND
+  // close the sidebar overlay. Desktop keeps the sidebar visible since
+  // it's a persistent left rail. Same pattern as navigateToLesson in
+  // CourseShell — overlay routes auto-dismiss after acting.
+  const handleCourseTitleClick = () => {
+    router.push(courseBasePath);
+    if (!isDesktop) setSidebarOpen(false);
+  };
 
   // Initialize on first render if parent hasn't set it yet
   const expandedModules = expandedModulesProp ?? new Set(modules.map((_, i) => i));
@@ -160,7 +171,7 @@ export const CourseSidebar = ({
     <S.Container>
       <S.Header>
         <S.HeaderContent>
-          <S.CourseNameLink onClick={() => router.push(courseBasePath)}>{courseName || 'Course'}</S.CourseNameLink>
+          <S.CourseNameLink onClick={handleCourseTitleClick}>{courseName || 'Course'}</S.CourseNameLink>
           <S.MetaRow>
             {depthLabel && <Badge variant="gold">{depthLabel}</Badge>}
             <S.MetaText>

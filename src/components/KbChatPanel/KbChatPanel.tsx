@@ -19,11 +19,12 @@
 import { useChat } from '@ai-sdk/react';
 import { DefaultChatTransport, type UIMessage } from 'ai';
 import { AnimatePresence, motion, useReducedMotion } from 'framer-motion';
-import { ChevronDown, MessageCircle, Sparkles } from 'lucide-react';
+import { ChevronDown, Sparkles } from 'lucide-react';
 import { useSession } from 'next-auth/react';
 import { useMemo, useState } from 'react';
 import { Chat, type ChatMessageData } from '@/components/Chat';
 import { NEXT_PUBLIC_API_URL } from '@/conf/env';
+import { PANEL_CLOSE_TRANSITION, PANEL_OPEN_TRANSITION } from '@/theme/motionPresets';
 import * as S from './KbChatPanel.styles';
 
 const DEFAULT_SUGGESTED_PROMPTS = [
@@ -33,18 +34,24 @@ const DEFAULT_SUGGESTED_PROMPTS = [
   'How do I create my first course?',
 ];
 
+// Same motion vocabulary as the lesson side panels and the app drawer:
+// PANEL_OPEN_TRANSITION on enter (the widget is what the user is
+// engaging with), PANEL_CLOSE_TRANSITION on exit (returning to the
+// FAB is the "close" direction). Scale + opacity + y is the bloom
+// shape specific to the FAB↔widget pattern; only the duration + ease
+// are unified with the rest of the app.
 const widgetMotionFull = {
   initial: { opacity: 0, scale: 0.85, y: 12 },
   animate: { opacity: 1, scale: 1, y: 0 },
   exit: { opacity: 0, scale: 0.9, y: 8 },
-  transition: { duration: 0.22, ease: [0.16, 1, 0.3, 1] as const },
+  transition: PANEL_OPEN_TRANSITION,
 };
 
 const fabMotionFull = {
   initial: { opacity: 0, scale: 0.7 },
   animate: { opacity: 1, scale: 1 },
   exit: { opacity: 0, scale: 0.7 },
-  transition: { duration: 0.18, ease: [0.16, 1, 0.3, 1] as const },
+  transition: PANEL_CLOSE_TRANSITION,
 };
 
 // prefers-reduced-motion: drop the scale/translate transforms and shrink
@@ -108,6 +115,14 @@ export const KbChatPanel = ({ suggestedPrompts }: KbChatPanelProps = {}) => {
 
   return (
     <S.Root>
+      {/* `mode="wait"` serialises exit→enter so only one of the two
+          motion children is in the DOM at a time. That avoids the
+          previous left-shift (FAB and widget reflowing as siblings
+          during cross-fade) and keeps the FAB rendering at its natural
+          pill width without absolute-positioning hacks. The total swap
+          time is exit (PANEL_CLOSE_TRANSITION ≈ 300ms) + enter
+          (PANEL_OPEN_TRANSITION ≈ 400ms) — acceptable for an
+          intentional FAB↔widget transition. */}
       <AnimatePresence initial={false} mode="wait">
         {open ? (
           <motion.div key="widget" {...widgetMotion} style={{ transformOrigin: 'bottom right' }}>
@@ -135,9 +150,9 @@ interface ExpandedPanelProps {
 const ExpandedPanel = ({ onClose, chat, prompts }: ExpandedPanelProps) => (
   <S.Widget role="dialog" aria-label="Strive guide chat">
     <S.Header>
-      <S.HeaderAvatar aria-hidden="true">
-        <MessageCircle size={16} strokeWidth={1.75} />
-      </S.HeaderAvatar>
+      {/* No avatar — the wordmark on the FAB does the brand work, and a
+          small icon in the header was reading as a stock plate. The
+          title alone is the cleaner gesture. */}
       <S.HeaderText>
         <S.HeaderTitle>Strive guide</S.HeaderTitle>
       </S.HeaderText>

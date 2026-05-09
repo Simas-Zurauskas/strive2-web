@@ -1,11 +1,12 @@
 'use client';
 
 import { useRouter, useSearchParams } from 'next/navigation';
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import { Course, CourseDepth } from '@/api/types';
 import { Stepper, AlertDialog, TextLoader } from '@/components';
 import { DepthOverrideDialog } from '@/components/DepthOverrideDialog';
 import { useCourse } from '@/hooks/useCourses';
+import { analytics } from '@/lib/analytics';
 import * as S from './GenerateCourseScreen.styles';
 import { GoalStep, ClarifyStep, DepthStep, StructureStep, useWizardMutations, useWizardHandlers } from './internal';
 import { useDepthOverrideDialog } from './internal/useDepthOverrideDialog';
@@ -46,7 +47,16 @@ export const GenerateCourseScreen = () => {
 // Inner wizard: receives initial values as props, no effects needed
 const GenerateCourseWizard = ({ resumeCourse }: { resumeCourse: Course | null }) => {
   const router = useRouter();
-  const [step, setStep] = useState<Step>(() => determineStepFromCourse(resumeCourse));
+  const initialStep = useMemo(() => determineStepFromCourse(resumeCourse), [resumeCourse]);
+  const [step, setStep] = useState<Step>(initialStep);
+  // Tracks whether the user reached step 4 (StructureStep) so
+  // `wizard_step_4_structure_viewed` fires once per session, not on every
+  // back-and-forth navigation. Reused on unmount as the
+  // `wizard_abandoned` no-fire guard once `course.status === 'ready'`.
+  const wizardStartedAt = useRef<number>(Date.now());
+  const structureViewedRef = useRef(false);
+  const acceptedRef = useRef(false);
+  const lastStepRef = useRef<Step>(initialStep);
   const [courseId, setCourseId] = useState<string | null>(resumeCourse?._id ?? null);
   const [goal, setGoal] = useState(resumeCourse?.goal ?? '');
   const [generatedForGoal, setGeneratedForGoal] = useState(resumeCourse?.goal ?? '');
@@ -117,7 +127,59 @@ const GenerateCourseWizard = ({ resumeCourse }: { resumeCourse: Course | null })
   // Scroll to top on step change
   useEffect(() => {
     window.scrollTo({ top: 0 });
+    lastStepRef.current = step;
   }, [step]);
+
+  // Mixpanel: `wizard_started` once on mount. `entry_point` defaults to
+  // 'home' for fresh sessions; the search-param branch on resume is
+  // covered separately via `entry_point: 'resume'`.
+  useEffect(() => {
+    analytics.track('wizard_started', {
+      entry_point: resumeCourse ? 'resume' : 'home',
+    });
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+  // Mixpanel: `wizard_step_4_structure_viewed` — fire once on first visit
+  // to step 4, with the realised module/lesson counts so analyses can group
+  // wizards by complexity without joining back to Mongo.
+  useEffect(() => {
+    if (step === 4 && !structureViewedRef.current) {
+      const modules = handlers.structureData ?? [];
+      const moduleCount = modules.length;
+      const lessonCountEstimated = modules.reduce(
+        (sum, m) => sum + ((m as { lessons?: unknown[] }).lessons?.length ?? 0),
+        0,
+      );
+      analytics.track('wizard_step_4_structure_viewed', {
+        module_count: moduleCount,
+        lesson_count_estimated: lessonCountEstimated,
+      });
+      structureViewedRef.current = true;
+    }
+  }, [step, handlers.structureData]);
+
+  // Mixpanel: `wizard_abandoned` on unmount when the course was never
+  // accepted. `acceptedRef` is set inside handlers.handleAccept's onSuccess
+  // mirror via a separate effect — but here we infer acceptance from
+  // course.status changing to 'ready'. The current snapshot at unmount is
+  // captured in the cleanup so we don't depend on a stale closure.
+  useEffect(() => {
+    if (course?.status === 'ready') {
+      acceptedRef.current = true;
+    }
+  }, [course?.status]);
+
+  useEffect(() => {
+    return () => {
+      if (acceptedRef.current) return;
+      analytics.track('wizard_abandoned', {
+        last_step: lastStepRef.current,
+        time_in_wizard_seconds: Math.max(0, Math.round((Date.now() - wizardStartedAt.current) / 1000)),
+      });
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   // ── Computed ───────────────────────────────────────────
   const completedSteps = useMemo(() => {
