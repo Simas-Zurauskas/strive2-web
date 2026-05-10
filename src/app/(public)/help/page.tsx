@@ -1,6 +1,7 @@
 import { SITE_URL } from '@/conf/env.server';
 import { getAllTopics, getSearchEntries } from '@/lib/kb';
 import { buildBreadcrumbJsonLd, buildHelpHubJsonLd, renderJsonLd } from '@/lib/seo/jsonLd';
+import { DEFAULT_OG_IMAGES } from '@/lib/seo/sharedMetadata';
 import { KbHubScreen } from '@/screens/KbScreen';
 import type { Metadata } from 'next';
 
@@ -14,6 +15,7 @@ export const metadata: Metadata = {
     description: 'Articles, guides, and answers about the Strive learning platform.',
     type: 'website',
     url: '/help',
+    images: DEFAULT_OG_IMAGES,
   },
 };
 

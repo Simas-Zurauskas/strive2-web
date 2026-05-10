@@ -7,6 +7,7 @@ import {
   buildLearnCourseJsonLd,
   renderJsonLd,
 } from '@/lib/seo/jsonLd';
+import { DEFAULT_OG_IMAGES, DEFAULT_TWITTER_IMAGES } from '@/lib/seo/sharedMetadata';
 import { LearnTopicScreen } from '@/screens/LearnScreen';
 import type { Metadata } from 'next';
 
@@ -38,11 +39,13 @@ export const generateMetadata = async ({ params }: RouteParams): Promise<Metadat
       description: topic.metaDescription,
       type: 'website',
       url: `/learn/${topic.slug}`,
+      images: DEFAULT_OG_IMAGES,
     },
     twitter: {
       card: 'summary_large_image',
       title,
       description: topic.metaDescription,
+      images: DEFAULT_TWITTER_IMAGES,
     },
   };
 };

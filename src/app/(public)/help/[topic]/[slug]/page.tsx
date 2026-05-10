@@ -2,6 +2,7 @@ import { notFound } from 'next/navigation';
 import { SITE_URL } from '@/conf/env.server';
 import { getAllArticles, getArticle, getRelatedArticles, getTopic } from '@/lib/kb';
 import { buildBreadcrumbJsonLd, renderJsonLd } from '@/lib/seo/jsonLd';
+import { DEFAULT_OG_IMAGES } from '@/lib/seo/sharedMetadata';
 import { KbArticleScreen } from '@/screens/KbScreen';
 import type { KbArticle } from '@/lib/kb';
 import type { Metadata } from 'next';
@@ -37,6 +38,7 @@ export const generateMetadata = async ({ params }: RouteParams): Promise<Metadat
       description: article.summary,
       type: 'article',
       url: canonical,
+      images: DEFAULT_OG_IMAGES,
     },
   };
 };

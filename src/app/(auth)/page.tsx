@@ -8,6 +8,7 @@ import {
   buildWebSiteJsonLd,
   renderJsonLd,
 } from '@/lib/seo/jsonLd';
+import { DEFAULT_OG_IMAGES, DEFAULT_TWITTER_IMAGES } from '@/lib/seo/sharedMetadata';
 import LandingScreen from '@/screens/LandingScreen';
 import { FAQ } from '@/screens/LandingScreen/constants';
 
@@ -23,8 +24,9 @@ export const metadata: Metadata = {
     url: SITE_URL,
     siteName: 'Strive',
     type: 'website',
+    images: DEFAULT_OG_IMAGES,
   },
-  twitter: { card: 'summary_large_image' },
+  twitter: { card: 'summary_large_image', images: DEFAULT_TWITTER_IMAGES },
 };
 
 type PageProps = {

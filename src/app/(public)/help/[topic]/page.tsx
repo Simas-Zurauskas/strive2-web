@@ -6,6 +6,7 @@ import {
   buildTopicCollectionJsonLd,
   renderJsonLd,
 } from '@/lib/seo/jsonLd';
+import { DEFAULT_OG_IMAGES } from '@/lib/seo/sharedMetadata';
 import { KbTopicScreen } from '@/screens/KbScreen';
 import type { Metadata } from 'next';
 
@@ -33,6 +34,7 @@ export const generateMetadata = async ({ params }: RouteParams): Promise<Metadat
       description: topic.summary,
       type: 'website',
       url: `/help/${topicSlug}`,
+      images: DEFAULT_OG_IMAGES,
     },
   };
 };
