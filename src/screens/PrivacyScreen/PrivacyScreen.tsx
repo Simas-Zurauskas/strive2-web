@@ -1,16 +1,20 @@
 'use client';
 
 import { Markdown } from '@/components';
-import { PRIVACY_CONTENT } from './content';
 import * as S from './PrivacyScreen.styles';
 
-export const PrivacyScreen: React.FC = () => {
+interface PrivacyScreenProps {
+  body: string;
+  updated?: string;
+}
+
+export const PrivacyScreen: React.FC<PrivacyScreenProps> = ({ body, updated }) => {
   return (
     <S.Layout>
       <S.Title>Privacy Policy</S.Title>
-      <S.LastUpdated>Last updated: May 9, 2026</S.LastUpdated>
+      {updated ? <S.LastUpdated>Last updated: {updated}</S.LastUpdated> : null}
       <S.MarkdownBody>
-        <Markdown>{PRIVACY_CONTENT}</Markdown>
+        <Markdown>{body}</Markdown>
       </S.MarkdownBody>
     </S.Layout>
   );

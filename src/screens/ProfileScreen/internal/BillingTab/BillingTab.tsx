@@ -3,8 +3,7 @@
 import { useQueryClient } from '@tanstack/react-query';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { useEffect, useRef, useState } from 'react';
-import { toast } from 'sonner';
-import { BillingPanel, Button } from '@/components';
+import { BillingPanel, Button, PurchaseSuccessModal, type PurchaseKind } from '@/components';
 import { useAuth } from '@/hooks';
 import {
   useDeleteAllUsageEvents,
@@ -36,10 +35,11 @@ export const BillingTab: React.FC = () => {
   const searchParams = useSearchParams();
   const router = useRouter();
   const queryClient = useQueryClient();
-  const checkoutToastShown = useRef(false);
+  const checkoutHandledRef = useRef(false);
   const { user } = useAuth();
   const isAdmin = Boolean(user?.isAdmin);
   const [devExpanded, setDevExpanded] = useState(false);
+  const [purchaseKind, setPurchaseKind] = useState<PurchaseKind | null>(null);
   const [offset, setOffset] = useState(0);
   const [sortBy, setSortBy] = useState<UsageSortField>('timestamp');
   const [sortDir, setSortDir] = useState<UsageSortDir>('desc');
@@ -59,27 +59,27 @@ export const BillingTab: React.FC = () => {
 
   // Stripe Checkout redirects here with `?checkout=subscription|topup`.
   // The webhook has (almost certainly) already updated state by the time
-  // the user lands — we just show a welcome toast and strip the flag from
-  // the URL so a page reload doesn't re-trigger it. The `useRef` guard
+  // the user lands — we invalidate the billing queries (so the modal reads
+  // fresh data) and open the PurchaseSuccessModal. The `useRef` guard
   // covers React Strict Mode's double-effect behavior in dev.
   useEffect(() => {
-    if (checkoutToastShown.current) return;
+    if (checkoutHandledRef.current) return;
     const checkoutKind = searchParams.get('checkout');
     if (checkoutKind !== 'subscription' && checkoutKind !== 'topup') return;
-    checkoutToastShown.current = true;
-
-    if (checkoutKind === 'subscription') {
-      toast.success('Welcome aboard — your subscription is active and allowance is ready.');
-    } else {
-      toast.success('Top-up allowance added to your account.');
-    }
+    checkoutHandledRef.current = true;
 
     // Force-refresh billing data; the socket event will usually beat us to
-    // this, but explicit invalidation guarantees the RenewalCard + balance
+    // this, but explicit invalidation guarantees the modal + BillingPanel
     // reflect the new state even if the webhook is delayed.
     queryClient.invalidateQueries({ queryKey: [QKeys.BILLING_SUMMARY] });
     queryClient.invalidateQueries({ queryKey: [QKeys.AUTH_USER] });
     queryClient.invalidateQueries({ queryKey: [QKeys.BILLING_LEDGER] });
+
+    // Translating a one-shot URL signal into modal open state — the ref
+    // guard above ensures this fires exactly once per arrival, so the
+    // setState-in-effect lint rule is a false positive here.
+    // eslint-disable-next-line react-hooks/set-state-in-effect
+    setPurchaseKind(checkoutKind);
 
     // Strip the checkout flag while preserving the billing tab selection.
     router.replace('/profile?tab=billing', { scroll: false });
@@ -102,13 +102,20 @@ export const BillingTab: React.FC = () => {
   const clearEvents = useDeleteAllUsageEvents();
 
   const handleClear = () => {
-    if (!window.confirm('Delete ALL your usage events? This is an admin action and cannot be undone.')) return;
+    if (
+      !window.confirm(
+        'Delete ALL your usage events AND action-related credit-ledger rows? Your actual balance is unchanged. This is an admin action and cannot be undone.',
+      )
+    )
+      return;
     clearEvents.mutate(undefined, { onSuccess: () => setOffset(0) });
   };
 
   return (
     <>
       <BillingPanel />
+
+      <PurchaseSuccessModal kind={purchaseKind} onClose={() => setPurchaseKind(null)} />
 
       {isAdmin && (
         <S.DevSection>

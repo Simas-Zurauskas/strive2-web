@@ -135,10 +135,10 @@ export const QuizzesScreen: React.FC = () => {
     <PageLayout>
       <S.ContentWrap>
         <S.PageHeader>
-          <S.Eyebrow>Practice</S.Eyebrow>
-          <S.Title>
-            A quiet way to make what you read stick. <HelpAnchor concept="quiz-types" />
-          </S.Title>
+          <S.Eyebrow>
+            Practice <HelpAnchor concept="quiz-types" size="sm" />
+          </S.Eyebrow>
+          <S.Title>A quiet way to make what you read stick.</S.Title>
           <S.Subtitle>
             Each module ends with a quiz that checks your understanding. Reviews come back on a
             spaced schedule, so the work compounds instead of fading.

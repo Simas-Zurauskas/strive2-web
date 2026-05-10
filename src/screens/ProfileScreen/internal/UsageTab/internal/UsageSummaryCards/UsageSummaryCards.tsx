@@ -17,23 +17,28 @@ const SERVICE_LABELS: Record<string, string> = {
 };
 
 export const UsageSummaryCards: React.FC<Props> = ({ data, loading }) => {
-  // Each card shows two numbers: charged (what the user paid in credits-equivalent
-  // microcents) and vendor (what we paid the provider). They differ for the four
-  // marked-up services (judge0, tavily, jina, bfl); for anthropic-only periods
-  // they're equal and the vendor line is hidden.
+  // Each card stacks three numbers: credits debited (big, integer count),
+  // charged (small, vendor cost × markup in $), vendor (small, raw provider
+  // spend in $). Credits come from CreditLedger `debit_action` rows — true
+  // balance debit, not derived from charged microcents — so it accounts for
+  // per-job ceil and balance-clamp differences. The vendor subline is hidden
+  // when it equals charged (anthropic-only periods have no markup gap).
   const cards = [
     {
       label: 'Today',
+      credits: data?.today.creditsDebited ?? 0,
       charged: data?.today.chargedMicroCents ?? 0,
       vendor: data?.today.costMicroCents ?? 0,
     },
     {
       label: 'This month',
+      credits: data?.thisMonth.creditsDebited ?? 0,
       charged: data?.thisMonth.chargedMicroCents ?? 0,
       vendor: data?.thisMonth.costMicroCents ?? 0,
     },
     {
       label: 'All time',
+      credits: data?.allTime.creditsDebited ?? 0,
       charged: data?.allTime.chargedMicroCents ?? 0,
       vendor: data?.allTime.costMicroCents ?? 0,
     },
@@ -48,7 +53,14 @@ export const UsageSummaryCards: React.FC<Props> = ({ data, loading }) => {
       <S.Grid>
         {cards.map((c) => (
           <S.Card key={c.label}>
-            <S.Value>{loading ? <Skeleton width={72} /> : formatMicroCents(c.charged)}</S.Value>
+            <S.Value>
+              {loading ? <Skeleton width={72} /> : `${c.credits.toLocaleString()} cr`}
+            </S.Value>
+            {!loading && (
+              <S.VendorValue title="What the user was charged (vendor × markup)">
+                charged {formatMicroCents(c.charged)}
+              </S.VendorValue>
+            )}
             {!loading && c.vendor !== c.charged && (
               <S.VendorValue title="Vendor cost (what we paid the provider)">
                 vendor {formatMicroCents(c.vendor)}

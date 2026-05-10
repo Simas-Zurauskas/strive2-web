@@ -8,10 +8,13 @@ export const Layout = styled.div`
   display: flex;
   flex-direction: column;
   align-items: center;
-  padding: 2rem 2rem 0 2rem;
+  /* Bottom padding keeps the Structure step's sticky right-rail chat
+     (whose bottom is bound by this Layout's bottom edge at end-of-scroll)
+     from sitting flush against the global Footer. */
+  padding: 2rem 2rem 2.5rem 2rem;
 
   ${(p) => p.theme.media.tablet} {
-    padding: 2rem 1.25rem 0;
+    padding: 2rem 1.25rem 2.5rem;
   }
 `;
 

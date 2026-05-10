@@ -27,7 +27,7 @@ const OPEN_PATHS = new Set([
   '/privacy',
 ]);
 
-const OPEN_PREFIXES = ['/help'];
+const OPEN_PREFIXES = ['/help', '/learn', '/blog'];
 
 export async function middleware(req: NextRequest) {
   const { pathname } = req.nextUrl;

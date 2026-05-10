@@ -8,16 +8,25 @@ import { DepthOverrideDialog } from '@/components/DepthOverrideDialog';
 import { useCourse } from '@/hooks/useCourses';
 import { analytics } from '@/lib/analytics';
 import * as S from './GenerateCourseScreen.styles';
-import { GoalStep, ClarifyStep, DepthStep, StructureStep, useWizardMutations, useWizardHandlers } from './internal';
+import { GoalStep, PurposeStep, ClarifyStep, DepthStep, StructureStep, useWizardMutations, useWizardHandlers } from './internal';
 import { useDepthOverrideDialog } from './internal/useDepthOverrideDialog';
 
-type Step = 1 | 2 | 3 | 4;
+type Step = 1 | 2 | 3 | 4 | 5;
 
+// Resume routing — pick the right step from the persisted course state.
+// Order matters: structure (terminal) > depth/answers (post-questions) >
+// goalTypeConfirmedAt (post-purpose) > clarifyData (post-goal). The
+// `goalTypeConfirmedAt` field is the only reliable signal that the user
+// has moved past Purpose; relying on `goalTypeConfidence === 'high'`
+// would misclassify because the AI classifier itself can output `high`.
 const determineStepFromCourse = (course: Course | null): Step => {
   if (!course) return 1;
-  if (course.structure) return 4;
+  if (course.structure) return 5;
   if (!course.clarifyData) return 1;
-  if (course.depth || course.answers) return 3;
+  const hasAnswers =
+    course.answers && Object.keys(course.answers as Record<string, unknown>).length > 0;
+  if (course.depth || hasAnswers) return 4;
+  if (course.goalTypeConfirmedAt) return 3;
   return 2;
 };
 
@@ -49,8 +58,8 @@ const GenerateCourseWizard = ({ resumeCourse }: { resumeCourse: Course | null })
   const router = useRouter();
   const initialStep = useMemo(() => determineStepFromCourse(resumeCourse), [resumeCourse]);
   const [step, setStep] = useState<Step>(initialStep);
-  // Tracks whether the user reached step 4 (StructureStep) so
-  // `wizard_step_4_structure_viewed` fires once per session, not on every
+  // Tracks whether the user reached step 5 (StructureStep) so
+  // `wizard_step_5_structure_viewed` fires once per session, not on every
   // back-and-forth navigation. Reused on unmount as the
   // `wizard_abandoned` no-fire guard once `course.status === 'ready'`.
   const wizardStartedAt = useRef<number>(Date.now());
@@ -140,18 +149,18 @@ const GenerateCourseWizard = ({ resumeCourse }: { resumeCourse: Course | null })
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  // Mixpanel: `wizard_step_4_structure_viewed` — fire once on first visit
-  // to step 4, with the realised module/lesson counts so analyses can group
+  // Mixpanel: `wizard_step_5_structure_viewed` — fire once on first visit
+  // to step 5, with the realised module/lesson counts so analyses can group
   // wizards by complexity without joining back to Mongo.
   useEffect(() => {
-    if (step === 4 && !structureViewedRef.current) {
+    if (step === 5 && !structureViewedRef.current) {
       const modules = handlers.structureData ?? [];
       const moduleCount = modules.length;
       const lessonCountEstimated = modules.reduce(
         (sum, m) => sum + ((m as { lessons?: unknown[] }).lessons?.length ?? 0),
         0,
       );
-      analytics.track('wizard_step_4_structure_viewed', {
+      analytics.track('wizard_step_5_structure_viewed', {
         module_count: moduleCount,
         lesson_count_estimated: lessonCountEstimated,
       });
@@ -178,21 +187,29 @@ const GenerateCourseWizard = ({ resumeCourse }: { resumeCourse: Course | null })
         time_in_wizard_seconds: Math.max(0, Math.round((Date.now() - wizardStartedAt.current) / 1000)),
       });
     };
-    // eslint-disable-next-line react-hooks/exhaustive-deps
+     
   }, []);
 
   // ── Computed ───────────────────────────────────────────
   const completedSteps = useMemo(() => {
     const completed: number[] = [];
+    // Step 1 (Goal) done = clarify settled.
     if (handlers.clarifyData && generatedForGoal) completed.push(1);
 
+    // Step 2 (Purpose) done = the user pressed Next at least once.
+    if (course?.goalTypeConfirmedAt) completed.push(2);
+
+    // Step 3 (Questions) done = answers persisted (server or local).
     const hasAnswers =
       Object.keys(answers).length > 0 ||
       (course?.answers && Object.keys(course.answers as Record<string, unknown>).length > 0);
-    if (hasAnswers) completed.push(2);
+    if (hasAnswers) completed.push(3);
 
-    if (depth || course?.depth) completed.push(3);
-    if (handlers.structureData) completed.push(4);
+    // Step 4 (Depth) done = depth selected.
+    if (depth || course?.depth) completed.push(4);
+
+    // Step 5 (Structure) done = structure exists (modules array on course).
+    if (handlers.structureData) completed.push(5);
     return completed;
   }, [handlers.clarifyData, generatedForGoal, answers, course, depth, handlers.structureData]);
 
@@ -201,6 +218,7 @@ const GenerateCourseWizard = ({ resumeCourse }: { resumeCourse: Course | null })
     if (completedSteps.includes(1)) navigable.push(2);
     if (completedSteps.includes(2)) navigable.push(3);
     if (completedSteps.includes(3)) navigable.push(4);
+    if (completedSteps.includes(4)) navigable.push(5);
     return navigable;
   }, [completedSteps]);
 
@@ -229,7 +247,7 @@ const GenerateCourseWizard = ({ resumeCourse }: { resumeCourse: Course | null })
 
   return (
     <S.Layout>
-      <S.Container $wide={step === 4} $semiWide={step === 1}>
+      <S.Container $wide={step === 5} $semiWide={step === 1}>
         {step !== 1 && (
           <>
             <S.TopBar>
@@ -249,8 +267,8 @@ const GenerateCourseWizard = ({ resumeCourse }: { resumeCourse: Course | null })
             <S.StepperWrapper>
               <Stepper
                 currentStep={step}
-                totalSteps={4}
-                labels={['Goal', 'Questions', 'Depth', 'Structure']}
+                totalSteps={5}
+                labels={['Goal', 'Purpose', 'Questions', 'Depth', 'Structure']}
                 completedSteps={completedSteps}
                 navigableSteps={navigableSteps}
                 onStepClick={(s) => handlers.handleStepClick(s, navigableSteps)}
@@ -270,11 +288,35 @@ const GenerateCourseWizard = ({ resumeCourse }: { resumeCourse: Course | null })
             />
           )}
 
+          {/* Step 2 (Purpose) — wait until clarify returns so the AI
+              suggestion + goalTypeNoun are present. The PurposeStep
+              itself doesn't show a chip when clarify is still running;
+              we render the same loader as the questions step did
+              previously. */}
           {step === 2 && !handlers.clarifyData && handlers.isJobRunning && (
+            <TextLoader text="Detecting your goal type..." />
+          )}
+
+          {step === 2 && handlers.clarifyData && course?.goalType && (
+            <PurposeStep
+              goal={goal}
+              aiSuggestion={course.goalType}
+              currentGoalType={course.goalType}
+              loading={
+                handlers.updateCourseMutation.isPending ||
+                handlers.clarifyMutation.isPending ||
+                handlers.isJobRunning
+              }
+              onConfirm={handlers.handlePurposeConfirm}
+              onBack={() => setStep(1)}
+            />
+          )}
+
+          {step === 3 && !handlers.clarifyData && handlers.isJobRunning && (
             <TextLoader text="Preparing your questions..." />
           )}
 
-          {step === 2 && handlers.clarifyData && (
+          {step === 3 && handlers.clarifyData && (
             <ClarifyStep
               questions={handlers.clarifyData.questions}
               initialAnswers={answers}
@@ -282,13 +324,12 @@ const GenerateCourseWizard = ({ resumeCourse }: { resumeCourse: Course | null })
               goalType={course?.goalType ?? null}
               goalTypeNoun={handlers.clarifyData.goalTypeNoun}
               onSubmit={handlers.handleClarifySubmit}
-              onBack={() => setStep(1)}
+              onBack={() => setStep(2)}
               onDirtyChange={handlers.handleDirtyChange}
-              onGoalTypeChange={handlers.handleGoalTypeSwitch}
             />
           )}
 
-          {step === 3 && handlers.clarifyData && (
+          {step === 4 && handlers.clarifyData && (
             <DepthStep
               depthPreviews={handlers.depthPreviews}
               previewsLoading={handlers.depthPreviewsMutation.isPending || (handlers.isJobRunning && !handlers.depthPreviews)}
@@ -303,16 +344,16 @@ const GenerateCourseWizard = ({ resumeCourse }: { resumeCourse: Course | null })
                   onSuccess: (data) => handlers.trackJob({ jobId: data.jobId, courseId, type: 'generate_depth_previews' }),
                 })
               }
-              onBack={() => setStep(2)}
+              onBack={() => setStep(3)}
               onDirtyChange={handlers.handleDirtyChange}
             />
           )}
 
-          {step === 4 && !handlers.structureData && handlers.isJobRunning && (
+          {step === 5 && !handlers.structureData && handlers.isJobRunning && (
             <TextLoader text="Building your course structure..." />
           )}
 
-          {step === 4 && handlers.structureData && courseId && (
+          {step === 5 && handlers.structureData && courseId && (
             <StructureStep
               courseId={courseId}
               modules={handlers.structureData}
@@ -330,7 +371,7 @@ const GenerateCourseWizard = ({ resumeCourse }: { resumeCourse: Course | null })
               }
               onStructureModified={handlers.handleStructureModified}
               onAccept={handlers.handleAccept}
-              onBack={() => setStep(3)}
+              onBack={() => setStep(4)}
             />
           )}
         </S.Content>

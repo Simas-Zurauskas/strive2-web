@@ -2,7 +2,7 @@
 
 import Link from 'next/link';
 import { useEffect, useState } from 'react';
-import { getConsent, setConsent } from '@/lib/cookieConsent';
+import { getConsent, setConsent, subscribeConsent } from '@/lib/cookieConsent';
 import * as S from './CookieBanner.styles';
 
 /**
@@ -21,6 +21,10 @@ export const CookieBanner = () => {
   useEffect(() => {
     // eslint-disable-next-line react-hooks/set-state-in-effect -- localStorage gate must run post-hydration
     if (getConsent() === null) setShow(true);
+    // Cross-tab sync: if another tab clears consent (Footer "Cookie
+    // preferences"), this tab's banner re-shows. If another tab sets
+    // consent, hide here too.
+    return subscribeConsent((value) => setShow(value === null));
   }, []);
 
   if (!show) return null;

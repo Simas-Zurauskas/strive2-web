@@ -13,8 +13,8 @@ import {
 } from '@/api/routes/auth';
 import { ClientApiError } from '@/api/types';
 import { Button, Input, PasswordRequirements } from '@/components';
-import { useDialog } from '@/hooks';
 import { TOASTS } from '@/constants/toasts';
+import { useDialog } from '@/hooks';
 import {
   changePasswordSchema,
   ChangePasswordValues,

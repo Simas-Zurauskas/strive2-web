@@ -1,1 +1,1 @@
-export { TermsScreen as default } from './TermsScreen';
+export { TermsScreen, TermsScreen as default } from './TermsScreen';

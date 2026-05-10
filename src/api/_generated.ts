@@ -495,6 +495,62 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/auth/consent-log": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Record a cookie-consent decision (anonymous or authenticated)
+         * @description GDPR Art. 7(1) requires the controller to be able to demonstrate
+         *     consent. Browsers persist the user's choice in localStorage; this
+         *     endpoint mirrors it server-side so we can prove "user X chose
+         *     'all' on date D from approximately IP I". IP is truncated for
+         *     data minimisation. Anonymous visitors are identified by a
+         *     client-generated `anonymousId` (uuid stored in cookie/localStorage).
+         */
+        post: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path?: never;
+                cookie?: never;
+            };
+            requestBody: {
+                content: {
+                    "application/json": {
+                        /** @enum {string|null} */
+                        value: "all" | "essential" | null;
+                        anonymousId?: string | null;
+                        policyVersion: string;
+                    };
+                };
+            };
+            responses: {
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": {
+                            data: {
+                                recorded: boolean;
+                            };
+                        };
+                    };
+                };
+            };
+        };
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/auth/refresh": {
         parameters: {
             query?: never;
@@ -1785,8 +1841,13 @@ export interface paths {
                         answers?: Record<string, never>;
                         depth?: components["schemas"]["CourseDepth"];
                         status?: components["schemas"]["CourseStatus"];
-                        /** @description User-selected goalType from the ClarifyStep chip. Marks the choice as user-confirmed and causes the next clarify job to skip the auto-classifier. */
+                        /** @description User-selected goalType from the Purpose step. Marks the choice as user-confirmed and causes the next clarify job to skip the auto-classifier. */
                         goalType?: components["schemas"]["GoalType"];
+                        /**
+                         * @description Stamp written by the Purpose step on Next. Pass the string literal `'now'` to set the timestamp server-side, or `null` to clear it (forces resume back to Purpose). Used by the client's resume logic to distinguish "purpose unconfirmed" from "purpose confirmed, on questions step".
+                         * @enum {string|null}
+                         */
+                        goalTypeConfirmedAt?: "now" | null;
                         /** @description Transport-only flag. Set to true on retry after a 409 DEPTH_OVERRIDE_REQUIRES_ACK response to confirm the learner has seen the course-magnitude modal and chooses to proceed with the selected depth. Never persisted. */
                         depthOverrideAcknowledged?: boolean;
                     };
@@ -2036,7 +2097,7 @@ export interface paths {
                         lessonIndex: number;
                         /** @default true */
                         includeImage?: boolean;
-                        /** @default true */
+                        /** @default false */
                         includeLinks?: boolean;
                     };
                 };
@@ -4194,6 +4255,12 @@ export interface components {
              */
             status: "completed" | "failed";
             error?: string | null;
+            /** @description Structured error code for failures the client must handle specifically — e.g. INSUFFICIENT_CREDITS triggers the Out-of-Credits modal instead of a toast. Mirrors the value the HTTP error middleware would have returned for a synchronous 4xx. */
+            errorCode?: string;
+            /** @description Optional metadata that pairs with errorCode (e.g. `{ need, have }` for INSUFFICIENT_CREDITS). */
+            errorMeta?: {
+                [key: string]: unknown;
+            };
             courseId: string;
             type: components["schemas"]["JobType"];
             moduleIndex?: number;
@@ -4375,6 +4442,8 @@ export interface components {
             domain?: components["schemas"]["CourseDomain"] | null;
             goalType?: components["schemas"]["GoalType"] | null;
             goalTypeConfidence?: components["schemas"]["GoalTypeConfidence"] | null;
+            /** Format: date-time */
+            goalTypeConfirmedAt?: string | null;
             clarifyData?: components["schemas"]["ClarifyResponse"];
             answers?: Record<string, never>;
             depth?: components["schemas"]["CourseDepth"];
@@ -4501,6 +4570,7 @@ export interface components {
         UsageCostBucket: {
             costMicroCents: number;
             chargedMicroCents: number;
+            creditsDebited: number;
         };
         UsageServiceTotal: {
             service: components["schemas"]["UsageService"];

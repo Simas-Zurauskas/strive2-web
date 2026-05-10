@@ -158,6 +158,42 @@ export const FooterLink = styled.a`
   }
 `;
 
+/**
+ * Button-shaped twin of FooterLink — same visual vocabulary, but rendered
+ * as `<button>` for in-page actions (e.g. Cookie preferences) where a
+ * navigation `<a>` would be semantically wrong.
+ */
+export const FooterLinkButton = styled.button`
+  font: inherit;
+  font-size: 0.875rem;
+  color: ${(p) => p.theme.colors.muted};
+  text-decoration: underline;
+  text-decoration-color: ${(p) => p.theme.colors.border};
+  text-underline-offset: 3px;
+  text-decoration-thickness: 1px;
+  transition:
+    color 0.15s,
+    text-decoration-color 0.15s;
+  width: fit-content;
+  background: transparent;
+  border: 0;
+  padding: 0;
+  margin: 0;
+  cursor: pointer;
+  text-align: left;
+
+  &:hover {
+    color: ${(p) => p.theme.colors.foreground};
+    text-decoration-color: ${(p) => p.theme.colors.muted};
+  }
+
+  &:focus-visible {
+    outline: 2px solid ${(p) => p.theme.colors.foreground};
+    outline-offset: 2px;
+    border-radius: 2px;
+  }
+`;
+
 // ── Bottom row: faint divider + copyright ──────────────
 
 export const Divider = styled.div`

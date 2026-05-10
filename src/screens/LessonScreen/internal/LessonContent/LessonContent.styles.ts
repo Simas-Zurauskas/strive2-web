@@ -178,58 +178,6 @@ export const GenerateOptionsHeading = styled.span`
   align-self: center;
 `;
 
-// ── Streaming indicators ──────────────────────────────
-
-export const StreamingIndicator = styled.div`
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  gap: 0.5rem;
-  padding: 0.75rem;
-  font-size: 0.8125rem;
-  color: ${(p) => p.theme.colors.accent};
-  font-weight: 500;
-
-  &::before {
-    content: '';
-    width: 8px;
-    height: 8px;
-    border-radius: 50%;
-    background: ${(p) => p.theme.colors.accent};
-    animation: pulse 1.5s ease-in-out infinite;
-  }
-
-  @keyframes pulse {
-    0%,
-    100% {
-      opacity: 0.3;
-    }
-    50% {
-      opacity: 1;
-    }
-  }
-`;
-
-export const FinishingIndicator = styled.div`
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  gap: 0.5rem;
-  padding: 0.5rem;
-  font-size: 0.75rem;
-  color: ${(p) => p.theme.colors.muted};
-  font-weight: 400;
-
-  &::before {
-    content: '';
-    width: 6px;
-    height: 6px;
-    border-radius: 50%;
-    background: ${(p) => p.theme.colors.muted};
-    animation: pulse 1.5s ease-in-out infinite;
-  }
-`;
-
 // ── Finish section ────────────────────────────────────
 
 /**

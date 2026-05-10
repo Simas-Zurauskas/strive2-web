@@ -39,7 +39,13 @@ export const ChatColumn = styled(motion.div)`
   top: calc(56px + 1.5rem);
   align-self: start;
   min-width: 0;
-  height: calc(100vh - 56px - 1.5rem - 7rem);
+  /* Column reaches the viewport floor; the inner padding-bottom matches
+     S.Actions' padding-bottom so the composer's bottom edge sits on the
+     same horizontal line as the Accept & Start Learning button — both in
+     mid-scroll (chat sticky / Actions sticky) and at end-of-scroll (chat
+     anchored to the grid row bottom / Actions pinned via margin-top:auto). */
+  height: calc(100vh - 56px - 1.5rem);
+  padding-bottom: 1.25rem;
   overflow: hidden;
   display: flex;
   flex-direction: column;
@@ -150,7 +156,6 @@ export const RefineTrigger = styled.button`
     }
   }
 `;
-
 
 export const Header = styled.div`
   display: flex;
@@ -286,9 +291,15 @@ export const Actions = styled.div`
   gap: 1rem;
   position: sticky;
   bottom: 0;
+  /* Pins to the bottom of StructureColumn so the Accept button stays
+     aligned with the chat composer at end-of-scroll, even when the
+     column is stretched taller than its natural content by ChatColumn's
+     calc-height. */
+  margin-top: auto;
   background: ${(p) => p.theme.colors.background};
   padding: 0.5rem 1rem 1.25rem;
-  margin: 0 -1rem;
+  margin-left: -1rem;
+  margin-right: -1rem;
   z-index: 2;
   box-shadow: 0 -8px 16px ${(p) => p.theme.colors.background};
 `;

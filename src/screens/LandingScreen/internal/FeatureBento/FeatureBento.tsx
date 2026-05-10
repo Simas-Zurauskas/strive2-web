@@ -12,9 +12,8 @@ export const FeatureBento = () => {
       <S.Inner>
         <S.SectionHeader
           initial={fadeUp.initial}
-          whileInView={fadeUp.animate}
+          animate={fadeUp.animate}
           transition={fadeUp.transition}
-          viewport={{ once: true, margin: '0px 0px -10% 0px' }}
         >
           <S.Eyebrow>Built for real learning</S.Eyebrow>
           <S.Heading>Everything the loop needs. None of the homework feel.</S.Heading>

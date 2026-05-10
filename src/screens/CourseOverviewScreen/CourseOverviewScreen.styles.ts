@@ -57,6 +57,8 @@ export const MetaRow = styled.div`
 `;
 
 // ── Progress section ─────────────────────────────────
+// Legacy "card" treatment kept for back-compat (not currently used after the
+// UpNextHero rewrite — the slim ProgressMini below is rendered instead).
 
 export const ProgressSection = styled.div`
   margin-bottom: 2rem;
@@ -115,6 +117,26 @@ export const ContinueButton = styled.button`
   &:hover {
     opacity: 0.9;
   }
+`;
+
+// Slim percent-complete readout shown below UpNextHero once the user has
+// any forward motion. Just a label + bar — no CTA, since UpNextHero owns the
+// directional message.
+export const ProgressMini = styled.div`
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  margin: -0.5rem 0 2rem;
+  padding: 0 0.25rem;
+`;
+
+export const ProgressMiniLabel = styled.span`
+  font-size: 0.6875rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: ${(p) => p.theme.colors.accent};
+  flex-shrink: 0;
 `;
 
 // ── Reviews due ──────────────────────────────────────
@@ -211,13 +233,81 @@ export const ModuleCard = styled.div`
   margin-bottom: 1rem;
 `;
 
-export const ModuleHeader = styled.div`
+// Module header is now a button so a screenreader announces the
+// expand/collapse affordance and Enter/Space toggles. The bottom border is
+// only painted when the card is expanded — collapsed cards read as a single
+// row, no orphan rule between header and (hidden) body.
+export const ModuleHeader = styled.button`
   display: flex;
   align-items: center;
-  gap: 1rem;
+  gap: 0.875rem;
+  width: 100%;
   padding: 1rem 1.25rem;
+  border: none;
   background: ${(p) => p.theme.colors.surface};
-  border-bottom: 1px solid ${(p) => p.theme.colors.border};
+  font-family: inherit;
+  text-align: left;
+  cursor: pointer;
+  color: inherit;
+  transition: background 0.15s;
+
+  &:hover {
+    background: ${(p) =>
+      `color-mix(in oklab, ${p.theme.colors.accent} 4%, ${p.theme.colors.surface})`};
+  }
+
+  &[aria-expanded='true'] {
+    border-bottom: 1px solid ${(p) => p.theme.colors.border};
+  }
+
+  &:focus-visible {
+    outline: 2px solid ${(p) => p.theme.colors.accent};
+    outline-offset: -2px;
+  }
+`;
+
+export const ChevronWrap = styled.span<{ $expanded: boolean }>`
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  color: ${(p) => p.theme.colors.muted};
+  transition: transform 150ms ease;
+  transform: ${(p) => (p.$expanded ? 'rotate(90deg)' : 'rotate(0deg)')};
+`;
+
+// Inline quiz indicator that appears on a COLLAPSED module header so the
+// user knows there's an actionable quiz inside without expanding. Variants:
+//   - not-taken     → tertiary (gold) — "available, take it"
+//   - needs_review  → warning  (amber) — "due", subtle pulse
+// `mastered`/`passed`/`locked` are not surfaced (passed quizzes need no
+// nudge; locked is implied by an incomplete module).
+export const HeaderQuizBadge = styled.span<{ $variant: 'not-taken' | 'needs_review' }>`
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 22px;
+  height: 22px;
+  border-radius: 50%;
+  flex-shrink: 0;
+  background: ${(p) =>
+    p.$variant === 'needs_review'
+      ? `${p.theme.colors.warning}22`
+      : `${p.theme.colors.tertiary}22`};
+  color: ${(p) =>
+    p.$variant === 'needs_review' ? p.theme.colors.warning : p.theme.colors.tertiary};
+
+  ${(p) =>
+    p.$variant === 'needs_review' &&
+    `
+      @media (prefers-reduced-motion: no-preference) {
+        animation: overviewHeaderQuizPulse 2.4s ease-in-out infinite;
+      }
+      @keyframes overviewHeaderQuizPulse {
+        0%, 100% { opacity: 1; }
+        50% { opacity: 0.55; }
+      }
+    `}
 `;
 
 export const ModuleTitle = styled.span`
@@ -254,20 +344,31 @@ export const LessonList = styled.div`
   flex-direction: column;
 `;
 
-export const LessonItem = styled.button`
+export const LessonItem = styled.button<{ $focus?: boolean }>`
   display: flex;
   align-items: flex-start;
   gap: 0.75rem;
   width: 100%;
   padding: 0.625rem 1.25rem;
+  /* Subtle gold left rail on the UpNextHero target row so the eye lands
+     on the same lesson the CTA points at, even when the user scrolls past
+     the hero. The 3px rail mirrors the sidebar's "active lesson" treatment
+     for visual consistency, but uses tertiary (gold) instead of accent
+     (green) — it's a "next action" hint, not a "currently viewing" mark. */
   border: none;
-  background: transparent;
+  border-left: 3px solid ${(p) => (p.$focus ? p.theme.colors.tertiary : 'transparent')};
+  padding-left: ${(p) => (p.$focus ? 'calc(1.25rem - 3px)' : '1.25rem')};
+  background: ${(p) =>
+    p.$focus
+      ? `color-mix(in oklab, ${p.theme.colors.tertiary} 6%, transparent)`
+      : 'transparent'};
   font-family: inherit;
   cursor: pointer;
   text-align: left;
   transition:
     background 0.15s,
-    padding-left 0.15s ease;
+    padding-left 0.15s ease,
+    padding-right 0.15s ease;
   border-bottom: 1px solid ${(p) => p.theme.colors.border};
 
   &:last-child {
@@ -275,8 +376,12 @@ export const LessonItem = styled.button`
   }
 
   &:hover {
-    background: ${(p) => `${p.theme.colors.accent}06`};
-    padding-left: calc(1.25rem + 4px);
+    background: ${(p) =>
+      p.$focus
+        ? `color-mix(in oklab, ${p.theme.colors.tertiary} 10%, transparent)`
+        : `${p.theme.colors.accent}06`};
+    padding-left: ${(p) => (p.$focus ? 'calc(1.25rem - 3px + 4px)' : 'calc(1.25rem + 4px)')};
+    padding-right: calc(1.25rem - 4px);
   }
 `;
 
@@ -314,7 +419,8 @@ export const QuizRow = styled.button<{ $locked: boolean }>`
   text-align: left;
   transition:
     background 0.15s,
-    padding-left 0.15s ease;
+    padding-left 0.15s ease,
+    padding-right 0.15s ease;
 
   ${(p) =>
     !p.$locked &&
@@ -322,6 +428,7 @@ export const QuizRow = styled.button<{ $locked: boolean }>`
     &:hover {
       background: ${p.theme.colors.accent}06;
       padding-left: calc(1.25rem + 4px);
+      padding-right: calc(1.25rem - 4px);
     }
   `}
 `;

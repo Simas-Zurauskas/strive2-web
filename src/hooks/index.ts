@@ -33,3 +33,5 @@ export {
 } from './useRecall';
 export { useConceptViewed, markConceptViewed } from './useConceptViewed';
 export { useDialog } from './useDialog';
+export { useCourseNextAction } from './useCourseNextAction';
+export type { CourseNextAction, CourseNextActionKind } from './useCourseNextAction';

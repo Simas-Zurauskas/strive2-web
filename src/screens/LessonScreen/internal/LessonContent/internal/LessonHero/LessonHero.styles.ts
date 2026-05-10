@@ -214,19 +214,45 @@ export const GenerateButton = styled.button`
   }
 `;
 
-export const GeneratingDot = styled.div`
-  width: 8px;
-  height: 8px;
-  border-radius: 50%;
-  background: ${(p) => p.theme.colors.accent};
-  animation: pulse 1.5s ease-in-out infinite;
+/** Small "generating" chip rendered inside EyebrowRow alongside the
+ *  "MODULE 1 · LESSON 2" eyebrow. Reads as a peer to the bookmark chip —
+ *  uppercase eyebrow vocabulary, hairline accent fill, with a soft
+ *  pulsating dot on the leading edge. The label text makes the state
+ *  legible without forcing the reader to interpret a bare dot.
+ *  Animation is suppressed under prefers-reduced-motion. */
+export const GeneratingPill = styled.span`
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4375rem;
+  padding: 0.1875rem 0.5625rem 0.1875rem 0.5rem;
+  border-radius: 999px;
+  border: 1px solid
+    ${(p) => `color-mix(in oklab, ${p.theme.colors.accent} 32%, transparent)`};
+  background: ${(p) => p.theme.colors.accentMuted};
+  color: ${(p) => p.theme.colors.accent};
+  font-size: 0.625rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.12em;
+  line-height: 1;
 
-  @keyframes pulse {
-    0%,
-    100% {
-      opacity: 0.3;
-    }
-    50% {
+  &::before {
+    content: '';
+    width: 6px;
+    height: 6px;
+    border-radius: 50%;
+    background: ${(p) => p.theme.colors.accent};
+    animation: pulseDot 1.4s ease-in-out infinite;
+  }
+
+  @keyframes pulseDot {
+    0%, 100% { opacity: 0.4; transform: scale(1); }
+    50%      { opacity: 1;   transform: scale(1.18); }
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    &::before {
+      animation: none;
       opacity: 1;
     }
   }

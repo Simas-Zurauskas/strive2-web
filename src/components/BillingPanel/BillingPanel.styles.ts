@@ -190,32 +190,6 @@ export const BarFill = styled.div<{ $pct: number }>`
   transition: width 320ms ease;
 `;
 
-/** Bonus / top-up balance summary line beneath the bar. Highlighted via
- *  a small gold dot to signal "saved/earned" semantics — top-up balance
- *  is paid-for and never expires, distinct from the renewing allowance. */
-export const BonusLine = styled.p`
-  display: flex;
-  align-items: center;
-  gap: 0.5rem;
-  margin: 0.875rem 0 0;
-  font-size: 0.8125rem;
-  color: ${(p) => p.theme.colors.muted};
-
-  strong {
-    color: ${(p) => p.theme.colors.foreground};
-    font-weight: 600;
-    font-variant-numeric: tabular-nums;
-  }
-`;
-
-export const BonusDot = styled.span`
-  width: 6px;
-  height: 6px;
-  border-radius: 50%;
-  background: ${(p) => p.theme.colors.tertiary};
-  flex-shrink: 0;
-`;
-
 export const BonusSep = styled.span`
   opacity: 0.55;
 `;
@@ -237,6 +211,31 @@ export const TopupTitle = styled.h3`
   line-height: 1.15;
   color: ${(p) => p.theme.colors.foreground};
   margin: 0 0 0.4375rem;
+`;
+
+/** Top-up balance line — "Balance · $X.XX · never expires" with the dollar
+ *  amount rendered in the editorial italic-serif treatment so it reads as
+ *  important data the user should notice without having to hunt. Always
+ *  rendered, including at $0, so users always know what they have
+ *  available beyond the renewing allowance. */
+export const TopupBalance = styled.p`
+  display: flex;
+  align-items: baseline;
+  gap: 0.5rem;
+  margin: 0 0 1rem;
+  font-size: 0.875rem;
+  color: ${(p) => p.theme.colors.muted};
+
+  strong {
+    color: ${(p) => p.theme.colors.foreground};
+    font-family: var(--font-heading-serif), Georgia, serif;
+    font-style: italic;
+    font-weight: 500;
+    font-size: 1.625rem;
+    line-height: 1;
+    letter-spacing: -0.02em;
+    font-variant-numeric: tabular-nums;
+  }
 `;
 
 export const TopupLead = styled.p`

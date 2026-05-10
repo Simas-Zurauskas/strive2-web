@@ -1,17 +1,26 @@
 import { Metadata } from 'next';
-import { NEXT_PUBLIC_SITE_URL } from '@/conf/env';
+import { SITE_URL } from '@/conf/env.server';
 import { safeRedirect } from '@/lib/safeRedirect';
+import {
+  buildFaqPageJsonLd,
+  buildOrganizationJsonLd,
+  buildSoftwareApplicationJsonLd,
+  buildWebSiteJsonLd,
+  renderJsonLd,
+} from '@/lib/seo/jsonLd';
 import LandingScreen from '@/screens/LandingScreen';
+import { FAQ } from '@/screens/LandingScreen/constants';
 
 export const metadata: Metadata = {
   title: 'Strive — Personal AI courses on anything you want to learn',
   description:
     'Strive turns any goal into a personalised curriculum — modules, lessons, quizzes, and a daily spaced-recall queue — generated live by AI. Free to start. No credit card.',
+  alternates: { canonical: '/' },
   openGraph: {
     title: 'Strive — Personal AI courses, generated live',
     description:
       'Tell Strive what you want to learn. AI builds your modules, lessons, and quizzes, and a daily recall queue makes them stick.',
-    url: NEXT_PUBLIC_SITE_URL,
+    url: SITE_URL,
     siteName: 'Strive',
     type: 'website',
   },
@@ -31,5 +40,28 @@ export default async function Page({ searchParams }: PageProps) {
   // onto the landing and forcing them to click another button.
   const initialAuthMode =
     params.auth === 'signup' || params.auth === 'signin' ? params.auth : null;
-  return <LandingScreen redirect={redirect} initialAuthMode={initialAuthMode} />;
+
+  const jsonLd = [
+    buildOrganizationJsonLd({ siteUrl: SITE_URL }),
+    buildWebSiteJsonLd({ siteUrl: SITE_URL }),
+    buildSoftwareApplicationJsonLd({
+      siteUrl: SITE_URL,
+      description:
+        'Strive turns any goal into a personalised AI-generated curriculum: modules, lessons, quizzes, and a daily spaced-recall queue.',
+    }),
+    buildFaqPageJsonLd(FAQ),
+  ];
+
+  return (
+    <>
+      {jsonLd.map((payload, idx) => (
+        <script
+          key={idx}
+          type="application/ld+json"
+          dangerouslySetInnerHTML={{ __html: renderJsonLd(payload) }}
+        />
+      ))}
+      <LandingScreen redirect={redirect} initialAuthMode={initialAuthMode} />
+    </>
+  );
 }

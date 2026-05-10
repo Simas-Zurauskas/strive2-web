@@ -1,5 +1,11 @@
 import { notFound } from 'next/navigation';
+import { SITE_URL } from '@/conf/env.server';
 import { KB_TOPICS, getArticlesByTopic, getSearchEntries, getTopic } from '@/lib/kb';
+import {
+  buildBreadcrumbJsonLd,
+  buildTopicCollectionJsonLd,
+  renderJsonLd,
+} from '@/lib/seo/jsonLd';
 import { KbTopicScreen } from '@/screens/KbScreen';
 import type { Metadata } from 'next';
 
@@ -35,11 +41,25 @@ export default async function HelpTopicPage({ params }: RouteParams) {
   const { topic: topicSlug } = await params;
   const topic = getTopic(topicSlug);
   if (!topic) notFound();
+  const articles = getArticlesByTopic(topicSlug);
+  const jsonLd = [
+    buildTopicCollectionJsonLd({ siteUrl: SITE_URL, topic, articles }),
+    buildBreadcrumbJsonLd([
+      { name: 'Home', url: SITE_URL },
+      { name: 'Help center', url: `${SITE_URL}/help` },
+      { name: topic.title, url: `${SITE_URL}${topic.href}` },
+    ]),
+  ];
   return (
-    <KbTopicScreen
-      topic={topic}
-      articles={getArticlesByTopic(topicSlug)}
-      searchEntries={getSearchEntries()}
-    />
+    <>
+      {jsonLd.map((payload, idx) => (
+        <script
+          key={idx}
+          type="application/ld+json"
+          dangerouslySetInnerHTML={{ __html: renderJsonLd(payload) }}
+        />
+      ))}
+      <KbTopicScreen topic={topic} articles={articles} searchEntries={getSearchEntries()} />
+    </>
   );
 }

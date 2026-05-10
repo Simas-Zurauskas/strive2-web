@@ -10,8 +10,9 @@ import * as S from './Footer.styles';
  * if they change there so the footer never points at a 404.
  */
 const LEARN_LINKS: { label: string; href: string }[] = [
+  { label: 'Browse topics', href: '/learn' },
+  { label: 'Blog', href: '/blog' },
   { label: 'Help center', href: '/help' },
-  { label: 'Getting started', href: '/help/getting-started' },
   { label: 'How Strive teaches', href: '/help/how-strive-teaches' },
   { label: 'Plans & billing', href: '/help/plans-and-account' },
 ];
@@ -63,26 +64,16 @@ export const Footer = () => {
                 </S.FooterLink>
               ))}
               {/* GDPR Art. 7(3): withdrawal must be as easy as giving consent.
-                  Clears the local choice → CookieBanner re-mounts on next
-                  render and re-prompts. Already-loaded scripts (Mixpanel/gtag/
-                  Appzi) stay live until reload — the banner copy mentions
-                  this trade-off. */}
-              <S.FooterLink
-                as="button"
-                type="button"
-                onClick={() => clearConsent()}
-                style={{
-                  background: 'transparent',
-                  border: 0,
-                  padding: 0,
-                  cursor: 'pointer',
-                  font: 'inherit',
-                  color: 'inherit',
-                  textAlign: 'left',
-                }}
-              >
+                  Clears the local choice → CookieBanner subscribes to
+                  consent changes and re-shows immediately. Mixpanel gates
+                  every emit on `hasAnalyticsConsent()`, gtag uses Consent
+                  Mode v2 (CookieConsentBootstrap flips storage signals
+                  back to 'denied'). Appzi may stay live for the current
+                  session if already loaded — acceptable edge case; its
+                  cookies persist across reload anyway. */}
+              <S.FooterLinkButton type="button" onClick={() => clearConsent()}>
                 Cookie preferences
-              </S.FooterLink>
+              </S.FooterLinkButton>
             </S.Column>
 
             <S.Column>

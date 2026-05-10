@@ -174,8 +174,8 @@ export const CONCEPTS: Record<ConceptId, ConceptEntry> = {
     eyebrow: 'How it works',
     title: 'Two mentors, two scopes',
     body: [
-      "The lesson mentor lives inside the lesson. It has read what you're studying and the lessons around it — ask for a re-explanation in different words, an example in your own field, or help troubleshooting something you tried. You can paste code, a URL, or attach a PDF and discuss whatever you've shared.",
-      "The course mentor sits on the course overview. It sees your whole outline, your progress, and what's due in recall — ask \"what should I do next?\", \"how does module 3 connect to module 7?\", or \"where am I weakest?\". It points you to the right surface — a lesson, a quiz, your recall queue — rather than re-teaching.",
+      "The **lesson mentor** lives inside the lesson. It has read what you're studying and the lessons around it — ask for a re-explanation in different words, an example in your own field, or help troubleshooting something you tried. You can paste code, a URL, or attach a PDF and discuss whatever you've shared.",
+      "The **course mentor** sits on the course overview. It sees your whole outline, your progress, and what's due in recall — ask \"what should I do next?\", \"how does module 3 connect to module 7?\", or \"where am I weakest?\". It points you to the right surface — a lesson, a quiz, your recall queue — rather than re-teaching.",
       "Different jobs, paired on purpose. The lesson mentor is where you stop when you're stuck mid-paragraph; the course mentor is where you stand back to decide what's next.",
     ],
     animation: MentorChatAnimation,  },

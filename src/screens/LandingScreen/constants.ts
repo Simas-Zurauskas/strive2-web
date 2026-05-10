@@ -172,10 +172,11 @@ export const LESSONS: readonly DemoLesson[] = [
   },
 ];
 
-// Mirrors the five goalTypes the wizard's classifier emits — see
-// `client/src/screens/GenerateCourseScreen/internal/ClarifyStep.tsx`.
-// Don't reorder without re-checking the wizard's `GOAL_TYPE_OPTIONS`.
-export type GoalTypeKey = 'master' | 'monetize' | 'pass' | 'build' | 'fluency';
+// Alias of the OpenAPI-backed `GoalType` so the LandingScreen module and
+// the wizard's PurposeStep share one source of truth (per the project
+// "no local enum types in client" convention).
+import type { GoalType } from '@/api/types';
+export type GoalTypeKey = GoalType;
 
 export const GOAL_TYPES_SECTION = {
   eyebrow: 'Built for any reason',
@@ -437,7 +438,37 @@ export const FAQ = [
 ] as const;
 
 export const FINAL_CTA = {
+  eyebrow: 'Start learning',
   heading: 'Ready to learn something — for real this time?',
+  subhead:
+    'Tell us what you want to learn. We shape the curriculum, stream lessons as you read, and the recall queue keeps it from fading. What you generate is yours.',
   cta: 'Build my first course — free',
+  ctaSecondary: 'See pricing',
   microcopy: 'Free tier included. No credit card.',
+  // 3 cards rotated through in the closing visual. Echoes real RecallCard
+  // shape (course + lesson + prompt + answer + box badge). Coprime cycle so
+  // the visitor doesn't see the same card twice on a normal scroll-by.
+  recallSamples: [
+    {
+      course: 'SQL for analysts',
+      lesson: 'Window functions',
+      prompt: "Which window function returns the row's rank with gaps?",
+      answer: 'RANK()',
+      box: 'Box 2',
+    },
+    {
+      course: 'Spanish A2',
+      lesson: 'The pretérito',
+      prompt: "What's the 'yo' form of *poder* in pretérito?",
+      answer: 'pude',
+      box: 'New',
+    },
+    {
+      course: 'Negotiation tactics',
+      lesson: 'Anchoring',
+      prompt: 'The first number in a negotiation tends to…',
+      answer: 'pull the final outcome toward it',
+      box: 'Box 3',
+    },
+  ],
 } as const;

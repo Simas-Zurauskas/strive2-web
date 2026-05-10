@@ -48,7 +48,7 @@ export const getUsageSummary = () => {
 // ── Dev-only: wipe the caller's events ────────────────────
 
 export const deleteAllUsageEvents = () => {
-  return client<{ data: { deleted: number } }>({
+  return client<{ data: { deleted: number; ledgerDeleted: number } }>({
     url: '/usage/events',
     method: 'DELETE',
   }).then((res) => res.data.data);

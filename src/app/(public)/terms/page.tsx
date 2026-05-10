@@ -1,4 +1,7 @@
 import { Metadata } from 'next';
+import { notFound } from 'next/navigation';
+import { getArticle } from '@/lib/kb';
+import { TermsScreen } from '@/screens/TermsScreen';
 
 export const metadata: Metadata = {
   title: 'Terms of Service — Strive',
@@ -8,4 +11,8 @@ export const metadata: Metadata = {
   alternates: { canonical: '/terms' },
 };
 
-export { default } from '@/screens/TermsScreen';
+export default function Page() {
+  const article = getArticle('legal', 'terms-of-service');
+  if (!article) notFound();
+  return <TermsScreen body={article.body} updated={article.updated} />;
+}

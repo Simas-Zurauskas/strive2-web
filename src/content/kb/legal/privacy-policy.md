@@ -1,4 +1,14 @@
-export const PRIVACY_CONTENT = `
+---
+title: Privacy Policy
+slug: privacy-policy
+topic: legal
+summary: How Strive collects, uses, shares, and protects personal data — sub-processors, retention, your GDPR rights, and your responsibilities.
+tags: [privacy, gdpr, data-protection, legal]
+order: 10
+updated: 2026-05-10
+related: [terms-of-service, your-privacy-on-strive]
+---
+
 Strive ("we", "us") is operated by **MB Kūrybinis kodas**, a small partnership registered
 in the Republic of Lithuania. We are the data controller for the personal data described
 below. Contact: **admin@strive-learning.com**.
@@ -15,13 +25,20 @@ below. Contact: **admin@strive-learning.com**.
 | Cookie / analytics data | Mixpanel events, Google Analytics 4 hits, Google Ads conversions, page views | Consent (Art. 6(1)(a)) — see § 6 |
 
 We do not knowingly process special-category data (health, biometrics, religion, etc.).
-Do not submit such data through course goals, notes, or chats.
+**You are responsible for what you submit.** Do not enter, paste, upload or otherwise
+submit through any input field (course goals, wizard answers, notes, chat, attachments)
+any of the following: special-category data within the meaning of Art. 9 GDPR; personal
+data of third parties without lawful basis; payment-card numbers or full credentials;
+content protected by copyright that you do not have the right to submit; or content that
+is illegal in your jurisdiction. We are not the controller of data that you submit in
+breach of this paragraph and you indemnify us against any resulting claims.
 
 ## 2. Why we process it
 
 To provide and operate the service, run AI-generated lessons, gate paid features, send
 account and security email, prevent abuse, comply with tax and accounting law, and — with
-your consent — measure how the product is used and acquired.
+your consent — measure how the product is used and acquired. We may also process your
+data to enforce our Terms of Service and to defend legal claims.
 
 ## 3. Recipients (sub-processors)
 
@@ -47,7 +64,10 @@ service. Each is bound by a data-processing agreement under GDPR Art. 28.
 | Appzi | In-app feedback widget (consent-gated) | United States (SCCs) |
 
 We do not sell personal data and do not share it for any third-party advertising other
-than the conversion tracking listed above.
+than the conversion tracking listed above. AI prompts you submit are sent to the LLM
+provider via API; we rely on each provider's standard API terms (which generally do not
+use API inputs to train their models). We cannot and do not guarantee third-party
+provider behaviour beyond their published terms.
 
 ## 4. International transfers
 
@@ -71,7 +91,7 @@ GDPR right-to-erasure within 30 days of account deletion.
 | Analytics | Mixpanel, Google Analytics 4 | Only with consent |
 | Marketing | Google Ads conversion tracking | Only with consent |
 
-You can change your choice at any time by clearing the \`strive:cookie-consent\` key
+You can change your choice at any time by clearing the `strive:cookie-consent` key
 in your browser's storage; the banner will reappear on your next visit.
 
 ## 7. Your rights
@@ -87,20 +107,29 @@ The Lithuanian supervisory authority is the **State Data Protection Inspectorate
 complaint with the supervisory authority of the EU/EEA member state where you live or
 work.
 
-## 8. Automated decision-making
+## 8. Aggregated and de-identified data
+
+We may create aggregated, statistical, or de-identified data from your usage of the
+service (data that cannot reasonably be used to identify you). Aggregated and
+de-identified data is not personal data and we may use, retain and disclose it for any
+lawful purpose, including service improvement, research, benchmarking and external
+publication.
+
+## 9. Automated decision-making
 
 Strive does not make automated decisions that produce legal or similarly significant
 effects on you (Art. 22 GDPR). The AI generates course content and grades free-recall
-answers, but you remain in full control of how you use these outputs.
+answers, but you remain in full control of how you use these outputs. **AI-generated
+output may be incorrect, incomplete, biased or out of date; you should verify anything
+you act on.**
 
-## 9. Children
+## 10. Children
 
 Strive is not directed at children under **16**. We do not knowingly create accounts for
 children under that age. If you believe a child has registered, contact us and we will
 delete the account.
 
-## 10. Changes to this policy
+## 11. Changes to this policy
 
 We may update this policy. The "last updated" date at the top reflects the current
 version. Material changes will be notified by email or in-product before they take effect.
-`;

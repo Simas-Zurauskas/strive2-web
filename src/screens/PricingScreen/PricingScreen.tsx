@@ -14,8 +14,8 @@ import { Accordion, AccordionItem, AlertDialog, Button, HelpAnchor } from '@/com
 import { ROUTES } from '@/constants/routes';
 import { useAuth } from '@/hooks/useAuth';
 import { useBillingPlans, useBillingSummary } from '@/hooks/useBilling';
-import { analytics } from '@/lib/analytics';
 import { formatAllowance } from '@/lib/allowance';
+import { analytics } from '@/lib/analytics';
 import { formatDate } from '@/lib/formatDate';
 import { QKeys } from '@/types';
 import * as S from './PricingScreen.styles';
@@ -127,7 +127,7 @@ export const PricingScreen: React.FC = () => {
       // Malformed referrer — treat as direct.
     }
     analytics.track('pricing_page_viewed', { from });
-    // eslint-disable-next-line react-hooks/exhaustive-deps
+     
   }, []);
 
   const handleCadenceToggle = (next: BillingCadence) => {
@@ -296,12 +296,9 @@ export const PricingScreen: React.FC = () => {
   return (
     <S.Layout>
       <S.Header>
-        <S.Title>
-          One app. Pick your allowance.{' '}
-          <HelpAnchor concept="credits" />
-        </S.Title>
+        <S.Title>One app. Pick your allowance.</S.Title>
         <S.Subtitle>
-          Every plan unlocks the entire platform — the only thing that changes is how much monthly allowance you get. Allowance is used up as you generate courses, lessons, and quizzes, and refunded in full on any failure.
+          Every plan unlocks the entire platform — the only thing that changes is how much monthly allowance you get. Allowance is used up as you generate courses, lessons, and quizzes, and refunded in full on any failure. <HelpAnchor concept="credits" size="sm" />
         </S.Subtitle>
 
         <S.CadenceToggle role="tablist" aria-label="Billing cadence">

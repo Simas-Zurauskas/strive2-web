@@ -1,4 +1,6 @@
+import { SITE_URL } from '@/conf/env.server';
 import { getAllTopics, getSearchEntries } from '@/lib/kb';
+import { buildBreadcrumbJsonLd, buildHelpHubJsonLd, renderJsonLd } from '@/lib/seo/jsonLd';
 import { KbHubScreen } from '@/screens/KbScreen';
 import type { Metadata } from 'next';
 
@@ -16,5 +18,24 @@ export const metadata: Metadata = {
 };
 
 export default function HelpHubPage() {
-  return <KbHubScreen topics={getAllTopics()} searchEntries={getSearchEntries()} />;
+  const topics = getAllTopics();
+  const jsonLd = [
+    buildHelpHubJsonLd({ siteUrl: SITE_URL, topics }),
+    buildBreadcrumbJsonLd([
+      { name: 'Home', url: SITE_URL },
+      { name: 'Help center', url: `${SITE_URL}/help` },
+    ]),
+  ];
+  return (
+    <>
+      {jsonLd.map((payload, idx) => (
+        <script
+          key={idx}
+          type="application/ld+json"
+          dangerouslySetInnerHTML={{ __html: renderJsonLd(payload) }}
+        />
+      ))}
+      <KbHubScreen topics={topics} searchEntries={getSearchEntries()} />
+    </>
+  );
 }

@@ -14,7 +14,7 @@ export const Option = styled.label<{ $selected: boolean }>`
   padding: 1.125rem 1.25rem;
   border: ${(p) => (p.$selected ? `2px solid ${p.theme.colors.accent}` : `1px solid ${p.theme.colors.surfaceBorder}`)};
   border-radius: 8px;
-  background: ${(p) => (p.$selected ? p.theme.colorsLib.primary + '06' : p.theme.colors.surface)};
+  background: ${(p) => (p.$selected ? p.theme.colors.accentMuted : p.theme.colors.surface)};
   cursor: pointer;
   transition:
     border-color 0.15s,
@@ -25,7 +25,7 @@ export const Option = styled.label<{ $selected: boolean }>`
 
   &:hover {
     border-color: ${(p) => p.theme.colors.accent};
-    background: ${(p) => (p.$selected ? p.theme.colorsLib.primary + '06' : p.theme.colorsLib.gray100)};
+    background: ${(p) => (p.$selected ? p.theme.colors.accentMuted : p.theme.colors.background)};
   }
 `;
 

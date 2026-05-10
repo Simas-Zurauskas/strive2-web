@@ -92,10 +92,10 @@ export const DepthStep = ({
   return (
     <S.Container>
       <S.Header>
-        <Eyebrow>Depth</Eyebrow>
-        <S.Title>
-          How deep should we go? <HelpAnchor concept="course-depth" />
-        </S.Title>
+        <Eyebrow>
+          Depth <HelpAnchor concept="course-depth" size="sm" />
+        </Eyebrow>
+        <S.Title>How deep should we go?</S.Title>
         {previewsLoading && !depthPreviews ? (
           <S.Subtitle>Preparing your options...</S.Subtitle>
         ) : (

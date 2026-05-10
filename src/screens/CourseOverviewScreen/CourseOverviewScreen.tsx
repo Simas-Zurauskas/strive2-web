@@ -1,12 +1,13 @@
 'use client';
 
-import { AlertCircle, CheckCircle, Lock, Sparkles, Trophy } from 'lucide-react';
+import { AlertCircle, CheckCircle, ChevronRight, Lock, Sparkles, Trophy } from 'lucide-react';
 import { useRouter } from 'next/navigation';
 import { useMemo } from 'react';
 import { Badge, HelpAnchor, LessonIndicator, TextAction, computeLessonIndicatorState } from '@/components';
 import { plural } from '@/lib/strings';
 import { useCourseContext } from '@/screens/CourseShell';
 import * as S from './CourseOverviewScreen.styles';
+import { UpNextHero } from './internal/UpNextHero';
 import type { CourseQuizProgressItem } from '@/api/types';
 import type { QuizIconVariant } from '@/types';
 
@@ -20,8 +21,19 @@ const quizIconFor: Record<QuizIconVariant, typeof Trophy> = {
 
 export const CourseOverviewScreen = () => {
   const router = useRouter();
-  const { courseBasePath, course, modules, progressData, generatedLessons, navigateToLesson, onDeleteCourse, onArchiveCourse } =
-    useCourseContext();
+  const {
+    courseBasePath,
+    course,
+    modules,
+    progressData,
+    generatedLessons,
+    navigateToLesson,
+    onDeleteCourse,
+    onArchiveCourse,
+    expandedModules,
+    toggleExpandedModule,
+    nextAction,
+  } = useCourseContext();
 
   const generatedSet = useMemo(() => {
     const set = new Set<string>();
@@ -94,18 +106,17 @@ export const CourseOverviewScreen = () => {
     return results;
   }, [modules, progressMap, quizProgressMap]);
 
-  // Find last accessed lesson for "Continue" button
-  const continueTarget = useMemo(() => {
-    if (!progressData?.lessons || progressData.lessons.length === 0) return { mi: 0, li: 0 };
-    const sorted = [...progressData.lessons].sort(
-      (a, b) => new Date(b.lastAccessedAt).getTime() - new Date(a.lastAccessedAt).getTime(),
-    );
-    return { mi: sorted[0].moduleIndex, li: sorted[0].lessonIndex };
-  }, [progressData]);
-
   const stats = progressData?.stats;
   const totalLessons = modules.reduce((sum, m) => sum + (m.lessons?.length ?? 0), 0);
   const depthLabel = course?.depth?.replace('_', ' ');
+
+  // Coordinates of the lesson that the UpNextHero CTA points at — used to
+  // paint a subtle gold left-rail on that row inside the open module so
+  // the eye lands on the same target even if the user scrolls past the hero.
+  const focusLesson =
+    nextAction && nextAction.lessonIndex !== undefined
+      ? { mi: nextAction.moduleIndex, li: nextAction.lessonIndex }
+      : null;
 
   const getIndicatorState = ({ mi, li }: { mi: number; li: number }) =>
     computeLessonIndicatorState({
@@ -140,20 +151,21 @@ export const CourseOverviewScreen = () => {
         </S.MetaRow>
       </S.Header>
 
-      {/* Progress */}
+      {/* Up next — always-visible directional anchor (replaces the conditional
+          ProgressSection that only rendered after >0% progress). The thin
+          progress bar moves to the bottom of this card; the new CTA carries
+          the "what to click next" message in all five course states. */}
+      <UpNextHero />
+
+      {/* Slim progress bar — secondary readout, only after the user has
+          made any forward motion. Does not duplicate the Up-next CTA. */}
       {stats && stats.percentage > 0 && (
-        <S.ProgressSection>
-          <S.ProgressHeader>
-            <S.ProgressLabel>Progress</S.ProgressLabel>
-            <S.ProgressValue>{stats.percentage}% complete</S.ProgressValue>
-          </S.ProgressHeader>
+        <S.ProgressMini>
+          <S.ProgressMiniLabel>{stats.percentage}% complete</S.ProgressMiniLabel>
           <S.ProgressBarTrack>
             <S.ProgressBarFill $percent={stats.percentage} />
           </S.ProgressBarTrack>
-          <S.ContinueButton onClick={() => navigateToLesson(continueTarget.mi, continueTarget.li)}>
-            Continue learning
-          </S.ContinueButton>
-        </S.ProgressSection>
+        </S.ProgressMini>
       )}
 
       {/* Quizzes to do: unattempted + reviews due */}
@@ -203,7 +215,9 @@ export const CourseOverviewScreen = () => {
         </S.BookmarksSection>
       )}
 
-      {/* Course outline */}
+      {/* Course outline — collapsible cards. The expanded set is shared with
+          the sidebar via CourseContext, so the user maintains a single mental
+          model of "which modules am I currently focused on." */}
       <S.SectionTitle>
         Course Outline <HelpAnchor concept="modules-and-lessons" size="sm" />
       </S.SectionTitle>
@@ -211,10 +225,32 @@ export const CourseOverviewScreen = () => {
         const mp = getModuleProgress(mi);
         const isModuleComplete = mp.completed === mp.total && mp.total > 0;
         const qp = quizProgressMap.get(mi);
+        const expanded = expandedModules?.has(mi) ?? false;
+        const lessonListId = `overview-module-lessons-${mi}`;
+
+        // Surface an inline quiz indicator on the COLLAPSED header when the
+        // quiz is actionable (unattempted-but-unlocked, or review-due) so
+        // collapsing the module doesn't bury anything the user should act on.
+        const headerQuizVariant: QuizIconVariant | null = !expanded && isModuleComplete
+          ? (qp?.bestTier === 'needs_review' || qp?.reviewDue
+              ? 'needs_review'
+              : !qp
+                ? 'not-taken'
+                : null)
+          : null;
+        const HeaderQuizIcon = headerQuizVariant ? quizIconFor[headerQuizVariant] : null;
 
         return (
           <S.ModuleCard key={mi}>
-            <S.ModuleHeader>
+            <S.ModuleHeader
+              type="button"
+              onClick={() => toggleExpandedModule(mi)}
+              aria-expanded={expanded}
+              aria-controls={lessonListId}
+            >
+              <S.ChevronWrap $expanded={expanded} aria-hidden>
+                <ChevronRight size={14} strokeWidth={2} />
+              </S.ChevronWrap>
               <S.ModuleTitle>
                 Module {mi + 1} <S.ModuleDot>&middot;</S.ModuleDot> {mod.name}
               </S.ModuleTitle>
@@ -223,47 +259,70 @@ export const CourseOverviewScreen = () => {
                   {mp.completed}/{mp.total}
                 </S.ModuleProgress>
               )}
+              {HeaderQuizIcon && headerQuizVariant && (
+                <S.HeaderQuizBadge
+                  $variant={headerQuizVariant}
+                  aria-label={
+                    headerQuizVariant === 'needs_review'
+                      ? 'Module quiz review due'
+                      : 'Module quiz available'
+                  }
+                >
+                  <HeaderQuizIcon size={12} strokeWidth={2.25} />
+                </S.HeaderQuizBadge>
+              )}
             </S.ModuleHeader>
-            <S.ModuleDescription>{mod.description}</S.ModuleDescription>
-            <S.LessonList>
-              {mod.lessons?.map((lesson, li) => {
-                const indicatorState = getIndicatorState({ mi, li });
-                return (
-                  <S.LessonItem key={li} onClick={() => navigateToLesson(mi, li)}>
-                    <LessonIndicator state={indicatorState} size="md" />
-                    <S.LessonContent>
-                      <S.LessonName>{lesson.name}</S.LessonName>
-                      <S.LessonDescription>{lesson.description}</S.LessonDescription>
-                    </S.LessonContent>
-                  </S.LessonItem>
-                );
-              })}
 
-              {/* Module quiz */}
-              {(() => {
-                const variant: QuizIconVariant = !isModuleComplete
-                  ? 'locked'
-                  : qp?.bestTier ?? 'not-taken';
-                const QuizIcon = quizIconFor[variant];
-                return (
-                  <S.QuizRow
-                    $locked={!isModuleComplete}
-                    onClick={() =>
-                      isModuleComplete &&
-                      router.push(`${courseBasePath}/quiz/${mi}${qp?.reviewDue ? '?review=true' : ''}`)
-                    }
-                  >
-                    <S.QuizIcon $variant={variant}>
-                      <QuizIcon size={14} strokeWidth={2} />
-                    </S.QuizIcon>
-                    <S.QuizLabel>Module Quiz</S.QuizLabel>
-                    {isModuleComplete && !qp && <S.TakeQuizBadge>Take quiz</S.TakeQuizBadge>}
-                    {qp?.reviewDue && <S.ReviewDueBadge>Review due</S.ReviewDueBadge>}
-                    {qp?.bestTier && <S.QuizBadge $tier={qp.bestTier}>{qp.bestScore}%</S.QuizBadge>}
-                  </S.QuizRow>
-                );
-              })()}
-            </S.LessonList>
+            {expanded && (
+              <>
+                <S.ModuleDescription>{mod.description}</S.ModuleDescription>
+                <S.LessonList id={lessonListId}>
+                  {mod.lessons?.map((lesson, li) => {
+                    const indicatorState = getIndicatorState({ mi, li });
+                    const isFocus =
+                      !!focusLesson && focusLesson.mi === mi && focusLesson.li === li;
+                    return (
+                      <S.LessonItem
+                        key={li}
+                        $focus={isFocus}
+                        onClick={() => navigateToLesson(mi, li)}
+                      >
+                        <LessonIndicator state={indicatorState} size="md" />
+                        <S.LessonContent>
+                          <S.LessonName>{lesson.name}</S.LessonName>
+                          <S.LessonDescription>{lesson.description}</S.LessonDescription>
+                        </S.LessonContent>
+                      </S.LessonItem>
+                    );
+                  })}
+
+                  {/* Module quiz */}
+                  {(() => {
+                    const variant: QuizIconVariant = !isModuleComplete
+                      ? 'locked'
+                      : qp?.bestTier ?? 'not-taken';
+                    const QuizIcon = quizIconFor[variant];
+                    return (
+                      <S.QuizRow
+                        $locked={!isModuleComplete}
+                        onClick={() =>
+                          isModuleComplete &&
+                          router.push(`${courseBasePath}/quiz/${mi}${qp?.reviewDue ? '?review=true' : ''}`)
+                        }
+                      >
+                        <S.QuizIcon $variant={variant}>
+                          <QuizIcon size={14} strokeWidth={2} />
+                        </S.QuizIcon>
+                        <S.QuizLabel>Module Quiz</S.QuizLabel>
+                        {isModuleComplete && !qp && <S.TakeQuizBadge>Take quiz</S.TakeQuizBadge>}
+                        {qp?.reviewDue && <S.ReviewDueBadge>Review due</S.ReviewDueBadge>}
+                        {qp?.bestTier && <S.QuizBadge $tier={qp.bestTier}>{qp.bestScore}%</S.QuizBadge>}
+                      </S.QuizRow>
+                    );
+                  })()}
+                </S.LessonList>
+              </>
+            )}
           </S.ModuleCard>
         );
       })}

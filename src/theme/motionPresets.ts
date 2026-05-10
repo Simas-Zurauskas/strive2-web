@@ -1,7 +1,7 @@
 'use client';
 
-import type { Transition } from 'framer-motion';
 import { useReducedMotion } from 'framer-motion';
+import type { Transition } from 'framer-motion';
 
 export const easeOutSpring = [0.16, 1, 0.3, 1] as const;
 

@@ -58,4 +58,6 @@ export type { LessonIndicatorState } from './LessonIndicator';
 export { BillingPanel } from './BillingPanel';
 export { CreditPill } from './CreditPill';
 export { OutOfCreditsModal } from './OutOfCreditsModal';
+export { PurchaseSuccessModal } from './PurchaseSuccessModal';
+export type { PurchaseKind } from './PurchaseSuccessModal';
 export { TopupControl } from './TopupControl';

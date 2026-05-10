@@ -1,16 +1,20 @@
 'use client';
 
 import { Markdown } from '@/components';
-import { TERMS_CONTENT } from './content';
 import * as S from './TermsScreen.styles';
 
-export const TermsScreen: React.FC = () => {
+interface TermsScreenProps {
+  body: string;
+  updated?: string;
+}
+
+export const TermsScreen: React.FC<TermsScreenProps> = ({ body, updated }) => {
   return (
     <S.Layout>
       <S.Title>Terms of Service</S.Title>
-      <S.LastUpdated>Last updated: May 9, 2026</S.LastUpdated>
+      {updated ? <S.LastUpdated>Last updated: {updated}</S.LastUpdated> : null}
       <S.MarkdownBody>
-        <Markdown>{TERMS_CONTENT}</Markdown>
+        <Markdown>{body}</Markdown>
       </S.MarkdownBody>
     </S.Layout>
   );

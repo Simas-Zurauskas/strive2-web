@@ -6,12 +6,12 @@ import { createPortal } from 'react-dom';
 import { Button } from '@/components/Button';
 import { TopupControl } from '@/components/TopupControl';
 import { ROUTES } from '@/constants/routes';
-import { useBillingSummary } from '@/hooks/useBilling';
 import { useDialog } from '@/hooks';
+import { useBillingSummary } from '@/hooks/useBilling';
 import { analytics } from '@/lib/analytics';
 import { registerCreditModalListener } from '@/lib/creditModalBus';
-import { TopupBar } from './TopupBar';
 import * as S from './OutOfCreditsModal.styles';
+import { TopupBar } from './TopupBar';
 import type { PlanKey } from '@/api/types';
 
 const daysUntil = (date: string | Date | null | undefined): number | null => {
