@@ -5,6 +5,7 @@ import {
   buildLearnHubJsonLd,
   renderJsonLd,
 } from '@/lib/seo/jsonLd';
+import { DEFAULT_OG_IMAGES, DEFAULT_TWITTER_IMAGES } from '@/lib/seo/sharedMetadata';
 import { LearnHubScreen } from '@/screens/LearnScreen';
 import type { Metadata } from 'next';
 
@@ -19,11 +20,13 @@ export const metadata: Metadata = {
       'Personal AI courses on Python, Spanish, calculus, Meta Ads, negotiation, and more — generated around your goal.',
     type: 'website',
     url: '/learn',
+    images: DEFAULT_OG_IMAGES,
   },
   twitter: {
     card: 'summary_large_image',
     title: 'Learn anything on Strive',
     description: 'Pick a topic. Strive builds the course around your goal.',
+    images: DEFAULT_TWITTER_IMAGES,
   },
 };
 

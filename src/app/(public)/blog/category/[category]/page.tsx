@@ -7,6 +7,7 @@ import {
 } from '@/lib/blog';
 import { getAllBlogPosts, getBlogPostsByCategory } from '@/lib/blog/loader';
 import { buildBreadcrumbJsonLd, renderJsonLd } from '@/lib/seo/jsonLd';
+import { DEFAULT_OG_IMAGES } from '@/lib/seo/sharedMetadata';
 import { BlogHubScreen } from '@/screens/BlogScreen';
 import type { Metadata } from 'next';
 
@@ -40,6 +41,7 @@ export const generateMetadata = async ({ params }: RouteParams): Promise<Metadat
       description: `${label} posts from the Strive blog.`,
       type: 'website',
       url: `/blog/category/${category}`,
+      images: DEFAULT_OG_IMAGES,
     },
   };
 };

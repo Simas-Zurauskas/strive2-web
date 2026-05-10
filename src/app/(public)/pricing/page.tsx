@@ -1,4 +1,5 @@
 import { Metadata } from 'next';
+import { DEFAULT_OG_IMAGES } from '@/lib/seo/sharedMetadata';
 
 export const metadata: Metadata = {
   title: 'Pricing — Strive',
@@ -9,6 +10,7 @@ export const metadata: Metadata = {
     description:
       'Top up Strive credits to generate personalised AI courses, lessons, quizzes, and a daily recall queue. No subscription. No expiry.',
     type: 'website',
+    images: DEFAULT_OG_IMAGES,
   },
   alternates: { canonical: '/pricing' },
 };

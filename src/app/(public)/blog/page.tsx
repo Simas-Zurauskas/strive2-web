@@ -5,6 +5,7 @@ import {
   buildBreadcrumbJsonLd,
   renderJsonLd,
 } from '@/lib/seo/jsonLd';
+import { DEFAULT_OG_IMAGES, DEFAULT_TWITTER_IMAGES } from '@/lib/seo/sharedMetadata';
 import { BlogHubScreen } from '@/screens/BlogScreen';
 import type { Metadata } from 'next';
 
@@ -23,11 +24,13 @@ export const metadata: Metadata = {
     description: 'Field notes from teaching, AI, and the design of Strive — by Simas Zurauskas.',
     type: 'website',
     url: '/blog',
+    images: DEFAULT_OG_IMAGES,
   },
   twitter: {
     card: 'summary_large_image',
     title: 'Strive blog',
     description: 'Field notes from teaching, AI, and the design of Strive.',
+    images: DEFAULT_TWITTER_IMAGES,
   },
 };
 

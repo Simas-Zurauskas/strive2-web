@@ -1,7 +1,9 @@
+import { Analytics } from '@vercel/analytics/next';
 import { Inter, Newsreader } from 'next/font/google';
 import Script from 'next/script';
 import { NEXT_PUBLIC_GA_MEASUREMENT_ID, NEXT_PUBLIC_GOOGLE_ADS_ID } from '@/conf/env';
 import { SITE_URL } from '@/conf/env.server';
+import { DEFAULT_OG_IMAGES, DEFAULT_TWITTER_IMAGES } from '@/lib/seo/sharedMetadata';
 import Registry from './_registry';
 import type { Metadata } from 'next';
 import 'katex/dist/katex.min.css';
@@ -25,7 +27,7 @@ export const metadata: Metadata = {
     template: '%s · Strive',
   },
   description:
-    'Personal AI-generated courses with live-streaming lessons, module quizzes, and a daily spaced-review queue that fights the three-week forgetting curve. Built around your goal — master a topic, monetize a skill, pass an exam, build a project, or achieve fluency. Powered by Claude.',
+    'Personal AI-generated courses with live-streaming lessons, module quizzes, and a daily spaced-review queue that fights the three-week forgetting curve. Built around your goal — master a topic, monetize a skill, pass an exam, build a project, or achieve fluency.',
   applicationName: 'Strive',
   keywords: [
     'AI learning platform',
@@ -38,7 +40,6 @@ export const metadata: Metadata = {
     'self-directed learning',
     'adaptive learning',
     'course generator',
-    'Anthropic Claude',
   ],
   authors: [{ name: 'Simas Zurauskas' }],
   creator: 'Simas Zurauskas',
@@ -55,23 +56,16 @@ export const metadata: Metadata = {
     siteName: 'Strive',
     title: 'Strive — A real AI course on anything you want to learn',
     description:
-      'Modules, lessons, quizzes, and daily recall — generated live, powered by Claude. Personal AI courses that actually stick.',
+      'Modules, lessons, quizzes, and daily recall — generated live. Personal AI courses that actually stick.',
     locale: 'en_US',
-    images: [
-      {
-        url: '/og.png',
-        width: 1200,
-        height: 630,
-        alt: 'Strive — personal AI-built courses with live-streaming lessons and daily recall',
-      },
-    ],
+    images: DEFAULT_OG_IMAGES,
   },
 
   twitter: {
     card: 'summary_large_image',
     title: 'Strive — A real AI course on anything you want to learn',
-    description: 'Modules, lessons, quizzes, and daily recall — generated live, powered by Claude.',
-    images: ['/og.png'],
+    description: 'Modules, lessons, quizzes, and daily recall — generated live.',
+    images: DEFAULT_TWITTER_IMAGES,
   },
 
   robots: {
@@ -137,6 +131,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
         )}
       </head>
       <body className={`${inter.variable} ${newsreader.variable}`} suppressHydrationWarning>
+        <Analytics />
         <a href="#main-content" className="skip-to-content">
           Skip to main content
         </a>
