@@ -43,7 +43,7 @@ export const LessonHero = ({
           <S.TitleArea>
             <S.EyebrowRow>
               <S.Eyebrow>{eyebrowText}</S.Eyebrow>
-              {isGenerating && <S.GeneratingDot />}
+              {isGenerating && <S.GeneratingPill>Generating</S.GeneratingPill>}
             </S.EyebrowRow>
             <S.Title>{lessonName}</S.Title>
           </S.TitleArea>
@@ -59,7 +59,7 @@ export const LessonHero = ({
         <S.TitleArea>
           <S.EyebrowRow>
             <S.Eyebrow>{eyebrowText}</S.Eyebrow>
-            {isGenerating && <S.GeneratingDot />}
+            {isGenerating && <S.GeneratingPill>Generating</S.GeneratingPill>}
             {hasContent && (
               <S.BookmarkButtonInline
                 $active={isBookmarked}
@@ -100,7 +100,7 @@ export const LessonHero = ({
         <S.TitleArea>
           <S.EyebrowRow>
             <S.Eyebrow>{eyebrowText}</S.Eyebrow>
-            {isGenerating && <S.GeneratingDot />}
+            {isGenerating && <S.GeneratingPill>Generating</S.GeneratingPill>}
             {hasContent && (
               <S.BookmarkButtonInline
                 $active={isBookmarked}

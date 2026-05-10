@@ -20,3 +20,11 @@ export const NEXTAUTH_SECRET = getServerEnv('NEXTAUTH_SECRET');
 export const NEXTAUTH_URL = getServerEnv('NEXTAUTH_URL');
 export const GOOGLE_CLIENT_ID = getServerEnv('GOOGLE_CLIENT_ID');
 export const GOOGLE_CLIENT_SECRET = getServerEnv('GOOGLE_CLIENT_SECRET');
+
+/**
+ * Canonical site origin used for sitemap entries, OpenGraph metadata, and
+ * JSON-LD URLs. Derived from NEXTAUTH_URL (single source of truth) with
+ * any trailing slash stripped. Server-only — JSON-LD and metadata are
+ * server-rendered, so no `NEXT_PUBLIC_*` mirror is needed.
+ */
+export const SITE_URL = NEXTAUTH_URL.replace(/\/$/, '');

@@ -1,0 +1,1 @@
+export { UpNextHero } from './UpNextHero';

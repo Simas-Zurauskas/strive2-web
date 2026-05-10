@@ -22,10 +22,10 @@ export const GoalStep = ({ initialGoal, hasExistingData, loading, error, onSubmi
   return (
     <S.Container>
       <S.Header>
-        <Eyebrow>Learning Goal</Eyebrow>
-        <S.Title>
-          What do you want to learn? <HelpAnchor concept="wizard" />
-        </S.Title>
+        <Eyebrow>
+          Learning Goal <HelpAnchor concept="wizard" size="sm" />
+        </Eyebrow>
+        <S.Title>What do you want to learn?</S.Title>
         <S.Subtitle>
           Describe your learning goal in your own words. We&apos;ll build a personalized course around it.
         </S.Subtitle>

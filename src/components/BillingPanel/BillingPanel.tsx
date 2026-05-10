@@ -169,9 +169,11 @@ export const BillingPanel: React.FC = () => {
 
   // Bonus balance (credits) → USD display. Users bought top-ups in dollars,
   // so they should see the remaining value in dollars. Uses the catalog's
-  // published rate so the math matches what was charged at checkout.
+  // published rate so the math matches what was charged at checkout. Shown
+  // unconditionally on the Top-up card — including at $0 — so users always
+  // know what they have available beyond the renewing allowance.
   const topupRate = catalog?.topupRate?.creditsPerUsd ?? 0;
-  const bonusUsdLabel = topupRate > 0 && credits.bonus > 0 ? `$${(credits.bonus / topupRate).toFixed(2)}` : null;
+  const bonusUsdLabel = topupRate > 0 ? `$${(credits.bonus / topupRate).toFixed(2)}` : null;
 
   return (
     <S.Wrap>
@@ -223,20 +225,19 @@ export const BillingPanel: React.FC = () => {
         <S.BarTrack>
           <S.BarFill $pct={pctRemaining} />
         </S.BarTrack>
-        {bonusUsdLabel && (
-          <S.BonusLine>
-            <S.BonusDot aria-hidden />
-            Plus <strong>{bonusUsdLabel}</strong> top-up balance
-            <S.BonusSep aria-hidden>·</S.BonusSep>
-            never expires
-          </S.BonusLine>
-        )}
       </S.AllowanceCard>
 
       {/* ── Top up ──────────────────────────────────────── */}
       <S.TopupCard>
         <S.TopupEyebrow>Top up</S.TopupEyebrow>
         <S.TopupTitle>Buy more, anytime.</S.TopupTitle>
+        <S.TopupBalance>
+          Balance
+          <S.BonusSep aria-hidden>·</S.BonusSep>
+          <strong>{bonusUsdLabel ?? '—'}</strong>
+          <S.BonusSep aria-hidden>·</S.BonusSep>
+          never expires
+        </S.TopupBalance>
         <S.TopupLead>
           One-off purchases sit on top of your monthly allowance and never reset to zero. Use them
           first when generating courses or lessons.

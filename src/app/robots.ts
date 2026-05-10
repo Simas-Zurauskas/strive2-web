@@ -1,4 +1,4 @@
-import { NEXT_PUBLIC_SITE_URL } from '@/conf/env';
+import { SITE_URL } from '@/conf/env.server';
 import type { MetadataRoute } from 'next';
 
 export default function robots(): MetadataRoute.Robots {
@@ -6,10 +6,10 @@ export default function robots(): MetadataRoute.Robots {
     rules: [
       {
         userAgent: '*',
-        allow: ['/', '/help', '/pricing', '/privacy', '/terms'],
+        allow: ['/', '/help', '/learn', '/blog', '/pricing', '/privacy', '/terms'],
         disallow: ['/api/', '/profile', '/courses', '/library', '/quizzes', '/recall', '/dev'],
       },
     ],
-    sitemap: `${NEXT_PUBLIC_SITE_URL}/sitemap.xml`,
+    sitemap: `${SITE_URL}/sitemap.xml`,
   };
 }

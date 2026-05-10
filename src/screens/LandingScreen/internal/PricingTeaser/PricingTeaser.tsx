@@ -48,8 +48,7 @@ export const PricingTeaser = ({ onOpenSignUp }: PricingTeaserProps) => {
     <S.Wrap>
       <S.Inner
         initial={fadeUp.initial}
-        whileInView={fadeUp.animate}
-        viewport={{ once: true, margin: '0px 0px -10% 0px' }}
+        animate={fadeUp.animate}
         transition={{ ...fadeUp.transition, duration: 0.4 }}
       >
         <S.Heading>{PRICING_TEASER.heading}</S.Heading>

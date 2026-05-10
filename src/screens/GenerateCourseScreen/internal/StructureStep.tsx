@@ -85,10 +85,10 @@ export const StructureStep = ({
   return (
     <S.Container>
       <S.Header>
-        <Eyebrow>Structure</Eyebrow>
-        <S.Title>
-          Your Course Structure <HelpAnchor concept="modules-and-lessons" />
-        </S.Title>
+        <Eyebrow>
+          Structure <HelpAnchor concept="modules-and-lessons" size="sm" />
+        </Eyebrow>
+        <S.Title>Your Course Structure</S.Title>
         <S.Subtitle>
           Review the modules and lessons below. Use the chat to make changes &mdash; add or remove topics, reorder
           modules, adjust scope, or ask why something was included. When you&apos;re happy with it, accept to start learning.

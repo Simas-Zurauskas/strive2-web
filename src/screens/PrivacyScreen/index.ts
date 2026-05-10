@@ -1,1 +1,1 @@
-export { PrivacyScreen as default } from './PrivacyScreen';
+export { PrivacyScreen, PrivacyScreen as default } from './PrivacyScreen';

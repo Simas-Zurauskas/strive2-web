@@ -21,13 +21,18 @@ interface HelpAnchorProps {
 
 /**
  * Small "?" button. Pulses softly and continuously while the concept is
- * unviewed (skipped under `prefers-reduced-motion`). The pulse only stops
- * when the user opens the modal and dismisses it (any close path —
- * "Got it" / Escape / backdrop click — flips the viewed flag).
+ * unviewed, with a periodic horizontal "wiggle" — a quick damped shake
+ * (≈ 320 ms) every 4 s — to draw the eye without disturbing the text
+ * baseline. The pulse only stops when the user opens the modal and
+ * dismisses it (any close path flips the viewed flag). Both motion layers
+ * are suppressed under `prefers-reduced-motion`.
  *
- * Hover/focus do NOT stop the pulse: if the user mouses past the anchor
- * without engaging, we want it to keep inviting them. The pulse is the
- * teaching layer; not pulsing == we already taught it.
+ * Why a horizontal wiggle, not a vertical bounce: this anchor sits inline
+ * inside text rows (eyebrows, captions, sentences). A vertical hop reads as
+ * the icon "jumping out of the line" and makes line-height look unstable.
+ * A short horizontal shake stays on the baseline and reads instantly as
+ * "calling attention" — same pattern Linear / Stripe / Apple use for inline
+ * hint elements.
  */
 export const HelpAnchor = ({
   concept,
@@ -42,7 +47,7 @@ export const HelpAnchor = ({
   const entry = CONCEPTS[concept];
 
   return (
-    <S.Wrap $variant={variant} className={className}>
+    <S.Wrap $variant={variant} $active={pulsing} className={className}>
       <S.Ring $active={pulsing} />
       <S.Button
         type="button"

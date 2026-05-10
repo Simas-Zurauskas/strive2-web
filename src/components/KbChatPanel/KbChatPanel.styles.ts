@@ -112,7 +112,6 @@ export const Header = styled.div`
   background: ${(p) => p.theme.colors.surface};
 `;
 
-
 export const HeaderText = styled.div`
   flex: 1;
   min-width: 0;

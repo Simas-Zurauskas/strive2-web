@@ -12,8 +12,7 @@ export const GoalTypesSection = () => {
     <S.Wrap>
       <S.Inner
         initial={fadeUp.initial}
-        whileInView={fadeUp.animate}
-        viewport={{ once: true, margin: '0px 0px -10% 0px' }}
+        animate={fadeUp.animate}
         transition={{ ...fadeUp.transition, duration: 0.45 }}
       >
         <S.Header>
@@ -27,8 +26,7 @@ export const GoalTypesSection = () => {
             <S.Card
               key={g.key}
               initial={{ opacity: 0, y: prefersReduced ? 0 : 8 }}
-              whileInView={{ opacity: 1, y: 0 }}
-              viewport={{ once: true, margin: '0px 0px -10% 0px' }}
+              animate={{ opacity: 1, y: 0 }}
               transition={{
                 duration: 0.4,
                 delay: prefersReduced ? 0 : Math.min(i * 0.06, 0.3),

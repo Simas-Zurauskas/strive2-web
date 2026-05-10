@@ -5,8 +5,8 @@ topic: plans-and-account
 summary: What Strive stores, what we do with it, and the things we explicitly don't do — like training models on your study data.
 tags: [privacy, data, account]
 order: 10
-updated: 2026-05-02
-related: [understanding-credits-and-allowance]
+updated: 2026-05-10
+related: [understanding-credits-and-allowance, privacy-policy, terms-of-service]
 ---
 
 We take privacy seriously. This page is the friendlier sibling of our [privacy policy](/privacy) — it explains, in plain language, what Strive stores about you and what we do with it.
@@ -36,4 +36,4 @@ As long as your account is active, your data stays with you. If you delete your 
 
 ## Asking us anything
 
-If you have a privacy-specific question, email **privacy@strive.com**. For general questions, the help center search and the AI guide can usually answer without needing a human in the loop.
+If you have a privacy-specific question, email **admin@strive-learning.com**. For general questions, the help center search and the AI guide can usually answer without needing a human in the loop. The full legal text — including sub-processors, retention periods, your GDPR rights and our data-handling commitments — lives in the [Privacy Policy](/privacy).

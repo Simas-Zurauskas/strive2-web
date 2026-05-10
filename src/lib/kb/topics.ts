@@ -33,6 +33,13 @@ export const KB_TOPICS: TopicConfig[] = [
     icon: 'Wallet',
     order: 40,
   },
+  {
+    slug: 'legal',
+    title: 'Legal',
+    summary: 'Privacy policy and terms of service — the contract and data-handling rules between you and Strive.',
+    icon: 'Scale',
+    order: 90,
+  },
 ];
 
 export const getTopicConfig = (slug: string): TopicConfig | undefined =>

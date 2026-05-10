@@ -25,12 +25,12 @@
  *    as the slot so the two layers read as a single coordinated motion.
  */
 
-import type { Transition, Variants } from 'framer-motion';
 import {
   PANEL_CLOSE_TRANSITION,
   PANEL_EASE,
   PANEL_OPEN_TRANSITION,
 } from '@/theme/motionPresets';
+import type { Transition, Variants } from 'framer-motion';
 
 // Re-exports — historically these constants lived in this file, now
 // they're a shared motion vocabulary used by every "panel slides in"

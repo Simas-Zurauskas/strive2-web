@@ -75,7 +75,7 @@ export const LessonStreamProvider = ({ children }: { children: React.ReactNode }
     typeof window === 'undefined' ? true : localStorage.getItem('gen_includeImage') !== 'false',
   );
   const [includeLinks, setIncludeLinksState] = useState(() =>
-    typeof window === 'undefined' ? true : localStorage.getItem('gen_includeLinks') !== 'false',
+    typeof window === 'undefined' ? false : localStorage.getItem('gen_includeLinks') === 'true',
   );
 
   const setIncludeImage = (value: boolean) => {

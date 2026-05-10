@@ -19,7 +19,7 @@ import { deleteCourse, updateCourse } from '@/api/routes/course';
 import { AlertDialog, TextLoader } from '@/components';
 import { ROUTES } from '@/constants/routes';
 import { TOASTS } from '@/constants/toasts';
-import { useCourse, useCourseProgress, useGeneratedLessons } from '@/hooks';
+import { useCourse, useCourseNextAction, useCourseProgress, useGeneratedLessons } from '@/hooks';
 import { analytics } from '@/lib/analytics';
 import { breakpoints } from '@/theme';
 import { QKeys } from '@/types';
@@ -39,14 +39,17 @@ import type { CourseStatus } from '@/api/types';
 
 const DESKTOP_MQ = `(min-width: ${breakpoints.desktop + 1}px)`;
 
-// Persists across remounts (route param changes remount page components, but layout stays)
-let persistedExpandedModules: Set<number> | null = null;
-
 // Persist panel-open states across page reloads, course switches, and
 // lesson navigation. Plain "true"/"false" strings for forward-compat with
 // other primitive flags we may want to colocate here.
 const CHAT_OPEN_STORAGE_KEY = 'strive.lessonScreen.chatOpen';
 const SIDEBAR_OPEN_STORAGE_KEY = 'strive.lessonScreen.sidebarOpen';
+
+// Per-course expanded-modules set, persisted as a JSON array of indices.
+// Null marker (`__null__`) means "user has explicitly collapsed everything"
+// — distinct from "no entry yet, apply focus default".
+const expandedModulesStorageKey = (courseSlug: string) =>
+  `strive.courseSidebar.expanded.${courseSlug}`;
 
 const readStoredBool = (key: string, fallback: boolean): boolean => {
   if (typeof window === 'undefined') return fallback;
@@ -56,6 +59,28 @@ const readStoredBool = (key: string, fallback: boolean): boolean => {
     return v === 'true';
   } catch {
     return fallback;
+  }
+};
+
+/** Read the persisted expanded-modules set for a course, or null when none stored.
+ *  Filters out indices that are out of range against the current `moduleCount`
+ *  so a structure shrinkage can't strand stale numbers in the set. */
+const readStoredExpandedModules = (
+  courseSlug: string,
+  moduleCount: number,
+): Set<number> | null => {
+  if (typeof window === 'undefined') return null;
+  try {
+    const raw = window.localStorage.getItem(expandedModulesStorageKey(courseSlug));
+    if (raw === null) return null;
+    const parsed = JSON.parse(raw);
+    if (!Array.isArray(parsed)) return null;
+    const valid = parsed.filter(
+      (n): n is number => typeof n === 'number' && Number.isInteger(n) && n >= 0 && n < moduleCount,
+    );
+    return new Set(valid);
+  } catch {
+    return null;
   }
 };
 
@@ -123,21 +148,46 @@ export const CourseShell = ({ children }: CourseShellProps) => {
   });
 
   // ── UI state ─────────────────────────────────────────
-  // Sidebar default: open on desktop, closed on mobile. Persisted choice
+  // Both panels default to open on desktop, closed on mobile/tablet (where
+  // they're full-width overlays and can't coexist). Persisted choice
   // overrides the responsive default.
-  const [sidebarOpen, setSidebarOpen] = useState(() => {
-    const isDesktopMount =
-      typeof window !== 'undefined' ? window.matchMedia(DESKTOP_MQ).matches : true;
-    return readStoredBool(SIDEBAR_OPEN_STORAGE_KEY, isDesktopMount);
-  });
-  const [chatOpen, setChatOpen] = useState(() => readStoredBool(CHAT_OPEN_STORAGE_KEY, false));
-  const [expandedModules, setExpandedModulesState] = useState<Set<number> | null>(
-    () => persistedExpandedModules,
+  const isDesktopMount =
+    typeof window !== 'undefined' ? window.matchMedia(DESKTOP_MQ).matches : true;
+  const [sidebarOpen, setSidebarOpen] = useState(() =>
+    readStoredBool(SIDEBAR_OPEN_STORAGE_KEY, isDesktopMount),
   );
-  const setExpandedModules = useCallback((val: Set<number>) => {
-    persistedExpandedModules = val;
-    setExpandedModulesState(val);
-  }, []);
+  const [chatOpen, setChatOpen] = useState(() =>
+    readStoredBool(CHAT_OPEN_STORAGE_KEY, isDesktopMount),
+  );
+  // Per-course expanded-modules set. Null = "not yet hydrated for this
+  // course" — defaulted below once `modules` resolves so we know the
+  // module count. Once non-null, every change is mirrored to localStorage
+  // under `strive.courseSidebar.expanded.<slug>`.
+  const [expandedModules, setExpandedModulesState] = useState<Set<number> | null>(null);
+  const setExpandedModules = useCallback(
+    (val: Set<number>) => {
+      setExpandedModulesState(val);
+      if (typeof window === 'undefined') return;
+      try {
+        window.localStorage.setItem(
+          expandedModulesStorageKey(courseSlug),
+          JSON.stringify([...val]),
+        );
+      } catch {
+        // localStorage can throw in private mode / quota exceeded — non-fatal.
+      }
+    },
+    [courseSlug],
+  );
+  const toggleExpandedModule = useCallback(
+    (mi: number) => {
+      const next = new Set(expandedModules ?? []);
+      if (next.has(mi)) next.delete(mi);
+      else next.add(mi);
+      setExpandedModules(next);
+    },
+    [expandedModules, setExpandedModules],
+  );
 
   // ── Persist panel states to localStorage ─────────────
   useEffect(() => {
@@ -246,7 +296,6 @@ export const CourseShell = ({ children }: CourseShellProps) => {
     );
   }, [chatOpen, chatX]);
 
-
   // ── Keep fixed sidebars above the global footer ──────
   // Both sidebars are position: fixed with bottom: 0 — without this they'd
   // sit ON TOP of the footer when the page is scrolled to the bottom. We
@@ -316,15 +365,61 @@ export const CourseShell = ({ children }: CourseShellProps) => {
 
   const modules = useMemo(() => course?.structure?.modules ?? [], [course?.structure?.modules]);
 
+  // ── Per-course expanded-modules hydration ────────────
+  // Resets when the course slug changes so cross-course leakage is impossible
+  // (the long-standing global-let gotcha — see Gotchas in the wiki).
+  const hydratedSlugRef = useRef<string | null>(null);
+  useEffect(() => {
+    if (modules.length === 0) return;
+    if (hydratedSlugRef.current === courseSlug) return;
+    hydratedSlugRef.current = courseSlug;
+    setExpandedModulesState(readStoredExpandedModules(courseSlug, modules.length));
+  }, [courseSlug, modules.length]);
+
+  // ── Next-action ──────────────────────────────────────
+  const nextAction = useCourseNextAction({ modules, progressData: progressData ?? undefined });
+
+  // Apply the focus default (open ONE module = focus module) on first
+  // hydrate per course, only when nothing is stored. Single-module courses
+  // skip the collapse default so the sole module isn't hidden behind a
+  // chevron the user has to find.
+  useEffect(() => {
+    if (modules.length === 0) return;
+    if (expandedModules !== null) return;
+    if (!nextAction) return;
+    const focus = modules.length === 1 ? 0 : nextAction.moduleIndex;
+    setExpandedModules(new Set([focus]));
+  }, [expandedModules, modules.length, nextAction, setExpandedModules]);
+
+  // Currently-routed module is also force-expanded so the active lesson
+  // row is visible in the sidebar on a hard reload deep into a lesson
+  // URL. Cheap to recompute: only mutates state when the index is missing.
+  useEffect(() => {
+    if (moduleIndex === undefined) return;
+    if (expandedModules === null) return;
+    if (expandedModules.has(moduleIndex)) return;
+    const next = new Set(expandedModules);
+    next.add(moduleIndex);
+    setExpandedModules(next);
+  }, [moduleIndex, expandedModules, setExpandedModules]);
+
   // ── Navigation ───────────────────────────────────────
   const courseBasePath = ROUTES.course(course?.slug, courseSlug);
 
   const navigateToLesson = useCallback(
     (mi: number, li: number) => {
+      // Ensure the target module is in the expanded set BEFORE the route
+      // change so the sidebar's active-row scrollIntoView (in CourseSidebar)
+      // can find the row it's looking for.
+      if (expandedModules && !expandedModules.has(mi)) {
+        const next = new Set(expandedModules);
+        next.add(mi);
+        setExpandedModules(next);
+      }
       router.push(ROUTES.lesson(course?.slug, courseSlug, mi, li));
       if (!isDesktop) setSidebarOpen(false);
     },
-    [course?.slug, courseSlug, router, isDesktop],
+    [course?.slug, courseSlug, router, isDesktop, expandedModules, setExpandedModules],
   );
 
   const closeOverlays = useCallback(() => {
@@ -366,14 +461,16 @@ export const CourseShell = ({ children }: CourseShellProps) => {
       isDesktop,
       expandedModules,
       setExpandedModules,
+      toggleExpandedModule,
       navigateToLesson,
       onDeleteCourse: () => setShowDeleteDialog(true),
       onArchiveCourse: () => setShowArchiveDialog(true),
+      nextAction,
     }),
     [
       courseSlug, courseBasePath, course, isLoading, modules, progressData, generatedLessons,
       sidebarOpen, chatOpen, isDesktop, expandedModules, setExpandedModules,
-      navigateToLesson,
+      toggleExpandedModule, navigateToLesson, nextAction,
     ],
   );
 
@@ -386,7 +483,6 @@ export const CourseShell = ({ children }: CourseShellProps) => {
   useEffect(() => {
     setNavExtensionEl(document.getElementById('navbar-extension-slot'));
   }, []);
-
 
   // ── Loading state ────────────────────────────────────
   if (isLoading) {
@@ -494,7 +590,7 @@ export const CourseShell = ({ children }: CourseShellProps) => {
             generatedLessons={generatedLessons ?? undefined}
             activeLesson={course?.activeLesson ?? null}
             expandedModules={expandedModules}
-            onExpandedChange={setExpandedModules}
+            onToggleModule={toggleExpandedModule}
           />
         </S.SidebarPanelFixed>
 

@@ -1,5 +1,6 @@
 'use client';
 
+import Link from 'next/link';
 import { useEffect, useState } from 'react';
 import * as S from './LandingTopBar.styles';
 
@@ -20,11 +21,14 @@ export const LandingTopBar = ({ onOpenSignIn }: LandingTopBarProps) => {
   return (
     <S.Bar $scrolled={scrolled}>
       <S.Inner>
-        <S.Wordmark href="/" aria-label="Strive home">
+        <S.Wordmark as={Link} href="/" aria-label="Strive home">
           Strive
         </S.Wordmark>
         <S.NavLinks>
-          <S.PricingLink href="/pricing" data-analytics-id="landing.topbar.pricing">
+          <S.PricingLink as={Link} href="/blog" data-analytics-id="landing.topbar.blog">
+            Blog
+          </S.PricingLink>
+          <S.PricingLink as={Link} href="/pricing" data-analytics-id="landing.topbar.pricing">
             Pricing
           </S.PricingLink>
           <S.SignInLink

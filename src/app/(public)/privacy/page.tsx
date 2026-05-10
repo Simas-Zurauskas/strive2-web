@@ -1,4 +1,7 @@
 import { Metadata } from 'next';
+import { notFound } from 'next/navigation';
+import { getArticle } from '@/lib/kb';
+import { PrivacyScreen } from '@/screens/PrivacyScreen';
 
 export const metadata: Metadata = {
   title: 'Privacy Policy — Strive',
@@ -8,4 +11,8 @@ export const metadata: Metadata = {
   alternates: { canonical: '/privacy' },
 };
 
-export { default } from '@/screens/PrivacyScreen';
+export default function Page() {
+  const article = getArticle('legal', 'privacy-policy');
+  if (!article) notFound();
+  return <PrivacyScreen body={article.body} updated={article.updated} />;
+}

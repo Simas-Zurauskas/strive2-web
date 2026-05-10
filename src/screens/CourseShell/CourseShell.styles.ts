@@ -22,7 +22,6 @@ export const Layout = styled.div`
   color: ${(p) => p.theme.colors.foreground};
 `;
 
-
 // ── Sidebar slot ───────────────────────────────────────
 // Mirror of ChatSlot: empty grid placeholder, animates `width` so the
 // lesson content reflows when the sidebar opens/closes. The visible

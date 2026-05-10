@@ -39,8 +39,6 @@ export const useJobManager = () => {
   return ctx;
 };
 
-const JOB_TIMEOUT_MS = 5 * 60 * 1000; // 5 minutes
-
 export const JobManagerProvider = ({ children }: { children: React.ReactNode }) => {
   const queryClient = useQueryClient();
   const router = useRouter();
@@ -50,9 +48,7 @@ export const JobManagerProvider = ({ children }: { children: React.ReactNode }) 
     pathnameRef.current = pathname;
   }, [pathname]);
   const { socket } = useSocket();
-  const callbacksRef = useRef<
-    Map<string, { callback: () => void; courseId: string; timer: ReturnType<typeof setTimeout> }>
-  >(new Map());
+  const callbacksRef = useRef<Map<string, { callback: () => void; courseId: string }>>(new Map());
   // Local set for instant reactivity (before query cache updates with activeJobId)
   const [activeCourseIds, setActiveCourseIds] = useState<Set<string>>(new Set());
   // Which specific lesson is currently generating (set via WS or optimistically)
@@ -76,7 +72,6 @@ export const JobManagerProvider = ({ children }: { children: React.ReactNode }) 
   const cleanupJob = useCallback((jobId: string) => {
     const entry = callbacksRef.current.get(jobId);
     if (entry) {
-      clearTimeout(entry.timer);
       callbacksRef.current.delete(jobId);
       setActiveCourseIds((prev) => {
         const next = new Set(prev);
@@ -88,34 +83,12 @@ export const JobManagerProvider = ({ children }: { children: React.ReactNode }) 
 
   // trackJob: used by wizard flows (clarify, generate_structure) that need onComplete callbacks.
   // Also provides instant local tracking before the query cache updates.
-  const trackJob = useCallback(
-    (job: TrackJobParams) => {
-
-      // Clear any existing entry for this job
-      const existing = callbacksRef.current.get(job.jobId);
-      if (existing) clearTimeout(existing.timer);
-
-      // Auto-cleanup after timeout to prevent stuck state
-      const timer = setTimeout(() => {
-        console.warn('[JobManager] Job timed out on client:', job.jobId);
-        toast.error(TOASTS.JOB_TIMEOUT);
-        callbacksRef.current.delete(job.jobId);
-        setActiveCourseIds((prev) => {
-          const next = new Set(prev);
-          next.delete(job.courseId);
-          return next;
-        });
-        queryClient.invalidateQueries({ queryKey: [QKeys.COURSE, job.courseId] });
-        queryClient.invalidateQueries({ queryKey: [QKeys.COURSES] });
-      }, JOB_TIMEOUT_MS);
-
-      if (job.onComplete) {
-        callbacksRef.current.set(job.jobId, { callback: job.onComplete, courseId: job.courseId, timer });
-      }
-      setActiveCourseIds((prev) => new Set(prev).add(job.courseId));
-    },
-    [queryClient],
-  );
+  const trackJob = useCallback((job: TrackJobParams) => {
+    if (job.onComplete) {
+      callbacksRef.current.set(job.jobId, { callback: job.onComplete, courseId: job.courseId });
+    }
+    setActiveCourseIds((prev) => new Set(prev).add(job.courseId));
+  }, []);
 
   // Check if a job is running for a course. Uses two sources:
   // 1. Local activeCourseIds — instant, covers gap between job submit and query cache update
@@ -166,7 +139,6 @@ export const JobManagerProvider = ({ children }: { children: React.ReactNode }) 
       // Suppress generic success toast when a tracked callback exists (the caller handles its own UX)
       if (event.status === 'completed') {
         if (entry) {
-          clearTimeout(entry.timer);
           entry.callback();
         } else if (
           event.type === 'generate_lesson' &&
@@ -191,7 +163,6 @@ export const JobManagerProvider = ({ children }: { children: React.ReactNode }) 
           toast(TOASTS.GENERATION_COMPLETE);
         }
       } else if (event.status === 'failed') {
-        if (entry) clearTimeout(entry.timer);
         // Race-loss path: requireCredits passed at request time but the
         // in-runner re-check at submitJob lost — surface the same modal
         // the synchronous 402 path uses instead of a generic toast.
@@ -288,12 +259,12 @@ export const JobManagerProvider = ({ children }: { children: React.ReactNode }) 
         try {
           const job = await getJobStatus(jobId);
           if (job.status === 'completed' || job.status === 'failed') {
-            clearTimeout(entry.timer);
             if (job.status === 'completed') entry.callback();
             cleanupJob(jobId);
           }
         } catch {
-          // Job not found or network error — cleanup will happen via timeout
+          // Job not found or network error — leave the entry; the next
+          // job:status socket event will resolve it.
         }
       }
     };

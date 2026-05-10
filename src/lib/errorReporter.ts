@@ -16,7 +16,9 @@ interface ReportContext {
 }
 
 const sentryActive = (): boolean =>
-  typeof process !== 'undefined' && !!process.env.NEXT_PUBLIC_SENTRY_DSN;
+  typeof process !== 'undefined' &&
+  !!process.env.NEXT_PUBLIC_SENTRY_DSN &&
+  process.env.NODE_ENV !== 'development';
 
 export const reportError = (err: unknown, ctx: ReportContext = {}): void => {
   if (sentryActive()) {

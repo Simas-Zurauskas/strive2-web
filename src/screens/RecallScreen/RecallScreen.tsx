@@ -78,7 +78,7 @@ export const RecallScreen = () => {
     if (!currentRaw) return;
     if (modeOverrides[currentRaw.recallCardId]) return;
     if (!preferredMode || preferredMode === currentRaw.mode) return;
-    // eslint-disable-next-line react-hooks/set-state-in-effect -- syncing local override map with external preferredMode + persisting to server
+     
     setModeOverrides((prev) => ({ ...prev, [currentRaw.recallCardId]: preferredMode }));
     setMode({ recallCardId: currentRaw.recallCardId, mode: preferredMode });
   }, [currentRaw, preferredMode, modeOverrides, setMode]);
@@ -176,10 +176,10 @@ export const RecallScreen = () => {
       <PageLayout>
         <S.ContentWrap>
           <S.PageHeader>
-            <S.Eyebrow>Recall</S.Eyebrow>
-            <S.Title>
-              Where reading turns into knowing. <HelpAnchor concept="spaced-recall" />
-            </S.Title>
+            <S.Eyebrow>
+              Recall <HelpAnchor concept="spaced-recall" size="sm" />
+            </S.Eyebrow>
+            <S.Title>Where reading turns into knowing.</S.Title>
             <S.Subtitle>
               Tiny prompts pulled from your lessons, scheduled at intervals proven to outlast
               forgetting. A few minutes of recall a day is what makes the work compound.
@@ -215,10 +215,10 @@ export const RecallScreen = () => {
       <PageLayout>
         <S.ContentWrap>
           <S.PageHeader>
-            <S.Eyebrow>Recall</S.Eyebrow>
-            <S.Title>
-              Where reading turns into knowing. <HelpAnchor concept="spaced-recall" />
-            </S.Title>
+            <S.Eyebrow>
+              Recall <HelpAnchor concept="spaced-recall" size="sm" />
+            </S.Eyebrow>
+            <S.Title>Where reading turns into knowing.</S.Title>
           </S.PageHeader>
 
           <S.EmptyState>
@@ -248,10 +248,10 @@ export const RecallScreen = () => {
     <PageLayout>
       <S.ContentWrap>
         <S.PageHeader>
-          <S.Eyebrow>Recall</S.Eyebrow>
-          <S.Title>
-            Where reading turns into knowing. <HelpAnchor concept="spaced-recall" />
-          </S.Title>
+          <S.Eyebrow>
+            Recall <HelpAnchor concept="spaced-recall" size="sm" />
+          </S.Eyebrow>
+          <S.Title>Where reading turns into knowing.</S.Title>
           <S.Subtitle>
             Recall the answer first, then rate how well it came back. The scheduler handles the
             rest.

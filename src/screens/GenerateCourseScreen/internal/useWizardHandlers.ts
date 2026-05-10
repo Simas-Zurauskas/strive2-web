@@ -8,7 +8,7 @@ import type { useWizardMutations } from './useWizardMutations';
 import type { Course, CourseDepth, ClientApiError, DepthPreviewsResponse, GoalType } from '@/api/types';
 import type { DepthOverridePayload } from '@/components/DepthOverrideDialog';
 
-type Step = 1 | 2 | 3 | 4;
+type Step = 1 | 2 | 3 | 4 | 5;
 
 interface UseWizardHandlersParams {
   courseId: string | null;
@@ -111,6 +111,12 @@ export const useWizardHandlers = ({
                 structure: undefined,
                 depth: undefined,
                 answers: undefined,
+                // The backend cascades goalType / goalTypeConfidence /
+                // goalTypeConfirmedAt to null when the goal text changes.
+                // Mirror that here so the optimistic UI matches.
+                goalType: null,
+                goalTypeConfidence: null,
+                goalTypeConfirmedAt: null,
               }
             : old,
         );
@@ -175,16 +181,24 @@ export const useWizardHandlers = ({
 
   // ── Goal type ─────────────────────────────────────────
   //
-  // Triggered by the chip on the ClarifyStep header. Cascade mirrors the
-  // goal-overwrite flow: PATCH /course/{id} with the new goalType (the
-  // backend marks confidence='high' so the next clarify job uses the
-  // user-picked value instead of re-classifying), then re-submit a
-  // clarify job to regenerate questions tilted to the new goalType.
-  // Downstream (depthPreviews / structure / answers) is cleared by the
-  // clarify job itself — same cascade as a goal-text change.
+  // Triggered when the user picks a non-AI-suggested chip on the Purpose
+  // step. Cascade mirrors the goal-overwrite flow: PATCH /course/{id} with
+  // the new goalType (the backend marks confidence='high' so the next
+  // clarify job uses the user-picked value instead of re-classifying, and
+  // clears `goalTypeConfirmedAt`), then re-submit a clarify job to
+  // regenerate questions tilted to the new goalType. Downstream
+  // (depthPreviews / structure / answers) is cleared by the clarify job
+  // itself — same cascade as a goal-text change.
+  //
+  // `options.onClarifySettled` fires after the clarify regen finishes —
+  // PurposeStep uses it to stamp `goalTypeConfirmedAt` and advance the
+  // user to step 3 in one motion (no double-Next needed).
 
   const executeGoalTypeSwitch = useCallback(
-    (newGoalType: GoalType) => {
+    (
+      newGoalType: GoalType,
+      options?: { onClarifySettled?: () => void },
+    ) => {
       if (!courseId) return;
       analytics.track('wizard_step_2_goal_type_switched', {
         from_goal_type: course?.goalType ?? null,
@@ -198,6 +212,10 @@ export const useWizardHandlers = ({
           ? {
               ...old,
               goalType: newGoalType,
+              // Backend cascade nulls confirmedAt on goalType change; mirror
+              // here so the resume gate doesn't read stale state during the
+              // regen window.
+              goalTypeConfirmedAt: null,
               clarifyData: undefined,
               depthPreviews: undefined,
               structure: undefined,
@@ -217,6 +235,7 @@ export const useWizardHandlers = ({
                   jobId: clarifyResult.jobId,
                   courseId,
                   type: 'clarify',
+                  onComplete: options?.onClarifySettled,
                 });
               },
             });
@@ -232,29 +251,95 @@ export const useWizardHandlers = ({
       trackJob,
       setAnswers,
       setDepth,
+      course,
     ],
   );
 
-  const handleGoalTypeSwitch = useCallback(
-    (newGoalType: GoalType) => {
-      if (!course) return;
-      if (newGoalType === course.goalType) return;
+  // ── Purpose ───────────────────────────────────────────
+  //
+  // The new dedicated Purpose step routes here. Two paths:
+  //
+  //   1. No override (selected matches `course.goalType`, which is the AI
+  //      classification): just stamp `goalTypeConfirmedAt: 'now'`, fire
+  //      the funnel event, and advance to step 3. No clarify regen — the
+  //      questions already in `clarifyData` are tilted to the AI choice
+  //      the user is confirming.
+  //
+  //   2. Override (selected differs from current): mirror the prior chip-
+  //      row cascade — confirm dialog if there's downstream data the
+  //      regen will clobber, then `executeGoalTypeSwitch`. After the
+  //      clarify job settles we PATCH `goalTypeConfirmedAt: 'now'` and
+  //      advance to step 3 from the `onClarifySettled` hook so the user
+  //      doesn't have to click Next twice.
+  //
+  // The funnel event fires only on the FIRST confirmation transition
+  // (`course.goalTypeConfirmedAt === null`). Re-visiting Purpose via
+  // stepper back-nav and clicking Next without changes does NOT re-fire
+  // the event — keeps the funnel honest.
 
-      // Always confirm — the cascade clears the user's existing answers
-      // even when no depth/structure exists yet, since the clarify
-      // questions themselves regenerate.
-      const hasStructureDownstream = !!(depthPreviews || structureData);
-      const message = hasStructureDownstream
-        ? 'Switching will regenerate the clarifying questions and clear your depth options and course structure. Continue?'
-        : 'Switching will regenerate the clarifying questions and clear your current answers. Continue?';
+  const advancePastPurpose = useCallback(
+    (selectedType: GoalType, isOverride: boolean) => {
+      if (!courseId) return;
+      const wasFirstConfirmation = !course?.goalTypeConfirmedAt;
 
-      confirmOverwrite({
-        title: 'Switch course type?',
-        message,
-        action: () => executeGoalTypeSwitch(newGoalType),
-      });
+      // Cast: `goalTypeConfirmedAt` accepts a `'now'` literal at the
+      // OpenAPI boundary, decoded server-side to a real Date. The
+      // generated request type lists it as `'now' | null`.
+      updateCourseMutation.mutate(
+        {
+          id: courseId,
+          data: { goalTypeConfirmedAt: 'now' } as { goalTypeConfirmedAt: 'now' },
+        },
+        {
+          onSuccess: () => {
+            if (wasFirstConfirmation) {
+              analytics.track('wizard_step_2_purpose_confirmed', {
+                goal_type: selectedType,
+                was_ai_suggestion: !isOverride,
+                ai_suggestion: course?.goalType ?? null,
+              });
+            }
+            setStep(3);
+          },
+        },
+      );
     },
-    [course, depthPreviews, structureData, executeGoalTypeSwitch, confirmOverwrite],
+    [courseId, course, updateCourseMutation, setStep],
+  );
+
+  const handlePurposeConfirm = useCallback(
+    (selectedType: GoalType, isOverride: boolean) => {
+      if (!course) return;
+
+      if (!isOverride) {
+        advancePastPurpose(selectedType, false);
+        return;
+      }
+
+      const hasDownstream = !!(depthPreviews || structureData || (course.answers && Object.keys(course.answers).length > 0));
+      const proceed = () => {
+        // Trigger the goalType cascade + clarify regen. The backend will
+        // null `goalTypeConfirmedAt`; we re-stamp it from the
+        // onClarifySettled hook once the regen lands so the user doesn't
+        // bounce back to Purpose on resume.
+        executeGoalTypeSwitch(selectedType, {
+          onClarifySettled: () => advancePastPurpose(selectedType, true),
+        });
+      };
+
+      if (hasDownstream) {
+        confirmOverwrite({
+          title: 'Switch course purpose?',
+          message:
+            'Switching will regenerate the clarifying questions and clear your current answers, depth options, and structure. Continue?',
+          action: proceed,
+        });
+        return;
+      }
+
+      proceed();
+    },
+    [course, depthPreviews, structureData, executeGoalTypeSwitch, advancePastPurpose, confirmOverwrite],
   );
 
   // ── Clarify ───────────────────────────────────────────
@@ -262,7 +347,7 @@ export const useWizardHandlers = ({
   const executeClarifySubmit = useCallback(
     (answersValue: Record<string, string | string[]>) => {
       if (!courseId) return;
-      analytics.track('wizard_step_2_questions_completed', {
+      analytics.track('wizard_step_3_questions_completed', {
         n_questions: Object.keys(answersValue).length,
       });
       setAnswers(answersValue);
@@ -276,7 +361,7 @@ export const useWizardHandlers = ({
         { id: courseId, data: { answers: answersValue as Record<string, never> } },
         {
           onSuccess: () => {
-            setStep(3);
+            setStep(4);
             depthPreviewsMutation.mutate(courseId, {
               onSuccess: (data) => {
                 trackJob({
@@ -298,7 +383,7 @@ export const useWizardHandlers = ({
       const answersUnchanged = course?.answers && JSON.stringify(answersValue) === JSON.stringify(course.answers);
 
       if (answersUnchanged && depthPreviews) {
-        setStep(3);
+        setStep(4);
         return;
       }
 
@@ -327,7 +412,7 @@ export const useWizardHandlers = ({
           courseId,
           type: 'generate_structure',
         });
-        setStep(4);
+        setStep(5);
       },
     });
   }, [courseId, structureMutation, trackJob, setStep]);
@@ -351,7 +436,7 @@ export const useWizardHandlers = ({
       // already saw the gate and the dialog itself fires
       // `wizard_depth_gate_resolved` with the outcome.
       if (!acknowledged) {
-        analytics.track('wizard_step_3_depth_selected', {
+        analytics.track('wizard_step_4_depth_selected', {
           depth_tier: depthValue,
         });
       }
@@ -408,7 +493,7 @@ export const useWizardHandlers = ({
   const handleDepthConfirm = useCallback(
     (depthValue: CourseDepth) => {
       if (depthValue === course?.depth && structureData) {
-        setStep(4);
+        setStep(5);
         return;
       }
 
@@ -469,10 +554,13 @@ export const useWizardHandlers = ({
 
   const navigateToStep = useCallback(
     (targetStep: number) => {
-      if (targetStep === 2 && course?.answers && Object.keys(answers).length === 0) {
+      // Step 3 (Questions, was step 2): rehydrate answers from server
+      // when local state is empty (resume / stepper-jump).
+      if (targetStep === 3 && course?.answers && Object.keys(answers).length === 0) {
         setAnswers(course.answers as Record<string, string | string[]>);
       }
-      if (targetStep === 3 && course?.depth && !depth) {
+      // Step 4 (Depth, was step 3): same for depth selection.
+      if (targetStep === 4 && course?.depth && !depth) {
         setDepth(course.depth as CourseDepth);
       }
       isStepDirtyRef.current = false;
@@ -508,7 +596,7 @@ export const useWizardHandlers = ({
     isJobRunning,
     handleDirtyChange,
     handleGoalSubmit,
-    handleGoalTypeSwitch,
+    handlePurposeConfirm,
     handleClarifySubmit,
     handleDepthConfirm,
     handleStructureModified,

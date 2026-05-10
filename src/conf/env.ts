@@ -21,13 +21,6 @@ export const NEXT_PUBLIC_API_URL = _apiUrl;
 export const DEV_MODE = process.env.NEXT_PUBLIC_DEV_MODE === 'true';
 
 /**
- * Absolute origin used for canonical URLs, sitemap entries, and OpenGraph
- * metadata. Defaults to `http://localhost:3000` in dev; set
- * `NEXT_PUBLIC_SITE_URL` (no trailing slash) in production.
- */
-export const NEXT_PUBLIC_SITE_URL = process.env.NEXT_PUBLIC_SITE_URL?.replace(/\/$/, '') ?? 'http://localhost:3000';
-
-/**
  * Google Ads conversion tag, e.g. `AW-1234567890`. Required — drives the
  * gtag bootstrap and any future `adsConversion()` calls. Format-validated
  * so a typo fails fast at module load rather than silently mis-attributing.

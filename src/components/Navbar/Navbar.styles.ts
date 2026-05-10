@@ -29,7 +29,8 @@ export const Nav = styled.nav<{ $hidden?: boolean; $scrolled?: boolean }>`
   backdrop-filter: blur(14px) saturate(140%);
   -webkit-backdrop-filter: blur(14px) saturate(140%);
   border-bottom: 1px solid
-    ${(p) => (p.$scrolled ? p.theme.colors.surfaceBorder : 'transparent')};
+    ${(p) =>
+      p.$hidden ? 'transparent' : p.$scrolled ? p.theme.colors.surfaceBorder : 'transparent'};
   z-index: 50;
   transform: translateY(${(p) => (p.$hidden ? '-56px' : '0px')});
   transition:

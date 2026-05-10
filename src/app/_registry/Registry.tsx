@@ -17,6 +17,7 @@ import {
   AnalyticsBootstrap,
   AnalyticsIdentitySync,
   AuthTokenSync,
+  BfcacheReloadOnRestore,
   CookieConsentBootstrap,
   GAPageviewListener,
   GlobalErrorListener,
@@ -100,6 +101,12 @@ const Registry = ({ children }: { children: React.ReactNode }) => {
 
   return (
     <SessionProvider>
+      {/* Detects bfcache restoration and forces a hard reload. Without
+          this, framer-motion components that were paused mid-animation
+          when the user navigated away can stay frozen at their `initial`
+          opacity-0 state on browser back. Mounted as early as possible so
+          the listener is bound before any bfcache restore can fire. */}
+      <BfcacheReloadOnRestore />
       {/* Routes window.error and unhandledrejection through the central
           reporter; outermost so it captures errors anywhere in the tree. */}
       <GlobalErrorListener />

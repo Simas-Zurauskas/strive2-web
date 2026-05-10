@@ -2,8 +2,8 @@
 
 import { usePathname, useRouter } from 'next/navigation';
 import { useEffect, useRef } from 'react';
-import { Navbar, Footer, TextLoader } from '@/components';
 import { AppziLoader } from '@/app/_registry/comps';
+import { Navbar, Footer, TextLoader } from '@/components';
 import { ROUTES } from '@/constants/routes';
 import { useAuth } from '@/hooks';
 

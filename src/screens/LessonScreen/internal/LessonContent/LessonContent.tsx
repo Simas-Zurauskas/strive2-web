@@ -21,6 +21,7 @@ import {
   LinksEmptyPlaceholder,
   NarrationPlayer,
   NotesPanel,
+  StreamingWidget,
   useLessonCompletion,
 } from './internal';
 import * as S from './LessonContent.styles';
@@ -98,6 +99,10 @@ export const LessonContent = ({
     : lessonIndex > 0
       ? { mi: moduleIndex, li: lessonIndex - 1 }
       : { mi: moduleIndex - 1, li: (modules[moduleIndex - 1]?.lessons?.length ?? 1) - 1 };
+
+  const prevLessonName = prevCoords
+    ? modules[prevCoords.mi]?.lessons?.[prevCoords.li]?.name ?? null
+    : null;
 
   const { data: prevLessonContent } = useLessonContent({
     courseId,
@@ -268,16 +273,10 @@ export const LessonContent = ({
                 }
               />
             )}
-            {isThisLessonGenerating && (
-              stream.streamPhase === 'finishing' ? (
-                <S.FinishingIndicator>Finishing touches...</S.FinishingIndicator>
-              ) : (
-                <S.StreamingIndicator>Creating lesson...</S.StreamingIndicator>
-              )
-            )}
+            {isThisLessonGenerating && <StreamingWidget phase="streaming" />}
           </>
         ) : isThisLessonGenerating ? (
-          <S.StreamingIndicator>Creating lesson...</S.StreamingIndicator>
+          <StreamingWidget phase="streaming" />
         ) : (
           <S.Placeholder>
             {isPrevLessonGenerated ? (
@@ -324,9 +323,19 @@ export const LessonContent = ({
                 </Button>
               </>
             ) : (
-              <S.PlaceholderText>
-                Generate the previous lesson first — they unlock in order.
-              </S.PlaceholderText>
+              <>
+                <S.PlaceholderHeader>
+                  <S.PlaceholderRule aria-hidden />
+                  <S.PlaceholderEyebrow>Locked</S.PlaceholderEyebrow>
+                  <S.PlaceholderTitle>Generate the previous lesson first.</S.PlaceholderTitle>
+                  <S.PlaceholderLead>
+                    Lessons unlock in order. Head back to {prevLessonName ? <em>{prevLessonName}</em> : 'the lesson before this'} to start there.
+                  </S.PlaceholderLead>
+                </S.PlaceholderHeader>
+                <Button onClick={onPrev} disabled={!hasPrev}>
+                  &larr; {prevLessonName ? `Go to ${prevLessonName}` : 'Go to previous lesson'}
+                </Button>
+              </>
             )}
           </S.Placeholder>
         )}
@@ -377,37 +386,32 @@ export const LessonContent = ({
                     disabled={completion.upsertProgress.isPending}
                   >
                     {completion.upsertProgress.isPending ? (
-                      <>
-                        <S.Spinner />
-                        Saving…
-                      </>
+                      <S.Spinner />
                     ) : (
-                      <>
-                        <svg
-                          viewBox="0 0 16 16"
-                          fill="none"
-                          stroke="currentColor"
-                          strokeWidth="1.75"
-                          strokeLinecap="round"
-                          strokeLinejoin="round"
-                        >
-                          <path d="M3.5 8.5L6.5 11.5L12.5 4.5" />
-                        </svg>
-                        {hasNext ? 'Mark as finished — next lesson' : 'Mark as finished'}
-                        {hasNext && (
-                          <svg
-                            className="arrow"
-                            viewBox="0 0 16 16"
-                            fill="none"
-                            stroke="currentColor"
-                            strokeWidth="1.75"
-                            strokeLinecap="round"
-                            strokeLinejoin="round"
-                          >
-                            <path d="M3 8h10M9 4l4 4-4 4" />
-                          </svg>
-                        )}
-                      </>
+                      <svg
+                        viewBox="0 0 16 16"
+                        fill="none"
+                        stroke="currentColor"
+                        strokeWidth="1.75"
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                      >
+                        <path d="M3.5 8.5L6.5 11.5L12.5 4.5" />
+                      </svg>
+                    )}
+                    {hasNext ? 'Mark as finished — next lesson' : 'Mark as finished'}
+                    {hasNext && (
+                      <svg
+                        className="arrow"
+                        viewBox="0 0 16 16"
+                        fill="none"
+                        stroke="currentColor"
+                        strokeWidth="1.75"
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                      >
+                        <path d="M3 8h10M9 4l4 4-4 4" />
+                      </svg>
                     )}
                   </S.CompleteButton>
                 </motion.div>

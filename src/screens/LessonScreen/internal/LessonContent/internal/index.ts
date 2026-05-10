@@ -4,4 +4,5 @@ export { FontScaler, getSavedScale, STORAGE_KEY as FONT_SCALE_KEY } from './Font
 export { LessonHero } from './LessonHero';
 export { NotesPanel } from './NotesPanel/NotesPanel';
 export { NarrationPlayer } from './NarrationPlayer';
+export { StreamingWidget } from './StreamingWidget';
 export { useLessonCompletion } from './useLessonCompletion';

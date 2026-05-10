@@ -7,37 +7,103 @@ export const Wrap = styled.section`
   width: 100%;
   display: flex;
   justify-content: center;
-  /* Page closes on the CTA — slightly more air than content sections so
-     the visitor's eye can't drift past it, but not so much it floats. */
-  padding: var(--space-20) var(--space-8);
-  background: ${(p) => p.theme.colors.accentMuted};
+  /* Closing band — visual weight comes from the 3D scene, not from a
+     decorated background. Generous padding gives the page a deliberate
+     full-stop. */
+  padding: var(--space-20) 0;
+  background: ${(p) => p.theme.colors.background};
+  position: relative;
+
+  /* Hairline divider above the band — separates the closer from FaqSection
+     without coloring the whole slab. */
+  &::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 50%;
+    transform: translateX(-50%);
+    width: min(560px, 80%);
+    height: 1px;
+    background: linear-gradient(
+      90deg,
+      transparent,
+      ${(p) => p.theme.colors.surfaceBorder},
+      transparent
+    );
+  }
 
   ${(p) => p.theme.media.tabletLarge} {
-    padding: var(--space-12) var(--space-5);
+    padding: var(--space-14) 0;
   }
 `;
 
-export const Inner = styled(motion.div)`
+export const Inner = styled.div`
+  width: 100%;
+  max-width: 1120px;
+  padding: 0 var(--space-8);
+  display: grid;
+  grid-template-columns: minmax(0, 1.05fr) minmax(0, 1fr);
+  gap: var(--space-12);
+  align-items: center;
+
+  ${(p) => p.theme.media.desktop} {
+    gap: var(--space-8);
+  }
+
+  ${(p) => p.theme.media.tabletLarge} {
+    grid-template-columns: 1fr;
+    gap: var(--space-10);
+    padding: 0 var(--space-5);
+  }
+`;
+
+export const CopyCol = styled.div`
   display: flex;
   flex-direction: column;
-  align-items: center;
-  gap: var(--space-4);
-  text-align: center;
-  max-width: 640px;
+  gap: var(--space-5);
+`;
+
+export const Eyebrow = styled.span`
+  font-size: 0.6875rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.16em;
+  color: ${(p) => p.theme.colors.tertiary};
 `;
 
 export const Heading = styled.h2`
   font-family: var(--font-heading-serif), Georgia, serif;
   font-style: italic;
   font-weight: 500;
-  font-size: clamp(1.75rem, 4vw, 2.75rem);
-  line-height: 1.15;
+  font-size: clamp(1.875rem, 4.4vw, 3rem);
+  line-height: 1.1;
   letter-spacing: -0.015em;
   color: ${(p) => p.theme.colors.foreground};
   margin: 0;
+  text-wrap: balance;
 `;
 
-export const Cta = styled.button`
+export const Subhead = styled.p`
+  font-size: 1.0625rem;
+  line-height: 1.55;
+  color: ${(p) => p.theme.colors.muted};
+  margin: 0;
+  max-width: 52ch;
+  text-wrap: pretty;
+`;
+
+export const CtaRow = styled.div`
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+  align-items: flex-start;
+
+  ${(p) => p.theme.media.tabletLarge} {
+    align-items: stretch;
+  }
+`;
+
+export const PrimaryCta = styled.button`
   display: inline-flex;
   align-items: center;
   gap: var(--space-2);
@@ -67,7 +133,7 @@ export const Cta = styled.button`
     outline-offset: 2px;
   }
 
-  ${(p) => p.theme.media.mobile} {
+  ${(p) => p.theme.media.tabletLarge} {
     width: 100%;
     justify-content: center;
   }
@@ -76,4 +142,32 @@ export const Cta = styled.button`
 export const Microcopy = styled.span`
   font-size: 0.8125rem;
   color: ${(p) => p.theme.colors.muted};
+`;
+
+export const SecondaryCta = styled.a`
+  font-size: 0.875rem;
+  color: ${(p) => p.theme.colors.foreground};
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-1);
+  margin-top: var(--space-2);
+  cursor: pointer;
+  transition: color 0.15s;
+  text-decoration: none;
+
+  &:hover {
+    color: ${(p) => p.theme.colors.accent};
+  }
+
+  &:focus-visible {
+    outline: 2px solid ${(p) => p.theme.colors.accent};
+    outline-offset: 2px;
+    border-radius: var(--radius-sm);
+  }
+`;
+
+export const VisualCol = styled(motion.div)`
+  display: flex;
+  align-items: center;
+  justify-content: center;
 `;

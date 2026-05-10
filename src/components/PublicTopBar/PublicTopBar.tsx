@@ -29,6 +29,9 @@ export const PublicTopBar = () => {
           Strive
         </S.Wordmark>
         <S.NavLinks>
+          <S.NavLink href="/blog" data-analytics-id="public-nav.blog">
+            Blog
+          </S.NavLink>
           <S.NavLink href="/pricing" data-analytics-id="public-nav.pricing">
             Pricing
           </S.NavLink>

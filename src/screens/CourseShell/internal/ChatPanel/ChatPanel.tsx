@@ -230,12 +230,12 @@ const LessonChatPanel = ({ contextLabel, courseSlug, moduleIndex, lessonIndex, o
 
   const header = (
     <S.Header>
-      <S.CollapseButton onClick={onClose} aria-label="Collapse mentor panel" title="Collapse (⌘\)">
+      <S.CollapseButton onClick={onClose} aria-label="Collapse lesson mentor panel" title="Collapse (⌘\)">
         <ChevronRight size={18} />
       </S.CollapseButton>
       <S.HeaderText>
         <S.HeaderEyebrow>
-          Mentor <HelpAnchor concept="mentor-chat" size="sm" />
+          Lesson mentor <HelpAnchor concept="mentor-chat" size="sm" />
         </S.HeaderEyebrow>
         {contextLabel && <S.HeaderContext>{contextLabel}</S.HeaderContext>}
       </S.HeaderText>
@@ -268,7 +268,7 @@ const LessonChatPanel = ({ contextLabel, courseSlug, moduleIndex, lessonIndex, o
         <S.Body>
           <S.EmptyState>
             <S.EmptyRule aria-hidden />
-            <S.EmptyEyebrow>Mentor</S.EmptyEyebrow>
+            <S.EmptyEyebrow>Lesson mentor</S.EmptyEyebrow>
             <S.EmptyHeading>Grounded in the lesson.</S.EmptyHeading>
             <S.EmptyHint>
               Generate the lesson on the left to begin. Your mentor reads it with you — ready for
@@ -498,8 +498,9 @@ const LessonChatPanelInner = ({
 //   - Empty states are different: "course not ready" gate when the
 //     learner hasn't accepted their structure; otherwise the active
 //     compass with state-derived suggested prompts.
-//   - Header label reads "Guide", not "Mentor", to disambiguate from
-//     the lesson-scope companion when navigating between the two.
+//   - Header label reads "Course mentor" (vs "Lesson mentor" on the
+//     lesson-scope companion) so learners can tell which scope they
+//     are talking to when navigating between the two.
 // ──────────────────────────────────────────────────────────
 
 interface CourseChatPanelProps {
@@ -571,12 +572,12 @@ const CourseChatPanel = ({ contextLabel, courseSlug, onClose }: CourseChatPanelP
 
   const header = (
     <S.Header>
-      <S.CollapseButton onClick={onClose} aria-label="Collapse guide panel" title="Collapse (⌘\)">
+      <S.CollapseButton onClick={onClose} aria-label="Collapse course mentor panel" title="Collapse (⌘\)">
         <ChevronRight size={18} />
       </S.CollapseButton>
       <S.HeaderText>
         <S.HeaderEyebrow>
-          Guide <HelpAnchor concept="mentor-chat" size="sm" />
+          Course mentor <HelpAnchor concept="mentor-chat" size="sm" />
         </S.HeaderEyebrow>
         {contextLabel && <S.HeaderContext>{contextLabel}</S.HeaderContext>}
       </S.HeaderText>
@@ -600,7 +601,7 @@ const CourseChatPanel = ({ contextLabel, courseSlug, onClose }: CourseChatPanelP
 
   // Pre-acceptance gate. When the course is still in 'creating' status
   // (wizard not yet accepted), there's no structure to navigate yet —
-  // chatting with a guide that doesn't know its course makes no sense.
+  // chatting with a mentor that doesn't know its course makes no sense.
   if (courseGenerated === false) {
     return (
       <S.Container>
@@ -608,10 +609,10 @@ const CourseChatPanel = ({ contextLabel, courseSlug, onClose }: CourseChatPanelP
         <S.Body>
           <S.EmptyState>
             <S.EmptyRule aria-hidden />
-            <S.EmptyEyebrow>Guide</S.EmptyEyebrow>
+            <S.EmptyEyebrow>Course mentor</S.EmptyEyebrow>
             <S.EmptyHeading>Mapped to your course.</S.EmptyHeading>
             <S.EmptyHint>
-              Accept the course on the left to begin. Your guide knows your modules and lessons,
+              Accept the course on the left to begin. Your mentor knows your modules and lessons,
               your progress, and where you might be stuck — and helps you decide what to do next.
             </S.EmptyHint>
           </S.EmptyState>
@@ -707,7 +708,7 @@ const CourseChatPanelInner = ({
       onSubmit={handleSubmit}
       suggestedPrompts={suggestedPrompts}
       onSuggestedPromptClick={handleSuggestedPrompt}
-      placeholder="Ask your guide..."
+      placeholder="Ask your mentor..."
       isStreaming={isStreaming}
       isThinking={isSubmitted}
       error={displayError}

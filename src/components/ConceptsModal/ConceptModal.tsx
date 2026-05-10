@@ -1,14 +1,23 @@
 'use client';
 
+import { X } from 'lucide-react';
 import { useCallback, useEffect, useState } from 'react';
 import { createPortal } from 'react-dom';
-import { X } from 'lucide-react';
 import { Button } from '@/components/Button';
-import { markConceptViewed } from '@/hooks/useConceptViewed';
 import { useDialog } from '@/hooks';
+import { markConceptViewed } from '@/hooks/useConceptViewed';
 import { registerConceptModalListener } from '@/lib/conceptModalBus';
 import * as S from './ConceptModal.styles';
 import { CONCEPTS, type ConceptId } from './registry';
+
+const renderInlineBold = (text: string) =>
+  text.split(/(\*\*[^*]+\*\*)/g).map((part, i) =>
+    part.startsWith('**') && part.endsWith('**') ? (
+      <strong key={i}>{part.slice(2, -2)}</strong>
+    ) : (
+      part
+    ),
+  );
 
 /**
  * Singleton ConceptModal — mounted once at the app root and opened via the
@@ -62,7 +71,7 @@ export const ConceptModal = () => {
           <S.Title id={`concept-title-${concept.id}`}>{concept.title}</S.Title>
           <S.Body id={`concept-body-${concept.id}`}>
             {concept.body.map((p, i) => (
-              <S.Paragraph key={i}>{p}</S.Paragraph>
+              <S.Paragraph key={i}>{renderInlineBold(p)}</S.Paragraph>
             ))}
           </S.Body>
         </S.Content>

@@ -87,7 +87,7 @@ export const CourseNameLink = styled.button`
   cursor: pointer;
   text-align: left;
   text-decoration: underline;
-  text-decoration-color: transparent;
+  text-decoration-color: ${(p) => p.theme.colors.surfaceBorder};
   text-underline-offset: 3px;
   text-decoration-thickness: 1px;
   /* Shrink to text width — without this the button stretches to fill
@@ -97,11 +97,19 @@ export const CourseNameLink = styled.button`
   max-width: 100%;
   transition:
     text-decoration-color 0.15s,
+    text-decoration-thickness 0.15s,
     color 0.15s;
 
   &:hover {
     text-decoration-color: ${(p) => p.theme.colors.accent};
+    text-decoration-thickness: 2px;
     color: ${(p) => p.theme.colors.accent};
+  }
+
+  &:focus-visible {
+    outline: 2px solid ${(p) => p.theme.colors.accent};
+    outline-offset: 4px;
+    border-radius: 2px;
   }
 `;
 
@@ -217,6 +225,43 @@ export const ModuleProgress = styled.span`
   color: ${(p) => p.theme.colors.muted};
   flex-shrink: 0;
   margin-top: 1px;
+`;
+
+// Inline quiz indicator that surfaces on a COLLAPSED module header so the
+// user knows there's an actionable quiz inside without having to expand.
+// Variants:
+//   - not-taken     → tertiary (gold) — "available, take it"
+//   - needs_review  → warning  (amber) — "due", subtle pulse to earn the click
+// `mastered`/`passed`/`locked` are intentionally not surfaced here: passed
+// quizzes don't need a nudge, and `locked` is implied by the closed module.
+export const HeaderQuizBadge = styled.span<{ $variant: 'not-taken' | 'needs_review' }>`
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 18px;
+  height: 18px;
+  border-radius: 50%;
+  flex-shrink: 0;
+  margin-left: 0.5rem;
+  margin-top: 1px;
+  background: ${(p) =>
+    p.$variant === 'needs_review'
+      ? `${p.theme.colors.warning}22`
+      : `${p.theme.colors.tertiary}22`};
+  color: ${(p) =>
+    p.$variant === 'needs_review' ? p.theme.colors.warning : p.theme.colors.tertiary};
+
+  ${(p) =>
+    p.$variant === 'needs_review' &&
+    `
+      @media (prefers-reduced-motion: no-preference) {
+        animation: headerQuizPulse 2.4s ease-in-out infinite;
+      }
+      @keyframes headerQuizPulse {
+        0%, 100% { opacity: 1; }
+        50% { opacity: 0.55; }
+      }
+    `}
 `;
 
 // ── Lesson list ──────────────────────────────────────

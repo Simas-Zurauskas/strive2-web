@@ -71,10 +71,10 @@ export const HomeScreen: React.FC = () => {
               <HomeGhostPreview />
             </S.EmptyPreviewSlot>
             <S.EmptyRule aria-hidden />
-            <S.EmptyEyebrow>Start with a goal</S.EmptyEyebrow>
-            <S.EmptyTitle>
-              Tell Strive what you want to learn. <HelpAnchor concept="how-strive-works" />
-            </S.EmptyTitle>
+            <S.EmptyEyebrow>
+              Start with a goal <HelpAnchor concept="how-strive-works" size="sm" />
+            </S.EmptyEyebrow>
+            <S.EmptyTitle>Tell Strive what you want to learn.</S.EmptyTitle>
             <S.EmptyText>
               Strive turns it into a real course — modules, lessons, quizzes, and daily recall —
               shaped around what you already know.

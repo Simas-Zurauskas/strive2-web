@@ -7,8 +7,9 @@ import { getAuthToken } from '@/api/client';
 import { upsertLessonProgress } from '@/api/routes/course';
 import { NEXT_PUBLIC_API_URL } from '@/conf/env';
 import { ROUTES } from '@/constants/routes';
-import { useCourseContext } from '@/screens/CourseShell';
+import { useLessonContent } from '@/hooks';
 import { analytics } from '@/lib/analytics';
+import { useCourseContext } from '@/screens/CourseShell';
 import { QKeys } from '@/types';
 import { LessonContent } from './internal';
 
@@ -65,9 +66,28 @@ export const LessonScreen = () => {
 
   // ── Auto-track progress ───────────────────────────────
 
+  // Lesson is "open-able" when it has streamed content OR is currently
+  // being generated for this user. Locked lessons (whose previous lesson
+  // hasn't been generated yet) hit a dead-end placeholder instead, so
+  // marking them in_progress would poison the resume target — the next
+  // visit's "Up next" CTA would point at a row the user can't act on.
+  const isThisLessonGenerating =
+    course?.activeLesson?.moduleIndex === moduleIndex &&
+    course?.activeLesson?.lessonIndex === lessonIndex;
+  const { data: thisLessonContent } = useLessonContent({
+    courseId: courseSlug,
+    moduleIndex,
+    lessonIndex,
+    isGenerating: isThisLessonGenerating,
+  });
+  const hasContent = !!thisLessonContent?.blocks?.length;
+  const shouldTrackProgress = hasContent || isThisLessonGenerating;
+
   const timeRef = useRef(0);
 
   useEffect(() => {
+    if (!shouldTrackProgress) return;
+
     upsertLessonProgress({ courseId: courseSlug, moduleIndex, lessonIndex, data: { status: 'in_progress' } }).then(() => {
       queryClient.invalidateQueries({ queryKey: [QKeys.CONTINUE_LEARNING] });
       queryClient.invalidateQueries({ queryKey: [QKeys.PROGRESS_SUMMARY] });
@@ -121,23 +141,20 @@ export const LessonScreen = () => {
       window.removeEventListener('beforeunload', sendBeacon);
       sendBeacon();
     };
-  }, [courseSlug, moduleIndex, lessonIndex, queryClient]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [courseSlug, moduleIndex, lessonIndex, queryClient, shouldTrackProgress]);
 
   // ── Not found ─────────────────────────────────────────
 
   const courseObjectId = course?._id;
   const isGenerationRunning = !!course?.activeJobId;
 
-  // `course.activeLesson` is the authoritative source — it's stamped by
-  // generateLessonController and cleared by the job runner's finally, so
-  // it's correct the instant GET /course returns (including reload right
-  // after clicking Generate, before any content has landed in the DB).
-  // The WS `generatingLesson` state stays as a fast-path for sibling
-  // features (e.g. dashboard list) but the viewer reads the course
-  // field directly to avoid race gaps.
-  const isThisLessonGenerating =
-    course?.activeLesson?.moduleIndex === moduleIndex &&
-    course?.activeLesson?.lessonIndex === lessonIndex;
+  // `isThisLessonGenerating` is computed up at the progress-tracking gate
+  // (see comment there) — `course.activeLesson` is the authoritative source,
+  // stamped by generateLessonController and cleared by the job runner's
+  // finally, so it's correct the instant GET /course returns. The WS
+  // `generatingLesson` state stays as a fast-path for sibling features
+  // (dashboard list) but the viewer reads the course field directly.
 
   if (!currentModule || !currentLesson) {
     return (

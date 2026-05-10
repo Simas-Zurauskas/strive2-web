@@ -10,8 +10,7 @@ export const ProblemSection = () => {
     <S.Wrap>
       <S.Inner
         initial={fadeUp.initial}
-        whileInView={fadeUp.animate}
-        viewport={{ once: true, margin: '0px 0px -10% 0px' }}
+        animate={fadeUp.animate}
         transition={{ ...fadeUp.transition, duration: 0.5 }}
       >
         <S.Heading>

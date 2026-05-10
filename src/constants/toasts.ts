@@ -40,9 +40,6 @@ export const TOASTS = {
   RESET_PASSWORD_SUCCESS: 'Password reset. Please sign in with your new password.',
   FORGOT_PASSWORD_ERROR: 'Could not send reset link. Please try again.',
 
-  // ── Job management ───────────────────────────────────
-  JOB_TIMEOUT: 'This is taking too long. Please try again.',
-
   // ── Chat ─────────────────────────────────────────────
   CHAT_HISTORY_ERROR: 'Failed to load chat history.',
 

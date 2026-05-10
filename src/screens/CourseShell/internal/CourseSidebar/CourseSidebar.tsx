@@ -14,8 +14,8 @@ import { useRouter } from 'next/navigation';
 import { useEffect, useMemo, useRef } from 'react';
 import { Badge, LessonIndicator, computeLessonIndicatorState } from '@/components';
 import { plural } from '@/lib/strings';
-import { useCourseContext } from '../../CourseContext';
 import * as S from './CourseSidebar.styles';
+import { useCourseContext } from '../../CourseContext';
 import type { CourseProgressResponse } from '@/api/routes/course';
 import type { Course, CourseQuizProgressItem } from '@/api/types';
 import type { QuizIconVariant } from '@/types';
@@ -47,7 +47,7 @@ interface CourseSidebarProps {
   generatedLessons?: { moduleIndex: number; lessonIndex: number }[];
   activeLesson?: Course['activeLesson'];
   expandedModules: Set<number> | null;
-  onExpandedChange: (expanded: Set<number>) => void;
+  onToggleModule: (index: number) => void;
 }
 
 export const CourseSidebar = ({
@@ -63,7 +63,7 @@ export const CourseSidebar = ({
   generatedLessons,
   activeLesson,
   expandedModules: expandedModulesProp,
-  onExpandedChange,
+  onToggleModule,
 }: CourseSidebarProps) => {
   const router = useRouter();
   const activeRef = useRef<HTMLButtonElement>(null);
@@ -78,11 +78,11 @@ export const CourseSidebar = ({
     if (!isDesktop) setSidebarOpen(false);
   };
 
-  // Initialize on first render if parent hasn't set it yet
-  const expandedModules = expandedModulesProp ?? new Set(modules.map((_, i) => i));
-  if (expandedModulesProp === null) {
-    onExpandedChange(expandedModules);
-  }
+  // Render-time fallback: empty set until the parent has hydrated the
+  // per-course expanded set from localStorage (one effect tick after
+  // mount). One frame of "all collapsed" is far less jarring than the
+  // legacy "all expanded → collapse to one" flash.
+  const expandedModules = expandedModulesProp ?? new Set<number>();
 
   // Scroll active lesson into view on mount
   useEffect(() => {
@@ -90,16 +90,6 @@ export const CourseSidebar = ({
       activeRef.current.scrollIntoView({ block: 'nearest' });
     }
   }, [currentModuleIndex, currentLessonIndex]);
-
-  const toggleModule = (index: number) => {
-    const next = new Set(expandedModules);
-    if (next.has(index)) {
-      next.delete(index);
-    } else {
-      next.add(index);
-    }
-    onExpandedChange(next);
-  };
 
   const progressMap = useMemo(() => {
     const map = new Map<string, { status: string; bookmarked: boolean }>();
@@ -207,10 +197,31 @@ export const CourseSidebar = ({
           const expanded = expandedModules.has(mi);
           const lessons = mod.lessons ?? [];
           const mp = getModuleProgress(mi);
+          const lessonListId = `module-lessons-${mi}`;
+
+          // Compute the quiz variant for the inline collapsed-header badge.
+          // Only render the badge when collapsed AND the quiz is actionable
+          // (unattempted-but-unlocked, or review-due) — `mastered`/`passed`
+          // need no nudge, `locked` is implied by the closed module.
+          const qpForHeader = quizProgressMap.get(mi);
+          const quizUnlocked = isModuleComplete(mi);
+          const headerQuizVariant: QuizIconVariant | null = !expanded && quizUnlocked
+            ? (qpForHeader?.bestTier === 'needs_review' || qpForHeader?.reviewDue
+                ? 'needs_review'
+                : !qpForHeader
+                  ? 'not-taken'
+                  : null)
+            : null;
+          const HeaderQuizIcon = headerQuizVariant ? quizIconFor[headerQuizVariant] : null;
 
           return (
             <S.ModuleSection key={mi}>
-              <S.ModuleHeader $expanded={expanded} onClick={() => toggleModule(mi)}>
+              <S.ModuleHeader
+                $expanded={expanded}
+                onClick={() => onToggleModule(mi)}
+                aria-expanded={expanded}
+                aria-controls={lessonListId}
+              >
                 <S.ChevronIcon $expanded={expanded}>
                   <ChevronRight size={12} />
                 </S.ChevronIcon>
@@ -222,10 +233,22 @@ export const CourseSidebar = ({
                     {mp.completed}/{mp.total}
                   </S.ModuleProgress>
                 )}
+                {HeaderQuizIcon && headerQuizVariant && (
+                  <S.HeaderQuizBadge
+                    $variant={headerQuizVariant}
+                    aria-label={
+                      headerQuizVariant === 'needs_review'
+                        ? 'Module quiz review due'
+                        : 'Module quiz available'
+                    }
+                  >
+                    <HeaderQuizIcon size={11} strokeWidth={2.25} />
+                  </S.HeaderQuizBadge>
+                )}
               </S.ModuleHeader>
 
               {expanded && (
-                <S.LessonList>
+                <S.LessonList id={lessonListId}>
                   {lessons.map((lesson, li) => {
                     const isActive =
                       currentModuleIndex !== undefined &&

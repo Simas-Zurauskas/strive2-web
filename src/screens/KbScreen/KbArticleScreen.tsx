@@ -1,7 +1,6 @@
 'use client';
 
 import { Markdown } from '@/components';
-import { NEXT_PUBLIC_SITE_URL } from '@/conf/env';
 import { KbBreadcrumb } from './internal/KbBreadcrumb';
 import { KbRelatedArticles } from './internal/KbRelatedArticles';
 import * as S from './KbScreen.styles';
@@ -21,35 +20,8 @@ const formatDate = (iso?: string): string | null => {
 
 export const KbArticleScreen = ({ article, related }: KbArticleScreenProps) => {
   const updated = formatDate(article.updated);
-  const absoluteUrl = `${NEXT_PUBLIC_SITE_URL}${article.href}`;
-  const jsonLd = {
-    '@context': 'https://schema.org',
-    '@type': 'Article',
-    headline: article.title,
-    description: article.summary,
-    inLanguage: 'en',
-    keywords: article.tags.join(', '),
-    url: absoluteUrl,
-    mainEntityOfPage: { '@type': 'WebPage', '@id': absoluteUrl },
-    datePublished: article.updated,
-    dateModified: article.updated,
-    publisher: {
-      '@type': 'Organization',
-      name: 'Strive',
-      url: NEXT_PUBLIC_SITE_URL,
-    },
-    isPartOf: {
-      '@type': 'CollectionPage',
-      name: 'Strive Help Center',
-      url: `${NEXT_PUBLIC_SITE_URL}/help`,
-    },
-  };
   return (
     <S.Layout>
-      <script
-        type="application/ld+json"
-        dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
-      />
       <KbBreadcrumb
         trail={[
           { label: 'Help', href: '/help' },

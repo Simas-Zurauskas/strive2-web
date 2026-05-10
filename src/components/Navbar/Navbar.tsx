@@ -1,7 +1,6 @@
 'use client';
 
 import { useAnimation } from 'framer-motion';
-import { PANEL_CLOSE_TRANSITION, PANEL_OPEN_TRANSITION } from '@/theme/motionPresets';
 import {
   HelpCircle,
   Home,
@@ -20,6 +19,7 @@ import { useEffect, useLayoutEffect, useRef, useState } from 'react';
 import { CreditPill } from '@/components/CreditPill';
 import { NEXT_PUBLIC_APPZI_BUTTON_ID } from '@/conf/env';
 import { useAuth } from '@/hooks';
+import { PANEL_CLOSE_TRANSITION, PANEL_OPEN_TRANSITION } from '@/theme/motionPresets';
 import * as S from './Navbar.styles';
 
 const SCROLL_THRESHOLD = 10;
