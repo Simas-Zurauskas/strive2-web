@@ -34,10 +34,10 @@ const cap = (s: string) => s[0].toUpperCase() + s.slice(1);
 // wording is revised. Mirrored in `PRICING_TEASER.cards.{free,pro}.guidance`
 // on the landing teaser; align all three together.
 const ALLOWANCE_GUIDANCE: Record<PlanKey, string> = {
-  free: '≈ one short course end-to-end, or a handful of lessons',
-  starter: '≈ a few full courses each month',
-  pro: '≈ ongoing course building, with comfortable headroom',
-  studio: '≈ multiple parallel courses, heavy regeneration',
+  free: '≈ 4–5 lessons, or a course structure plus a few lessons',
+  starter: '≈ 20–25 lessons / month — a full short course or two',
+  pro: '≈ 50–60 lessons / month — ongoing course building',
+  studio: '≈ 120+ lessons / month — heavy continuous use',
 };
 
 const buildCheckoutCta = ({
@@ -427,11 +427,12 @@ export const PricingScreen: React.FC = () => {
         <Accordion>
           <AccordionItem question="What can I actually do on each plan?">
             <p>
-              Allowance translates roughly to <strong>full courses generated end-to-end</strong>. Free is enough to
-              try one short course or generate a handful of individual lessons. Starter covers a few personalized
-              courses a month. Pro is the comfortable middle for someone studying or building consistently. Studio
-              is for power users — multiple parallel courses, heavy regeneration, in-depth modules. Every plan
-              unlocks the same features; tiers only change how much you can generate.
+              Allowance translates roughly to <strong>lessons generated</strong>. A typical lesson costs around
+              30–40 credits, so the Free unit (150 credits) covers about <strong>4–5 lessons</strong>, plus the
+              cheap one-off steps (clarify, structure, module quizzes). Starter scales that 5× — enough for a full
+              short course or two each month. Pro is 12× — comfortable headroom for ongoing study or building.
+              Studio is 30× — multiple parallel courses, heavy regeneration. Every plan unlocks the same features;
+              tiers only change how much you can generate.
             </p>
           </AccordionItem>
           <AccordionItem question="Will I lose my courses if I cancel or downgrade?">
