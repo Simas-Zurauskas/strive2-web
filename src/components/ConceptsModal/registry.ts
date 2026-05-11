@@ -72,7 +72,7 @@ export const CONCEPTS: Record<ConceptId, ConceptEntry> = {
     eyebrow: 'Core concept',
     title: 'How allowance gets used',
     body: [
-      'Every plan includes a monthly allowance. Generating a course, regenerating a lesson, or making narration draws from it. We measure in real cost — most lessons use a small fraction.',
+      'Every plan includes a monthly allowance. Generating a course, regenerating a lesson, or making narration draws from it. Free covers roughly four to five lessons; Starter scales that 5×, Pro 12×, Studio 30×.',
       "Top-ups stack on top and don't expire. The monthly bucket resets at the start of each billing cycle and doesn't roll over.",
       'Out of allowance? You can keep reading, reviewing, and quizzing. Only new generation pauses.',
     ],

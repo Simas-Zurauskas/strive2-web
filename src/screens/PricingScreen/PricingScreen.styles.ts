@@ -214,9 +214,9 @@ export const AllowanceUnit = styled.div`
 `;
 
 // Per-tier plain-language translation of the abstract allowance count
-// (e.g. "≈ one short course end-to-end"). Sits beneath AllowanceUnit
-// inside the same bordered AllowanceBlock. The `≈` prefix carries the
-// "approximate" semantic without italics.
+// (e.g. "≈ 4–5 lessons"). Sits beneath AllowanceUnit inside the same
+// bordered AllowanceBlock. The `≈` prefix carries the "approximate"
+// semantic without italics.
 export const AllowanceGuidance = styled.div`
   font-size: 0.8125rem;
   line-height: 1.5;

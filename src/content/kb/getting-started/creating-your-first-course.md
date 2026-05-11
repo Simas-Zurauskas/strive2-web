@@ -33,6 +33,6 @@ The agent only changes structure. Lesson content is generated later, on demand, 
 
 ## When to commit
 
-When the structure looks right, click Generate. You'll be charged one unit of allowance for the structure generation, and the course will appear in your library. From there, you start studying — one lesson at a time.
+When the structure looks right, click Generate. A small fraction of your allowance is debited for the structure (structure generation is cheap — the bulk of cost happens later, when you open individual lessons), and the course will appear in your library. From there, you start studying — one lesson at a time.
 
 You don't have to know exactly what you want before you start. The wizard plus the agent chat are designed to help you find the right shape. If the first draft is wrong, iterate or scrap it and try again.

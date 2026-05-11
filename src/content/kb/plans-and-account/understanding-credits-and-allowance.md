@@ -17,10 +17,10 @@ Strive is consumption-based, not feature-tiered. Every plan — Free, Starter, P
 | --- | --- | --- | --- |
 | Free | $0 | — | One unit / month |
 | Starter | $12.99 | $10.39 | Five units / month |
-| Pro | $24.99 | $19.99 | Fifteen units / month |
-| Studio | $49.99 | $39.99 | Forty units / month |
+| Pro | $24.99 | $19.99 | Twelve units / month |
+| Studio | $49.99 | $39.99 | Thirty units / month |
 
-A "unit" is a fixed quantity of generation calibrated against real provider cost. In practice, a unit covers a typical lesson generation with some headroom, and a course structure costs about one unit. Heavy actions (very long lessons, narration of long lessons) consume more.
+A "unit" is a fixed quantity of generation calibrated against real provider cost. In practice, **one unit covers roughly four to five typical lesson generations**, with headroom for the cheaper one-off steps (clarifying questions, course structure, module quizzes). A course structure is cheap — usually a small fraction of a unit. Heavy actions (very long lessons, narration of long lessons, structural revisions in the design chat) consume more.
 
 ## Two balances
 
@@ -35,8 +35,8 @@ When a paid action runs, monthly allowance is spent first; top-up is only touche
 
 Anything that calls an AI model:
 
-- Building a new course (one unit for the structure)
-- Generating a lesson (varies by lesson length)
+- Building a new course (small — a course structure is usually under a quarter of one unit)
+- Generating a lesson (the main cost — a typical lesson runs about a fifth of one unit, longer or denser lessons more)
 - Running a module quiz generation
 - Regenerating a hero image
 - Synthesizing audio narration for a lesson
@@ -45,7 +45,7 @@ Reading, reviewing recall cards, taking already-generated quizzes, taking notes,
 
 ## How charges actually settle
 
-When you start a paid action, Strive checks that you have at least one unit of allowance — that's the gate. The actual cost depends on how many tokens the model used during the job, and is computed and debited at the *end* of the job, not at the start. If a job fails or is cancelled, you're not charged at all; Strive absorbs whatever cost it incurred before the failure.
+When you start a paid action, Strive checks that you have *any* remaining allowance — that's the gate; you don't need a full unit to start. The actual cost depends on how many tokens the model used during the job, and is computed and debited at the *end* of the job, not at the start. If a job fails or is cancelled, you're not charged at all; Strive absorbs whatever cost it incurred before the failure.
 
 Occasionally the actual cost slightly exceeds your remaining balance. When that happens, Strive clamps the debit at your balance and absorbs the difference — you never get an overage charge or a mid-job abort. It's a deliberate, bounded design choice that keeps the rule simple: *if you have any allowance, you can run the action*.
 

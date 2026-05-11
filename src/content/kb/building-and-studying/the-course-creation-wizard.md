@@ -50,4 +50,4 @@ If your stated goal and the chosen depth seem mismatched (you ask for *"a quick 
 
 After generation, you see a draft structure and can chat with the agent to refine it. The agent can add, remove, merge, split, and reorder modules. It does not write lesson content — that comes later, on demand. Use this step generously. Iterating the structure once now is much cheaper than discovering the wrong shape after generating five lessons.
 
-When the structure looks right, click Generate. One unit of allowance is debited and the course lands in your library.
+When the structure looks right, click Generate. A small fraction of your allowance is debited for the structure itself (the per-lesson generation that comes later is where most of the cost actually lands), and the course appears in your library.

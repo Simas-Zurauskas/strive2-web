@@ -380,12 +380,15 @@ export const PRICING_TEASER = {
       // Per-tier translation of the abstract allowance count into a typical
       // usage shape. Lifted (condensed) from the "What can I actually do on
       // each plan?" FAQ on /pricing so the teaser and the FAQ stay in lockstep.
-      guidance: '≈ one short course end-to-end, or a handful of lessons',
+      // Calibration anchor: a typical lesson costs ~30–40 credits, so the
+      // 150-credit Free unit ≈ 4–5 lessons (plus the cheap structure/quiz
+      // steps that are ~5–25 credits each).
+      guidance: '≈ 4–5 lessons, or a course structure plus a few lessons',
       cta: 'Start free',
     },
     pro: {
       tagline: 'Most chosen by daily learners. Generate as you go.',
-      guidance: '≈ ongoing course building, with comfortable headroom',
+      guidance: '≈ 50–60 lessons / month — ongoing course building',
       cta: 'Get Pro',
     },
   },

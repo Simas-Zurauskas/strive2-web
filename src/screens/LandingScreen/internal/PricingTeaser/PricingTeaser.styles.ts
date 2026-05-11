@@ -125,9 +125,9 @@ export const TierAllowance = styled.span`
 `;
 
 // Per-tier plain-language translation of the allowance count (e.g.
-// "≈ one short course end-to-end"). Sits between the dry "X allowances /
-// month" line and the brand tagline. Same muted token; the `≈` prefix
-// carries the "approximate" semantic without italics.
+// "≈ 4–5 lessons"). Sits between the dry "X allowances / month" line and
+// the brand tagline. Same muted token; the `≈` prefix carries the
+// "approximate" semantic without italics.
 export const TierGuidance = styled.span`
   font-size: 0.75rem;
   color: ${(p) => p.theme.colors.muted};
