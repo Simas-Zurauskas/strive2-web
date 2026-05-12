@@ -6,6 +6,11 @@ export const Wrapper = styled.div`
   align-items: center;
   gap: 0;
   width: 100%;
+  /* Belt-and-suspenders: if labels ever overflow at an unusual breakpoint,
+     hidden + min-width:0 keeps the stepper inside the viewport instead
+     of pushing past the clip. */
+  min-width: 0;
+  overflow: hidden;
 `;
 
 export const Step = styled.div`
@@ -71,8 +76,10 @@ export const Circle = styled.span<{ $state: 'completed' | 'active' | 'navigable'
       return p.theme.colorsLib.gray400;
     }};
 
-  ${StepButton}:hover & {
-    opacity: 0.8;
+  ${(p) => p.theme.media.hover} {
+    ${StepButton}:hover & {
+      opacity: 0.8;
+    }
   }
 `;
 
@@ -89,6 +96,15 @@ export const Label = styled.span<{ $state: 'completed' | 'active' | 'navigable' 
   }};
   white-space: nowrap;
   cursor: ${(p) => (p.$clickable ? 'pointer' : 'default')};
+
+  /* On tablet and below, five labels + connectors don't fit. Hide
+     them — the circles alone communicate position, and the active
+     step's name is already shown in the step content header. The
+     active label stays visible so the user always knows where they
+     are. */
+  ${(p) => p.theme.media.tabletLarge} {
+    display: ${(p) => (p.$state === 'active' ? 'inline' : 'none')};
+  }
 `;
 
 export const Connector = styled.span<{ $completed: boolean }>`
@@ -98,4 +114,14 @@ export const Connector = styled.span<{ $completed: boolean }>`
   background: ${(p) => (p.$completed ? p.theme.colors.foreground : p.theme.colors.surfaceBorder)};
   opacity: ${(p) => (p.$completed ? 0.2 : 1)};
   transition: background 0.15s, opacity 0.15s;
+  min-width: 0.5rem;
+
+  ${(p) => p.theme.media.tabletLarge} {
+    margin: 0 0.4375rem;
+  }
+
+  ${(p) => p.theme.media.mobile} {
+    margin: 0 0.25rem;
+    min-width: 0.25rem;
+  }
 `;

@@ -99,8 +99,10 @@ export const PrimaryCta = styled.button`
   color: ${onAccent};
   transition: background 0.15s, transform 0.08s ease;
 
-  &:hover {
-    background: ${(p) => p.theme.colors.accentHover};
+  ${(p) => p.theme.media.hover} {
+    &:hover {
+      background: ${(p) => p.theme.colors.accentHover};
+    }
   }
 
   &:active {
@@ -116,8 +118,10 @@ export const PrimaryCta = styled.button`
     transition: transform 0.18s ease;
   }
 
-  &:hover > svg {
-    transform: translateX(2px);
+  ${(p) => p.theme.media.hover} {
+    &:hover > svg {
+      transform: translateX(2px);
+    }
   }
 `;
 
@@ -136,8 +140,10 @@ export const SecondaryAction = styled.button`
   border-radius: 6px;
   transition: color 0.15s, background 0.15s;
 
-  &:hover {
-    color: ${(p) => p.theme.colors.foreground};
-    background: ${(p) => p.theme.colors.background};
+  ${(p) => p.theme.media.hover} {
+    &:hover {
+      color: ${(p) => p.theme.colors.foreground};
+      background: ${(p) => p.theme.colors.background};
+    }
   }
 `;

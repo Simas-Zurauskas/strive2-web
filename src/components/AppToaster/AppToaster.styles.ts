@@ -111,8 +111,10 @@ export const ToasterGlobalStyle = createGlobalStyle`
       transform 0.1s;
   }
 
-  [data-sonner-toast][data-styled='true'] [data-button]:hover {
-    background: ${(p) => p.theme.colors.accentHover};
+  ${(p) => p.theme.media.hover} {
+    [data-sonner-toast][data-styled='true'] [data-button]:hover {
+      background: ${(p) => p.theme.colors.accentHover};
+    }
   }
 
   [data-sonner-toast][data-styled='true'] [data-button]:active {
@@ -129,10 +131,12 @@ export const ToasterGlobalStyle = createGlobalStyle`
     font-weight: 500;
   }
 
-  [data-sonner-toast][data-styled='true'] [data-cancel]:hover {
-    background: transparent;
-    border-color: ${(p) => p.theme.colors.tertiary};
-    color: ${(p) => p.theme.colors.tertiary};
+  ${(p) => p.theme.media.hover} {
+    [data-sonner-toast][data-styled='true'] [data-cancel]:hover {
+      background: transparent;
+      border-color: ${(p) => p.theme.colors.tertiary};
+      color: ${(p) => p.theme.colors.tertiary};
+    }
   }
 
   /* ── Loader colour ──────────────────────────── */

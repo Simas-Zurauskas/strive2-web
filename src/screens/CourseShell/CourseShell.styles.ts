@@ -284,7 +284,16 @@ export const ChatEdgeTab = styled(motion.button)`
     box-shadow 0.25s ease,
     top 0.3s ease;
 
-  &:hover,
+  ${(p) => p.theme.media.hover} {
+    &:hover {
+      width: 42px;
+      background: ${(p) => p.theme.colors.accentMuted};
+      color: ${(p) => p.theme.colors.accent};
+      box-shadow: var(--shadow-drawer-l-hover);
+      outline: none;
+    }
+  }
+
   &:focus-visible {
     width: 42px;
     background: ${(p) => p.theme.colors.accentMuted};
@@ -337,7 +346,16 @@ export const SidebarEdgeTab = styled(motion.button)`
     box-shadow 0.25s ease,
     top 0.3s ease;
 
-  &:hover,
+  ${(p) => p.theme.media.hover} {
+    &:hover {
+      width: 42px;
+      background: ${(p) => p.theme.colors.accentMuted};
+      color: ${(p) => p.theme.colors.accent};
+      box-shadow: var(--shadow-drawer-r-hover);
+      outline: none;
+    }
+  }
+
   &:focus-visible {
     width: 42px;
     background: ${(p) => p.theme.colors.accentMuted};

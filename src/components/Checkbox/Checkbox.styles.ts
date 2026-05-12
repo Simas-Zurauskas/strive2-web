@@ -46,8 +46,10 @@ export const Indicator = styled.span<{ $checked: boolean }>`
     transform: translate(-50%, -50%);
   }
 
-  ${Label}:hover & {
-    border-color: ${(p) => p.theme.colors.accent};
+  ${(p) => p.theme.media.hover} {
+    ${Label}:hover & {
+      border-color: ${(p) => p.theme.colors.accent};
+    }
   }
 `;
 

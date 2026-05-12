@@ -89,10 +89,12 @@ export const DevResetButton = styled.button`
     color 0.15s,
     border-color 0.15s;
 
-  &:hover {
-    opacity: 1;
-    color: ${(p) => p.theme.colors.error};
-    border-color: ${(p) => p.theme.colors.error};
+  ${(p) => p.theme.media.hover} {
+    &:hover {
+      opacity: 1;
+      color: ${(p) => p.theme.colors.error};
+      border-color: ${(p) => p.theme.colors.error};
+    }
   }
 
   &:disabled {
@@ -385,8 +387,10 @@ export const Option = styled.button<{ $state: QuizOptionState }>`
 
   ${(p) =>
     (p.$state === 'default' || p.$state === 'selected') &&
-    `&:hover {
-      border-color: ${p.theme.colors.accent};
+    `${p.theme.media.hover} {
+      &:hover {
+        border-color: ${p.theme.colors.accent};
+      }
     }`}
 
   &:active:not(:disabled) {

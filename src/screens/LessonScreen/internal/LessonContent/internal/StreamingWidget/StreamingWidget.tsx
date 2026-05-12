@@ -9,17 +9,48 @@ interface Props {
    *  `finishing` — quieter follow-up while the server wraps recall cards
    *  and metadata after the last block has rendered. */
   phase: StreamingPhase;
+  /** Optional flags so the sub-line names only the extras actually
+   *  being generated. Default everything-on for back-compat with
+   *  callers that don't know (e.g. reload-into-active-stream paths
+   *  where the job's options aren't surfaced client-side). */
+  includeImage?: boolean;
+  includeLinks?: boolean;
+  includeRecallCards?: boolean;
   className?: string;
 }
 
-const COPY: Record<StreamingPhase, { title: string; sub?: string }> = {
-  streaming: {
-    title: 'Creating your lesson',
-    sub: 'Pulling together blocks, code, and recall cards.',
-  },
-  finishing: {
-    title: 'Adding finishing touches',
-  },
+/**
+ * Compose the streaming sub-line. Lesson body + interactive code/
+ * exercises always run, so they're always named. The three optional
+ * extras (cover image, further reading, recall cards) get appended
+ * only when their flag is on. Oxford comma in the joined list keeps
+ * the cadence editorial.
+ */
+const buildStreamingSub = ({
+  includeImage,
+  includeLinks,
+  includeRecallCards,
+}: {
+  includeImage: boolean;
+  includeLinks: boolean;
+  includeRecallCards: boolean;
+}): string => {
+  const extras: string[] = [];
+  if (includeImage) extras.push('a cover image');
+  if (includeLinks) extras.push('further reading');
+  if (includeRecallCards) extras.push('recall cards to come back to');
+
+  if (extras.length === 0) {
+    return 'Drafting the prose, working the examples.';
+  }
+  if (extras.length === 1) {
+    return `Drafting the prose, working the examples — and ${extras[0]}.`;
+  }
+  if (extras.length === 2) {
+    return `Drafting the prose and examples — plus ${extras[0]} and ${extras[1]}.`;
+  }
+  // 3 extras: full editorial list with Oxford comma
+  return `Drafting the prose and examples — plus ${extras[0]}, ${extras[1]}, and ${extras[2]}.`;
 };
 
 /**
@@ -37,9 +68,18 @@ const COPY: Record<StreamingPhase, { title: string; sub?: string }> = {
  * interrupting current speech. Decorative motion is `aria-hidden` and all
  * animations honor `prefers-reduced-motion: reduce`.
  */
-export const StreamingWidget = ({ phase, className }: Props) => {
+export const StreamingWidget = ({
+  phase,
+  includeImage = true,
+  includeLinks = true,
+  includeRecallCards = true,
+  className,
+}: Props) => {
   const finishing = phase === 'finishing';
-  const copy = COPY[phase];
+  const title = finishing ? 'Adding finishing touches' : 'Creating your lesson';
+  const sub = finishing
+    ? null
+    : buildStreamingSub({ includeImage, includeLinks, includeRecallCards });
 
   return (
     <S.Wrap
@@ -54,8 +94,8 @@ export const StreamingWidget = ({ phase, className }: Props) => {
         <S.Dot $i={2} $finishing={finishing} />
       </S.IconStage>
       <S.Body>
-        <S.Title $finishing={finishing}>{copy.title}…</S.Title>
-        {copy.sub && !finishing && <S.Sub>{copy.sub}</S.Sub>}
+        <S.Title $finishing={finishing}>{title}…</S.Title>
+        {sub && <S.Sub>{sub}</S.Sub>}
       </S.Body>
       <S.Sweep $finishing={finishing} aria-hidden />
     </S.Wrap>

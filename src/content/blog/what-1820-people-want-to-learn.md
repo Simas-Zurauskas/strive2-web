@@ -84,7 +84,7 @@ Around 55 goals reference India explicitly or use Indian context cues. Around 50
 
 Two things follow from that.
 
-Pricing first. A flat €12.99 / €24.99 / €49.99 credit ladder works for Western Europe and the US. It does not work for India, where the same product needs to clear a much lower price-of-the-decision bar before someone tries it. We're now on a track to do PPP-adjusted pricing for the credit packs rather than a single global ladder. That's a non-trivial bit of Stripe and entitlement work, and we haven't shipped it yet. But the data made the decision obvious.
+Pricing first. A flat €12.99 / €24.99 / €49.99 plan ladder works for Western Europe and the US. It does not work for India, where the same product needs to clear a much lower price-of-the-decision bar before someone tries it. We're now on a track to do PPP-adjusted pricing for the subscription tiers rather than a single global ladder. That's a non-trivial bit of Stripe and entitlement work, and we haven't shipped it yet. But the data made the decision obvious.
 
 The second is content. India shows up not just as a country but as a market for *specific* learning intents: competitive exams, e-commerce sellers, freelancers building agency-style businesses. That bleeds into the next cluster.
 

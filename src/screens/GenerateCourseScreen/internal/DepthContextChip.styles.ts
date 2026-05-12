@@ -90,9 +90,11 @@ export const DismissButton = styled.button`
   align-items: center;
   justify-content: center;
 
-  &:hover {
-    background: ${(p) => p.theme.colors.surface};
-    color: ${(p) => p.theme.colors.foreground};
+  ${(p) => p.theme.media.hover} {
+    &:hover {
+      background: ${(p) => p.theme.colors.surface};
+      color: ${(p) => p.theme.colors.foreground};
+    }
   }
 
   &:focus-visible {

@@ -100,12 +100,14 @@ export const RateButton = styled.button<{ $active: boolean; $pending: boolean }>
      itself doesn't change size or content — no layout shift. */
   ${(p) => p.$pending && `opacity: 0.7;`}
 
-  &:hover:not(:disabled) {
-    border-color: ${(p) =>
-      p.$active
-        ? p.theme.colors.accent
-        : `color-mix(in oklab, ${p.theme.colors.tertiary} 50%, ${p.theme.colors.surfaceBorder})`};
-    color: ${(p) => p.theme.colors.foreground};
+  ${(p) => p.theme.media.hover} {
+    &:hover:not(:disabled) {
+      border-color: ${(p) =>
+        p.$active
+          ? p.theme.colors.accent
+          : `color-mix(in oklab, ${p.theme.colors.tertiary} 50%, ${p.theme.colors.surfaceBorder})`};
+      color: ${(p) => p.theme.colors.foreground};
+    }
   }
 
   &:focus-visible {

@@ -1,82 +1,93 @@
-import styled, { keyframes } from 'styled-components';
+import { motion } from 'framer-motion';
+import styled from 'styled-components';
 import { onAccent } from '@/theme';
 import type { GradeVerdict } from '@/api/types';
 
-const fadeIn = keyframes`
-  from { opacity: 0; transform: translateY(6px); }
-  to   { opacity: 1; transform: translateY(0); }
-`;
+// ── Layout shell ─────────────────────────────────────
+// The card sits inside a "stack" that includes the breadcrumb above —
+// the breadcrumb is *part of* the card's identity but lives outside the
+// surface, so the prompt is the first weighted element the eye lands on.
 
-export const Card = styled.article`
+export const Stack = styled.div`
   display: flex;
   flex-direction: column;
-  gap: 1rem;
-  padding: 1.5rem 1.625rem 1.375rem;
-  background: ${(p) => p.theme.colors.surface};
-  border: 1px solid ${(p) => p.theme.colors.surfaceBorder};
-  border-radius: var(--radius-xl);
-  animation: ${fadeIn} 0.2s ease;
-
-  ${(p) => p.theme.media.tablet} {
-    padding: 1.125rem 1.125rem 1rem;
-    gap: 0.875rem;
-  }
+  gap: 0.625rem;
+  width: 100%;
 `;
 
-// ── Source meta (course eyebrow + lesson link) + mode ─────
-// Two-line meta block on the left, mode toggle on the right.
-// Inline-joining the course and lesson with " · " breaks when either
-// is long — both end up truncated and the lesson hides under the
-// toggle. Stacking them gives each its own row with independent
-// ellipsis: the lesson title (the primary identifier) gets the
-// full width it needs.
+// ── Breadcrumb (course / lesson, above the card) ─────
 
-export const SourceRow = styled.div`
-  display: flex;
+export const Breadcrumb = styled.div`
+  display: inline-flex;
   align-items: center;
-  gap: 0.875rem;
+  gap: 0.4rem;
   min-width: 0;
+  padding: 0 0.125rem;
+  font-size: 0.75rem;
+  line-height: 1.3;
 `;
 
-export const SourceMeta = styled.div`
-  flex: 1;
-  min-width: 0;
-  display: flex;
-  flex-direction: column;
-  gap: 0.1875rem;
-`;
-
-/** Small uppercase eyebrow — clearly metadata, never the primary
- *  visual element. Ellipsis only kicks in for an extremely long
- *  course name; the lesson row beneath gets all the width it needs. */
-export const SourceCourse = styled.span`
+export const CourseTag = styled.span`
   font-size: 0.625rem;
   font-weight: 600;
   text-transform: uppercase;
-  letter-spacing: 0.12em;
+  letter-spacing: 0.14em;
   color: ${(p) => p.theme.colors.muted};
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
+  max-width: 12rem;
+  flex-shrink: 1;
+  min-width: 0;
+
+  ${(p) => p.theme.media.tablet} {
+    max-width: 7rem;
+  }
+
+  ${(p) => p.theme.media.mobile} {
+    max-width: 5rem;
+  }
 `;
 
-/** Lesson link — the primary identifier of where this card came from.
- *  Foreground colour, gets full row width. */
-export const SourceLink = styled.a`
+export const BreadcrumbSep = styled.span`
+  color: ${(p) => p.theme.colors.muted};
+  opacity: 0.5;
+  flex-shrink: 0;
+`;
+
+/** Small gold pill that appears in the breadcrumb when this card is
+ *  cycling back after a previous Again. Tells the user "yes, you're
+ *  seeing this again on purpose" without breaking the card surface. */
+export const RetryBadge = styled.span`
   display: inline-flex;
   align-items: center;
-  gap: 0.3125rem;
-  color: ${(p) => p.theme.colors.foreground};
+  gap: 0.25rem;
+  margin-left: 0.25rem;
+  padding: 0.0625rem 0.4375rem;
+  border-radius: var(--radius-pill);
+  border: 1px solid
+    ${(p) => `color-mix(in oklab, ${p.theme.colors.tertiary} 45%, transparent)`};
+  background: ${(p) =>
+    `color-mix(in oklab, ${p.theme.colors.tertiary} 12%, transparent)`};
+  color: ${(p) => p.theme.colors.tertiaryHover};
+  font-size: 0.5625rem;
+  font-weight: 700;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  flex-shrink: 0;
+`;
+
+export const LessonLink = styled.a`
+  display: inline-flex;
+  align-items: center;
+  gap: 0.25rem;
+  min-width: 0;
+  color: ${(p) => p.theme.colors.muted};
   text-decoration: none;
   font-weight: 500;
-  font-size: 0.875rem;
-  letter-spacing: -0.005em;
-  line-height: 1.3;
-  min-width: 0;
+  font-size: 0.75rem;
   transition: color 0.15s;
 
-  /* The wrapping span carries the ellipsis so the icon stays anchored
-     to the end of whatever portion of the lesson name fits. */
   & > span {
     overflow: hidden;
     text-overflow: ellipsis;
@@ -86,128 +97,73 @@ export const SourceLink = styled.a`
 
   & svg {
     flex-shrink: 0;
-    opacity: 0.5;
+    opacity: 0.55;
     margin-bottom: -1px;
   }
 
-  &:hover {
-    color: ${(p) => p.theme.colors.tertiary};
-
-    & > span {
-      text-decoration: underline;
+  ${(p) => p.theme.media.hover} {
+    &:hover {
+      color: ${(p) => p.theme.colors.tertiary};
+      & > span {
+        text-decoration: underline;
+      }
+      & svg {
+        opacity: 0.9;
+      }
     }
   }
 `;
 
-export const SourceBadges = styled.div`
+// ── Card surface ─────────────────────────────────────
+
+export const Card = styled(motion.article)`
   display: flex;
-  align-items: center;
-  gap: 0.5rem;
-  flex-shrink: 0;
-  align-self: center;
-`;
-
-// ── Mode toggle (segmented control, restrained) ──────
-// Active option uses an accent-muted background + accent text rather
-// than inverted-fill — quieter, fits editorial chrome.
-
-export const ModeToggle = styled.div`
-  display: inline-flex;
-  align-items: stretch;
-  padding: 2px;
-  border-radius: var(--radius-pill);
+  flex-direction: column;
+  gap: 1.25rem;
+  padding: 2rem 2rem 1.75rem;
+  background: ${(p) => p.theme.colors.surface};
   border: 1px solid ${(p) => p.theme.colors.surfaceBorder};
-  background: ${(p) => p.theme.colors.background};
-`;
+  border-radius: var(--radius-xl);
+  box-shadow: var(--shadow-ghost, 0 1px 2px rgba(0, 0, 0, 0.04));
 
-export const ModeOption = styled.button<{ $active: boolean }>`
-  display: inline-flex;
-  align-items: center;
-  gap: 0.3125rem;
-  padding: 0.3125rem 0.625rem;
-  border-radius: var(--radius-pill);
-  border: none;
-  font-family: inherit;
-  font-size: 0.6875rem;
-  font-weight: 600;
-  letter-spacing: 0.04em;
-  text-transform: uppercase;
-  background: ${(p) => (p.$active ? p.theme.colors.accentMuted : 'transparent')};
-  color: ${(p) => (p.$active ? p.theme.colors.accent : p.theme.colors.muted)};
-  cursor: pointer;
-  transition:
-    background 0.15s,
-    color 0.15s;
-
-  &:hover:not(:disabled) {
-    color: ${(p) => (p.$active ? p.theme.colors.accent : p.theme.colors.foreground)};
+  ${(p) => p.theme.media.tablet} {
+    padding: 1.5rem 1.25rem 1.25rem;
+    gap: 1rem;
   }
 
-  &:disabled {
-    cursor: default;
+  ${(p) => p.theme.media.mobile} {
+    padding: 1.25rem 1rem 1.125rem;
+    gap: 0.875rem;
+    border-radius: var(--radius-lg);
   }
 `;
 
-// ── Footer badges (kind / state) ─────────────────────
-// Single badge component reused for kind / new / box. All use
-// color-mix tints + hairline borders, never solid fills.
-
-const badgeColor = ({
-  variant,
-  colors,
-}: {
-  variant: 'kind' | 'new' | 'box' | 'mode' | undefined;
-  colors: { accent: string; success: string; warning: string; muted: string; tertiary: string };
-}) => {
-  switch (variant) {
-    case 'new':
-      return colors.tertiary;
-    case 'box':
-      return colors.success;
-    case 'mode':
-      return colors.warning;
-    case 'kind':
-    default:
-      return colors.muted;
-  }
-};
-
-export const Badge = styled.span<{ $variant?: 'kind' | 'new' | 'box' | 'mode' }>`
-  display: inline-block;
-  padding: 0.1875rem 0.5rem;
-  border-radius: var(--radius-pill);
-  font-size: 0.625rem;
-  font-weight: 600;
-  letter-spacing: 0.06em;
-  text-transform: uppercase;
-  border: 1px solid
-    ${(p) =>
-      `color-mix(in oklab, ${badgeColor({ variant: p.$variant, colors: p.theme.colors })} 28%, transparent)`};
-  background: ${(p) =>
-    `color-mix(in oklab, ${badgeColor({ variant: p.$variant, colors: p.theme.colors })} 10%, transparent)`};
-  color: ${(p) => badgeColor({ variant: p.$variant, colors: p.theme.colors })};
-`;
-
-// ── Prompt (the focal moment of the card) ────────────
+// ── Prompt ───────────────────────────────────────────
 
 export const Prompt = styled.p`
   font-family: var(--font-heading-serif), Georgia, serif;
-  font-size: 1.5rem;
+  font-size: 1.625rem;
   font-weight: 500;
-  line-height: 1.4;
+  line-height: 1.35;
   letter-spacing: -0.015em;
-  margin: 0.25rem 0 0;
+  margin: 0;
   color: ${(p) => p.theme.colors.foreground};
 
   ${(p) => p.theme.media.tablet} {
-    font-size: 1.25rem;
+    font-size: 1.3125rem;
+  }
+
+  ${(p) => p.theme.media.mobile} {
+    font-size: 1.1875rem;
+    line-height: 1.4;
   }
 `;
 
-/** Cloze blank — lighter, more typographic. Unrevealed: just an
- *  underlined gap (no chunky bg block). Revealed: success-tinted
- *  background + colored text. The blank reads as part of the
- *  sentence rhythm rather than a placeholder rectangle dropped in. */
+/** Cloze blank.
+ *  Unrevealed: underlined typographic gap.
+ *  Revealed: tertiary-tinted (warm gold) — a neutral "look here, this is
+ *  the answer" cue rather than success-green which would imply the user
+ *  got it right even when they didn't. */
 export const BlankSlot = styled.span<{ $revealed: boolean }>`
   display: inline-block;
   min-width: 3.5rem;
@@ -215,12 +171,13 @@ export const BlankSlot = styled.span<{ $revealed: boolean }>`
   border-radius: ${(p) => (p.$revealed ? 'var(--radius-sm)' : '0')};
   background: ${(p) =>
     p.$revealed
-      ? `color-mix(in oklab, ${p.theme.colors.success} 14%, ${p.theme.colors.surface})`
+      ? `color-mix(in oklab, ${p.theme.colors.tertiary} 16%, ${p.theme.colors.surface})`
       : 'transparent'};
-  color: ${(p) => (p.$revealed ? p.theme.colors.success : 'transparent')};
+  color: ${(p) =>
+    p.$revealed ? p.theme.colors.tertiaryHover : 'transparent'};
   border-bottom: ${(p) =>
     p.$revealed
-      ? `2px solid ${p.theme.colors.success}`
+      ? `2px solid ${p.theme.colors.tertiary}`
       : `1.5px solid ${p.theme.colors.muted}`};
   font-family: inherit;
   font-weight: 600;
@@ -230,172 +187,324 @@ export const BlankSlot = styled.span<{ $revealed: boolean }>`
     border-bottom-color 0.2s;
 `;
 
-// ── Answer block (revealed) ─────────────────────────
-// Soft accent-tinted callout with a hairline border, not a heavy
-// left-bar productivity callout.
+// ── "or" divider ─────────────────────────────────────
+// Sits between the typed-recall row (primary) and the reveal/skip row
+// (secondary). Quiet typographic separator — italic serif "or" with
+// hairlines on each side, no contrast spike. Reads as a fork, not a
+// section break.
 
-export const AnswerBlock = styled.div`
-  display: flex;
-  flex-direction: column;
-  gap: 0.4375rem;
-  padding: 0.875rem 1rem 1rem;
-  background: ${(p) => p.theme.colors.accentMuted};
-  border: 1px solid
-    ${(p) => `color-mix(in oklab, ${p.theme.colors.accent} 22%, transparent)`};
-  border-radius: var(--radius-lg);
-  animation: ${fadeIn} 0.2s ease;
-`;
-
-export const AnswerLabel = styled.span`
-  font-size: 0.625rem;
-  font-weight: 700;
-  text-transform: uppercase;
-  letter-spacing: 0.1em;
-  color: ${(p) => p.theme.colors.accent};
-`;
-
-export const AnswerText = styled.span`
-  font-size: 1rem;
-  line-height: 1.55;
-  color: ${(p) => p.theme.colors.foreground};
-  font-weight: 500;
-`;
-
-// ── Reveal divider (tap-mode primary action) ────────
-
-export const RevealDivider = styled.button`
+export const OrDivider = styled.div`
   display: flex;
   align-items: center;
-  gap: 0.75rem;
-  padding: 0.5rem 0;
-  background: none;
-  border: none;
-  color: ${(p) => p.theme.colors.muted};
-  font-family: inherit;
-  font-size: 0.75rem;
-  font-weight: 600;
-  text-transform: uppercase;
-  letter-spacing: 0.12em;
-  cursor: pointer;
-  transition: color 0.15s;
+  gap: 0.625rem;
+  margin: 0.0625rem 0;
+  user-select: none;
 
   &::before,
   &::after {
     content: '';
     flex: 1;
     height: 1px;
-    background: ${(p) => p.theme.colors.surfaceBorder};
-    transition: background 0.15s;
+    background: ${(p) =>
+      `color-mix(in oklab, ${p.theme.colors.surfaceBorder} 100%, transparent)`};
+  }
+`;
+
+export const OrLabel = styled.span`
+  font-family: var(--font-heading-serif), Georgia, serif;
+  font-style: italic;
+  font-size: 0.8125rem;
+  font-weight: 400;
+  letter-spacing: 0.02em;
+  color: ${(p) => p.theme.colors.muted};
+  padding: 0 0.125rem;
+`;
+
+// ── Reveal action row ────────────────────────────────
+// Secondary path under the typed-recall row. Reveal is a quieter
+// gold-outlined button — typing is the recommended primary path, so
+// Reveal steps back and reads as the "I'd rather just see it" option.
+// Skip uses the same fixed right-column width as the Check button
+// above so the two rows align perfectly with no layout shift.
+
+export const RevealRow = styled.div`
+  display: flex;
+  align-items: stretch;
+  gap: 0.5rem;
+`;
+
+export const RevealButton = styled.button`
+  flex: 1;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  padding: 0 0.875rem;
+  border-radius: var(--radius-md);
+  border: 1px solid
+    ${(p) => `color-mix(in oklab, ${p.theme.colors.tertiary} 50%, transparent)`};
+  background: ${(p) =>
+    `color-mix(in oklab, ${p.theme.colors.tertiary} 8%, ${p.theme.colors.surface})`};
+  color: ${(p) => p.theme.colors.tertiaryHover};
+  font-family: inherit;
+  font-weight: 600;
+  font-size: 0.75rem;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  cursor: pointer;
+  min-height: 34px;
+  height: 34px;
+
+  /* Bump to a real touch target on tablet/mobile widths — 34px is
+     too small for a thumb. */
+  ${(p) => p.theme.media.tablet} {
+    min-height: 44px;
+    height: 44px;
+  }
+  transition:
+    background 0.15s,
+    border-color 0.15s,
+    transform 0.1s ease,
+    box-shadow 0.15s;
+
+  ${(p) => p.theme.media.hover} {
+    &:hover {
+      background: ${(p) =>
+        `color-mix(in oklab, ${p.theme.colors.tertiary} 16%, ${p.theme.colors.surface})`};
+      border-color: ${(p) =>
+        `color-mix(in oklab, ${p.theme.colors.tertiary} 75%, transparent)`};
+    }
   }
 
-  &:hover {
-    color: ${(p) => p.theme.colors.accent};
+  &:active {
+    transform: scale(0.99);
+  }
 
-    &::before,
-    &::after {
-      background: ${(p) =>
-        `color-mix(in oklab, ${p.theme.colors.accent} 50%, ${p.theme.colors.surfaceBorder})`};
+  &:focus-visible {
+    outline: none;
+    box-shadow: 0 0 0 3px
+      ${(p) =>
+        `color-mix(in oklab, ${p.theme.colors.tertiary} 28%, transparent)`};
+  }
+`;
+
+/** Right-column width shared by Check (typed row) and Skip (reveal
+ *  row) so the two action rows align and there's no layout shift
+ *  between renders. Kept here so both buttons reference one source. */
+const RIGHT_COL_WIDTH = '6.25rem';
+
+export const SkipButton = styled.button`
+  width: ${RIGHT_COL_WIDTH};
+  flex-shrink: 0;
+  padding: 0;
+  border-radius: var(--radius-md);
+  border: 1px solid ${(p) => p.theme.colors.surfaceBorder};
+  background: transparent;
+  color: ${(p) => p.theme.colors.muted};
+  font-family: inherit;
+  font-weight: 500;
+  font-size: 0.75rem;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  cursor: pointer;
+  min-height: 34px;
+  height: 34px;
+
+  ${(p) => p.theme.media.tablet} {
+    min-height: 44px;
+    height: 44px;
+    width: 4.5rem;
+  }
+  transition:
+    color 0.15s,
+    border-color 0.15s,
+    background 0.15s;
+
+  ${(p) => p.theme.media.hover} {
+    &:hover {
+      color: ${(p) => p.theme.colors.foreground};
+      border-color: ${(p) =>
+        `color-mix(in oklab, ${p.theme.colors.muted} 40%, transparent)`};
     }
   }
 
   &:focus-visible {
     outline: none;
     color: ${(p) => p.theme.colors.foreground};
+    border-color: ${(p) => p.theme.colors.muted};
   }
 `;
 
-export const RevealLabel = styled.span`
-  display: inline-flex;
-  align-items: center;
+// ── Answer block (QA cards only — cloze reveals inline) ─────
+// Lighter than the previous accent-tinted callout. A left-stripe of
+// tertiary (warm gold) anchors it as "the canonical answer" without
+// turning the whole block into a tinted rectangle.
+
+export const AnswerBlock = styled.div`
+  display: flex;
+  flex-direction: column;
   gap: 0.375rem;
+  padding: 0.75rem 1rem 0.875rem;
+  border-left: 2px solid
+    ${(p) => `color-mix(in oklab, ${p.theme.colors.tertiary} 70%, transparent)`};
+  background: ${(p) =>
+    `color-mix(in oklab, ${p.theme.colors.tertiary} 6%, transparent)`};
+  border-radius: 0 var(--radius-md) var(--radius-md) 0;
 `;
 
-// ── Footer ──────────────────────────────────────────
-
-export const FooterRow = styled.div`
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 1rem;
-  flex-wrap: wrap;
-  margin-top: 0.125rem;
+export const AnswerLabel = styled.span`
+  font-size: 0.625rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.14em;
+  color: ${(p) => p.theme.colors.tertiary};
 `;
 
-export const FooterBadges = styled.div`
-  display: flex;
-  align-items: center;
-  gap: 0.5rem;
-  flex-wrap: wrap;
-`;
-
-export const SkipLink = styled.button`
-  padding: 0;
-  background: none;
-  border: none;
-  color: ${(p) => p.theme.colors.muted};
-  font-family: inherit;
-  font-size: 0.75rem;
+export const AnswerText = styled.span`
+  font-size: 1.0625rem;
+  line-height: 1.5;
+  color: ${(p) => p.theme.colors.foreground};
   font-weight: 500;
-  cursor: pointer;
-  transition: color 0.15s;
-
-  &:hover {
-    color: ${(p) => p.theme.colors.foreground};
-  }
 `;
 
-// ── Typed recall ─────────────────────────────────────
+// ── Typed-recall input (always available, no mode toggle) ──
+// Optional path: type for AI feedback, or just press Space / click
+// Reveal to skip the typing. Sits above the Reveal row so the choice
+// is legible without being aggressive (Reveal is autofocused, not the
+// input).
 
-export const TypedRow = styled.form`
+export const TypedForm = styled.form`
   display: flex;
   gap: 0.5rem;
   align-items: stretch;
+  margin-top: 0.25rem;
 `;
 
 export const TypedInput = styled.input`
   flex: 1;
-  padding: 0.625rem 0.875rem;
+  min-width: 0;
+  padding: 0.75rem 0.875rem;
   border-radius: var(--radius-md);
   border: 1px solid ${(p) => p.theme.colors.surfaceBorder};
   background: ${(p) => p.theme.colors.background};
   color: ${(p) => p.theme.colors.foreground};
   font-family: inherit;
   font-size: 0.9375rem;
-  transition: border-color 0.15s;
+  min-height: 48px;
+  transition: border-color 0.15s, box-shadow 0.15s;
+
+  &::placeholder {
+    color: ${(p) => p.theme.colors.muted};
+    opacity: 0.85;
+  }
 
   &:focus {
     outline: none;
-    border-color: ${(p) => p.theme.colors.accent};
+    border-color: ${(p) =>
+      `color-mix(in oklab, ${p.theme.colors.accent} 55%, ${p.theme.colors.surfaceBorder})`};
+    box-shadow: 0 0 0 3px
+      ${(p) => `color-mix(in oklab, ${p.theme.colors.accent} 18%, transparent)`};
   }
 `;
 
+/** Filled-accent Check button — the recommended primary action since
+ *  typing is the deeper-practice path. Fixed width so the column
+ *  aligns with Skip below and there's no layout shift between
+ *  renders. */
 export const TypedSubmit = styled.button`
-  padding: 0.625rem 1rem;
+  width: ${RIGHT_COL_WIDTH};
+  flex-shrink: 0;
+  padding: 0;
   border-radius: var(--radius-md);
   border: 1px solid ${(p) => p.theme.colors.accent};
   background: ${(p) => p.theme.colors.accent};
   color: ${onAccent};
   font-family: inherit;
-  font-weight: 600;
+  font-weight: 700;
   font-size: 0.8125rem;
-  letter-spacing: 0.03em;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
   cursor: pointer;
-  transition:
-    background 0.15s,
-    border-color 0.15s,
-    opacity 0.15s;
+  min-height: 48px;
+  transition: background 0.15s, border-color 0.15s, opacity 0.15s, box-shadow 0.15s;
+
+  /* Narrower right column on mobile so the typed input gets more
+     breathing room. Stays aligned with Skip below. */
+  ${(p) => p.theme.media.tablet} {
+    width: 4.5rem;
+  }
 
   &:disabled {
-    opacity: 0.5;
+    opacity: 0.32;
     cursor: not-allowed;
   }
 
-  &:hover:not(:disabled) {
-    background: ${(p) => p.theme.colors.accentHover};
+  ${(p) => p.theme.media.hover} {
+    &:hover:not(:disabled) {
+      background: ${(p) => p.theme.colors.accentHover};
+      border-color: ${(p) => p.theme.colors.accentHover};
+    }
+  }
+
+  &:focus-visible {
+    outline: none;
+    box-shadow: 0 0 0 3px
+      ${(p) => `color-mix(in oklab, ${p.theme.colors.accent} 28%, transparent)`};
   }
 `;
 
-// ── Verdict panel (AI-graded typed recall) ───────────
+// ── Assessing state ──────────────────────────────────
+// Shown after the user submits a typed answer while the AI is grading.
+// Holds back the canonical answer and rating bar so the user doesn't
+// see the right answer next to their (possibly wrong) input before
+// the AI has actually evaluated it.
+
+export const Assessing = styled.div`
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  padding: 1rem 1.125rem;
+  border: 1px dashed
+    ${(p) =>
+      `color-mix(in oklab, ${p.theme.colors.accent} 38%, ${p.theme.colors.surfaceBorder})`};
+  background: ${(p) =>
+    `color-mix(in oklab, ${p.theme.colors.accent} 4%, transparent)`};
+  border-radius: var(--radius-lg);
+`;
+
+export const AssessingHeader = styled.span`
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  font-size: 0.75rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.12em;
+  color: ${(p) => p.theme.colors.accent};
+
+  .spin {
+    animation: spin 0.8s linear infinite;
+  }
+
+  @keyframes spin {
+    from {
+      transform: rotate(0deg);
+    }
+    to {
+      transform: rotate(360deg);
+    }
+  }
+`;
+
+export const AssessingYourAnswer = styled.span`
+  font-size: 0.875rem;
+  color: ${(p) => p.theme.colors.muted};
+  line-height: 1.5;
+`;
+
+// ── Verdict (AI-graded typed recall) ─────────────────
+// Typographic, not panel-shaped. The status word carries the colour;
+// the rest reads as a quiet annotation under the answer.
 
 const verdictColor = ({
   verdict,
@@ -416,92 +525,91 @@ const verdictColor = ({
   }
 };
 
-export const VerdictPanel = styled.div<{ $verdict: GradeVerdict | null }>`
+export const Verdict = styled.div<{ $verdict: GradeVerdict | null }>`
   display: flex;
   flex-direction: column;
-  gap: 0.4375rem;
-  padding: 0.875rem 1rem;
-  border-radius: var(--radius-lg);
-  border: 1px solid
-    ${(p) =>
-      `color-mix(in oklab, ${verdictColor({ verdict: p.$verdict, colors: p.theme.colors })} 28%, transparent)`};
-  background: ${(p) =>
-    `color-mix(in oklab, ${verdictColor({ verdict: p.$verdict, colors: p.theme.colors })} 8%, ${p.theme.colors.surface})`};
+  gap: 0.3125rem;
+  padding: 0 0.125rem;
 `;
 
-export const VerdictHeader = styled.div`
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 0.75rem;
+export const VerdictRow = styled.div`
+  display: inline-flex;
+  align-items: baseline;
+  gap: 0.5rem;
   flex-wrap: wrap;
 `;
 
-export const YourAnswer = styled.span`
-  font-size: 0.8125rem;
-  font-style: italic;
-  color: ${(p) => p.theme.colors.muted};
-  flex: 1;
-  min-width: 0;
-  overflow: hidden;
-  text-overflow: ellipsis;
-`;
-
-export const VerdictPill = styled.span<{ $verdict: GradeVerdict }>`
-  display: inline-block;
-  padding: 0.1875rem 0.5625rem;
-  border-radius: var(--radius-pill);
-  font-size: 0.625rem;
-  font-weight: 700;
-  letter-spacing: 0.08em;
-  text-transform: uppercase;
-  flex-shrink: 0;
-  border: 1px solid
-    ${(p) =>
-      `color-mix(in oklab, ${verdictColor({ verdict: p.$verdict, colors: p.theme.colors })} 30%, transparent)`};
-  background: ${(p) =>
-    `color-mix(in oklab, ${verdictColor({ verdict: p.$verdict, colors: p.theme.colors })} 14%, ${p.theme.colors.surface})`};
-  color: ${(p) => verdictColor({ verdict: p.$verdict, colors: p.theme.colors })};
-`;
-
-export const GradingSpinner = styled.span`
+export const VerdictStatus = styled.span<{ $verdict: GradeVerdict | null }>`
   display: inline-flex;
   align-items: center;
   gap: 0.375rem;
-  font-size: 0.75rem;
-  color: ${(p) => p.theme.colors.muted};
+  font-size: 0.6875rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.12em;
+  color: ${(p) => verdictColor({ verdict: p.$verdict, colors: p.theme.colors })};
   flex-shrink: 0;
+
+  &::before {
+    content: '';
+    width: 6px;
+    height: 6px;
+    border-radius: 50%;
+    background: currentColor;
+    display: inline-block;
+    flex-shrink: 0;
+  }
 
   .spin {
     animation: spin 0.8s linear infinite;
   }
 
   @keyframes spin {
-    from { transform: rotate(0deg); }
-    to { transform: rotate(360deg); }
+    from {
+      transform: rotate(0deg);
+    }
+    to {
+      transform: rotate(360deg);
+    }
+  }
+`;
+
+export const YourAnswer = styled.span`
+  font-size: 0.875rem;
+  color: ${(p) => p.theme.colors.muted};
+  min-width: 0;
+  line-height: 1.5;
+`;
+
+export const YourAnswerQuoted = styled.span`
+  font-style: italic;
+  font-weight: 700;
+  font-size: 0.9375rem;
+  color: ${(p) => p.theme.colors.foreground};
+  &::before {
+    content: '“';
+  }
+  &::after {
+    content: '”';
   }
 `;
 
 export const VerdictFeedback = styled.p`
-  font-size: 0.8125rem;
+  font-size: 1rem;
   line-height: 1.55;
   color: ${(p) => p.theme.colors.foreground};
   margin: 0;
+  padding-left: 0.125rem;
 `;
 
-// Inline label above the rating bar — hosts the recall-ratings HelpAnchor
-// without disturbing the existing 4-button grid layout.
-export const RatingBarRow = styled.div`
-  display: flex;
-  justify-content: flex-start;
-  margin-bottom: 0.375rem;
-`;
+// ── Rating label above bar ───────────────────────────
 
-export const RatingBarLabel = styled.span`
+export const RatingLabel = styled.span`
   font-size: 0.75rem;
   font-weight: 500;
   color: ${(p) => p.theme.colors.muted};
   display: inline-flex;
   align-items: center;
   gap: 0.375rem;
+  margin-top: 0.25rem;
 `;

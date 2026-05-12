@@ -34,26 +34,29 @@ export const Row = styled.div<{ $expandable: boolean }>`
   display: block;
   width: 100%;
   text-align: left;
-  padding: 0.625rem 0.75rem;
+  padding: 0.25rem 0.75rem;
   border: 1px solid transparent;
-  border-radius: 8px;
+  border-radius: 6px;
   background: transparent;
   color: inherit;
   font: inherit;
-  margin-bottom: 0.25rem;
+  margin-bottom: 0;
 
   ${(p) =>
     p.$expandable &&
     css`
       cursor: pointer;
-      &:hover {
-        background: ${p.theme.colors.surfaceBorder}40;
-        border-color: ${p.theme.colors.border};
+      ${p.theme.media.hover} {
+        &:hover {
+          background: ${p.theme.colors.surfaceBorder}40;
+          border-color: ${p.theme.colors.border};
+        }
       }
     `}
 `;
 
-// Engineer-view row layout: Service · Action · Time · Vendor · Credits · Plan · You pay.
+// Engineer-view row layout under the single-layer markup model:
+//   Service · Action · Time · Vendor · Markup · Charged · Credits · Bucket
 // HeaderRow + every RowHeader use this exact template so columns line up.
 // Fixed widths on every column except Action are intentional — using `auto`
 // would let each grid pick its own column widths (since header text and row
@@ -63,10 +66,11 @@ const ENGINEER_GRID = `
   72px
   minmax(0, 1fr)
   108px
-  92px
-  72px
-  88px
   84px
+  56px
+  84px
+  64px
+  88px
 `;
 
 export const RowHeader = styled.div`
@@ -257,8 +261,8 @@ export const MetadataValue = styled.span`
 `;
 
 export const SkeletonRow = styled.div`
-  padding: 0.625rem 0.75rem;
-  margin-bottom: 0.25rem;
+  padding: 0.25rem 0.75rem;
+  margin-bottom: 0;
 `;
 
 export const Empty = styled.div`

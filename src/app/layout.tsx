@@ -5,7 +5,7 @@ import { NEXT_PUBLIC_GA_MEASUREMENT_ID, NEXT_PUBLIC_GOOGLE_ADS_ID } from '@/conf
 import { SITE_URL } from '@/conf/env.server';
 import { DEFAULT_OG_IMAGES, DEFAULT_TWITTER_IMAGES } from '@/lib/seo/sharedMetadata';
 import Registry from './_registry';
-import type { Metadata } from 'next';
+import type { Metadata, Viewport } from 'next';
 import 'katex/dist/katex.min.css';
 
 const inter = Inter({
@@ -77,6 +77,18 @@ export const metadata: Metadata = {
       'max-image-preview': 'large',
     },
   },
+};
+
+// `viewportFit: 'cover'` opts iOS Safari into using the full screen including
+// behind the rounded corners / notch / home-indicator regions, so the layout
+// can read `env(safe-area-inset-*)` and decide where to pad. Without this,
+// iOS keeps a black "letterbox" around the page and the safe-area envs read
+// as `0`. Width + initialScale carry the defaults next-injects so we don't
+// regress the responsive baseline.
+export const viewport: Viewport = {
+  width: 'device-width',
+  initialScale: 1,
+  viewportFit: 'cover',
 };
 
 // Runs before next-themes' own inline script: promotes a per-session theme

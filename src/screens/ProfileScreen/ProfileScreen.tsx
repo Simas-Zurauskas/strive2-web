@@ -74,7 +74,11 @@ export const ProfileScreen: React.FC = () => {
       {/* ── Profile header ──────────────────────────── */}
       <S.ProfileHeader>
         <S.Avatar>
-          {getInitials()}
+          {/* Render initials only when there's no image to show. If we
+              always render them, transparent/partial-transparent provider
+              avatars (e.g. some Google placeholders) let the initial letters
+              bleed through and produce an "SimŽas"-style double exposure. */}
+          {(!user.image || imgError) && getInitials()}
           {user.image && !imgError && (
             // Plain <img> here on purpose: user.image is an arbitrary external
             // URL (Google profile, Gravatar, etc.) so next/image would require

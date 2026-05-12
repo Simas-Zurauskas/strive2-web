@@ -4,6 +4,14 @@ export const Container = styled.div`
   display: flex;
   flex-direction: column;
   gap: 2.5rem;
+
+  ${(p) => p.theme.media.tablet} {
+    gap: 1.75rem;
+  }
+
+  ${(p) => p.theme.media.mobile} {
+    gap: 1.25rem;
+  }
 `;
 
 export const Header = styled.div`
@@ -23,6 +31,10 @@ export const Title = styled.h2`
 
   ${(p) => p.theme.media.tablet} {
     font-size: 1.75rem;
+  }
+
+  ${(p) => p.theme.media.mobile} {
+    font-size: 1.5rem;
   }
 `;
 
@@ -76,6 +88,16 @@ export const DepthCard = styled.button<{ $selected: boolean }>`
   display: flex;
   flex-direction: column;
   gap: 1rem;
+
+  ${(p) => p.theme.media.tablet} {
+    padding: 1.25rem;
+    gap: 0.75rem;
+  }
+
+  ${(p) => p.theme.media.mobile} {
+    padding: 1rem 1.125rem;
+    gap: 0.625rem;
+  }
   box-shadow: ${(p) =>
     p.$selected
       ? `0 0 0 1px ${p.theme.colors.tertiary}, var(--shadow-lift)`
@@ -86,13 +108,15 @@ export const DepthCard = styled.button<{ $selected: boolean }>`
     transform 0.15s ease,
     background 0.15s ease;
 
-  &:hover {
-    border-color: ${(p) => (p.$selected ? p.theme.colors.tertiary : p.theme.colors.muted)};
-    box-shadow: ${(p) =>
-      p.$selected
-        ? `0 0 0 1px ${p.theme.colors.tertiary}, var(--shadow-lift)`
-        : 'var(--shadow-lift)'};
-    transform: ${(p) => (p.$selected ? 'none' : 'translateY(-1px)')};
+  ${(p) => p.theme.media.hover} {
+    &:hover {
+      border-color: ${(p) => (p.$selected ? p.theme.colors.tertiary : p.theme.colors.muted)};
+      box-shadow: ${(p) =>
+        p.$selected
+          ? `0 0 0 1px ${p.theme.colors.tertiary}, var(--shadow-lift)`
+          : 'var(--shadow-lift)'};
+      transform: ${(p) => (p.$selected ? 'none' : 'translateY(-1px)')};
+    }
   }
 
   &:focus-visible {
@@ -105,6 +129,15 @@ export const CardHeader = styled.div`
   display: flex;
   align-items: center;
   gap: 0.75rem;
+  flex-wrap: wrap;
+  min-width: 0;
+
+  /* On tablet/mobile the header stacks: label (with badge inline) on
+     one row, scope on the next. Keeps the label intact instead of
+     squeezing it next to a long scope string. */
+  ${(p) => p.theme.media.tablet} {
+    gap: 0.5rem 0.625rem;
+  }
 `;
 
 export const CardLabel = styled.span`
@@ -113,6 +146,14 @@ export const CardLabel = styled.span`
   font-weight: 500;
   color: ${(p) => p.theme.colors.foreground};
   letter-spacing: -0.01em;
+  /* Don't let the badge/scope push the label into a stack of one word
+     per line — keep it whole. */
+  white-space: nowrap;
+  min-width: 0;
+
+  ${(p) => p.theme.media.tablet} {
+    font-size: 1.1875rem;
+  }
 `;
 
 export const CardScope = styled.span`
@@ -125,6 +166,14 @@ export const CardScope = styled.span`
      whether the Recommended badge is present, so cards align vertically
      across all three tiers. */
   margin-left: auto;
+
+  /* On tablet/mobile, drop margin-left:auto so the scope wraps to its
+     own line under the label/badge rather than fighting for space. */
+  ${(p) => p.theme.media.tablet} {
+    margin-left: 0;
+    flex-basis: 100%;
+    font-size: 0.75rem;
+  }
 `;
 
 export const CardSummary = styled.p`
@@ -132,6 +181,11 @@ export const CardSummary = styled.p`
   color: ${(p) => p.theme.colors.muted};
   line-height: 1.6;
   margin: 0;
+
+  ${(p) => p.theme.media.tablet} {
+    font-size: 0.9375rem;
+    line-height: 1.55;
+  }
 `;
 
 export const BulletList = styled.ul`
@@ -140,12 +194,20 @@ export const BulletList = styled.ul`
   display: flex;
   flex-direction: column;
   gap: 0.375rem;
+
+  ${(p) => p.theme.media.mobile} {
+    padding-left: 1rem;
+  }
 `;
 
 export const BulletItem = styled.li`
   font-size: 0.9375rem;
   color: ${(p) => p.theme.colors.foreground};
   line-height: 1.5;
+
+  ${(p) => p.theme.media.tablet} {
+    font-size: 0.875rem;
+  }
 `;
 
 // ── Skeleton loading ────────────────────────────────────

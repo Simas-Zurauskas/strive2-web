@@ -114,8 +114,10 @@ export const ContinueButton = styled.button`
   cursor: pointer;
   transition: opacity 0.15s;
 
-  &:hover {
-    opacity: 0.9;
+  ${(p) => p.theme.media.hover} {
+    &:hover {
+      opacity: 0.9;
+    }
   }
 `;
 
@@ -164,8 +166,10 @@ export const ReviewItem = styled.button`
   transition: border-color 0.15s;
   margin-bottom: 0.5rem;
 
-  &:hover {
-    border-color: ${(p) => p.theme.colors.warning};
+  ${(p) => p.theme.media.hover} {
+    &:hover {
+      border-color: ${(p) => p.theme.colors.warning};
+    }
   }
 `;
 
@@ -207,8 +211,10 @@ export const BookmarkItem = styled.button`
   transition: border-color 0.15s;
   margin-bottom: 0.5rem;
 
-  &:hover {
-    border-color: ${(p) => p.theme.colors.accent};
+  ${(p) => p.theme.media.hover} {
+    &:hover {
+      border-color: ${(p) => p.theme.colors.accent};
+    }
   }
 `;
 
@@ -251,9 +257,11 @@ export const ModuleHeader = styled.button`
   color: inherit;
   transition: background 0.15s;
 
-  &:hover {
-    background: ${(p) =>
-      `color-mix(in oklab, ${p.theme.colors.accent} 4%, ${p.theme.colors.surface})`};
+  ${(p) => p.theme.media.hover} {
+    &:hover {
+      background: ${(p) =>
+        `color-mix(in oklab, ${p.theme.colors.accent} 4%, ${p.theme.colors.surface})`};
+    }
   }
 
   &[aria-expanded='true'] {
@@ -375,13 +383,15 @@ export const LessonItem = styled.button<{ $focus?: boolean }>`
     border-bottom: none;
   }
 
-  &:hover {
-    background: ${(p) =>
-      p.$focus
-        ? `color-mix(in oklab, ${p.theme.colors.tertiary} 10%, transparent)`
-        : `${p.theme.colors.accent}06`};
-    padding-left: ${(p) => (p.$focus ? 'calc(1.25rem - 3px + 4px)' : 'calc(1.25rem + 4px)')};
-    padding-right: calc(1.25rem - 4px);
+  ${(p) => p.theme.media.hover} {
+    &:hover {
+      background: ${(p) =>
+        p.$focus
+          ? `color-mix(in oklab, ${p.theme.colors.tertiary} 10%, transparent)`
+          : `${p.theme.colors.accent}06`};
+      padding-left: ${(p) => (p.$focus ? 'calc(1.25rem - 3px + 4px)' : 'calc(1.25rem + 4px)')};
+      padding-right: calc(1.25rem - 4px);
+    }
   }
 `;
 
@@ -425,10 +435,12 @@ export const QuizRow = styled.button<{ $locked: boolean }>`
   ${(p) =>
     !p.$locked &&
     `
-    &:hover {
-      background: ${p.theme.colors.accent}06;
-      padding-left: calc(1.25rem + 4px);
-      padding-right: calc(1.25rem - 4px);
+    ${p.theme.media.hover} {
+      &:hover {
+        background: ${p.theme.colors.accent}06;
+        padding-left: calc(1.25rem + 4px);
+        padding-right: calc(1.25rem - 4px);
+      }
     }
   `}
 `;

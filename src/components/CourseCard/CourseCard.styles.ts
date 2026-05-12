@@ -12,8 +12,10 @@ export const Container = styled.div`
   cursor: pointer;
   transition: border-color 0.15s ease;
 
-  &:hover {
-    border-color: ${(p) => p.theme.colors.accent};
+  ${(p) => p.theme.media.hover} {
+    &:hover {
+      border-color: ${(p) => p.theme.colors.accent};
+    }
   }
 `;
 
@@ -60,9 +62,11 @@ export const FavoriteButton = styled.button<{ $active?: boolean }>`
     color 0.15s,
     background 0.15s;
 
-  &:hover {
-    color: ${(p) => p.theme.colors.warning};
-    background: ${(p) => `${p.theme.colors.warning}10`};
+  ${(p) => p.theme.media.hover} {
+    &:hover {
+      color: ${(p) => p.theme.colors.warning};
+      background: ${(p) => `${p.theme.colors.warning}10`};
+    }
   }
 `;
 

@@ -23,9 +23,11 @@ export const Option = styled.label<{ $selected: boolean }>`
 
   margin: ${(p) => (p.$selected ? '0' : '1px')};
 
-  &:hover {
-    border-color: ${(p) => p.theme.colors.accent};
-    background: ${(p) => (p.$selected ? p.theme.colors.accentMuted : p.theme.colors.background)};
+  ${(p) => p.theme.media.hover} {
+    &:hover {
+      border-color: ${(p) => p.theme.colors.accent};
+      background: ${(p) => (p.$selected ? p.theme.colors.accentMuted : p.theme.colors.background)};
+    }
   }
 `;
 

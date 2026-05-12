@@ -22,8 +22,10 @@ export const DevToggle = styled.button`
   font-weight: 700;
   cursor: pointer;
 
-  &:hover {
-    background: ${(p) => p.theme.colorsLib.amber}15;
+  ${(p) => p.theme.media.hover} {
+    &:hover {
+      background: ${(p) => p.theme.colorsLib.amber}15;
+    }
   }
 `;
 

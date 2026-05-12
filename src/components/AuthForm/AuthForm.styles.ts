@@ -52,9 +52,11 @@ export const FormHelperRow = styled.div`
     opacity: 0.85;
     transition: opacity 0.15s;
 
-    &:hover {
-      opacity: 1;
-      text-decoration: underline;
+    ${(p) => p.theme.media.hover} {
+      &:hover {
+        opacity: 1;
+        text-decoration: underline;
+      }
     }
   }
 `;
@@ -72,10 +74,12 @@ export const SubmitBtn = styled.button<{ $loading?: boolean }>`
   box-shadow: var(--shadow-btn);
   transition: background 0.15s, border-color 0.15s, box-shadow 0.15s, transform 0.05s, opacity 0.15s;
 
-  &:hover:not(:disabled) {
-    background: ${(p) => p.theme.colors.accentHover};
-    border-color: ${(p) => p.theme.colors.accentHover};
-    box-shadow: var(--shadow-btn-hover);
+  ${(p) => p.theme.media.hover} {
+    &:hover:not(:disabled) {
+      background: ${(p) => p.theme.colors.accentHover};
+      border-color: ${(p) => p.theme.colors.accentHover};
+      box-shadow: var(--shadow-btn-hover);
+    }
   }
 
   &:active:not(:disabled) {
@@ -121,11 +125,13 @@ export const GoogleBtn = styled.button`
   cursor: pointer;
   transition: border-color 0.15s, background 0.15s, transform 0.05s;
 
-  &:hover:not(:disabled) {
-    border-color: ${(p) =>
-      `color-mix(in oklab, ${p.theme.colors.foreground} 20%, ${p.theme.colors.surfaceBorder})`};
-    background: ${(p) =>
-      `color-mix(in oklab, ${p.theme.colors.foreground} 2%, ${p.theme.colors.surface})`};
+  ${(p) => p.theme.media.hover} {
+    &:hover:not(:disabled) {
+      border-color: ${(p) =>
+        `color-mix(in oklab, ${p.theme.colors.foreground} 20%, ${p.theme.colors.surfaceBorder})`};
+      background: ${(p) =>
+        `color-mix(in oklab, ${p.theme.colors.foreground} 2%, ${p.theme.colors.surface})`};
+    }
   }
 
   &:active:not(:disabled) {

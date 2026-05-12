@@ -109,6 +109,7 @@ export const generateLesson = (params: {
   lessonIndex: number;
   includeImage?: boolean;
   includeLinks?: boolean;
+  includeRecallCards?: boolean;
 }) => {
   const { courseId, ...body } = params;
   return client<GenerateLessonResponse>({
@@ -136,6 +137,16 @@ type RegenerateLinksResponse =
 export const regenerateLinks = (params: { courseId: string; moduleIndex: number; lessonIndex: number }) => {
   return client<RegenerateLinksResponse>({
     url: `/course/${params.courseId}/lesson/${params.moduleIndex}/${params.lessonIndex}/regenerate-links`,
+    method: 'POST',
+  }).then((res) => res.data.data);
+};
+
+type RegenerateRecallResponse =
+  paths['/api/course/{courseId}/lesson/{moduleIndex}/{lessonIndex}/regenerate-recall']['post']['responses']['202']['content']['application/json'];
+
+export const regenerateRecall = (params: { courseId: string; moduleIndex: number; lessonIndex: number }) => {
+  return client<RegenerateRecallResponse>({
+    url: `/course/${params.courseId}/lesson/${params.moduleIndex}/${params.lessonIndex}/regenerate-recall`,
     method: 'POST',
   }).then((res) => res.data.data);
 };

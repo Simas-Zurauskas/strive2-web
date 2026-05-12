@@ -77,10 +77,12 @@ export const Container = styled.button<{ $gradient: string }>`
     z-index: 1;
   }
 
-  &:hover {
-    transform: translateY(-2px);
-    box-shadow: var(--shadow-lift);
-    border-color: ${courseCardInk.borderHover};
+  ${(p) => p.theme.media.hover} {
+    &:hover {
+      transform: translateY(-2px);
+      box-shadow: var(--shadow-lift);
+      border-color: ${courseCardInk.borderHover};
+    }
   }
 
   &:focus-visible {

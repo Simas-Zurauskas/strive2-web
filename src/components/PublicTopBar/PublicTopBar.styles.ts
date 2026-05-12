@@ -83,9 +83,11 @@ export const SignInLink = styled(Link)`
   border-radius: var(--radius-md);
   transition: color 0.15s, background 0.15s;
 
-  &:hover {
-    color: ${(p) => p.theme.colors.accent};
-    background: ${(p) => p.theme.colors.accentMuted};
+  ${(p) => p.theme.media.hover} {
+    &:hover {
+      color: ${(p) => p.theme.colors.accent};
+      background: ${(p) => p.theme.colors.accentMuted};
+    }
   }
 
   &:focus-visible {

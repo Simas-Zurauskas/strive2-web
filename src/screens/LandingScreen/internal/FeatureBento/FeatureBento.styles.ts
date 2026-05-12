@@ -89,8 +89,10 @@ export const Tile = styled(motion.section)<{ $hero: boolean }>`
     );
   `}
 
-  &:hover {
-    box-shadow: var(--shadow-lift);
+  ${(p) => p.theme.media.hover} {
+    &:hover {
+      box-shadow: var(--shadow-lift);
+    }
   }
 
   /* At tabletLarge (<=768px) drop the hero size distinction so 6 tiles in

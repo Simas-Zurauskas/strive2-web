@@ -31,6 +31,11 @@ export const Header = styled.div`
   border-bottom: 1px solid ${(p) => p.theme.colors.surfaceBorder};
   flex-shrink: 0;
   min-height: 52px;
+  /* Safety net so a runaway child can't push the panel wider than the
+     viewport. min-width: 0 lets nested flex children honor their own
+     wrap/ellipsis rules. */
+  overflow: hidden;
+  min-width: 0;
 `;
 
 export const CollapseButton = styled.button`
@@ -49,9 +54,11 @@ export const CollapseButton = styled.button`
     background 0.15s,
     color 0.15s;
 
-  &:hover {
-    background: ${(p) => p.theme.colors.background};
-    color: ${(p) => p.theme.colors.foreground};
+  ${(p) => p.theme.media.hover} {
+    &:hover {
+      background: ${(p) => p.theme.colors.background};
+      color: ${(p) => p.theme.colors.foreground};
+    }
   }
 
   &:focus-visible {
@@ -79,10 +86,17 @@ export const HeaderEyebrow = styled.span`
 export const HeaderContext = styled.span`
   font-size: 0.75rem;
   color: ${(p) => p.theme.colors.muted};
+  line-height: 1.35;
+  /* Wrap rather than truncate. Long lesson titles read better on two
+     lines than disappearing into ellipsis. Hard-capped at 2 lines so
+     a very long title can't push the chat body down indefinitely. */
+  display: -webkit-box;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 2;
+  line-clamp: 2;
   overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-  line-height: 1.3;
+  overflow-wrap: anywhere;
+  word-break: break-word;
 `;
 
 export const ClearButton = styled.button`
@@ -101,9 +115,11 @@ export const ClearButton = styled.button`
     background 0.15s,
     color 0.15s;
 
-  &:hover:not(:disabled) {
-    background: ${(p) => p.theme.colors.background};
-    color: ${(p) => p.theme.colors.foreground};
+  ${(p) => p.theme.media.hover} {
+    &:hover:not(:disabled) {
+      background: ${(p) => p.theme.colors.background};
+      color: ${(p) => p.theme.colors.foreground};
+    }
   }
 
   &:disabled {
@@ -114,6 +130,115 @@ export const ClearButton = styled.button`
   &:focus-visible {
     outline: 2px solid ${(p) => p.theme.colors.accent};
     outline-offset: 2px;
+  }
+`;
+
+// ── Overflow menu (replaces the bare-trash header button) ───
+// Destructive "Clear chat history" now lives behind a kebab `⋮` so
+// the header reads as pure navigation/utility and accidental wipes
+// take an extra click. The popover anchors to the trigger so it
+// stays inside the panel even when the panel sits at the right
+// edge of the viewport.
+
+export const HeaderMenuRoot = styled.div`
+  position: relative;
+  flex-shrink: 0;
+`;
+
+export const HeaderMenuTrigger = styled.button`
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 28px;
+  height: 28px;
+  border-radius: 6px;
+  border: none;
+  background: transparent;
+  color: ${(p) => p.theme.colors.muted};
+  cursor: pointer;
+  transition:
+    background 0.15s,
+    color 0.15s;
+
+  ${(p) => p.theme.media.hover} {
+    &:hover:not(:disabled) {
+      background: ${(p) => p.theme.colors.background};
+      color: ${(p) => p.theme.colors.foreground};
+    }
+  }
+
+  &:disabled {
+    opacity: 0.4;
+    cursor: not-allowed;
+  }
+
+  &:focus-visible {
+    outline: 2px solid ${(p) => p.theme.colors.accent};
+    outline-offset: 2px;
+  }
+`;
+
+/**
+ * Rendered via React portal at document.body, so the popover escapes
+ * the chat-panel header's `overflow: hidden`. Position is set inline
+ * by the trigger's bounding rect (top, right) — `position: fixed` so
+ * it stays anchored to the viewport, not to any ancestor scroll
+ * context. z-index sits above the chat panel's `z-index: 30/40`.
+ */
+export const HeaderMenuPopover = styled.div`
+  position: fixed;
+  z-index: 60;
+  min-width: 12rem;
+  padding: 0.3125rem;
+  border-radius: var(--radius-md);
+  border: 1px solid ${(p) => p.theme.colors.surfaceBorder};
+  background: ${(p) => p.theme.colors.surface};
+  box-shadow:
+    0 8px 24px -8px rgba(0, 0, 0, 0.18),
+    0 2px 6px -2px rgba(0, 0, 0, 0.08);
+`;
+
+export const HeaderMenuItem = styled.button`
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  width: 100%;
+  padding: 0.5rem 0.625rem;
+  border-radius: var(--radius-sm);
+  border: none;
+  background: transparent;
+  color: ${(p) => p.theme.colors.foreground};
+  font-family: inherit;
+  font-size: 0.8125rem;
+  text-align: left;
+  cursor: pointer;
+  transition:
+    background 0.12s,
+    color 0.12s;
+
+  & svg {
+    flex-shrink: 0;
+    opacity: 0.75;
+  }
+
+  ${(p) => p.theme.media.hover} {
+    &:hover:not(:disabled) {
+      background: ${(p) =>
+        `color-mix(in oklab, ${p.theme.colors.error} 8%, transparent)`};
+      color: ${(p) => p.theme.colors.error};
+    }
+  }
+
+  &:focus-visible {
+    outline: none;
+    background: ${(p) =>
+      `color-mix(in oklab, ${p.theme.colors.error} 8%, transparent)`};
+    color: ${(p) => p.theme.colors.error};
+  }
+
+  &:disabled {
+    opacity: 0.45;
+    cursor: not-allowed;
   }
 `;
 

@@ -110,9 +110,11 @@ export const Table = styled.table`
     transition: background 0.12s;
   }
 
-  tbody tr:hover td {
-    background: ${(p) =>
-      `color-mix(in oklab, ${p.theme.colors.tertiary} 8%, ${p.theme.colors.background})`};
+  ${(p) => p.theme.media.hover} {
+    tbody tr:hover td {
+      background: ${(p) =>
+        `color-mix(in oklab, ${p.theme.colors.tertiary} 8%, ${p.theme.colors.background})`};
+    }
   }
 `;
 

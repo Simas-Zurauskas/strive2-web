@@ -48,6 +48,14 @@ export const UsageSummaryCards: React.FC<Props> = ({ data, loading }) => {
     .filter((s) => s.chargedMicroCents > 0 || s.costMicroCents > 0)
     .sort((a, b) => b.chargedMicroCents - a.chargedMicroCents);
 
+  // Granular per-action breakdown. The aggregation in the backend
+  // groups by UsageEvent.action (e.g. "lesson:content", "lesson:recall",
+  // "lesson:image", "lesson:links", "recall:grade"), giving operators a
+  // line-item view of where credit was actually spent at the feature
+  // level. Sorted by charged spend descending, capped at top 20 server-side.
+  const byAction = (data?.byAction ?? [])
+    .filter((a) => a.chargedMicroCents > 0 || a.costMicroCents > 0);
+
   return (
     <>
       <S.Grid>
@@ -82,6 +90,27 @@ export const UsageSummaryCards: React.FC<Props> = ({ data, loading }) => {
                 {s.chargedMicroCents !== s.costMicroCents && (
                   <S.ChipService title="Vendor cost (what we paid the provider)">
                     / vendor {formatMicroCents(s.costMicroCents)}
+                  </S.ChipService>
+                )}
+              </S.Chip>
+            ))}
+          </S.ChipRow>
+        </S.ByService>
+      )}
+
+      {byAction.length > 0 && (
+        <S.ByService>
+          <S.ByServiceTitle>Where it went — by feature</S.ByServiceTitle>
+          <S.ChipRow>
+            {byAction.map((a) => (
+              <S.Chip key={a.action}>
+                <S.ChipService title={`${a.count} call${a.count === 1 ? '' : 's'}`}>
+                  {a.action}
+                </S.ChipService>
+                <S.ChipValue>{formatMicroCents(a.chargedMicroCents)}</S.ChipValue>
+                {a.chargedMicroCents !== a.costMicroCents && (
+                  <S.ChipService title="Vendor cost (what we paid the provider)">
+                    / vendor {formatMicroCents(a.costMicroCents)}
                   </S.ChipService>
                 )}
               </S.Chip>

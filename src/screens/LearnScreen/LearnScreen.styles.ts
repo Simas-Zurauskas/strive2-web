@@ -142,11 +142,13 @@ const cardBase = css`
     border-color 0.15s ease,
     background 0.15s ease;
 
-  &:hover {
-    border-color: ${(p) =>
-      `color-mix(in oklab, ${p.theme.colors.accent} 35%, ${p.theme.colors.surfaceBorder})`};
-    background: ${(p) =>
-      `color-mix(in oklab, ${p.theme.colors.accent} 3%, ${p.theme.colors.surface})`};
+  ${(p) => p.theme.media.hover} {
+    &:hover {
+      border-color: ${(p) =>
+        `color-mix(in oklab, ${p.theme.colors.accent} 35%, ${p.theme.colors.surfaceBorder})`};
+      background: ${(p) =>
+        `color-mix(in oklab, ${p.theme.colors.accent} 3%, ${p.theme.colors.surface})`};
+    }
   }
 `;
 

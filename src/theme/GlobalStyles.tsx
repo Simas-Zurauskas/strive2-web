@@ -121,6 +121,18 @@ export const GlobalStyles = createGlobalStyle`
        type. */
     --selection-bg: color-mix(in srgb, ${themeColors.light.accent} 22%, transparent);
     --selection-fg: ${themeColors.light.foreground};
+
+    /* Safe-area insets — fall back to 0 on browsers that don't expose
+       env(safe-area-inset-*) so consumers can use these vars
+       unconditionally. iOS Safari fills these in once <meta name="viewport"
+       content="viewport-fit=cover"> is applied (set in app/layout.tsx
+       via the viewport export). Use as e.g.
+         padding-bottom: max(1rem, var(--safe-area-bottom));
+       on fixed action bars and bottom toolbars. */
+    --safe-area-top: env(safe-area-inset-top, 0px);
+    --safe-area-right: env(safe-area-inset-right, 0px);
+    --safe-area-bottom: env(safe-area-inset-bottom, 0px);
+    --safe-area-left: env(safe-area-inset-left, 0px);
   }
 
   [data-theme="dark"],
@@ -236,6 +248,21 @@ export const GlobalStyles = createGlobalStyle`
     font-family: inherit;
     cursor: pointer;
     -webkit-tap-highlight-color: transparent;
+  }
+
+  /* iOS Safari auto-zooms when focusing any form control whose computed
+     font-size is < 16px. The site uses 0.9375rem (15px) inputs which trip
+     that threshold on every iPhone. Forcing a 16px minimum on touch-only
+     devices stops the tap from kicking off a "scroll-the-page-into-place"
+     zoom that breaks the layout. !important wins against per-component
+     input font-sizes (many .styles.ts files set their own); the max keeps
+     inputs that were already ≥16px at their original size. */
+  @media (hover: none) and (pointer: coarse) {
+    input:not([type='checkbox']):not([type='radio']):not([type='range']),
+    textarea,
+    select {
+      font-size: max(16px, 1em) !important;
+    }
   }
 
   /* Global focus-visible safety net. Many design-system primitives reset

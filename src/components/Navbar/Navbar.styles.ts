@@ -68,13 +68,23 @@ export const NavRow = styled.div`
   align-items: center;
   justify-content: space-between;
   padding: 0 2rem;
+  /* Notch / status-bar avoidance on iOS Safari with viewport-fit=cover.
+     env() resolves to 0 on devices without a cutout so desktop gutters
+     are unchanged. The padding goes on the *row*, not the fixed <Nav>
+     wrapper, so the row content is pushed inward without growing the
+     row's vertical footprint (the 56px height contract drives
+     --navbar-offset). */
+  padding-left: max(2rem, var(--safe-area-left));
+  padding-right: max(2rem, var(--safe-area-right));
 
   ${(p) => p.theme.media.desktop} {
-    padding: 0 1.25rem;
+    padding-left: max(1.25rem, var(--safe-area-left));
+    padding-right: max(1.25rem, var(--safe-area-right));
   }
 
   ${(p) => p.theme.media.tablet} {
-    padding: 0 0.75rem;
+    padding-left: max(0.75rem, var(--safe-area-left));
+    padding-right: max(0.75rem, var(--safe-area-right));
   }
 `;
 
@@ -323,18 +333,20 @@ export const FeedbackButton = styled.button`
     transition: transform 260ms cubic-bezier(0.22, 0.61, 0.36, 1);
   }
 
-  &:hover {
-    background: ${(p) => p.theme.colors.accent};
-    color: ${(p) => p.theme.colors.surface};
-    border-color: ${(p) => p.theme.colors.accent};
-    box-shadow:
-      0 2px 10px ${(p) => p.theme.colors.accentMuted},
-      var(--shadow-card);
-    transform: translateY(-0.5px);
-  }
+  ${(p) => p.theme.media.hover} {
+    &:hover {
+      background: ${(p) => p.theme.colors.accent};
+      color: ${(p) => p.theme.colors.surface};
+      border-color: ${(p) => p.theme.colors.accent};
+      box-shadow:
+        0 2px 10px ${(p) => p.theme.colors.accentMuted},
+        var(--shadow-card);
+      transform: translateY(-0.5px);
+    }
 
-  &:hover svg {
-    transform: translateX(-1px);
+    &:hover svg {
+      transform: translateX(-1px);
+    }
   }
 
   &:active {
@@ -537,10 +549,12 @@ export const DrawerLink = styled(Link)<{ $active?: boolean }>`
     color: ${(p) => (p.$active ? p.theme.colors.accent : p.theme.colors.muted)};
   }
 
-  &:hover {
-    color: ${(p) => p.theme.colors.foreground};
-    background: ${(p) =>
-      `color-mix(in srgb, ${p.theme.colors.accent} 8%, transparent)`};
+  ${(p) => p.theme.media.hover} {
+    &:hover {
+      color: ${(p) => p.theme.colors.foreground};
+      background: ${(p) =>
+        `color-mix(in srgb, ${p.theme.colors.accent} 8%, transparent)`};
+    }
   }
 `;
 
@@ -570,10 +584,12 @@ export const DrawerAction = styled.button`
     flex-shrink: 0;
   }
 
-  &:hover {
-    color: ${(p) => p.theme.colors.foreground};
-    background: ${(p) =>
-      `color-mix(in srgb, ${p.theme.colors.accent} 8%, transparent)`};
+  ${(p) => p.theme.media.hover} {
+    &:hover {
+      color: ${(p) => p.theme.colors.foreground};
+      background: ${(p) =>
+        `color-mix(in srgb, ${p.theme.colors.accent} 8%, transparent)`};
+    }
   }
 `;
 

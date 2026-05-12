@@ -97,30 +97,35 @@ export const QuickPicks = styled.div<{ $grid?: boolean }>`
         `}
 `;
 
-/** Quick-pick chip. Selected state used to fill solid accent — too loud
- *  next to the input field. Now an accent-tinted hairline like the
+/** Quick-pick chip. Vertical: dollar amount on top, credits granted
+ *  beneath. Selected state is an accent-tinted hairline like the
  *  recall card status pills, so the picked amount reads as "selected"
  *  without competing with the Buy CTA. */
 export const QuickPick = styled.button<{ $selected: boolean }>`
-  height: 42px;
-  padding: 0 0.5rem;
+  min-height: 56px;
+  padding: 0.5rem 0.5rem;
   border-radius: var(--radius-md);
-  font-size: 0.8125rem;
-  font-weight: 600;
   cursor: pointer;
   border: 1px solid ${(p) => p.theme.colors.surfaceBorder};
   background: ${(p) => p.theme.colors.surface};
   color: ${(p) => p.theme.colors.muted};
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 0.125rem;
   transition:
     background 120ms ease,
     border-color 120ms ease,
     color 120ms ease;
   font-variant-numeric: tabular-nums;
 
-  &:hover:not(:disabled) {
-    border-color: ${(p) =>
-      `color-mix(in oklab, ${p.theme.colors.tertiary} 50%, ${p.theme.colors.surfaceBorder})`};
-    color: ${(p) => p.theme.colors.foreground};
+  ${(p) => p.theme.media.hover} {
+    &:hover:not(:disabled) {
+      border-color: ${(p) =>
+        `color-mix(in oklab, ${p.theme.colors.tertiary} 50%, ${p.theme.colors.surfaceBorder})`};
+      color: ${(p) => p.theme.colors.foreground};
+    }
   }
 
   &:focus-visible {
@@ -140,6 +145,41 @@ export const QuickPick = styled.button<{ $selected: boolean }>`
       color: ${p.theme.colors.accent};
       border-color: ${p.theme.colors.accent};
     `}
+`;
+
+/** Dollar amount line — the primary read on each chip. */
+export const QuickPickPrice = styled.span`
+  font-size: 0.9375rem;
+  font-weight: 700;
+  letter-spacing: -0.005em;
+  line-height: 1.1;
+`;
+
+/** Credit count line — quiet secondary. Inherits color from the chip
+ *  so selected state stays cohesive. */
+export const QuickPickCredits = styled.span`
+  font-size: 0.6875rem;
+  font-weight: 500;
+  letter-spacing: 0.02em;
+  opacity: 0.82;
+  font-variant-numeric: tabular-nums;
+`;
+
+/** Reference yardstick line under the chips. Tells the user roughly
+ *  what each credit costs them in lessons — the anchor unit they
+ *  actually care about. Range, not a single number, because real
+ *  lesson cost varies with depth and whether image/links are enabled. */
+export const Yardstick = styled.p`
+  margin: 0;
+  font-size: 0.75rem;
+  line-height: 1.4;
+  color: ${(p) => p.theme.colors.muted};
+  font-variant-numeric: tabular-nums;
+`;
+
+export const YardstickStrong = styled.strong`
+  color: ${(p) => p.theme.colors.foreground};
+  font-weight: 600;
 `;
 
 export const Footnote = styled.div`
@@ -208,9 +248,11 @@ export const CancelButton = styled.button`
   cursor: pointer;
   transition: color 120ms ease, background 120ms ease;
 
-  &:hover {
-    color: ${(p) => p.theme.colors.foreground};
-    background: ${(p) => p.theme.colors.background};
+  ${(p) => p.theme.media.hover} {
+    &:hover {
+      color: ${(p) => p.theme.colors.foreground};
+      background: ${(p) => p.theme.colors.background};
+    }
   }
 
   &:focus-visible {

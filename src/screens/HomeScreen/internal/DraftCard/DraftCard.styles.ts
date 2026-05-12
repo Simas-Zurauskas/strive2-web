@@ -26,13 +26,15 @@ export const Container = styled.button`
 
   /* Subtler lift than complete course cards (-1 vs -2) — drafts are an
      in-progress affordance, not a primary destination. */
-  &:hover {
-    border-color: ${(p) => p.theme.colors.accent};
-    border-style: solid;
-    background: ${(p) =>
-      `color-mix(in oklab, ${p.theme.colors.accent} 4%, ${p.theme.colors.surface})`};
-    box-shadow: var(--shadow-card);
-    transform: translateY(-1px);
+  ${(p) => p.theme.media.hover} {
+    &:hover {
+      border-color: ${(p) => p.theme.colors.accent};
+      border-style: solid;
+      background: ${(p) =>
+        `color-mix(in oklab, ${p.theme.colors.accent} 4%, ${p.theme.colors.surface})`};
+      box-shadow: var(--shadow-card);
+      transform: translateY(-1px);
+    }
   }
 
   &:focus-visible {
@@ -42,8 +44,10 @@ export const Container = styled.button`
 
   @media (prefers-reduced-motion: reduce) {
     transition: border-color 160ms ease, background 160ms ease, box-shadow 160ms ease;
-    &:hover {
-      transform: none;
+    ${(p) => p.theme.media.hover} {
+      &:hover {
+        transform: none;
+      }
     }
   }
 `;

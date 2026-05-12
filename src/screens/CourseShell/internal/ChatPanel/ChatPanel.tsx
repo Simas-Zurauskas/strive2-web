@@ -2,9 +2,10 @@
 
 import { useChat } from '@ai-sdk/react';
 import { UIMessage, DefaultChatTransport } from 'ai';
-import { ChevronRight, Trash2 } from 'lucide-react';
+import { ChevronRight, MoreVertical, Trash2 } from 'lucide-react';
 import { useSession } from 'next-auth/react';
-import { useEffect, useMemo, useRef, useState } from 'react';
+import { useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react';
+import { createPortal } from 'react-dom';
 import { toast } from 'sonner';
 import { attachAttachment } from '@/api/routes/attachment';
 import {
@@ -37,6 +38,126 @@ interface ChatPanelProps {
 
 let idCounter = 0;
 const nextId = () => `history-${++idCounter}`;
+
+/**
+ * Header overflow menu — tucks the destructive "Clear chat history"
+ * action behind a kebab `⋮` so it can't be hit accidentally from the
+ * navigation row. Sits in the same header slot that previously held a
+ * bare trash icon; the indirection makes the destructive choice
+ * require intent (open menu → pick option) without burying it.
+ *
+ * Rendered via React portal to escape the chat-panel header's
+ * `overflow: hidden` (which was added to clamp long lesson titles).
+ * Without the portal the popover would be clipped just below the
+ * header bottom edge. We compute the trigger's bounding rect on open
+ * and on resize/scroll to keep the popover anchored to the trigger's
+ * right edge.
+ *
+ * Closes on:
+ *   - click outside the menu
+ *   - Escape key
+ *   - selecting an item
+ *   - scroll outside the panel (popover would otherwise drift)
+ */
+const HeaderMenu = ({
+  onClear,
+  disabled,
+  ariaLabel,
+}: {
+  onClear: () => void;
+  disabled?: boolean;
+  ariaLabel: string;
+}) => {
+  const [open, setOpen] = useState(false);
+  const triggerRef = useRef<HTMLButtonElement | null>(null);
+  const popoverRef = useRef<HTMLDivElement | null>(null);
+  const [position, setPosition] = useState<{ top: number; right: number } | null>(null);
+
+  // Compute the popover position from the trigger rect. Right-aligned
+  // to the trigger so the menu opens leftward from the kebab — matches
+  // the natural reading flow and keeps the menu inside the panel.
+  const updatePosition = () => {
+    const rect = triggerRef.current?.getBoundingClientRect();
+    if (!rect) return;
+    setPosition({
+      top: rect.bottom + 6,
+      right: Math.max(8, window.innerWidth - rect.right),
+    });
+  };
+
+  // Position on open (and re-position when the trigger moves due to
+  // scroll/resize). `useLayoutEffect` so the popover mounts in the
+  // right place rather than flashing at 0,0 first.
+  useLayoutEffect(() => {
+    if (!open) return;
+    updatePosition();
+  }, [open]);
+
+  useEffect(() => {
+    if (!open) return;
+    const handleClickOutside = (e: MouseEvent) => {
+      const target = e.target as Node;
+      if (triggerRef.current?.contains(target)) return;
+      if (popoverRef.current?.contains(target)) return;
+      setOpen(false);
+    };
+    const handleKey = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') setOpen(false);
+    };
+    const reposition = () => updatePosition();
+    document.addEventListener('mousedown', handleClickOutside);
+    document.addEventListener('keydown', handleKey);
+    window.addEventListener('scroll', reposition, true);
+    window.addEventListener('resize', reposition);
+    return () => {
+      document.removeEventListener('mousedown', handleClickOutside);
+      document.removeEventListener('keydown', handleKey);
+      window.removeEventListener('scroll', reposition, true);
+      window.removeEventListener('resize', reposition);
+    };
+  }, [open]);
+
+  const portalTarget = typeof document !== 'undefined' ? document.body : null;
+
+  return (
+    <S.HeaderMenuRoot>
+      <S.HeaderMenuTrigger
+        ref={triggerRef}
+        type="button"
+        onClick={() => setOpen((v) => !v)}
+        aria-label={ariaLabel}
+        aria-haspopup="menu"
+        aria-expanded={open}
+        disabled={disabled}
+      >
+        <MoreVertical size={16} />
+      </S.HeaderMenuTrigger>
+      {open && portalTarget && position
+        ? createPortal(
+            <S.HeaderMenuPopover
+              ref={popoverRef}
+              role="menu"
+              style={{ top: position.top, right: position.right }}
+            >
+              <S.HeaderMenuItem
+                role="menuitem"
+                type="button"
+                onClick={() => {
+                  setOpen(false);
+                  onClear();
+                }}
+                disabled={disabled}
+              >
+                <Trash2 size={14} strokeWidth={2} />
+                Clear chat history
+              </S.HeaderMenuItem>
+            </S.HeaderMenuPopover>,
+            portalTarget,
+          )
+        : null}
+    </S.HeaderMenuRoot>
+  );
+};
 
 /**
  * Top-level dispatcher. Two scopes share the same panel chrome:
@@ -240,9 +361,11 @@ const LessonChatPanel = ({ contextLabel, courseSlug, moduleIndex, lessonIndex, o
         {contextLabel && <S.HeaderContext>{contextLabel}</S.HeaderContext>}
       </S.HeaderText>
       {lessonGenerated === true && hasMessages && (
-        <S.ClearButton onClick={handleClear} disabled={isClearing} aria-label="Clear chat history" title="Clear chat">
-          <Trash2 size={16} />
-        </S.ClearButton>
+        <HeaderMenu
+          onClear={handleClear}
+          disabled={isClearing}
+          ariaLabel="Lesson mentor menu"
+        />
       )}
     </S.Header>
   );
@@ -582,9 +705,11 @@ const CourseChatPanel = ({ contextLabel, courseSlug, onClose }: CourseChatPanelP
         {contextLabel && <S.HeaderContext>{contextLabel}</S.HeaderContext>}
       </S.HeaderText>
       {courseGenerated === true && hasMessages && (
-        <S.ClearButton onClick={handleClear} disabled={isClearing} aria-label="Clear chat history" title="Clear chat">
-          <Trash2 size={16} />
-        </S.ClearButton>
+        <HeaderMenu
+          onClear={handleClear}
+          disabled={isClearing}
+          ariaLabel="Course mentor menu"
+        />
       )}
     </S.Header>
   );

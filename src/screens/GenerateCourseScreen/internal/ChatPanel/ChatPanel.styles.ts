@@ -62,9 +62,11 @@ export const CollapseButton = styled.button`
     background 0.15s,
     color 0.15s;
 
-  &:hover {
-    background: ${(p) => p.theme.colors.background};
-    color: ${(p) => p.theme.colors.foreground};
+  ${(p) => p.theme.media.hover} {
+    &:hover {
+      background: ${(p) => p.theme.colors.background};
+      color: ${(p) => p.theme.colors.foreground};
+    }
   }
 
   &:focus-visible {

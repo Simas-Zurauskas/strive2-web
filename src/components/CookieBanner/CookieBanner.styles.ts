@@ -2,9 +2,12 @@ import styled from 'styled-components';
 
 export const Container = styled.div`
   position: fixed;
-  bottom: 1rem;
-  left: 1rem;
-  right: 1rem;
+  /* Lift above the iOS home indicator (~34px on non-notch devices, 0 on
+     everything else). The max() keeps the 1rem floor for desktops where
+     safe-area-inset-bottom resolves to 0. */
+  bottom: max(1rem, var(--safe-area-bottom));
+  left: max(1rem, var(--safe-area-left));
+  right: max(1rem, var(--safe-area-right));
   z-index: 100;
   display: flex;
   justify-content: center;
@@ -66,8 +69,10 @@ export const Reject = styled(Btn)`
   border: 1px solid ${(p) => p.theme.colors.surfaceBorder};
   color: ${(p) => p.theme.colors.foreground};
 
-  &:hover {
-    border-color: ${(p) => p.theme.colors.foreground};
+  ${(p) => p.theme.media.hover} {
+    &:hover {
+      border-color: ${(p) => p.theme.colors.foreground};
+    }
   }
 `;
 
@@ -76,7 +81,9 @@ export const Accept = styled(Btn)`
   border: 1px solid ${(p) => p.theme.colors.foreground};
   color: ${(p) => p.theme.colors.background};
 
-  &:hover {
-    opacity: 0.85;
+  ${(p) => p.theme.media.hover} {
+    &:hover {
+      opacity: 0.85;
+    }
   }
 `;

@@ -24,9 +24,11 @@ export const Trigger = styled.button`
   cursor: pointer;
   transition: color 0.15s, background 0.15s;
 
-  &:hover {
-    color: ${(p) => p.theme.colors.foreground};
-    background: ${(p) => p.theme.colors.background};
+  ${(p) => p.theme.media.hover} {
+    &:hover {
+      color: ${(p) => p.theme.colors.foreground};
+      background: ${(p) => p.theme.colors.background};
+    }
   }
 
   &:focus-visible {
@@ -65,12 +67,14 @@ export const MenuItem = styled.button<{ $variant?: 'default' | 'danger' }>`
   text-align: left;
   transition: background 0.15s;
 
-  &:hover,
-  &:focus-visible {
-    background: ${(p) => p.theme.colors.background};
+  ${(p) => p.theme.media.hover} {
+    &:hover {
+      background: ${(p) => p.theme.colors.background};
+    }
   }
 
   &:focus-visible {
+    background: ${(p) => p.theme.colors.background};
     outline: 2px solid ${(p) => p.theme.colors.accent};
     outline-offset: -2px;
   }

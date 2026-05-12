@@ -377,18 +377,15 @@ export const PRICING_TEASER = {
   cards: {
     free: {
       tagline: 'Try Strive end-to-end. No credit card needed.',
-      // Per-tier translation of the abstract allowance count into a typical
-      // usage shape. Lifted (condensed) from the "What can I actually do on
-      // each plan?" FAQ on /pricing so the teaser and the FAQ stay in lockstep.
-      // Calibration anchor: a typical lesson costs ~30–40 credits, so the
-      // 150-credit Free unit ≈ 4–5 lessons (plus the cheap structure/quiz
-      // steps that are ~5–25 credits each).
-      guidance: '≈ 4–5 lessons, or a course structure plus a few lessons',
+      // Lesson guidance ("≈ 4–5 lessons") is now derived live from
+      // BillingCatalog via formatPlanLessonsPerMonth in PricingTeaser.tsx.
+      // This editorial tagline + cta stay static — they're brand voice,
+      // not pricing-dependent. If the catalog ever fails to load, the
+      // teaser renders the skeleton, not these strings.
       cta: 'Start free',
     },
     pro: {
       tagline: 'Most chosen by daily learners. Generate as you go.',
-      guidance: '≈ 50–60 lessons / month — ongoing course building',
       cta: 'Get Pro',
     },
   },
@@ -402,9 +399,9 @@ export const FAQ = [
       'No. Strive uses Anthropic Claude as its language model under the hood, but the value isn’t the model — it’s the structure around it: a clarification questionnaire, a curriculum-shaping pipeline, typed lesson blocks, module quizzes that test synthesis, and a Leitner-style recall queue. ChatGPT can write you one lesson; Strive builds and remembers the whole course.',
   },
   {
-    question: 'What if I run out of credits?',
+    question: 'What if I run out of allowance?',
     answer:
-      'Top up at any time (any whole-dollar amount, $5 minimum) or upgrade tiers. We refund credits on jobs that fail. Lessons you’ve already generated are yours forever; running out only stops new generation.',
+      'Top up any time (any whole-dollar amount, $5 minimum) or upgrade tiers. We refund allowance on jobs that fail. Lessons you’ve already generated are yours forever; running out only stops new generation.',
   },
   {
     question: 'Is my study data private?',

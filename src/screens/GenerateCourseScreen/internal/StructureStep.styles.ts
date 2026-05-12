@@ -44,7 +44,7 @@ export const ChatColumn = styled(motion.div)`
      same horizontal line as the Accept & Start Learning button — both in
      mid-scroll (chat sticky / Actions sticky) and at end-of-scroll (chat
      anchored to the grid row bottom / Actions pinned via margin-top:auto). */
-  height: calc(100vh - 56px - 1.5rem);
+  height: calc(100dvh - 56px - 1.5rem);
   padding-bottom: 1.25rem;
   overflow: hidden;
   display: flex;
@@ -135,14 +135,16 @@ export const RefineTrigger = styled.button`
       height: 16px;
     }
 
-    &:hover {
-      background: ${(p) => p.theme.colors.accent};
-      color: ${(p) => p.theme.colors.surface};
-      border-color: ${(p) => p.theme.colors.accent};
-      box-shadow:
-        0 2px 10px ${(p) => p.theme.colors.accentMuted},
-        var(--shadow-card);
-      transform: translateY(-0.5px);
+    ${(p) => p.theme.media.hover} {
+      &:hover {
+        background: ${(p) => p.theme.colors.accent};
+        color: ${(p) => p.theme.colors.surface};
+        border-color: ${(p) => p.theme.colors.accent};
+        box-shadow:
+          0 2px 10px ${(p) => p.theme.colors.accentMuted},
+          var(--shadow-card);
+        transform: translateY(-0.5px);
+      }
     }
 
     &:active {
@@ -302,4 +304,18 @@ export const Actions = styled.div`
   margin-right: -1rem;
   z-index: 2;
   box-shadow: 0 -8px 16px ${(p) => p.theme.colors.background};
+
+  /* On tablet/mobile three side-by-side buttons (Back · Refine · Accept
+     & Start Learning) overflow the viewport. Stack with primary on top
+     via column-reverse — DOM order is Back, Refine, Accept, so reversed
+     puts Accept first. Refine sits between as the secondary path; Back
+     reads as the tertiary escape. */
+  ${(p) => p.theme.media.tablet} {
+    flex-direction: column-reverse;
+    gap: 0.625rem;
+
+    & > * {
+      width: 100%;
+    }
+  }
 `;

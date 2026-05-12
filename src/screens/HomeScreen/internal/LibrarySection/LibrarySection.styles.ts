@@ -53,9 +53,11 @@ export const SortToggle = styled.button`
     color 0.15s;
   flex-shrink: 0;
 
-  &:hover {
-    border-color: ${(p) => p.theme.colors.accent};
-    color: ${(p) => p.theme.colors.foreground};
+  ${(p) => p.theme.media.hover} {
+    &:hover {
+      border-color: ${(p) => p.theme.colors.accent};
+      color: ${(p) => p.theme.colors.foreground};
+    }
   }
 `;
 
@@ -92,10 +94,12 @@ export const BookmarkItem = styled.button`
     border-color 0.15s,
     background 0.15s;
 
-  &:hover {
-    border-color: ${(p) =>
-      `color-mix(in oklab, ${p.theme.colors.tertiary} 50%, ${p.theme.colors.surfaceBorder})`};
-    background: ${(p) => p.theme.colors.tertiaryMuted};
+  ${(p) => p.theme.media.hover} {
+    &:hover {
+      border-color: ${(p) =>
+        `color-mix(in oklab, ${p.theme.colors.tertiary} 50%, ${p.theme.colors.surfaceBorder})`};
+      background: ${(p) => p.theme.colors.tertiaryMuted};
+    }
   }
 `;
 
@@ -155,8 +159,10 @@ export const BookmarkArrow = styled.span`
     color 0.15s,
     transform 0.15s;
 
-  ${BookmarkItem}:hover & {
-    color: ${(p) => p.theme.colors.tertiary};
-    transform: translateX(3px);
+  ${(p) => p.theme.media.hover} {
+    ${BookmarkItem}:hover & {
+      color: ${(p) => p.theme.colors.tertiary};
+      transform: translateX(3px);
+    }
   }
 `;

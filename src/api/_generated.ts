@@ -1295,9 +1295,9 @@ export interface paths {
             cookie?: never;
         };
         /**
-         * Public plan catalog (pricing, allowances, top-up rate)
-         * @description Returns everything the client needs to render the pricing page and the top-up widget. No auth required — the pricing page should be crawlable. Stripe price IDs are intentionally omitted; checkout is initiated by plan+cadence keys, which the server resolves server-side.
-         *     Per-action credit costs are no longer surfaced — user billing is real-cost metered (credits debited post-hoc from measured provider spend), so there are no flat per-action prices to publish.
+         * Public plan catalog (pricing, allowances, top-up rate, reference costs)
+         * @description Returns everything the client needs to render the pricing page, the top-up widget, and every "≈ X lessons" approximation across the app. No auth required — the pricing page should be crawlable. Stripe price IDs are intentionally omitted; checkout is initiated by plan+cadence keys, which the server resolves server-side.
+         *     Per-action credit costs are not surfaced — user billing is real-cost metered (credits debited post-hoc from measured provider spend), so there are no flat per-action prices to publish. The `referenceCosts` block carries empirical median ranges used for UI approximations only.
          */
         get: {
             parameters: {
@@ -2099,6 +2099,11 @@ export interface paths {
                         includeImage?: boolean;
                         /** @default false */
                         includeLinks?: boolean;
+                        /**
+                         * @description Whether to extract spaced-retrieval recall cards from the generated lesson. Defaults true — recall is the highest-value optional feature pedagogically. Users can regenerate later via /regenerate-recall.
+                         * @default true
+                         */
+                        includeRecallCards?: boolean;
                     };
                 };
             };
@@ -3133,6 +3138,52 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/course/{courseId}/lesson/{moduleIndex}/{lessonIndex}/regenerate-recall": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Generate (or re-generate) spaced-retrieval recall cards for an already-generated lesson
+         * @description Mirrors regenerate-hero / regenerate-links. Targets a lesson that was previously generated WITHOUT recall cards (user opted out at lesson-gen time) or where the user wants a fresh set after editing lesson content. Costs only the recall-extraction sub-step (label `lesson:recall`, ~1-3 credits per lesson), not a full re-generation.
+         */
+        post: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path: {
+                    courseId: string;
+                    moduleIndex: number;
+                    lessonIndex: number;
+                };
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                202: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": {
+                            data: {
+                                jobId: string;
+                            };
+                        };
+                    };
+                };
+            };
+        };
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/course/{courseId}/module-quiz/{moduleIndex}/submit": {
         parameters: {
             query?: never;
@@ -3839,7 +3890,7 @@ export interface components {
         /** @enum {string} */
         JobStatusEnum: "pending" | "processing" | "completed" | "failed";
         /** @enum {string} */
-        JobType: "clarify" | "generate_structure" | "refine_structure" | "generate_lesson" | "generate_depth_previews" | "generate_module_quiz" | "regenerate_hero" | "regenerate_links" | "lesson_narration";
+        JobType: "clarify" | "generate_structure" | "refine_structure" | "generate_lesson" | "generate_depth_previews" | "generate_module_quiz" | "regenerate_hero" | "regenerate_links" | "regenerate_recall" | "lesson_narration";
         /** @enum {string} */
         LessonProgressStatus: "not_started" | "in_progress" | "completed";
         /** @enum {string} */
@@ -3919,10 +3970,31 @@ export interface components {
             creditsPerUsd: number;
             minUsd: number;
             maxUsd: number;
+            quickPicks: number[];
+        };
+        BillingAllowanceShape: {
+            unit: number;
+            multipliers: {
+                free: number;
+                starter: number;
+                pro: number;
+                studio: number;
+            };
+        };
+        BillingReferenceCosts: {
+            lessonCredits: number[];
+            lessonCreditsTopup: number[];
+            recallCardExtractionCredits: number[];
+            courseStructureCredits: number[];
+            moduleQuizCredits: number[];
+            mentorTurnCredits: number[];
+            recallReviewCredits: number[];
         };
         BillingCatalog: {
             plans: components["schemas"]["BillingPlan"][];
             topupRate: components["schemas"]["BillingTopupRate"];
+            allowance: components["schemas"]["BillingAllowanceShape"];
+            referenceCosts: components["schemas"]["BillingReferenceCosts"];
         };
         BillingSummary: {
             plan: components["schemas"]["PlanKey"];
@@ -4057,6 +4129,8 @@ export interface components {
             audioGeneratedAt?: string | null;
             summary?: string | null;
             version: number;
+            /** Number of recall cards persisted for this lesson. */
+            recallCardCount?: number;
             /** Format: date-time */
             createdAt?: string;
             /** Format: date-time */
@@ -4553,6 +4627,7 @@ export interface components {
             chargedMicroCents: number;
             creditsCharged: number;
             planAtTime: components["schemas"]["PlanKey"] | null;
+            pricingVersion: string | null;
             /** @enum {string|null} */
             source: "allowance" | "topup" | "mixed" | null;
             userPaidUsd: number | null;
@@ -4577,11 +4652,18 @@ export interface components {
             costMicroCents: number;
             chargedMicroCents: number;
         };
+        UsageActionTotal: {
+            action: string;
+            costMicroCents: number;
+            chargedMicroCents: number;
+            count: number;
+        };
         UsageSummary: {
             today: components["schemas"]["UsageCostBucket"];
             thisMonth: components["schemas"]["UsageCostBucket"];
             allTime: components["schemas"]["UsageCostBucket"];
             byService: components["schemas"]["UsageServiceTotal"][];
+            byAction: components["schemas"]["UsageActionTotal"][];
         };
         OkResponse: {
             ok: boolean;

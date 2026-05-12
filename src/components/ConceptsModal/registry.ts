@@ -26,7 +26,7 @@ import type { ComponentType } from 'react';
  */
 export const CONCEPT_IDS = [
   'how-strive-works',
-  'credits',
+  'allowance',
   'spaced-recall',
   'course-depth',
   'goal-types',
@@ -67,12 +67,12 @@ export const CONCEPTS: Record<ConceptId, ConceptEntry> = {
     ],
     animation: HowStriveWorksAnimation,  },
 
-  credits: {
-    id: 'credits',
+  allowance: {
+    id: 'allowance',
     eyebrow: 'Core concept',
     title: 'How allowance gets used',
     body: [
-      'Every plan includes a monthly allowance. Generating a course, regenerating a lesson, or making narration draws from it. Free covers roughly four to five lessons; Starter scales that 5×, Pro 12×, Studio 30×.',
+      'Every plan includes a monthly allowance. Generating a course, regenerating a lesson, or making narration draws from it. The pricing page shows exactly how many lessons each tier gives you, with paid tiers scaling Free up significantly.',
       "Top-ups stack on top and don't expire. The monthly bucket resets at the start of each billing cycle and doesn't roll over.",
       'Out of allowance? You can keep reading, reviewing, and quizzing. Only new generation pauses.',
     ],

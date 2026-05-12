@@ -7,7 +7,7 @@ import { TermsScreen } from '@/screens/TermsScreen';
 export const metadata: Metadata = {
   title: 'Terms of Service — Strive',
   description:
-    'The terms governing your use of Strive — credits, AI-generated course content, account responsibilities, and acceptable use.',
+    'The terms governing your use of Strive — subscriptions, allowance, AI-generated course content, account responsibilities, and acceptable use.',
   openGraph: { title: 'Terms of Service — Strive', type: 'website', images: DEFAULT_OG_IMAGES },
   alternates: { canonical: '/terms' },
 };

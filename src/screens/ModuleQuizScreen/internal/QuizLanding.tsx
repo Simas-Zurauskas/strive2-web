@@ -44,15 +44,21 @@ export const QuizLanding = ({
   // separate meta line ("3 lessons · 8 questions · Pass at 70%…") is no
   // longer needed — the lesson count is already in the description, and
   // the pass/master thresholds live once on the /quizzes index hero.
+  //
+  // The not-yet-generated branch is explicit (rather than just a softer
+  // version of the existing copy) so first-time visitors understand the
+  // CTA below kicks off AI generation, not the quiz itself.
   const lessonText = `${lessonCount} ${plural({ count: lessonCount, singular: 'lesson' })}`;
   const description = isReviewMode
     ? 'A quick check-in to keep what you learned within reach. Mixed questions across the module.'
-    : totalQuestions > 0
-      ? `${totalQuestions} ${plural({
-          count: totalQuestions,
-          singular: 'question',
-        })} testing your understanding across the ${lessonText} in this module.`
-      : `Test your understanding across the ${lessonText} in this module.`;
+    : hasQuizContent
+      ? totalQuestions > 0
+        ? `${totalQuestions} ${plural({
+            count: totalQuestions,
+            singular: 'question',
+          })} testing your understanding across the ${lessonText} in this module.`
+        : `Test your understanding across the ${lessonText} in this module.`
+      : `This quiz isn't generated yet. We'll write a set of questions testing your understanding across the ${lessonText} in this module.`;
 
   return (
     <S.Container>
@@ -83,27 +89,27 @@ export const QuizLanding = ({
                 Previous best ·{' '}
                 <S.PreviousAttemptHighlight $tier={quizProgress.bestTier}>
                   {quizProgress.bestScore}% · {tierLabel[quizProgress.bestTier]}
-                </S.PreviousAttemptHighlight>
-                {' '}
+                </S.PreviousAttemptHighlight>{' '}
                 <S.PreviousAttemptCount>
-                  {quizProgress.attempts.length}{' '}
-                  {plural({ count: quizProgress.attempts.length, singular: 'attempt' })}
+                  {quizProgress.attempts.length} {plural({ count: quizProgress.attempts.length, singular: 'attempt' })}
                 </S.PreviousAttemptCount>
               </S.PreviousAttemptLine>
             )}
 
             <S.PrimaryAction>
-              <Button
-                onClick={hasQuizContent ? onStart : onGenerate}
-                disabled={isGenerating}
-              >
+              <Button onClick={hasQuizContent ? onStart : onGenerate} disabled={isGenerating}>
+                {/* CTA reflects what the click actually does. When no
+                    quiz content exists, the click kicks off AI
+                    generation — the label must say so. "Start quiz"
+                    is reserved for the case where the questions are
+                    already prepared and waiting. */}
                 {hasQuizContent
                   ? quizProgress
                     ? 'Retake quiz'
                     : 'Start quiz'
                   : quizProgress
-                    ? 'Create new quiz'
-                    : 'Start quiz'}
+                    ? 'Generate new quiz'
+                    : 'Generate quiz'}
                 <ArrowRight size={14} />
               </Button>
             </S.PrimaryAction>

@@ -82,9 +82,11 @@ export const CloseBtn = styled.button`
   padding: 0.25rem 0.5rem;
   border-radius: 6px;
 
-  &:hover {
-    background: ${(p) => p.theme.colors.background};
-    color: ${(p) => p.theme.colors.foreground};
+  ${(p) => p.theme.media.hover} {
+    &:hover {
+      background: ${(p) => p.theme.colors.background};
+      color: ${(p) => p.theme.colors.foreground};
+    }
   }
 `;
 

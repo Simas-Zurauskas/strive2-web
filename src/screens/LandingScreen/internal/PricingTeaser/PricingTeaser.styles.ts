@@ -73,13 +73,15 @@ export const TierCard = styled.div<{ $popular?: boolean }>`
     box-shadow: var(--shadow-card);
   `}
 
-  &:hover {
-    border-color: ${(p) =>
-      p.$popular
-        ? `color-mix(in oklab, ${p.theme.colors.accent} 50%, transparent)`
-        : `color-mix(in oklab, ${p.theme.colors.tertiary} 35%, ${p.theme.colors.surfaceBorder})`};
-    box-shadow: var(--shadow-card);
-    transform: translateY(-1px);
+  ${(p) => p.theme.media.hover} {
+    &:hover {
+      border-color: ${(p) =>
+        p.$popular
+          ? `color-mix(in oklab, ${p.theme.colors.accent} 50%, transparent)`
+          : `color-mix(in oklab, ${p.theme.colors.tertiary} 35%, ${p.theme.colors.surfaceBorder})`};
+      box-shadow: var(--shadow-card);
+      transform: translateY(-1px);
+    }
   }
 `;
 
@@ -109,12 +111,16 @@ export const TierName = styled.span`
 `;
 
 export const TierPrice = styled.span`
-  font-family: var(--font-heading-serif), Georgia, serif;
+  /* Inter (the default body font) to match the PricingScreen plan cards —
+     using the heading-serif here made the prices look like a different
+     product. Tabular nums keeps "$24.99" from baseline-shifting against
+     "$12.99" when both render in the comparison grid. */
   font-size: 1.5rem;
-  font-weight: 600;
+  font-weight: 700;
   letter-spacing: -0.015em;
-  color: ${(p) => p.theme.colors.foreground};
   line-height: 1.1;
+  color: ${(p) => p.theme.colors.foreground};
+  font-variant-numeric: tabular-nums;
 `;
 
 export const TierAllowance = styled.span`
@@ -191,6 +197,18 @@ export const Body = styled.p`
   color: ${(p) => p.theme.colors.muted};
   margin: 0;
   max-width: 50ch;
+`;
+
+// Asterisk footnote tying the per-card "≈ N lessons*" estimates to a single
+// disambiguation: what counts as a "lesson" in those numbers. Shown once
+// per page near where lesson counts are rendered.
+export const LessonFootnote = styled.p`
+  font-size: 0.8125rem;
+  line-height: 1.5;
+  color: ${(p) => p.theme.colors.muted};
+  margin: 0;
+  max-width: 56ch;
+  opacity: 0.85;
 `;
 
 export const CtaLink = styled.a`

@@ -135,10 +135,12 @@ export const Button = styled.button<{ $active: boolean; $size: 'sm' | 'md' }>`
   justify-content: center;
   transition: color 0.15s, border-color 0.15s, background 0.15s;
 
-  &:hover {
-    color: ${(p) => p.theme.colors.tertiaryHover};
-    border-color: ${(p) => p.theme.colors.tertiary};
-    background: ${(p) => p.theme.colors.tertiaryMuted};
+  ${(p) => p.theme.media.hover} {
+    &:hover {
+      color: ${(p) => p.theme.colors.tertiaryHover};
+      border-color: ${(p) => p.theme.colors.tertiary};
+      background: ${(p) => p.theme.colors.tertiaryMuted};
+    }
   }
 
   &:focus-visible {
@@ -157,10 +159,12 @@ export const Button = styled.button<{ $active: boolean; $size: 'sm' | 'md' }>`
       background: ${p.theme.colors.accentMuted};
       animation: ${pulseDot} 2.2s cubic-bezier(0.16, 1, 0.3, 1) infinite;
 
-      &:hover {
-        color: ${p.theme.colors.accentHover};
-        border-color: ${p.theme.colors.accentHover};
-        background: ${p.theme.colors.accentMuted};
+      ${p.theme.media.hover} {
+        &:hover {
+          color: ${p.theme.colors.accentHover};
+          border-color: ${p.theme.colors.accentHover};
+          background: ${p.theme.colors.accentMuted};
+        }
       }
     `}
 `;

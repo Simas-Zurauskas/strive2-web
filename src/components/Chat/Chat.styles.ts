@@ -44,12 +44,18 @@ export const ScrollArea = styled.div`
   /* use-stick-to-bottom renders TWO nested divs: an outer wrapper and
      an inner ref={scrollRef} that the library sets \`overflow: auto\` on
      at mount. The inner div is the actual scroller, so the scrollbar
-     styling AND \`overscroll-behavior: contain\` must land there — not
-     on the outer wrapper. Without \`contain\`, hitting the chat's top/
-     bottom chains the wheel scroll to the lesson page underneath. */
+     styling, \`overscroll-behavior: contain\` and \`touch-action: pan-y\`
+     must land there — not on the outer wrapper.
+     - \`contain\`: hitting the chat's top/bottom chains the wheel scroll
+       to the lesson page underneath without this.
+     - \`pan-y\`: lets horizontal swipes propagate to the parent panel
+       (ChatPanelFixed) so the swipe-to-close drag works even when the
+       touch starts on a chat message. Default \`auto\` makes the browser
+       grab the gesture for native scrolling and the drag never sees it. */
   > div > div {
     ${thinScrollbar}
     overscroll-behavior: contain;
+    touch-action: pan-y;
   }
 `;
 
@@ -84,8 +90,10 @@ export const ScrollDownButton = styled(motion.button)`
   transition: background 0.15s ease;
   z-index: 2;
 
-  &:hover {
-    background: ${(p) => p.theme.colors.surface};
+  ${(p) => p.theme.media.hover} {
+    &:hover {
+      background: ${(p) => p.theme.colors.surface};
+    }
   }
 `;
 
@@ -157,11 +165,13 @@ export const SuggestedPrompt = styled.button`
     animation-delay: 0.15s;
   }
 
-  &:hover:not(:disabled) {
-    border-color: ${(p) =>
-      `color-mix(in oklab, ${p.theme.colors.accent} 45%, ${p.theme.colors.surfaceBorder})`};
-    background: ${(p) => p.theme.colors.accentMuted};
-    color: ${(p) => p.theme.colors.accent};
+  ${(p) => p.theme.media.hover} {
+    &:hover:not(:disabled) {
+      border-color: ${(p) =>
+        `color-mix(in oklab, ${p.theme.colors.accent} 45%, ${p.theme.colors.surfaceBorder})`};
+      background: ${(p) => p.theme.colors.accentMuted};
+      color: ${(p) => p.theme.colors.accent};
+    }
   }
 
   &:disabled {
@@ -241,9 +251,11 @@ export const SendButton = styled.button`
     background 0.2s ease,
     transform 0.15s ease;
 
-  &:hover:not(:disabled) {
-    background: ${(p) => p.theme.colors.accentHover};
-    transform: scale(1.05);
+  ${(p) => p.theme.media.hover} {
+    &:hover:not(:disabled) {
+      background: ${(p) => p.theme.colors.accentHover};
+      transform: scale(1.05);
+    }
   }
 
   &:active:not(:disabled) {
@@ -289,9 +301,11 @@ export const AttachButton = styled.button`
     color 0.15s ease,
     background 0.15s ease;
 
-  &:hover:not(:disabled) {
-    border-color: ${(p) => p.theme.colors.muted};
-    color: ${(p) => p.theme.colors.foreground};
+  ${(p) => p.theme.media.hover} {
+    &:hover:not(:disabled) {
+      border-color: ${(p) => p.theme.colors.muted};
+      color: ${(p) => p.theme.colors.foreground};
+    }
   }
 
   &:disabled {
@@ -338,9 +352,11 @@ export const AttachmentChipClose = styled.button`
   padding: 0;
   border-radius: 4px;
 
-  &:hover {
-    color: ${(p) => p.theme.colors.foreground};
-    background: ${(p) => p.theme.colors.surface};
+  ${(p) => p.theme.media.hover} {
+    &:hover {
+      color: ${(p) => p.theme.colors.foreground};
+      background: ${(p) => p.theme.colors.surface};
+    }
   }
 `;
 
@@ -389,9 +405,11 @@ export const StopButton = styled.button`
     background 0.2s ease,
     transform 0.15s ease;
 
-  &:hover:not(:disabled) {
-    background: ${(p) => p.theme.colors.accentHover};
-    transform: scale(1.05);
+  ${(p) => p.theme.media.hover} {
+    &:hover:not(:disabled) {
+      background: ${(p) => p.theme.colors.accentHover};
+      transform: scale(1.05);
+    }
   }
 
   &:active:not(:disabled) {

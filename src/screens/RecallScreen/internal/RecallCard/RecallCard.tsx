@@ -4,6 +4,7 @@ import { ArrowUpRight, Loader2 } from 'lucide-react';
 import { useEffect, useRef, useState } from 'react';
 import { HelpAnchor } from '@/components';
 import { useGradeRecallAnswer } from '@/hooks';
+import { useMotion } from '@/theme/motionPresets';
 import { InlineCode } from './InlineCode';
 import * as S from './RecallCard.styles';
 import { RatingBar } from '../RatingBar/RatingBar';
@@ -11,9 +12,10 @@ import type { GradeResult, RecallQueueItem, RecallRating } from '@/api/types';
 
 interface RecallCardProps {
   card: RecallQueueItem;
-  onRate: (args: { rating: RecallRating; typedMatch?: number | null }) => void;
+  /** True when this card is reappearing in-session after a previous Again. */
+  isRetry?: boolean;
+  onRate: (rating: RecallRating) => void;
   onSkip: () => void;
-  onToggleMode: () => void;
   isRating?: boolean;
 }
 
@@ -30,50 +32,44 @@ const ClozePrompt = ({
   revealed: boolean;
 }) => {
   const parts = prompt.split(CLOZE_RE);
-  // Fallback for malformed cloze (no marker) — just show the prompt.
   if (parts.length === 1) return <InlineCode text={prompt} />;
   return (
     <>
       <InlineCode text={parts[0]} />
       <S.BlankSlot $revealed={revealed}>
-        {revealed ? <InlineCode text={answer} /> : '\u00A0'}
+        {revealed ? <InlineCode text={answer} /> : ' '}
       </S.BlankSlot>
       <InlineCode text={parts.slice(1).join('')} />
     </>
   );
 };
 
-export const RecallCard = ({
-  card,
-  onRate,
-  onSkip,
-  onToggleMode,
-  isRating,
-}: RecallCardProps) => {
-  // Parent remounts this component with key={card.recallCardId} so state is
-  // always fresh per card — no reset-on-change useEffect needed.
+export const RecallCard = ({ card, isRetry, onRate, onSkip, isRating }: RecallCardProps) => {
+  // Parent remounts this component with key={card.recallCardId} so state
+  // is always fresh per card.
   const [revealed, setRevealed] = useState(false);
   const [typedValue, setTypedValue] = useState('');
   const [typedSubmitted, setTypedSubmitted] = useState(false);
   const [grade, setGrade] = useState<GradeResult | null>(null);
   const inputRef = useRef<HTMLInputElement | null>(null);
+  const { prefersReduced } = useMotion();
+  const { mutate: gradeAnswer } = useGradeRecallAnswer();
 
-  const { mutate: gradeAnswer, isPending: isGrading } = useGradeRecallAnswer();
-
-  // Auto-focus text input when entering typed-recall mode.
+  // Space/Enter reveals when not already revealed, not focused in the
+  // typed input, and not currently waiting for the AI to grade a typed
+  // answer. Enter inside the input submits the typed answer (handled by
+  // the form below).
   useEffect(() => {
-    if (card.mode === 'typed-recall' && !typedSubmitted && inputRef.current) {
-      inputRef.current.focus();
-    }
-  }, [card.mode, typedSubmitted]);
-
-  // Space-to-reveal keyboard shortcut, only when not typing.
-  useEffect(() => {
-    if (card.mode === 'typed-recall') return;
-    if (revealed) return;
+    if (revealed || typedSubmitted) return;
     const handler = (e: KeyboardEvent) => {
       const target = e.target as HTMLElement | null;
-      if (target && (target.tagName === 'INPUT' || target.tagName === 'TEXTAREA' || target.isContentEditable)) return;
+      if (
+        target &&
+        (target.tagName === 'INPUT' ||
+          target.tagName === 'TEXTAREA' ||
+          target.isContentEditable)
+      )
+        return;
       if (e.key === ' ' || e.key === 'Enter') {
         e.preventDefault();
         setRevealed(true);
@@ -81,160 +77,176 @@ export const RecallCard = ({
     };
     window.addEventListener('keydown', handler);
     return () => window.removeEventListener('keydown', handler);
-  }, [card.mode, revealed]);
+  }, [revealed, typedSubmitted]);
 
   const handleTypedSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     const trimmed = typedValue.trim();
     if (!trimmed) return;
+    // Mark submitted but DO NOT reveal yet — wait for the AI verdict so
+    // the user doesn't see the canonical answer next to their (possibly
+    // wrong) input before the system has actually evaluated it.
     setTypedSubmitted(true);
-    setRevealed(true);
     gradeAnswer(
       { recallCardId: card.recallCardId, userAnswer: trimmed },
       {
-        onSuccess: (result) => setGrade(result),
-        // On failure the hook is silent; card still shows the canonical so
-        // the user can self-grade via the rating buttons.
+        onSuccess: (result) => {
+          setGrade(result);
+          setRevealed(true);
+        },
+        onError: () => {
+          // Grader unreachable — fall back to revealing without a
+          // verdict so the user can still self-grade.
+          setRevealed(true);
+        },
       },
     );
-  };
-
-  const handleRate = (rating: RecallRating) => {
-    onRate({ rating, typedMatch: grade?.score ?? null });
   };
 
   const lessonHref = card.courseSlug
     ? `/course/${card.courseSlug}/lesson/${card.moduleIndex}/${card.lessonIndex}#${card.sourceBlockId}`
     : `/course/${card.courseId}/lesson/${card.moduleIndex}/${card.lessonIndex}#${card.sourceBlockId}`;
 
+  const motionProps = prefersReduced
+    ? {
+        initial: { opacity: 0 },
+        animate: { opacity: 1 },
+        exit: { opacity: 0 },
+        transition: { duration: 0.12 },
+      }
+    : {
+        initial: { opacity: 0, y: 14, scale: 0.985 },
+        animate: { opacity: 1, y: 0, scale: 1 },
+        exit: { opacity: 0, y: -10, scale: 0.985 },
+        transition: { duration: 0.28, ease: [0.22, 1, 0.36, 1] as [number, number, number, number] },
+      };
+
   return (
-    <S.Card>
-      <S.SourceRow>
-        <S.SourceMeta>
-          <S.SourceCourse title={card.courseName}>{card.courseName}</S.SourceCourse>
-          <S.SourceLink
-            href={lessonHref}
-            target="_blank"
-            rel="noopener noreferrer"
-            title={`${card.courseName} · ${card.lessonName}`}
-          >
-            <span>{card.lessonName}</span>
-            <ArrowUpRight size={12} strokeWidth={2} />
-          </S.SourceLink>
-        </S.SourceMeta>
-        <S.SourceBadges>
-          {/* Mode is a preference, not an action — segmented control is clearer
-              than a generic toggle button and always shows both options. */}
-          <S.ModeToggle role="group" aria-label="Interaction mode">
-            <S.ModeOption
-              type="button"
-              $active={card.mode === 'tap-reveal'}
-              onClick={() => card.mode === 'typed-recall' && onToggleMode()}
-              disabled={card.mode === 'tap-reveal'}
-              title="Tap to reveal (easier)"
-              aria-pressed={card.mode === 'tap-reveal'}
-            >
-              Tap
-            </S.ModeOption>
-            <S.ModeOption
-              type="button"
-              $active={card.mode === 'typed-recall'}
-              onClick={() => card.mode === 'tap-reveal' && onToggleMode()}
-              disabled={card.mode === 'typed-recall'}
-              title="Typed recall (deeper practice)"
-              aria-pressed={card.mode === 'typed-recall'}
-            >
-              Typed
-            </S.ModeOption>
-          </S.ModeToggle>
-        </S.SourceBadges>
-      </S.SourceRow>
-
-      <S.Prompt>
-        {card.kind === 'cloze' ? (
-          <ClozePrompt prompt={card.prompt} answer={card.answer} revealed={revealed} />
-        ) : (
-          <InlineCode text={card.prompt} />
+    <S.Stack>
+      {/* Lesson breadcrumb — small muted line outside the card so the
+          prompt is the first weighted element the eye lands on. */}
+      <S.Breadcrumb>
+        <S.CourseTag title={card.courseName}>{card.courseName}</S.CourseTag>
+        <S.BreadcrumbSep aria-hidden>/</S.BreadcrumbSep>
+        <S.LessonLink
+          href={lessonHref}
+          target="_blank"
+          rel="noopener noreferrer"
+          title={`${card.courseName} · ${card.lessonName}`}
+        >
+          <span>{card.lessonName}</span>
+          <ArrowUpRight size={11} strokeWidth={2} />
+        </S.LessonLink>
+        {isRetry && (
+          <S.RetryBadge title="You marked this Again — give it another try">
+            ↻ retry
+          </S.RetryBadge>
         )}
-      </S.Prompt>
+      </S.Breadcrumb>
 
-      {/* Typed-mode primary row — the engaged path */}
-      {card.mode === 'typed-recall' && !typedSubmitted && (
-        <S.TypedRow onSubmit={handleTypedSubmit}>
-          <S.TypedInput
-            ref={inputRef}
-            type="text"
-            value={typedValue}
-            onChange={(e) => setTypedValue(e.target.value)}
-            placeholder="Type your answer…"
-            autoComplete="off"
-            autoCapitalize="off"
-            autoCorrect="off"
-            spellCheck={false}
-          />
-          <S.TypedSubmit type="submit" disabled={!typedValue.trim()}>
-            Check
-          </S.TypedSubmit>
-        </S.TypedRow>
-      )}
-
-      {/* Tap-mode reveal — quiet divider affordance, not a CTA */}
-      {card.mode === 'tap-reveal' && !revealed && (
-        <S.RevealDivider type="button" onClick={() => setRevealed(true)} autoFocus>
-          <S.RevealLabel>Reveal</S.RevealLabel>
-        </S.RevealDivider>
-      )}
-
-      {/* Revealed — verdict (if typed), answer, rating bar */}
-      {revealed && (
-        <>
-          {typedSubmitted && (
-            <S.VerdictPanel $verdict={grade?.verdict ?? null}>
-              <S.VerdictHeader>
-                <S.YourAnswer>Your answer: &ldquo;{typedValue}&rdquo;</S.YourAnswer>
-                {isGrading && (
-                  <S.GradingSpinner>
-                    <Loader2 size={12} className="spin" strokeWidth={2.5} />
-                    Grading…
-                  </S.GradingSpinner>
-                )}
-                {!isGrading && grade && (
-                  <S.VerdictPill $verdict={grade.verdict}>
-                    {grade.verdict === 'correct' ? 'Correct' : grade.verdict === 'partial' ? 'Partial' : 'Incorrect'}
-                  </S.VerdictPill>
-                )}
-              </S.VerdictHeader>
-              {!isGrading && grade && <S.VerdictFeedback>{grade.feedback}</S.VerdictFeedback>}
-            </S.VerdictPanel>
+      <S.Card {...motionProps}>
+        <S.Prompt>
+          {card.kind === 'cloze' ? (
+            <ClozePrompt prompt={card.prompt} answer={card.answer} revealed={revealed} />
+          ) : (
+            <InlineCode text={card.prompt} />
           )}
+        </S.Prompt>
 
-          <S.AnswerBlock>
-            <S.AnswerLabel>{card.kind === 'cloze' ? 'Blank was' : 'Answer'}</S.AnswerLabel>
-            <S.AnswerText>
-              <InlineCode text={card.answer} />
-            </S.AnswerText>
-          </S.AnswerBlock>
+        {!revealed && !typedSubmitted && (
+          <>
+            {/* Optional typed-recall input. Always visible — typing
+                yields a graded check; clicking Reveal skips the typing.
+                No mode toggle. */}
+            <S.TypedForm onSubmit={handleTypedSubmit}>
+              <S.TypedInput
+                ref={inputRef}
+                type="text"
+                value={typedValue}
+                onChange={(e) => setTypedValue(e.target.value)}
+                placeholder="Try it from memory…"
+                autoComplete="off"
+                autoCapitalize="off"
+                autoCorrect="off"
+                spellCheck={false}
+                aria-label="Try it from memory"
+              />
+              <S.TypedSubmit type="submit" disabled={!typedValue.trim()} title="Check answer (Enter)">
+                Check
+              </S.TypedSubmit>
+            </S.TypedForm>
 
-          <S.RatingBarRow>
-            <S.RatingBarLabel>
-              How well did you recall? <HelpAnchor concept="recall-ratings" size="sm" />
-            </S.RatingBarLabel>
-          </S.RatingBarRow>
-          <RatingBar onRate={handleRate} disabled={isRating} />
-        </>
-      )}
+            <S.OrDivider aria-hidden>
+              <S.OrLabel>or</S.OrLabel>
+            </S.OrDivider>
 
-      <S.FooterRow>
-        <S.FooterBadges>
-          {card.isNew && <S.Badge $variant="new">New</S.Badge>}
-          {!card.isNew && card.box >= 2 && <S.Badge $variant="box">Box {card.box}</S.Badge>}
-        </S.FooterBadges>
-        {!revealed && (
-          <S.SkipLink type="button" onClick={onSkip} title="Skip — come back tomorrow">
-            Skip
-          </S.SkipLink>
+            <S.RevealRow>
+              <S.RevealButton type="button" onClick={() => setRevealed(true)} autoFocus>
+                Reveal answer
+              </S.RevealButton>
+              <S.SkipButton type="button" onClick={onSkip} title="Skip — come back tomorrow">
+                Skip
+              </S.SkipButton>
+            </S.RevealRow>
+          </>
         )}
-      </S.FooterRow>
-    </S.Card>
+
+        {/* Assessing state — typed answer submitted, AI grading in
+            flight. Holds back the canonical answer + rating bar so the
+            user doesn't perceive a pre-judgment. */}
+        {!revealed && typedSubmitted && (
+          <S.Assessing aria-live="polite">
+            <S.AssessingHeader>
+              <Loader2 size={14} className="spin" strokeWidth={2.5} />
+              Marking your answer
+            </S.AssessingHeader>
+            <S.AssessingYourAnswer>
+              you typed <S.YourAnswerQuoted>{typedValue}</S.YourAnswerQuoted>
+            </S.AssessingYourAnswer>
+          </S.Assessing>
+        )}
+
+        {revealed && (
+          <>
+            {/* Cloze reveals the answer inline in the prompt; restating it
+                in a separate block is duplication. Only QA cards need a
+                dedicated answer panel below. */}
+            {card.kind !== 'cloze' && (
+              <S.AnswerBlock>
+                <S.AnswerLabel>Answer</S.AnswerLabel>
+                <S.AnswerText>
+                  <InlineCode text={card.answer} />
+                </S.AnswerText>
+              </S.AnswerBlock>
+            )}
+
+            {typedSubmitted && (
+              <S.Verdict $verdict={grade?.verdict ?? null}>
+                <S.VerdictRow>
+                  {grade && (
+                    <S.VerdictStatus $verdict={grade.verdict}>
+                      {grade.verdict === 'correct'
+                        ? 'Correct'
+                        : grade.verdict === 'partial'
+                          ? 'Partial'
+                          : 'Incorrect'}
+                    </S.VerdictStatus>
+                  )}
+                  <S.YourAnswer>
+                    you typed <S.YourAnswerQuoted>{typedValue}</S.YourAnswerQuoted>
+                  </S.YourAnswer>
+                </S.VerdictRow>
+                {grade?.feedback && <S.VerdictFeedback>{grade.feedback}</S.VerdictFeedback>}
+              </S.Verdict>
+            )}
+
+            <S.RatingLabel>
+              How well did you recall? <HelpAnchor concept="recall-ratings" size="sm" />
+            </S.RatingLabel>
+            <RatingBar box={card.box} onRate={onRate} disabled={isRating} />
+          </>
+        )}
+      </S.Card>
+    </S.Stack>
   );
 };

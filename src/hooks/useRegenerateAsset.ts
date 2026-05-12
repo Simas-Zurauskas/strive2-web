@@ -2,7 +2,7 @@
 
 import { useMutation } from '@tanstack/react-query';
 import { useCallback, useEffect, useState } from 'react';
-import { regenerateHero, regenerateLinks } from '@/api/routes/course';
+import { regenerateHero, regenerateLinks, regenerateRecall } from '@/api/routes/course';
 import { useJobManager } from './useJobManager';
 
 interface RegenerateParams {
@@ -17,7 +17,7 @@ const useRegenerateAsset = ({
   errorMessage,
 }: {
   mutationFn: (params: RegenerateParams) => Promise<{ jobId: string }>;
-  jobType: 'regenerate_hero' | 'regenerate_links';
+  jobType: 'regenerate_hero' | 'regenerate_links' | 'regenerate_recall';
   errorMessage: string;
 }) => {
   const { trackJob, isJobRunningForCourse } = useJobManager();
@@ -74,4 +74,11 @@ export const useRegenerateLinks = () =>
     mutationFn: regenerateLinks,
     jobType: 'regenerate_links',
     errorMessage: 'Failed to start resources generation',
+  });
+
+export const useRegenerateRecall = () =>
+  useRegenerateAsset({
+    mutationFn: regenerateRecall,
+    jobType: 'regenerate_recall',
+    errorMessage: 'Failed to generate recall cards',
   });

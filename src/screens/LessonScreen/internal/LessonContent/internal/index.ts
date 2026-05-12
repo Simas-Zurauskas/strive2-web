@@ -3,6 +3,7 @@ export { LinksEmptyPlaceholder, LinksBlockSkeleton } from './BlockRenderer/block
 export { FontScaler, getSavedScale, STORAGE_KEY as FONT_SCALE_KEY } from './FontScaler';
 export { LessonHero } from './LessonHero';
 export { NotesPanel } from './NotesPanel/NotesPanel';
+export { RecallStatusPanel } from './RecallStatusPanel/RecallStatusPanel';
 export { NarrationPlayer } from './NarrationPlayer';
 export { StreamingWidget } from './StreamingWidget';
 export { useLessonCompletion } from './useLessonCompletion';

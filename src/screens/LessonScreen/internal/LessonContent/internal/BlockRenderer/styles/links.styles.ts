@@ -39,9 +39,11 @@ export const LinkItem = styled.a`
     border-bottom: none;
   }
 
-  &:hover {
-    background: ${(p) => `${p.theme.colors.accent}06`};
-    transform: translateX(4px);
+  ${(p) => p.theme.media.hover} {
+    &:hover {
+      background: ${(p) => `${p.theme.colors.accent}06`};
+      transform: translateX(4px);
+    }
   }
 `;
 
@@ -91,10 +93,12 @@ export const LinksGenerateButton = styled.button`
     border-color 0.15s,
     background 0.15s;
 
-  &:hover:not(:disabled) {
-    color: ${(p) => p.theme.colors.tertiary};
-    border-color: ${(p) => p.theme.colors.tertiary};
-    background: ${(p) => `${p.theme.colors.tertiary}10`};
+  ${(p) => p.theme.media.hover} {
+    &:hover:not(:disabled) {
+      color: ${(p) => p.theme.colors.tertiary};
+      border-color: ${(p) => p.theme.colors.tertiary};
+      background: ${(p) => `${p.theme.colors.tertiary}10`};
+    }
   }
 
   &:disabled {

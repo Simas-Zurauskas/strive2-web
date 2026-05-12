@@ -118,11 +118,168 @@ export const PlaceholderText = styled.p`
   max-width: 28ch;
 `;
 
+/**
+ * Wrapper for the "Go to {prevLessonName}" button in the Locked state.
+ * The shared Button component sets \`white-space: nowrap\` globally so
+ * normal-length labels stay on one line. Long lesson names ("Newton's
+ * Three Laws as a Storyteller's Toolkit") overflow the viewport. Here
+ * we override per-instance: allow the label to wrap, cap the button
+ * width to the placeholder's content column so it never spans full
+ * width on desktop, and give the multi-line text some line-height.
+ */
+export const LockedActionWrap = styled.div`
+  display: flex;
+  justify-content: center;
+  width: 100%;
+
+  & > button {
+    white-space: normal;
+    line-height: 1.35;
+    text-align: center;
+    max-width: 26rem;
+    padding-top: 0.625rem;
+    padding-bottom: 0.625rem;
+  }
+`;
+
 export const GeneratingText = styled.p`
   font-size: 0.875rem;
   color: ${(p) => p.theme.colors.accent};
   text-align: center;
   font-weight: 500;
+`;
+
+/**
+ * Recall-cards toggle, lifted out of the generic "optional extras" list
+ * because it carries the only pedagogically important on/off decision
+ * on this surface — spaced retrieval is the lever that makes reading
+ * stick. The whole card is a <label> wrapping a hidden checkbox, so
+ * clicking anywhere on it flips the switch. Gold-tinted when enabled
+ * so the on/off state is legible at a glance.
+ */
+export const RecallOptionCard = styled.label<{ $enabled: boolean }>`
+  display: flex;
+  flex-direction: column;
+  width: 100%;
+  max-width: 380px;
+  padding: 1rem 1.125rem 1.125rem;
+  border-radius: var(--radius-lg);
+  border: 1px solid
+    ${(p) =>
+      p.$enabled
+        ? `color-mix(in oklab, ${p.theme.colors.tertiary} 45%, transparent)`
+        : p.theme.colors.surfaceBorder};
+  background: ${(p) =>
+    p.$enabled
+      ? `color-mix(in oklab, ${p.theme.colors.tertiary} 7%, ${p.theme.colors.surface})`
+      : p.theme.colors.surface};
+  cursor: pointer;
+  transition:
+    background 0.18s ease,
+    border-color 0.18s ease;
+
+  ${(p) => p.theme.media.hover} {
+    &:hover {
+      border-color: ${(p) =>
+        p.$enabled
+          ? `color-mix(in oklab, ${p.theme.colors.tertiary} 65%, transparent)`
+          : `color-mix(in oklab, ${p.theme.colors.muted} 35%, ${p.theme.colors.surfaceBorder})`};
+    }
+  }
+
+  &:focus-within {
+    outline: none;
+    border-color: ${(p) =>
+      `color-mix(in oklab, ${p.theme.colors.tertiary} 75%, transparent)`};
+    box-shadow: 0 0 0 3px
+      ${(p) => `color-mix(in oklab, ${p.theme.colors.tertiary} 22%, transparent)`};
+  }
+`;
+
+/** Visually hidden but keyboard-reachable. The label's :focus-within
+ *  picks up the focus ring so the user can still tab to the toggle. */
+export const RecallOptionHiddenInput = styled.input`
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border: 0;
+`;
+
+export const RecallOptionHeader = styled.div`
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.75rem;
+`;
+
+export const RecallOptionEyebrow = styled.span`
+  display: inline-flex;
+  align-items: center;
+  gap: 0.375rem;
+  font-size: 0.625rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.16em;
+  color: ${(p) => p.theme.colors.tertiary};
+`;
+
+/** Custom on/off switch — gold pill that slides a dot. Visually
+ *  louder than a checkbox tick because this is the decision we want
+ *  the user to see, not have to hunt for. */
+export const RecallSwitch = styled.span<{ $on: boolean }>`
+  position: relative;
+  display: inline-block;
+  width: 38px;
+  height: 22px;
+  border-radius: var(--radius-pill);
+  border: 1px solid
+    ${(p) =>
+      p.$on
+        ? p.theme.colors.tertiary
+        : `color-mix(in oklab, ${p.theme.colors.muted} 35%, ${p.theme.colors.surfaceBorder})`};
+  background: ${(p) =>
+    p.$on
+      ? p.theme.colors.tertiary
+      : `color-mix(in oklab, ${p.theme.colors.surfaceBorder} 65%, ${p.theme.colors.surface})`};
+  transition:
+    background 0.18s ease,
+    border-color 0.18s ease;
+  flex-shrink: 0;
+`;
+
+export const RecallSwitchKnob = styled.span<{ $on: boolean }>`
+  position: absolute;
+  top: 2px;
+  left: ${(p) => (p.$on ? '18px' : '2px')};
+  width: 16px;
+  height: 16px;
+  border-radius: 50%;
+  background: ${(p) => p.theme.colors.surface};
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.18);
+  transition: left 0.18s cubic-bezier(0.22, 1, 0.36, 1);
+`;
+
+export const RecallOptionTitle = styled.h3`
+  font-family: var(--font-heading-serif), Georgia, serif;
+  font-style: italic;
+  font-weight: 400;
+  font-size: 1.125rem;
+  letter-spacing: -0.005em;
+  line-height: 1.2;
+  margin: 0.5rem 0 0.4375rem;
+  color: ${(p) => p.theme.colors.foreground};
+`;
+
+export const RecallOptionBody = styled.p`
+  font-size: 0.8125rem;
+  line-height: 1.55;
+  color: ${(p) => p.theme.colors.muted};
+  margin: 0;
 `;
 
 /** Wrapper that pairs the small "Optional" caption with the options card. */
@@ -231,14 +388,16 @@ export const CompleteButton = styled.button`
     transition: transform 160ms ease;
   }
 
-  &:hover:not(:disabled) {
-    background: ${(p) => p.theme.colors.accentHover};
-    border-color: ${(p) => p.theme.colors.accentHover};
-    box-shadow: var(--shadow-btn-hover);
-  }
+  ${(p) => p.theme.media.hover} {
+    &:hover:not(:disabled) {
+      background: ${(p) => p.theme.colors.accentHover};
+      border-color: ${(p) => p.theme.colors.accentHover};
+      box-shadow: var(--shadow-btn-hover);
+    }
 
-  &:hover:not(:disabled) svg.arrow {
-    transform: translateX(3px);
+    &:hover:not(:disabled) svg.arrow {
+      transform: translateX(3px);
+    }
   }
 
   &:active:not(:disabled) {
@@ -334,10 +493,12 @@ export const NavButton = styled.button<{ $hidden?: boolean; $direction?: 'prev' 
     box-shadow 0.2s ease,
     transform 0.15s ease;
 
-  &:hover {
-    border-color: ${(p) => p.theme.colors.accent};
-    box-shadow: var(--shadow-pop);
-    transform: translateY(-2px);
+  ${(p) => p.theme.media.hover} {
+    &:hover {
+      border-color: ${(p) => p.theme.colors.accent};
+      box-shadow: var(--shadow-pop);
+      transform: translateY(-2px);
+    }
   }
 
   &:active {
