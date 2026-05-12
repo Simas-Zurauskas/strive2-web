@@ -97,11 +97,13 @@ const cardBase = css`
     border-color 0.15s ease,
     background 0.15s ease;
 
-  &:hover {
-    border-color: ${(p) =>
-      `color-mix(in oklab, ${p.theme.colors.accent} 35%, ${p.theme.colors.surfaceBorder})`};
-    background: ${(p) =>
-      `color-mix(in oklab, ${p.theme.colors.accent} 3%, ${p.theme.colors.surface})`};
+  ${(p) => p.theme.media.hover} {
+    &:hover {
+      border-color: ${(p) =>
+        `color-mix(in oklab, ${p.theme.colors.accent} 35%, ${p.theme.colors.surfaceBorder})`};
+      background: ${(p) =>
+        `color-mix(in oklab, ${p.theme.colors.accent} 3%, ${p.theme.colors.surface})`};
+    }
   }
 `;
 
@@ -202,13 +204,15 @@ export const ArticleCardLink = styled(Link)`
     border-top: 1px solid ${(p) => p.theme.colors.border};
   }
 
-  &:hover {
-    background: ${(p) => `color-mix(in oklab, ${p.theme.colors.accent} 5%, transparent)`};
-    transform: translateX(4px);
-  }
+  ${(p) => p.theme.media.hover} {
+    &:hover {
+      background: ${(p) => `color-mix(in oklab, ${p.theme.colors.accent} 5%, transparent)`};
+      transform: translateX(4px);
+    }
 
-  &:hover h3 {
-    color: ${(p) => p.theme.colors.accent};
+    &:hover h3 {
+      color: ${(p) => p.theme.colors.accent};
+    }
   }
 `;
 

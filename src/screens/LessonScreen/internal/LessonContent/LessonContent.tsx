@@ -21,6 +21,7 @@ import {
   LinksEmptyPlaceholder,
   NarrationPlayer,
   NotesPanel,
+  RecallStatusPanel,
   StreamingWidget,
   useLessonCompletion,
 } from './internal';
@@ -273,10 +274,20 @@ export const LessonContent = ({
                 }
               />
             )}
-            {isThisLessonGenerating && <StreamingWidget phase="streaming" />}
+            {isThisLessonGenerating && <StreamingWidget
+            phase="streaming"
+            includeImage={stream.includeImage}
+            includeLinks={stream.includeLinks}
+            includeRecallCards={stream.includeRecallCards}
+          />}
           </>
         ) : isThisLessonGenerating ? (
-          <StreamingWidget phase="streaming" />
+          <StreamingWidget
+            phase="streaming"
+            includeImage={stream.includeImage}
+            includeLinks={stream.includeLinks}
+            includeRecallCards={stream.includeRecallCards}
+          />
         ) : (
           <S.Placeholder>
             {isPrevLessonGenerated ? (
@@ -290,9 +301,46 @@ export const LessonContent = ({
                   </S.PlaceholderLead>
                 </S.PlaceholderHeader>
 
+                {/* Recall cards get their own emphasized card above the
+                    optional extras. Recall is pedagogically the biggest
+                    lever in the app — we want the user to opt OUT
+                    deliberately, not pass it by on a checkbox list with
+                    cosmetic options like "hero image". The whole card
+                    is a <label>, so clicking anywhere on it toggles the
+                    hidden checkbox. */}
+                <S.RecallOptionCard $enabled={stream.includeRecallCards}>
+                  <S.RecallOptionHiddenInput
+                    type="checkbox"
+                    role="switch"
+                    aria-checked={stream.includeRecallCards}
+                    checked={stream.includeRecallCards}
+                    onChange={(e) => stream.handleIncludeRecallCards(e.target.checked)}
+                  />
+                  <S.RecallOptionHeader>
+                    <S.RecallOptionEyebrow
+                      // Stop the help-anchor click from propagating into
+                      // the surrounding label — opening the concept
+                      // modal shouldn't also flip the toggle.
+                      onClick={(e: React.MouseEvent) => e.stopPropagation()}
+                    >
+                      Spaced retrieval <HelpAnchor concept="spaced-recall" size="sm" />
+                    </S.RecallOptionEyebrow>
+                    <S.RecallSwitch $on={stream.includeRecallCards} aria-hidden>
+                      <S.RecallSwitchKnob $on={stream.includeRecallCards} />
+                    </S.RecallSwitch>
+                  </S.RecallOptionHeader>
+                  <S.RecallOptionTitle>Generate recall cards</S.RecallOptionTitle>
+                  <S.RecallOptionBody>
+                    Tiny prompts pulled from this lesson, scheduled to come back over the
+                    following days. Active retrieval is what actually makes reading stick — the
+                    research is consistent on this. You can regenerate them later from inside
+                    the lesson if you skip now.
+                  </S.RecallOptionBody>
+                </S.RecallOptionCard>
+
                 <S.GenerateOptionsBlock>
                   <S.GenerateOptionsCaption>
-                    Optional <HelpAnchor concept="lesson-extras" size="sm" />
+                    Optional extras <HelpAnchor concept="lesson-extras" size="sm" />
                   </S.GenerateOptionsCaption>
                   <S.GenerateOptions>
                     <S.GenerateOptionRow>
@@ -332,9 +380,11 @@ export const LessonContent = ({
                     Lessons unlock in order. Head back to {prevLessonName ? <em>{prevLessonName}</em> : 'the lesson before this'} to start there.
                   </S.PlaceholderLead>
                 </S.PlaceholderHeader>
-                <Button onClick={onPrev} disabled={!hasPrev}>
-                  &larr; {prevLessonName ? `Go to ${prevLessonName}` : 'Go to previous lesson'}
-                </Button>
+                <S.LockedActionWrap>
+                  <Button onClick={onPrev} disabled={!hasPrev}>
+                    &larr; {prevLessonName ? `Go to ${prevLessonName}` : 'Go to previous lesson'}
+                  </Button>
+                </S.LockedActionWrap>
               </>
             )}
           </S.Placeholder>
@@ -347,6 +397,20 @@ export const LessonContent = ({
             moduleIndex={moduleIndex}
             lessonIndex={lessonIndex}
             initialNotes={completion.currentLessonProgress?.notes ?? null}
+          />
+        )}
+
+        {/* Recall-cards status + on-demand generation. Lesson predates
+            recall or user opted out at gen time? → CTA to generate now.
+            Cards exist? → small status badge. Suppressed while a
+            generation job for this lesson is mid-flight. */}
+        {hasContent && !isThisLessonGenerating && (
+          <RecallStatusPanel
+            courseId={courseId}
+            moduleIndex={moduleIndex}
+            lessonIndex={lessonIndex}
+            recallCardCount={lessonContent?.recallCardCount ?? 0}
+            isGenerationRunning={isGenerationRunning}
           />
         )}
 

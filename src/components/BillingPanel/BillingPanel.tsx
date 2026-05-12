@@ -10,6 +10,7 @@ import { ROUTES } from '@/constants/routes';
 import { useBillingPlans, useBillingSummary } from '@/hooks/useBilling';
 import { percentAllowanceRemaining } from '@/lib/allowance';
 import { formatDate } from '@/lib/formatDate';
+import { formatMaxSavings } from '@/lib/pricingFormat';
 import * as S from './BillingPanel.styles';
 import type { BillingPlan, BillingSummary, PlanKey, SubscriptionStatus } from '@/api/types';
 
@@ -52,12 +53,6 @@ const formatPriceWithCadence = ({
   return `$${usd.toFixed(2)}/${cadenceHint === 'annual' ? 'year' : 'month'}`;
 };
 
-/**
- * Build the renewal sentence shown beneath the plan name. Replaces the
- * previous separate colored callout — quiet text inside the plan card
- * is enough for the normal active/free path, and the warning tone on
- * the card border signals past_due / canceling visually.
- */
 const buildRenewalCopy = ({
   summary,
   plans,
@@ -128,13 +123,6 @@ const buildRenewalCopy = ({
   );
 };
 
-/**
- * Plan + allowance + top-up. Three editorial cards stacked vertically —
- * Plan (identity + status + renewal + upgrade CTAs), Allowance (the
- * single most important number on the surface, big italic-serif), and
- * Top-up (buy more capacity that never expires). Embedded in the
- * Profile screen's Billing tab.
- */
 export const BillingPanel: React.FC = () => {
   const router = useRouter();
   const { data: summary, isLoading: summaryLoading } = useBillingSummary();
@@ -167,17 +155,12 @@ export const BillingPanel: React.FC = () => {
   const cardTone: 'default' | 'warning' = tone === 'warning' ? 'warning' : 'default';
   const renewalCopy = buildRenewalCopy({ summary, plans: catalog?.plans });
 
-  // Bonus balance (credits) → USD display. Users bought top-ups in dollars,
-  // so they should see the remaining value in dollars. Uses the catalog's
-  // published rate so the math matches what was charged at checkout. Shown
-  // unconditionally on the Top-up card — including at $0 — so users always
-  // know what they have available beyond the renewing allowance.
+  // Bonus credits → USD using the catalog rate (matches what was charged).
   const topupRate = catalog?.topupRate?.creditsPerUsd ?? 0;
   const bonusUsdLabel = topupRate > 0 ? `$${(credits.bonus / topupRate).toFixed(2)}` : null;
 
   return (
     <S.Wrap>
-      {/* ── Plan ────────────────────────────────────────── */}
       <S.PlanCard $tone={cardTone}>
         <S.PlanHeader>
           <S.PlanIdentity>
@@ -194,6 +177,19 @@ export const BillingPanel: React.FC = () => {
             </S.PlanStatus>
           )}
         </S.PlanHeader>
+
+        <S.AllowanceSection>
+          <S.AllowanceEyebrow>
+            Allowance this period <HelpAnchor concept="allowance" size="sm" />
+          </S.AllowanceEyebrow>
+          <S.AllowanceHero>
+            <S.AllowanceValue>{Math.round(pctRemaining)}%</S.AllowanceValue>
+            <S.AllowanceLabel>remaining</S.AllowanceLabel>
+          </S.AllowanceHero>
+          <S.BarTrack>
+            <S.BarFill $pct={pctRemaining} />
+          </S.BarTrack>
+        </S.AllowanceSection>
 
         <S.PlanRenewal>{renewalCopy}</S.PlanRenewal>
 
@@ -213,20 +209,6 @@ export const BillingPanel: React.FC = () => {
         </S.PlanActions>
       </S.PlanCard>
 
-      {/* ── Allowance ───────────────────────────────────── */}
-      <S.AllowanceCard>
-        <S.AllowanceEyebrow>
-          Allowance this period <HelpAnchor concept="credits" size="sm" />
-        </S.AllowanceEyebrow>
-        <S.AllowanceHero>
-          <S.AllowanceValue>{Math.round(pctRemaining)}%</S.AllowanceValue>
-          <S.AllowanceLabel>remaining</S.AllowanceLabel>
-        </S.AllowanceHero>
-        <S.BarTrack>
-          <S.BarFill $pct={pctRemaining} />
-        </S.BarTrack>
-      </S.AllowanceCard>
-
       {/* ── Top up ──────────────────────────────────────── */}
       <S.TopupCard>
         <S.TopupEyebrow>Top up</S.TopupEyebrow>
@@ -243,6 +225,20 @@ export const BillingPanel: React.FC = () => {
           first when generating courses or lessons.
         </S.TopupLead>
         <TopupControl />
+        {/* Quiet cross-link to subscription plans. Top-up rate is set
+            above subscription per-credit rates so heavy users actually
+            save money on a plan. The savings figure is derived live
+            from the catalog — when knobs move in pricingConfig.ts,
+            this copy retunes automatically. */}
+        {catalog && formatMaxSavings(catalog) && (
+          <S.PlanNudge>
+            Heavy user? Subscription plans cost{' '}
+            <strong>up to {formatMaxSavings(catalog)} less</strong> per unit of allowance.{' '}
+            <S.PlanNudgeLink type="button" onClick={() => router.push(ROUTES.pricing())}>
+              Compare plans →
+            </S.PlanNudgeLink>
+          </S.PlanNudge>
+        )}
       </S.TopupCard>
     </S.Wrap>
   );

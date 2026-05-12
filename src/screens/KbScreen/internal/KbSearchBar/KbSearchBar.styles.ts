@@ -97,8 +97,10 @@ export const ResultItem = styled.li<{ $active?: boolean }>`
   flex-direction: column;
   gap: 0.125rem;
 
-  &:hover {
-    background: ${(p) => p.theme.colors.accentMuted};
+  ${(p) => p.theme.media.hover} {
+    &:hover {
+      background: ${(p) => p.theme.colors.accentMuted};
+    }
   }
 `;
 

@@ -139,9 +139,11 @@ export const PrimaryButton = styled.button`
   background: ${(p) => p.theme.colors.accent};
   color: ${(p) => (p.theme.scheme === 'dark' ? p.theme.colors.background : onAccent)};
 
-  &:hover {
-    background: ${(p) => p.theme.colors.accentHover};
-    border-color: ${(p) => p.theme.colors.accentHover};
+  ${(p) => p.theme.media.hover} {
+    &:hover {
+      background: ${(p) => p.theme.colors.accentHover};
+      border-color: ${(p) => p.theme.colors.accentHover};
+    }
   }
 `;
 
@@ -155,10 +157,12 @@ export const SecondaryButton = styled.button<{ $loading?: boolean }>`
   color: ${(p) => p.theme.colors.foreground};
   cursor: ${(p) => (p.$loading ? 'wait' : 'pointer')};
 
-  &:hover:not(:disabled) {
-    border-color: ${(p) =>
-      `color-mix(in oklab, ${p.theme.colors.tertiary} 50%, ${p.theme.colors.surfaceBorder})`};
-    color: ${(p) => p.theme.colors.tertiary};
+  ${(p) => p.theme.media.hover} {
+    &:hover:not(:disabled) {
+      border-color: ${(p) =>
+        `color-mix(in oklab, ${p.theme.colors.tertiary} 50%, ${p.theme.colors.surfaceBorder})`};
+      color: ${(p) => p.theme.colors.tertiary};
+    }
   }
 
   &:disabled {

@@ -78,10 +78,12 @@ export const Row = styled.button<{ $selected: boolean }>`
     transform 0.15s ease,
     box-shadow 0.2s ease;
 
-  &:hover {
-    border-color: ${(p) => (p.$selected ? p.theme.colors.tertiary : p.theme.colors.muted)};
-    transform: ${(p) => (p.$selected ? 'none' : 'translateY(-1px)')};
-    box-shadow: ${(p) => (p.$selected ? 'none' : 'var(--shadow-lift)')};
+  ${(p) => p.theme.media.hover} {
+    &:hover {
+      border-color: ${(p) => (p.$selected ? p.theme.colors.tertiary : p.theme.colors.muted)};
+      transform: ${(p) => (p.$selected ? 'none' : 'translateY(-1px)')};
+      box-shadow: ${(p) => (p.$selected ? 'none' : 'var(--shadow-lift)')};
+    }
   }
 
   &:focus-visible {

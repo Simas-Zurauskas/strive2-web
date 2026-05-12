@@ -2,11 +2,11 @@
 title: Terms of Service
 slug: terms-of-service
 topic: legal
-summary: The contract between you and Strive — eligibility, AI-generated content, accounts, billing and credits, acceptable use, liability and disputes.
+summary: The contract between you and Strive — eligibility, AI-generated content, accounts, billing and allowance, acceptable use, liability and disputes.
 tags: [terms, legal, billing, contract]
 order: 20
-updated: 2026-05-10
-related: [privacy-policy, understanding-credits-and-allowance]
+updated: 2026-05-12
+related: [privacy-policy, understanding-your-allowance]
 ---
 
 These Terms of Service ("Terms") govern your use of Strive, an AI-driven learning
@@ -53,7 +53,7 @@ responsible for everything that happens under your account. Notify us immediatel
 You will not: (a) use the service for any unlawful, infringing, harassing, deceptive
 or harmful purpose; (b) submit content that is illegal, infringes intellectual-property
 rights, contains malware or violates third-party rights or privacy; (c) attempt to
-bypass rate limits, credit gates, authentication, content filters or any other
+bypass rate limits, allowance gates, authentication, content filters or any other
 technical control; (d) probe, scan, scrape, reverse-engineer or interfere with the
 service or its underlying infrastructure; (e) use the service or its outputs to train
 another AI model or to generate content for resale; (f) impersonate another person,
@@ -77,17 +77,17 @@ purpose, and we are **not liable** for any loss, damage, data corruption, securi
 breach, downtime or other harm caused by execution of code on or via the platform or
 elsewhere as a consequence of using Strive output.
 
-## 5. Credits, plans and billing
+## 5. Plans, allowance and billing
 
-Paid features are purchased through subscription plans or one-off credit top-ups. Prices,
-features and credit allowances are shown at checkout and may be changed for future
-billing cycles with prior notice. Payments are processed by **Stripe**.
+Paid features are purchased through subscription plans or one-off allowance top-ups.
+Prices, monthly grants and top-up amounts are shown at checkout and may be changed
+for future billing cycles with prior notice. Payments are processed by **Stripe**.
 
-**Credits are a digital licence to consume AI-generated content within Strive.** They
-are **not** money, **not** redeemable for cash, **not** transferable, and may expire
-or be revoked if these Terms are breached. Plan allowances reset at the start of each
-billing cycle and unused allowance does not roll over. Top-up credit balances persist
-while your account is active.
+**Your allowance is a non-monetary right to use AI-generated content within Strive.**
+It is **not** money, **not** redeemable for cash, **not** transferable, and may expire
+or be revoked if these Terms are breached. Monthly allowance granted by a subscription
+plan resets at the start of each billing cycle and any unused monthly allowance does
+not roll over. Top-up allowance persists while your account is active.
 
 Subscriptions auto-renew at the end of each billing period until you cancel from
 **Profile → Billing**. Cancellation takes effect at the end of the current paid period;
@@ -97,12 +97,12 @@ the service remains available until then.
 
 Strive is "digital content not supplied on a tangible medium" within the meaning of
 Article 16(m) of EU Consumer Rights Directive 2011/83/EU. By starting a subscription,
-purchasing a credit top-up, or initiating any AI generation that consumes credits, you
-**expressly request immediate performance and acknowledge that you thereby lose the
-14-day right of withdrawal** that would otherwise apply to digital content. No refunds
-are issued for credits already consumed or for the current billing period of an active
-subscription. Mandatory non-waivable consumer-protection rights under Lithuanian and EU
-law are not affected (see § 12).
+purchasing an allowance top-up, or initiating any AI generation that draws on your
+allowance, you **expressly request immediate performance and acknowledge that you
+thereby lose the 14-day right of withdrawal** that would otherwise apply to digital
+content. No refunds are issued for allowance already consumed or for the current
+billing period of an active subscription. Mandatory non-waivable consumer-protection
+rights under Lithuanian and EU law are not affected (see § 12).
 
 ### 5.2 Refunds
 
@@ -154,7 +154,7 @@ arising out of or relating to the service is capped at the **higher of (a) €50
 the fees you actually paid us in the 12 months preceding the event giving rise to the
 claim**.
 
-We are **not liable** for: loss of credits, loss of generated content, loss or
+We are **not liable** for: loss of allowance, loss of generated content, loss or
 corruption of data, loss of profits, loss of revenue, loss of goodwill, loss of business
 opportunity, work stoppage, service interruption, downtime, the consequences of relying
 on AI output, the consequences of executing code generated, displayed or run via the
@@ -187,7 +187,8 @@ Directive (EU) 2019/770), those rights apply in full.
 You may close your account at any time from **Profile → Account**. Account deletion
 removes your courses, lessons, chats, recall progress, gamification, attachments and
 AI inputs as described in the Privacy Policy. **On termination — by you or by us —
-remaining credits and unused allowance are forfeited and not refundable.**
+any remaining monthly allowance and any remaining top-up allowance are forfeited and
+not refundable.**
 
 ## 14. Force majeure
 

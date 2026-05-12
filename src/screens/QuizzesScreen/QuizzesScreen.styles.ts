@@ -177,10 +177,12 @@ export const QuizRow = styled.button`
     padding-left 0.18s ease,
     background 0.18s ease;
 
-  &:hover {
-    padding-left: 0.5rem;
-    background: ${(p) =>
-      `color-mix(in oklab, ${p.theme.colors.tertiary} 5%, transparent)`};
+  ${(p) => p.theme.media.hover} {
+    &:hover {
+      padding-left: 0.5rem;
+      background: ${(p) =>
+        `color-mix(in oklab, ${p.theme.colors.tertiary} 5%, transparent)`};
+    }
   }
 `;
 
@@ -268,9 +270,11 @@ export const QuizArrow = styled.span`
     color 0.15s,
     transform 0.15s;
 
-  ${QuizRow}:hover & {
-    color: ${(p) => p.theme.colors.tertiary};
-    transform: translateX(3px);
+  ${(p) => p.theme.media.hover} {
+    ${QuizRow}:hover & {
+      color: ${(p) => p.theme.colors.tertiary};
+      transform: translateX(3px);
+    }
   }
 `;
 

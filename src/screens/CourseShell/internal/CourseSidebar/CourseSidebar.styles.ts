@@ -53,9 +53,11 @@ export const CollapseButton = styled.button`
     background 0.15s,
     color 0.15s;
 
-  &:hover {
-    background: ${(p) => p.theme.colors.background};
-    color: ${(p) => p.theme.colors.foreground};
+  ${(p) => p.theme.media.hover} {
+    &:hover {
+      background: ${(p) => p.theme.colors.background};
+      color: ${(p) => p.theme.colors.foreground};
+    }
   }
 
   &:focus-visible {
@@ -172,6 +174,16 @@ export const ReviewsDueBanner = styled.div`
 export const Tree = styled.div`
   flex: 1;
   overflow-y: auto;
+  /* Prevent scroll chaining — without this, scrolling past the tree's
+     top or bottom on mobile pushes the lesson body in the background
+     up/down. Same pattern as the chat panel's scrolling area. */
+  overscroll-behavior: contain;
+  /* Allow only vertical pan here; horizontal gestures propagate to the
+     parent (SidebarPanelFixed) so the swipe-to-close drag works even
+     when the touch starts on a lesson row. Without this, the browser
+     captures the touch for native vertical scrolling and never hands
+     horizontal movement to framer-motion's drag. */
+  touch-action: pan-y;
   padding: 0.5rem 0;
   ${thinScrollbar}
 `;
@@ -199,8 +211,10 @@ export const ModuleHeader = styled.button<{ $expanded: boolean }>`
   line-height: 1.4;
   transition: background 0.15s;
 
-  &:hover {
-    background: ${(p) => p.theme.colors.background};
+  ${(p) => p.theme.media.hover} {
+    &:hover {
+      background: ${(p) => p.theme.colors.background};
+    }
   }
 `;
 
@@ -293,9 +307,11 @@ export const LessonItem = styled.button<{ $active: boolean }>`
     background 0.15s,
     color 0.15s;
 
-  &:hover {
-    color: ${(p) => p.theme.colors.foreground};
-    background: ${(p) => p.theme.colors.background};
+  ${(p) => p.theme.media.hover} {
+    &:hover {
+      color: ${(p) => p.theme.colors.foreground};
+      background: ${(p) => p.theme.colors.background};
+    }
   }
 `;
 
@@ -333,7 +349,9 @@ export const QuizItem = styled.button<{ $locked?: boolean }>`
     background 0.15s,
     opacity 0.15s;
 
-  ${(p) => !p.$locked && `&:hover { background: ${p.theme.colors.background}; }`}
+  ${(p) =>
+    !p.$locked &&
+    `${p.theme.media.hover} { &:hover { background: ${p.theme.colors.background}; } }`}
 `;
 
 const quizIconColor = ({

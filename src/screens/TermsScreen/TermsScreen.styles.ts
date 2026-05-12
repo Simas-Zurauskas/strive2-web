@@ -60,8 +60,10 @@ export const MarkdownBody = styled.div`
     text-decoration: underline;
     text-underline-offset: 2px;
 
-    &:hover {
-      opacity: 0.8;
+    ${(p) => p.theme.media.hover} {
+      &:hover {
+        opacity: 0.8;
+      }
     }
   }
 

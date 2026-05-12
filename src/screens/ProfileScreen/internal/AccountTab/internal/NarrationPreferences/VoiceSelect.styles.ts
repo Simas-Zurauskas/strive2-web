@@ -33,11 +33,13 @@ export const Trigger = styled.button<{ $open: boolean }>`
   cursor: pointer;
   transition: border-color 0.15s, background 0.15s;
 
-  &:hover:not(:disabled) {
-    border-color: ${(p) =>
-      p.$open
-        ? p.theme.colors.accent
-        : `color-mix(in oklab, ${p.theme.colors.tertiary} 50%, ${p.theme.colors.surfaceBorder})`};
+  ${(p) => p.theme.media.hover} {
+    &:hover:not(:disabled) {
+      border-color: ${(p) =>
+        p.$open
+          ? p.theme.colors.accent
+          : `color-mix(in oklab, ${p.theme.colors.tertiary} 50%, ${p.theme.colors.surfaceBorder})`};
+    }
   }
 
   &:focus-visible {

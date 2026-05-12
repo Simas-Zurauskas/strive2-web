@@ -16,21 +16,10 @@ import { UsageHistoryList } from '../UsageTab/internal/UsageHistoryList/UsageHis
 import { UsageSummaryCards } from '../UsageTab/internal/UsageSummaryCards/UsageSummaryCards';
 import type { UsageSortDir, UsageSortField } from '@/api/types';
 
-const USAGE_PAGE_SIZE = 20;
+const USAGE_PAGE_SIZE = 50;
 
-/**
- * Profile > Billing tab. Primary content is the user-facing `BillingPanel`
- * (plan, credits, ledger, top-ups, portal). For admins, exposes the raw
- * per-call API spend (microcents) from UsageEventModel in a collapsible
- * "engineer view" — useful for debugging actual LLM/BFL/Tavily costs
- * vs. what the user is being charged in credits. The view is gated on
- * `user.isAdmin` (set by ops directly in the DB) AND the underlying
- * usage routes are protected by `requireAdmin` server-side.
- *
- * The summary/history queries are lazy: they only fire when the
- * engineer-view toggle is open, so non-admins never even attempt the
- * call and admins don't pay for the request unless they ask for it.
- */
+// Engineer-view (raw UsageEvent microcents) gated client-side on user.isAdmin
+// AND server-side on requireAdmin. Summary/history queries are lazy-enabled.
 export const BillingTab: React.FC = () => {
   const searchParams = useSearchParams();
   const router = useRouter();

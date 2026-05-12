@@ -36,9 +36,11 @@ export const CopyButton = styled.button`
   border-radius: 4px;
   transition: color 0.15s, background 0.15s;
 
-  &:hover {
-    color: ${(p) => p.theme.colors.foreground};
-    background: ${(p) => p.theme.colors.background};
+  ${(p) => p.theme.media.hover} {
+    &:hover {
+      color: ${(p) => p.theme.colors.foreground};
+      background: ${(p) => p.theme.colors.background};
+    }
   }
 `;
 

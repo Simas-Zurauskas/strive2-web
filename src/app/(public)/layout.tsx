@@ -28,7 +28,7 @@ export default function PublicLayout({ children }: { children: React.ReactNode }
         id="main-content"
         style={{
           paddingTop: showAuthedNav ? '56px' : undefined,
-          minHeight: 'calc(100vh - 56px)',
+          minHeight: 'calc(100dvh - 56px)',
           display: 'flex',
           flexDirection: 'column',
         }}

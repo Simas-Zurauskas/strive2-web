@@ -19,17 +19,21 @@ export const Container = styled.div`
     box-shadow 160ms ease,
     transform 220ms ease;
 
-  &:hover {
-    border-color: ${(p) =>
-      `color-mix(in oklab, ${p.theme.colors.accent} 35%, ${p.theme.colors.surfaceBorder})`};
-    box-shadow: var(--shadow-lift);
-    transform: translateY(-2px);
+  ${(p) => p.theme.media.hover} {
+    &:hover {
+      border-color: ${(p) =>
+        `color-mix(in oklab, ${p.theme.colors.accent} 35%, ${p.theme.colors.surfaceBorder})`};
+      box-shadow: var(--shadow-lift);
+      transform: translateY(-2px);
+    }
   }
 
   @media (prefers-reduced-motion: reduce) {
     transition: border-color 160ms ease, box-shadow 160ms ease;
-    &:hover {
-      transform: none;
+    ${(p) => p.theme.media.hover} {
+      &:hover {
+        transform: none;
+      }
     }
   }
 

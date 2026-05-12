@@ -72,10 +72,12 @@ export const BookmarkButton = styled.button<{ $active: boolean }>`
     color 0.15s,
     transform 0.15s ease;
 
-  &:hover {
-    background: ${(p) =>
-      p.$active ? `${p.theme.colors.tertiary}40` : 'var(--scrim-strong)'};
-    transform: scale(1.05);
+  ${(p) => p.theme.media.hover} {
+    &:hover {
+      background: ${(p) =>
+        p.$active ? `${p.theme.colors.tertiary}40` : 'var(--scrim-strong)'};
+      transform: scale(1.05);
+    }
   }
 
   &:active {
@@ -133,13 +135,15 @@ export const BookmarkButtonInline = styled.button<{ $active: boolean }>`
     stroke-width: 1.75;
   }
 
-  &:hover {
-    color: ${(p) => p.theme.colors.tertiary};
-    border-color: ${(p) =>
-      p.$active
-        ? p.theme.colors.tertiary
-        : `color-mix(in oklab, ${p.theme.colors.tertiary} 50%, ${p.theme.colors.border})`};
-    background: ${(p) => p.theme.colors.tertiaryMuted};
+  ${(p) => p.theme.media.hover} {
+    &:hover {
+      color: ${(p) => p.theme.colors.tertiary};
+      border-color: ${(p) =>
+        p.$active
+          ? p.theme.colors.tertiary
+          : `color-mix(in oklab, ${p.theme.colors.tertiary} 50%, ${p.theme.colors.border})`};
+      background: ${(p) => p.theme.colors.tertiaryMuted};
+    }
   }
 
   &:active {
@@ -202,10 +206,12 @@ export const GenerateButton = styled.button`
     border-color 0.15s,
     background 0.15s;
 
-  &:hover:not(:disabled) {
-    color: ${(p) => p.theme.colors.tertiary};
-    border-color: ${(p) => p.theme.colors.tertiary};
-    background: ${(p) => `${p.theme.colors.tertiary}10`};
+  ${(p) => p.theme.media.hover} {
+    &:hover:not(:disabled) {
+      color: ${(p) => p.theme.colors.tertiary};
+      border-color: ${(p) => p.theme.colors.tertiary};
+      background: ${(p) => `${p.theme.colors.tertiary}10`};
+    }
   }
 
   &:disabled {

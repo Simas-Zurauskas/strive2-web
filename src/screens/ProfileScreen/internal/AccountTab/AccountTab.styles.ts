@@ -46,6 +46,14 @@ export const InfoRow = styled.div`
   &:last-of-type {
     padding-bottom: 0;
   }
+
+  /* On mobile, stack the label above the value so chips/buttons get
+     full row width instead of being squeezed against the label. */
+  ${(p) => p.theme.media.mobile} {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 0.5rem;
+  }
 `;
 
 export const Label = styled.span`
@@ -60,6 +68,7 @@ export const Value = styled.span`
   display: inline-flex;
   align-items: center;
   gap: 0.375rem;
+  flex-wrap: wrap;
 `;
 
 /** Legal-row anchor — the whole row is the link, replacing the previous
@@ -95,13 +104,15 @@ export const LegalLink = styled.a`
     transition: opacity 0.15s, transform 0.15s;
   }
 
-  &:hover {
-    color: ${(p) => p.theme.colors.tertiary};
-  }
+  ${(p) => p.theme.media.hover} {
+    &:hover {
+      color: ${(p) => p.theme.colors.tertiary};
+    }
 
-  &:hover svg {
-    opacity: 1;
-    transform: translate(1px, -1px);
+    &:hover svg {
+      opacity: 1;
+      transform: translate(1px, -1px);
+    }
   }
 `;
 
@@ -118,6 +129,10 @@ export const ProviderTag = styled.span`
   background: ${(p) => `color-mix(in oklab, ${p.theme.colors.tertiary} 8%, transparent)`};
   border: 1px solid ${(p) => `color-mix(in oklab, ${p.theme.colors.tertiary} 24%, transparent)`};
   color: ${(p) => p.theme.colors.tertiary};
+  /* Never break the label inside the chip — chips stay pill-shaped
+     and the parent flow handles overflow via Value's flex-wrap or
+     InfoRow's column stack on mobile. */
+  white-space: nowrap;
 `;
 
 // ── Danger zone ───────────────────────────────────────
@@ -184,10 +199,12 @@ export const DangerButton = styled.button<{ $loading?: boolean }>`
   border: 1px solid transparent;
   box-shadow: var(--shadow-card);
 
-  &:hover:not(:disabled) {
-    opacity: 0.92;
-    box-shadow: 0 2px 6px ${(p) =>
-      `color-mix(in srgb, ${p.theme.colors.error} 18%, transparent)`};
+  ${(p) => p.theme.media.hover} {
+    &:hover:not(:disabled) {
+      opacity: 0.92;
+      box-shadow: 0 2px 6px ${(p) =>
+        `color-mix(in srgb, ${p.theme.colors.error} 18%, transparent)`};
+    }
   }
 
   &:focus-visible {

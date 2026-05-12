@@ -37,7 +37,7 @@ export default function SignedInLayout({ children }: { children: React.ReactNode
           display: 'flex',
           alignItems: 'center',
           justifyContent: 'center',
-          height: '100vh',
+          height: '100dvh',
           width: '100vw',
         }}
       >
@@ -66,7 +66,7 @@ export default function SignedInLayout({ children }: { children: React.ReactNode
           // the Navbar's hide-on-scroll effect and transitions in lockstep.
           paddingTop: 'var(--navbar-offset, 56px)',
           transition: 'padding-top 0.3s ease',
-          minHeight: 'calc(100vh - 56px)',
+          minHeight: 'calc(100dvh - 56px)',
           display: 'flex',
           flexDirection: 'column',
         }}

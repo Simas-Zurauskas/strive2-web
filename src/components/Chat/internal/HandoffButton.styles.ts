@@ -37,13 +37,15 @@ export const HandoffButton = styled.button`
     border-color 0.15s ease,
     transform 0.1s ease;
 
-  &:hover {
-    /* Subtle accent-tinted background on hover. accentMuted is the
-       already-defined low-alpha accent overlay used elsewhere for
-       hover/selected affordances; reusing it keeps the visual
-       language consistent with the rest of the app. */
-    background: ${(p) => p.theme.colors.accentMuted};
-    border-color: ${(p) => p.theme.colors.accent};
+  ${(p) => p.theme.media.hover} {
+    &:hover {
+      /* Subtle accent-tinted background on hover. accentMuted is the
+         already-defined low-alpha accent overlay used elsewhere for
+         hover/selected affordances; reusing it keeps the visual
+         language consistent with the rest of the app. */
+      background: ${(p) => p.theme.colors.accentMuted};
+      border-color: ${(p) => p.theme.colors.accent};
+    }
   }
 
   &:active {

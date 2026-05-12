@@ -4,6 +4,7 @@ import Link from 'next/link';
 import { Button } from '@/components';
 import { useBillingPlans } from '@/hooks/useBilling';
 import { formatAllowance } from '@/lib/allowance';
+import { formatPlanLessonsPerMonth, BASE_LESSON_FOOTNOTE } from '@/lib/pricingFormat';
 import { useMotion } from '@/theme/motionPresets';
 import * as S from './PricingTeaser.styles';
 import { PRICING_TEASER } from '../../constants';
@@ -83,9 +84,15 @@ export const PricingTeaser = ({ onOpenSignUp }: PricingTeaserProps) => {
                   <S.TierName>{plan.displayName}</S.TierName>
                   <S.TierPrice>{formatPrice(plan.monthlyUsd)}</S.TierPrice>
                   <S.TierAllowance>
-                    {formatAllowance(plan.monthlyAllowance, allowanceUnit)} allowances / month
+                    {formatAllowance(plan.monthlyAllowance, allowanceUnit)}
+                    {plan.key === 'free' ? '' : '×'} baseline usage / month
                   </S.TierAllowance>
-                  <S.TierGuidance>{copy.guidance}</S.TierGuidance>
+                  {/* Lesson estimate is derived from the live catalog — when
+                      the backend's referenceCosts or allowance multipliers
+                      shift, this teaser re-renders without a code change.
+                      `data` is guaranteed defined here because we're inside
+                      the `ready` branch (`isLoading=false && anchors ok`). */}
+                  <S.TierGuidance>{data ? formatPlanLessonsPerMonth(plan.key, data) : ''}</S.TierGuidance>
                   <S.TierTagline>{copy.tagline}</S.TierTagline>
 
                   <S.CtaSlot>
@@ -108,6 +115,10 @@ export const PricingTeaser = ({ onOpenSignUp }: PricingTeaserProps) => {
         )}
 
         <S.Body>{PRICING_TEASER.body}</S.Body>
+        {/* Footnote resolves the "*" suffix on every "≈ N lessons*" estimate
+            in the cards above. One sentence; same string used on PricingScreen
+            and TopupControl so the meaning is consistent app-wide. */}
+        {ready && <S.LessonFootnote>* {BASE_LESSON_FOOTNOTE}</S.LessonFootnote>}
         <S.CtaLink as={Link} href={PRICING_TEASER.comparisonCta.href} data-analytics-id="landing.pricing.see-plans">
           {PRICING_TEASER.comparisonCta.label} →
         </S.CtaLink>

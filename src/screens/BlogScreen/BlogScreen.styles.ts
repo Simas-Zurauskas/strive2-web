@@ -78,9 +78,11 @@ export const FeaturedLink = styled(Link)`
   color: inherit;
   transition: border-color 0.15s ease;
 
-  &:hover {
-    border-color: ${(p) =>
-      `color-mix(in oklab, ${p.theme.colors.accent} 50%, ${p.theme.colors.surfaceBorder})`};
+  ${(p) => p.theme.media.hover} {
+    &:hover {
+      border-color: ${(p) =>
+        `color-mix(in oklab, ${p.theme.colors.accent} 50%, ${p.theme.colors.surfaceBorder})`};
+    }
   }
 `;
 
@@ -146,8 +148,10 @@ export const CategoryPill = styled(Link)<{ $active?: boolean }>`
     color 0.15s ease,
     border-color 0.15s ease;
 
-  &:hover {
-    border-color: ${(p) => p.theme.colors.foreground};
+  ${(p) => p.theme.media.hover} {
+    &:hover {
+      border-color: ${(p) => p.theme.colors.foreground};
+    }
   }
 `;
 
@@ -177,11 +181,13 @@ export const PostCardLink = styled(Link)`
     border-color 0.15s ease,
     background 0.15s ease;
 
-  &:hover {
-    border-color: ${(p) =>
-      `color-mix(in oklab, ${p.theme.colors.accent} 35%, ${p.theme.colors.surfaceBorder})`};
-    background: ${(p) =>
-      `color-mix(in oklab, ${p.theme.colors.accent} 3%, ${p.theme.colors.surface})`};
+  ${(p) => p.theme.media.hover} {
+    &:hover {
+      border-color: ${(p) =>
+        `color-mix(in oklab, ${p.theme.colors.accent} 35%, ${p.theme.colors.surfaceBorder})`};
+      background: ${(p) =>
+        `color-mix(in oklab, ${p.theme.colors.accent} 3%, ${p.theme.colors.surface})`};
+    }
   }
 `;
 
@@ -520,11 +526,13 @@ export const ReadNextLink = styled(Link)`
     border-color 0.15s ease,
     background 0.15s ease;
 
-  &:hover {
-    border-color: ${(p) =>
-      `color-mix(in oklab, ${p.theme.colors.accent} 50%, ${p.theme.colors.surfaceBorder})`};
-    background: ${(p) =>
-      `color-mix(in oklab, ${p.theme.colors.accent} 4%, ${p.theme.colors.surface})`};
+  ${(p) => p.theme.media.hover} {
+    &:hover {
+      border-color: ${(p) =>
+        `color-mix(in oklab, ${p.theme.colors.accent} 50%, ${p.theme.colors.surfaceBorder})`};
+      background: ${(p) =>
+        `color-mix(in oklab, ${p.theme.colors.accent} 4%, ${p.theme.colors.surface})`};
+    }
   }
 `;
 

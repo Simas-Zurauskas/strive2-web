@@ -101,12 +101,12 @@ export const OutOfCreditsModal = () => {
   return createPortal(
     <>
       <S.Backdrop onClick={close} />
-      <S.Dialog ref={dialogRef} role="alertdialog" aria-labelledby="out-of-credits-title" aria-modal="true">
+      <S.Dialog ref={dialogRef} role="alertdialog" aria-labelledby="out-of-allowance-title" aria-modal="true">
         <S.CloseBtn onClick={close} aria-label="Close">×</S.CloseBtn>
 
         <S.Header>
           <TopupBar />
-          <S.Title id="out-of-credits-title">You&rsquo;re out of allowance</S.Title>
+          <S.Title id="out-of-allowance-title">You&rsquo;re out of allowance</S.Title>
           <S.Lede>
             {canUpgrade
               ? 'Pick up where you left off — upgrade for a bigger monthly pool, or buy a one-off top-up.'
@@ -141,7 +141,7 @@ export const OutOfCreditsModal = () => {
           {activeTab === 'upgrade' ? (
             <S.UpgradeContent>
               <S.UpgradeBlurb>
-                A bigger monthly pool, no expiring credits while subscribed, all generation features.
+                A bigger monthly pool, no expiring allowance while subscribed, all generation features.
               </S.UpgradeBlurb>
               <Button
                 variant="primary"

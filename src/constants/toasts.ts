@@ -12,7 +12,16 @@ export const TOASTS = {
   COURSE_READY: 'Course is ready!',
 
   // ── Lesson generation ────────────────────────────────
-  GENERATION_COMPLETE: 'Generation complete',
+  // Per-feature completion messages. Used by the central WS-status
+  // router in useJobManager.tsx, which also decides whether to show
+  // the toast at all (suppressed when the user is already on the
+  // target page).
+  GENERATION_COMPLETE: 'Lesson ready.',
+  GENERATION_COMPLETE_HERO: 'Hero image generated.',
+  GENERATION_COMPLETE_LINKS: 'Further reading curated.',
+  GENERATION_COMPLETE_RECALL: 'Recall cards ready.',
+  GENERATION_COMPLETE_NARRATION: 'Narration ready.',
+  GENERATION_COMPLETE_QUIZ: 'Quiz ready.',
   GENERATION_FAILED: 'Generation failed',
   GENERATION_FAILED_RETRY: 'Generation failed. Please try again.',
   COURSE_COMPLETE: 'Course complete.',

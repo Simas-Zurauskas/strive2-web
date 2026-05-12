@@ -9,14 +9,14 @@ import { onAccent } from '@/theme';
 
 export const Root = styled.div`
   position: fixed;
-  right: 1.5rem;
-  bottom: 1.5rem;
+  right: max(1.5rem, var(--safe-area-right));
+  bottom: max(1.5rem, var(--safe-area-bottom));
   z-index: 60;
   pointer-events: none;
 
   ${(p) => p.theme.media.tablet} {
-    right: 1rem;
-    bottom: 1rem;
+    right: max(1rem, var(--safe-area-right));
+    bottom: max(1rem, var(--safe-area-bottom));
   }
 `;
 
@@ -44,10 +44,12 @@ export const Fab = styled.button`
     box-shadow 0.15s,
     transform 0.15s;
 
-  &:hover {
-    background: ${(p) => p.theme.colors.accentHover};
-    box-shadow: var(--shadow-panel-hover);
-    transform: translateY(-1px);
+  ${(p) => p.theme.media.hover} {
+    &:hover {
+      background: ${(p) => p.theme.colors.accentHover};
+      box-shadow: var(--shadow-panel-hover);
+      transform: translateY(-1px);
+    }
   }
 
   &:active {
@@ -77,7 +79,7 @@ export const FabLabel = styled.span`
 export const Widget = styled.div`
   pointer-events: auto;
   width: 380px;
-  height: min(640px, calc(100vh - 3rem));
+  height: min(640px, calc(100dvh - 3rem));
   display: flex;
   flex-direction: column;
   border-radius: 16px;
@@ -94,12 +96,12 @@ export const Widget = styled.div`
      ≤640 rule made the widget span almost the whole viewport with the
      left edge butted against the screen edge. */
   ${(p) => p.theme.media.tablet} {
-    height: min(620px, calc(100vh - 2rem));
+    height: min(620px, calc(100dvh - 2rem));
   }
 
   ${(p) => p.theme.media.mobile} {
     width: calc(100vw - 1.5rem);
-    height: calc(100vh - 5rem);
+    height: calc(100dvh - 5rem);
   }
 `;
 
@@ -141,9 +143,11 @@ export const HeaderAction = styled.button`
     background 0.15s,
     color 0.15s;
 
-  &:hover {
-    background: ${(p) => p.theme.colors.tertiaryMuted};
-    color: ${(p) => p.theme.colors.foreground};
+  ${(p) => p.theme.media.hover} {
+    &:hover {
+      background: ${(p) => p.theme.colors.tertiaryMuted};
+      color: ${(p) => p.theme.colors.foreground};
+    }
   }
 
   &:focus-visible {

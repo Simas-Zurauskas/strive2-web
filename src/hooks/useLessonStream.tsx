@@ -42,6 +42,7 @@ interface StartStreamParams {
   lessonIndex: number;
   includeImage: boolean;
   includeLinks: boolean;
+  includeRecallCards: boolean;
 }
 
 interface LessonStreamContextValue {
@@ -49,8 +50,10 @@ interface LessonStreamContextValue {
   start: (params: StartStreamParams) => Promise<void>;
   includeImage: boolean;
   includeLinks: boolean;
+  includeRecallCards: boolean;
   setIncludeImage: (value: boolean) => void;
   setIncludeLinks: (value: boolean) => void;
+  setIncludeRecallCards: (value: boolean) => void;
 }
 
 const LessonStreamContext = createContext<LessonStreamContextValue | null>(null);
@@ -77,6 +80,13 @@ export const LessonStreamProvider = ({ children }: { children: React.ReactNode }
   const [includeLinks, setIncludeLinksState] = useState(() =>
     typeof window === 'undefined' ? false : localStorage.getItem('gen_includeLinks') === 'true',
   );
+  // Recall cards default ON — they're the highest-value optional feature
+  // (spaced retrieval + retrieval practice are the pedagogical core).
+  // Only read `false` from storage when the user explicitly opted out;
+  // missing key means "not seen yet" → keep the default ON.
+  const [includeRecallCards, setIncludeRecallCardsState] = useState(() =>
+    typeof window === 'undefined' ? true : localStorage.getItem('gen_includeRecallCards') !== 'false',
+  );
 
   const setIncludeImage = (value: boolean) => {
     setIncludeImageState(value);
@@ -86,6 +96,11 @@ export const LessonStreamProvider = ({ children }: { children: React.ReactNode }
   const setIncludeLinks = (value: boolean) => {
     setIncludeLinksState(value);
     localStorage.setItem('gen_includeLinks', String(value));
+  };
+
+  const setIncludeRecallCards = (value: boolean) => {
+    setIncludeRecallCardsState(value);
+    localStorage.setItem('gen_includeRecallCards', String(value));
   };
 
   // Merge a single progress event into the active stream. Caller guarantees
@@ -308,6 +323,7 @@ export const LessonStreamProvider = ({ children }: { children: React.ReactNode }
           lessonIndex: params.lessonIndex,
           includeImage: params.includeImage,
           includeLinks: params.includeLinks,
+          includeRecallCards: params.includeRecallCards,
         });
         setActive((prev) => (prev ? { ...prev, jobId, isStarting: false } : prev));
       } catch (err: unknown) {
@@ -337,11 +353,20 @@ export const LessonStreamProvider = ({ children }: { children: React.ReactNode }
   );
 
   // Stable identity (see useSocket / useJobManager for rationale).
-  // `start` is useCallback-wrapped above; the two setters are stable;
-  // `active`/`includeImage`/`includeLinks` are the only changing deps.
+  // `start` is useCallback-wrapped above; the setters are stable; only
+  // `active` + the three include-flags change.
   const value = useMemo(
-    () => ({ active, start, includeImage, includeLinks, setIncludeImage, setIncludeLinks }),
-    [active, start, includeImage, includeLinks],
+    () => ({
+      active,
+      start,
+      includeImage,
+      includeLinks,
+      includeRecallCards,
+      setIncludeImage,
+      setIncludeLinks,
+      setIncludeRecallCards,
+    }),
+    [active, start, includeImage, includeLinks, includeRecallCards],
   );
 
   return (
@@ -362,7 +387,16 @@ export const useLessonStream = (params: UseLessonStreamParams) => {
   if (!ctx) throw new Error('useLessonStream must be used within LessonStreamProvider');
   const { generatingLesson } = useJobManager();
 
-  const { active, start, includeImage, includeLinks, setIncludeImage, setIncludeLinks } = ctx;
+  const {
+    active,
+    start,
+    includeImage,
+    includeLinks,
+    includeRecallCards,
+    setIncludeImage,
+    setIncludeLinks,
+    setIncludeRecallCards,
+  } = ctx;
 
   const isActiveForThis =
     !!active &&
@@ -405,6 +439,7 @@ export const useLessonStream = (params: UseLessonStreamParams) => {
       lessonIndex: params.lessonIndex,
       includeImage,
       includeLinks,
+      includeRecallCards,
     });
   }, [
     isStreaming,
@@ -416,6 +451,7 @@ export const useLessonStream = (params: UseLessonStreamParams) => {
     params.lessonIndex,
     includeImage,
     includeLinks,
+    includeRecallCards,
   ]);
 
   return {
@@ -430,8 +466,10 @@ export const useLessonStream = (params: UseLessonStreamParams) => {
     isAnyLessonGenerating,
     includeImage,
     includeLinks,
+    includeRecallCards,
     handleIncludeImage: setIncludeImage,
     handleIncludeLinks: setIncludeLinks,
+    handleIncludeRecallCards: setIncludeRecallCards,
     handleGenerate,
   };
 };

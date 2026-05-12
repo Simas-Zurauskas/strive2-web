@@ -102,9 +102,11 @@ export const CloseButton = styled.button`
   cursor: pointer;
   transition: color 0.15s, background 0.15s;
 
-  &:hover {
-    color: ${(p) => p.theme.colors.foreground};
-    background: ${(p) => p.theme.colors.tertiaryMuted};
+  ${(p) => p.theme.media.hover} {
+    &:hover {
+      color: ${(p) => p.theme.colors.foreground};
+      background: ${(p) => p.theme.colors.tertiaryMuted};
+    }
   }
 
   &:focus-visible {

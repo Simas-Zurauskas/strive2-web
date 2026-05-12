@@ -36,8 +36,10 @@ export const PillLink = styled(Link)<{ $tone: CreditPillTone }>`
   text-decoration: none;
   transition: transform 120ms ease, box-shadow 120ms ease;
 
-  &:hover {
-    transform: translateY(-1px);
+  ${(p) => p.theme.media.hover} {
+    &:hover {
+      transform: translateY(-1px);
+    }
   }
 
   ${(p) => toneStyles[p.$tone]}

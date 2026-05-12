@@ -45,8 +45,10 @@ export const MermaidToolbarButton = styled.button`
     background 0.15s,
     opacity 0.15s;
 
-  &:hover:not(:disabled) {
-    background: ${(p) => p.theme.colors.surface};
+  ${(p) => p.theme.media.hover} {
+    &:hover:not(:disabled) {
+      background: ${(p) => p.theme.colors.surface};
+    }
   }
 
   &:disabled {

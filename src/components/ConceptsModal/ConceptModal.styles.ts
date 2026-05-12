@@ -27,7 +27,7 @@ export const Dialog = styled.div`
   z-index: 101;
   width: 92%;
   max-width: 640px;
-  max-height: calc(100vh - 3rem);
+  max-height: calc(100dvh - 3rem);
   background: ${(p) => p.theme.colors.surface};
   border: 1px solid ${(p) => p.theme.colors.surfaceBorder};
   border-radius: 14px;
@@ -56,9 +56,11 @@ export const CloseBtn = styled.button`
   z-index: 2;
   transition: color 0.15s, background 0.15s;
 
-  &:hover {
-    color: ${(p) => p.theme.colors.foreground};
-    background: ${(p) => p.theme.colors.background};
+  ${(p) => p.theme.media.hover} {
+    &:hover {
+      color: ${(p) => p.theme.colors.foreground};
+      background: ${(p) => p.theme.colors.background};
+    }
   }
 `;
 

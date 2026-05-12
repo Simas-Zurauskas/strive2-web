@@ -3,10 +3,22 @@ import { readdirSync, readFileSync, statSync } from 'fs';
 import path from 'path';
 import matter from 'gray-matter';
 import { cache } from 'react';
+import {
+  buildKbPricingReplacementsFromCatalog,
+  substitutePricingPlaceholders,
+} from '../kbPricingReplacements';
+import { PRICING_SNAPSHOT } from '../pricingSnapshot';
 import { KB_TOPICS, getTopicConfig } from './topics';
 import type { KbArticle, KbFrontmatter, KbSearchEntry, KbTopic } from './types';
 
 const CONTENT_ROOT = path.join(process.cwd(), 'src/content/kb');
+
+// Build-time replacements map. Computed once at module load — the snapshot
+// is static, so the replacement strings are stable for the whole build.
+// `body` returned from `readArticleFile` has these substitutions ALREADY
+// APPLIED, so consumers (KbArticleScreen, the SSR'd HTML, the static
+// content hash) all work from the same concrete numbers.
+const KB_PRICING_REPLACEMENTS = buildKbPricingReplacementsFromCatalog(PRICING_SNAPSHOT);
 
 const stripMarkdown = (md: string): string =>
   md
@@ -70,7 +82,12 @@ const readArticleFile = (topic: string, filename: string): KbArticle | null => {
   const { data, content } = matter(raw);
   const fm = validateFrontmatter(data, topic, slug, filePath);
   const topicCfg = getTopicConfig(topic);
-  const body = content.trim();
+  // Pricing placeholders are resolved server-side (build time) so the
+  // SSR'd HTML carries concrete numbers — crawlers and pre-hydration
+  // browsers never see literal `{{tokens}}`. The same substitution runs
+  // api-side before Pinecone embedding, so KB content rendered here and
+  // KB content searched by the mentor agree on numbers.
+  const body = substitutePricingPlaceholders(content.trim(), KB_PRICING_REPLACEMENTS);
   const contentHash = createHash('sha256').update(`${JSON.stringify(fm)}\n${body}`).digest('hex');
   return {
     title: fm.title,

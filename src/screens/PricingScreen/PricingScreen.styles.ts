@@ -270,6 +270,20 @@ export const SkBar = styled.span<{ $w?: string; $h?: string; $radius?: string }>
 // component (client/src/components/Accordion). Only the wrapper section
 // + italic-serif title live here.
 
+// One-line clarification under the plan grid (resolves the "*" on every
+// "≈ N lessons*" estimate in the cards above). Same string used on the
+// landing page teaser and the top-up control footnote, so the definition
+// of a "lesson" stays consistent across the app.
+export const LessonFootnote = styled.p`
+  font-size: 0.8125rem;
+  line-height: 1.5;
+  color: ${(p) => p.theme.colors.muted};
+  text-align: center;
+  margin: 1.5rem auto 0;
+  max-width: 60ch;
+  opacity: 0.85;
+`;
+
 export const FaqSection = styled.section`
   display: flex;
   flex-direction: column;

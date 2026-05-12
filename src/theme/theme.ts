@@ -224,6 +224,15 @@ export const media = {
   tablet: `@media (max-width: ${breakpoints.tablet}px)`,
   tabletLarge: `@media (max-width: ${breakpoints.tabletLarge}px)`,
   desktop: `@media (max-width: ${breakpoints.desktop}px)`,
+  /**
+   * Pointing devices that can hover (mouse, trackpad). Wrap `:hover` rules
+   * with this guard so touch devices don't "stick" the hover state after a
+   * tap. Pair `&:hover` blocks like:
+   *   ${media.hover} { &:hover { background: ... } }
+   */
+  hover: `@media (hover: hover) and (pointer: fine)`,
+  /** Touch-primary devices (no fine pointer). */
+  touch: `@media (hover: none) and (pointer: coarse)`,
 } as const;
 
 // ── CSS variable references ─────────────────────────────

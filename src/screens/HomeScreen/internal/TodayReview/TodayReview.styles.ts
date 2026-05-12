@@ -78,8 +78,10 @@ export const Cell = styled.button<{ $passive?: boolean }>`
   ${(p) =>
     !p.$passive &&
     `
-    &:hover {
-      background: ${p.theme.colors.accentMuted};
+    ${p.theme.media.hover} {
+      &:hover {
+        background: ${p.theme.colors.accentMuted};
+      }
     }
   `}
 
@@ -173,9 +175,11 @@ export const Arrow = styled.span`
     color 160ms ease,
     transform 160ms ease;
 
-  ${Cell}:hover & {
-    color: ${(p) => p.theme.colors.accent};
-    transform: translateX(3px);
+  ${(p) => p.theme.media.hover} {
+    ${Cell}:hover & {
+      color: ${(p) => p.theme.colors.accent};
+      transform: translateX(3px);
+    }
   }
 `;
 

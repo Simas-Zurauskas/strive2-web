@@ -10,9 +10,11 @@ const primaryStyles = css`
   font-weight: 600;
   box-shadow: var(--shadow-btn);
 
-  &:hover:not(:disabled) {
-    background: ${(p) => p.theme.colors.accentHover};
-    box-shadow: var(--shadow-btn-hover);
+  ${(p) => p.theme.media.hover} {
+    &:hover:not(:disabled) {
+      background: ${(p) => p.theme.colors.accentHover};
+      box-shadow: var(--shadow-btn-hover);
+    }
   }
 
   &:active:not(:disabled) {
@@ -26,10 +28,12 @@ const secondaryStyles = css`
   color: ${(p) => p.theme.colors.foreground};
   border: 1px solid ${(p) => p.theme.colors.border};
 
-  &:hover:not(:disabled) {
-    border-color: ${(p) => p.theme.colors.tertiary};
-    color: ${(p) => p.theme.colors.tertiary};
-    background: ${(p) => p.theme.colors.tertiaryMuted};
+  ${(p) => p.theme.media.hover} {
+    &:hover:not(:disabled) {
+      border-color: ${(p) => p.theme.colors.tertiary};
+      color: ${(p) => p.theme.colors.tertiary};
+      background: ${(p) => p.theme.colors.tertiaryMuted};
+    }
   }
 
   &:active:not(:disabled) {
@@ -46,9 +50,11 @@ const dangerStyles = css`
   font-weight: 600;
   box-shadow: var(--shadow-btn);
 
-  &:hover:not(:disabled) {
-    opacity: 0.9;
-    box-shadow: var(--shadow-btn-hover);
+  ${(p) => p.theme.media.hover} {
+    &:hover:not(:disabled) {
+      opacity: 0.9;
+      box-shadow: var(--shadow-btn-hover);
+    }
   }
 
   &:active:not(:disabled) {

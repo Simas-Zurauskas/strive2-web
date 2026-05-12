@@ -92,11 +92,13 @@ export const Card = styled(motion.div)`
   border-radius: var(--radius-lg);
   transition: border-color 0.15s, box-shadow 0.15s, transform 0.15s;
 
-  &:hover {
-    border-color: ${(p) =>
-      `color-mix(in oklab, ${p.theme.colors.tertiary} 35%, ${p.theme.colors.surfaceBorder})`};
-    box-shadow: var(--shadow-card);
-    transform: translateY(-1px);
+  ${(p) => p.theme.media.hover} {
+    &:hover {
+      border-color: ${(p) =>
+        `color-mix(in oklab, ${p.theme.colors.tertiary} 35%, ${p.theme.colors.surfaceBorder})`};
+      box-shadow: var(--shadow-card);
+      transform: translateY(-1px);
+    }
   }
 `;
 

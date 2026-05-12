@@ -6,7 +6,7 @@ summary: What Strive stores, what we do with it, and the things we explicitly do
 tags: [privacy, data, account]
 order: 10
 updated: 2026-05-10
-related: [understanding-credits-and-allowance, privacy-policy, terms-of-service]
+related: [understanding-your-allowance, privacy-policy, terms-of-service]
 ---
 
 We take privacy seriously. This page is the friendlier sibling of our [privacy policy](/privacy) — it explains, in plain language, what Strive stores about you and what we do with it.

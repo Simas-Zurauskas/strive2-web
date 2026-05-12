@@ -6,6 +6,26 @@ import * as S from './UsageHistoryList.styles';
 import type { UsageHistoryData } from '@/api/routes/usage';
 import type { UsageEvent, UsageSortDir, UsageSortField } from '@/api/types';
 
+/**
+ * Compute the markup ratio applied to a row from its vendor-vs-charged
+ * microcents. Returns a string like "4×" / "5×" / "2×" — or "—" when there's
+ * no markup (charged === vendor) or no vendor cost (defensive).
+ *
+ * Why derived rather than stored: the markup table in pricingConfig.ts is
+ * the single source of truth and can change between rows. Computing live
+ * from the row's own numbers means we always show what was actually charged
+ * for THAT row, not what's currently configured.
+ */
+const computeMarkupLabel = (vendor: number, charged: number): string => {
+  if (!vendor || vendor <= 0) return '—';
+  const ratio = charged / vendor;
+  if (Math.abs(ratio - 1) < 0.05) return '—'; // effectively no markup
+  // Show whole number when close; otherwise 1 decimal place.
+  const rounded = Math.round(ratio);
+  if (Math.abs(ratio - rounded) < 0.05) return `${rounded}×`;
+  return `${ratio.toFixed(1)}×`;
+};
+
 interface Props {
   data?: UsageHistoryData;
   loading: boolean;
@@ -67,9 +87,10 @@ const COLUMNS: ColumnDef[] = [
   { key: null, label: 'Action', align: 'left' },
   { key: 'timestamp', label: 'Time', align: 'left' },
   { key: 'costMicroCents', label: 'Vendor', align: 'right' },
-  { key: 'chargedMicroCents', label: 'Credits', align: 'right' },
-  { key: null, label: 'Plan', align: 'left' },
-  { key: null, label: 'You pay', align: 'right' },
+  { key: null, label: 'Markup', align: 'right' },
+  { key: 'chargedMicroCents', label: 'Charged', align: 'right' },
+  { key: null, label: 'Credits', align: 'right' },
+  { key: null, label: 'Bucket', align: 'left' },
 ];
 
 const SortHeader: React.FC<{
@@ -102,9 +123,10 @@ const SortHeader: React.FC<{
 const Row: React.FC<{ event: UsageEvent }> = ({ event }) => {
   const [open, setOpen] = useState(false);
   const hasMetadata = Object.keys(event.metadata ?? {}).length > 0;
-  const markedUp = event.chargedMicroCents !== event.costMicroCents;
   const plan = planCellLabel(event);
   const credits = event.creditsCharged;
+  const markupLabel = computeMarkupLabel(event.costMicroCents, event.chargedMicroCents);
+  const versionLabel = event.pricingVersion ?? 'legacy';
 
   return (
     <S.Row
@@ -118,23 +140,45 @@ const Row: React.FC<{ event: UsageEvent }> = ({ event }) => {
         </S.ServiceBadge>
         <S.Action>{event.action}</S.Action>
         <S.Time>{formatTime(event.timestamp)}</S.Time>
-        <S.VendorCost title="Vendor cost (what we paid the provider)">
+        <S.VendorCost title="Vendor cost — what we paid the provider">
           {formatMicroCents(event.costMicroCents)}
-          {markedUp && (
-            <>
-              {' '}
-              <S.Muted>(2×)</S.Muted>
-            </>
-          )}
         </S.VendorCost>
-        <S.CreditsCell title="Decimal credits this row was worth">
+        <S.CreditsCell title={`Markup factor under pricing version ${versionLabel}`}>
+          {markupLabel === '—' ? <S.Muted>—</S.Muted> : markupLabel}
+        </S.CreditsCell>
+        <S.CreditsCell title="Charged $ — vendor × markup. This is what the user paid the platform.">
+          {formatMicroCents(event.chargedMicroCents)}
+        </S.CreditsCell>
+        <S.CreditsCell title="Credits debited from balance (decimal)">
           {credits > 0 ? credits.toFixed(2) : <S.Muted>—</S.Muted>}
         </S.CreditsCell>
-        <S.PlanCell $kind={plan.kind}>{plan.label}</S.PlanCell>
-        <S.Cost>{event.userPaidUsd === null ? <S.Muted>—</S.Muted> : formatUsd(event.userPaidUsd)}</S.Cost>
+        <S.PlanCell
+          $kind={plan.kind}
+          title={
+            plan.kind === 'allowance'
+              ? `Paid from ${plan.label} plan allowance`
+              : plan.kind === 'topup'
+              ? 'Paid from top-up bonus balance (lessons bill at the bonus rate of the MARKUP table)'
+              : plan.kind === 'mixed'
+              ? 'Spanned allowance + bonus'
+              : 'Not yet attributed'
+          }
+        >
+          {plan.label}
+        </S.PlanCell>
       </S.RowHeader>
       {open && hasMetadata && (
         <S.Metadata>
+          <S.MetadataRow>
+            <S.MetadataKey>pricing version</S.MetadataKey>
+            <S.MetadataValue>{versionLabel}</S.MetadataValue>
+          </S.MetadataRow>
+          <S.MetadataRow>
+            <S.MetadataKey>you paid (pro-rated)</S.MetadataKey>
+            <S.MetadataValue>
+              {event.userPaidUsd === null ? '—' : formatUsd(event.userPaidUsd)}
+            </S.MetadataValue>
+          </S.MetadataRow>
           {Object.entries(event.metadata).map(([k, v]) => (
             <S.MetadataRow key={k}>
               <S.MetadataKey>{k}</S.MetadataKey>

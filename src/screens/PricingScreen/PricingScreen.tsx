@@ -17,27 +17,20 @@ import { useBillingPlans, useBillingSummary } from '@/hooks/useBilling';
 import { formatAllowance } from '@/lib/allowance';
 import { analytics } from '@/lib/analytics';
 import { formatDate } from '@/lib/formatDate';
+import { formatPlanLessonsPerMonth, BASE_LESSON_FOOTNOTE } from '@/lib/pricingFormat';
 import { QKeys } from '@/types';
 import * as S from './PricingScreen.styles';
 import type { BillingCadence, BillingPlan, ClientApiError, PlanKey } from '@/api/types';
 
-// Allowance rank — used to compute upgrade vs downgrade for UX labels.
-// Doesn't affect backend behavior; both directions use the same
-// cancel-and-replace Checkout flow so the user gets explicit payment
-// confirmation on every plan switch.
+// UI ranking only — both directions use cancel-and-replace Checkout.
 const PLAN_RANK: Record<PlanKey, number> = { free: 0, starter: 1, pro: 2, studio: 3 };
 const cap = (s: string) => s[0].toUpperCase() + s.slice(1);
 
-// Plain-language translation of the abstract allowance count into typical
-// usage shapes per tier. Lifted (condensed) from the "What can I actually
-// do on each plan?" FAQ accordion below — keep both in lockstep when the
-// wording is revised. Mirrored in `PRICING_TEASER.cards.{free,pro}.guidance`
-// on the landing teaser; align all three together.
-const ALLOWANCE_GUIDANCE: Record<PlanKey, string> = {
-  free: '≈ 4–5 lessons, or a course structure plus a few lessons',
-  starter: '≈ 20–25 lessons / month — a full short course or two',
-  pro: '≈ 50–60 lessons / month — ongoing course building',
-  studio: '≈ 120+ lessons / month — heavy continuous use',
+const ALLOWANCE_TAGLINE: Record<PlanKey, string> = {
+  free: 'A course structure plus a few lessons',
+  starter: 'A full short course or two',
+  pro: 'Ongoing course building',
+  studio: 'Heavy continuous use',
 };
 
 const buildCheckoutCta = ({
@@ -50,40 +43,24 @@ const buildCheckoutCta = ({
   isAuthenticated: boolean;
 }): {
   label: string;
-  /**
-   *  - 'upgrade'   → Checkout cancel-and-replace (user pays now)
-   *  - 'downgrade' → Scheduled downgrade at period end (no charge)
-   *  - 'cancel'    → Scheduled cancellation at period end (no charge)
-   *  - 'checkout'  → Fresh subscription for a currently-free user
-   *  - 'signup'    → Route unauth'd visitor to signup first
-   *  - 'current'   → Button disabled, user is already on this plan
-   */
   action: 'signup' | 'checkout' | 'upgrade' | 'downgrade' | 'cancel' | 'current' | 'hidden';
 } => {
-  // Public visitor → always "Get started" that bounces through signup.
   if (!isAuthenticated) {
     if (planKey === 'free') return { label: 'Get started', action: 'signup' };
     return { label: `Get ${cap(planKey)}`, action: 'signup' };
   }
 
-  // Same plan → disabled marker.
   if (planKey === currentPlan) return { label: 'Current plan', action: 'current' };
 
-  // Targeting Free from a paid plan → native cancel flow (at period end).
   if (planKey === 'free') {
     return { label: 'Cancel subscription', action: 'cancel' };
   }
 
-  // Free user picking a paid plan → new Checkout.
   if (currentPlan === 'free' || !currentPlan) {
     return { label: `Get ${cap(planKey)}`, action: 'checkout' };
   }
 
-  // Paid → paid: direction dictates mechanism.
-  //   - Upgrade: immediate, via Checkout cancel-and-replace (user confirms
-  //     payment explicitly for the new higher tier).
-  //   - Downgrade: scheduled at period end with no charge — user keeps the
-  //     higher plan until it naturally ends.
+  // upgrade: immediate cancel-and-replace; downgrade: scheduled at period end.
   const isUpgrade = PLAN_RANK[planKey] > PLAN_RANK[currentPlan];
   return {
     label: isUpgrade ? `Upgrade to ${cap(planKey)}` : `Downgrade to ${cap(planKey)}`,
@@ -107,10 +84,6 @@ export const PricingScreen: React.FC = () => {
   const isAuthenticated = Boolean(user);
   const currentPlan = summary?.plan;
 
-  // Fire `pricing_page_viewed` once per mount. `from` is inferred from the
-  // document referrer host vs. our own origin — accurate enough for the
-  // landing-vs-direct split and avoids prop-drilling. SSR guard via the
-  // empty-effect-deps useEffect (runs in the browser only).
   useEffect(() => {
     const referrer = typeof document !== 'undefined' ? document.referrer : '';
     let from: 'landing' | 'top_bar' | 'modal' | 'direct' = 'direct';
@@ -119,7 +92,6 @@ export const PricingScreen: React.FC = () => {
         const ref = new URL(referrer);
         const here = window.location;
         if (ref.host === here.host) {
-          // Same-origin referrer: most likely the public landing or top-bar.
           from = ref.pathname === '/' ? 'landing' : 'top_bar';
         }
       }
@@ -127,7 +99,6 @@ export const PricingScreen: React.FC = () => {
       // Malformed referrer — treat as direct.
     }
     analytics.track('pricing_page_viewed', { from });
-     
   }, []);
 
   const handleCadenceToggle = (next: BillingCadence) => {
@@ -135,15 +106,9 @@ export const PricingScreen: React.FC = () => {
     setCadence(next);
     analytics.track('pricing_billing_cycle_toggled', { cycle: next });
   };
-  // Tracks the specific plan card whose CTA is mid-flight, so only that
-  // button shows the spinner. The others stay enabled-but-disabled (no
-  // visual loading) — clicking another mid-redirect would race the Stripe
-  // Checkout flow anyway, so disabling them is the right behavior.
   const [busyPlan, setBusyPlan] = useState<PlanKey | null>(null);
-  // Confirmation dialog state for the two "no-charge, scheduled at period
-  // end" actions (downgrade + cancel). Both need user confirmation because
-  // they're semi-destructive — the user is giving up something at period
-  // boundary without immediate feedback.
+  // Confirmation required: downgrade + cancel happen at period boundary
+  // without immediate feedback, so the user must acknowledge.
   const [pendingConfirm, setPendingConfirm] = useState<PendingConfirm | null>(null);
 
   const portalMutation = useMutation({
@@ -298,7 +263,7 @@ export const PricingScreen: React.FC = () => {
       <S.Header>
         <S.Title>One app. Pick your allowance.</S.Title>
         <S.Subtitle>
-          Every plan unlocks the entire platform — the only thing that changes is how much monthly allowance you get. Allowance is used up as you generate courses, lessons, and quizzes, and refunded in full on any failure. <HelpAnchor concept="credits" size="sm" />
+          Every plan unlocks the entire platform — the only thing that changes is how much monthly allowance you get. Allowance is used up as you generate courses, lessons, and quizzes, and refunded in full on any failure. <HelpAnchor concept="allowance" size="sm" />
         </S.Subtitle>
 
         <S.CadenceToggle role="tablist" aria-label="Billing cadence">
@@ -361,7 +326,7 @@ export const PricingScreen: React.FC = () => {
         // 1 allowance := Free's monthly grant. Read from the same catalog
         // response rather than a hardcoded constant so backend changes to
         // ALLOWANCE_UNIT silently rescale generation headroom without
-        // shifting the displayed `×` multipliers (1×, 5×, 12×, 30×).
+        // shifting the displayed `×` multipliers (1×, 10×, 22×, 48×).
         const allowanceUnit =
           catalog.plans.find((p) => p.key === 'free')?.monthlyAllowance ?? 0;
 
@@ -401,7 +366,9 @@ export const PricingScreen: React.FC = () => {
                   <S.AllowanceUnit>
                     {isFree ? 'Baseline usage / month' : 'Baseline usage'}
                   </S.AllowanceUnit>
-                  <S.AllowanceGuidance>{ALLOWANCE_GUIDANCE[plan.key]}</S.AllowanceGuidance>
+                  <S.AllowanceGuidance>
+                    {formatPlanLessonsPerMonth(plan.key, catalog)} — {ALLOWANCE_TAGLINE[plan.key]}
+                  </S.AllowanceGuidance>
                 </S.AllowanceBlock>
 
                 <S.CardFooter>
@@ -421,18 +388,29 @@ export const PricingScreen: React.FC = () => {
         );
       })()}
 
+      {/* Resolves the "*" suffix on every "≈ N lessons*" estimate above.
+          One sentence, same string as TopupControl + LandingScreen so the
+          definition of a "lesson" stays consistent app-wide. */}
+      {catalog && <S.LessonFootnote>* {BASE_LESSON_FOOTNOTE}</S.LessonFootnote>}
+
       <S.FaqSection>
         <S.FaqTitle>Common questions</S.FaqTitle>
 
         <Accordion>
           <AccordionItem question="What can I actually do on each plan?">
             <p>
-              Allowance translates roughly to <strong>lessons generated</strong>. A typical lesson costs around
-              30–40 credits, so the Free unit (150 credits) covers about <strong>4–5 lessons</strong>, plus the
-              cheap one-off steps (clarify, structure, module quizzes). Starter scales that 5× — enough for a full
-              short course or two each month. Pro is 12× — comfortable headroom for ongoing study or building.
-              Studio is 30× — multiple parallel courses, heavy regeneration. Every plan unlocks the same features;
-              tiers only change how much you can generate.
+              Your monthly allowance translates roughly to <strong>lessons generated</strong>.
+              {catalog ? (
+                <>
+                  {' '}Free covers about <strong>{formatPlanLessonsPerMonth('free', catalog).replace(/^≈\s?/, '').replace(' / month', '')}</strong>
+                  {' '}per month, plus the cheap one-off steps (clarify, structure, module quizzes).
+                  Starter scales that <strong>{catalog.allowance.multipliers.starter}×</strong> — a full short
+                  course or two each month. Pro is <strong>{catalog.allowance.multipliers.pro}×</strong> —
+                  comfortable headroom for ongoing study. Studio is <strong>{catalog.allowance.multipliers.studio}×</strong> —
+                  multiple parallel courses, heavy regeneration.
+                </>
+              ) : null}
+              {' '}Every plan unlocks the same features; tiers only change how much you can generate.
             </p>
           </AccordionItem>
           <AccordionItem question="Will I lose my courses if I cancel or downgrade?">

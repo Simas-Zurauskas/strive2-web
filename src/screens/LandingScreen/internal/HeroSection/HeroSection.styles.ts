@@ -100,10 +100,12 @@ export const PrimaryCta = styled.button`
   box-shadow: var(--shadow-btn);
   transition: background 0.15s, border-color 0.15s, transform 0.05s, box-shadow 0.15s;
 
-  &:hover {
-    background: ${(p) => p.theme.colors.accentHover};
-    border-color: ${(p) => p.theme.colors.accentHover};
-    box-shadow: var(--shadow-btn-hover);
+  ${(p) => p.theme.media.hover} {
+    &:hover {
+      background: ${(p) => p.theme.colors.accentHover};
+      border-color: ${(p) => p.theme.colors.accentHover};
+      box-shadow: var(--shadow-btn-hover);
+    }
   }
 
   &:active {

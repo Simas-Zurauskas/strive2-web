@@ -66,8 +66,10 @@ export const PrimaryButton = styled.button`
   cursor: pointer;
   transition: background 0.15s, transform 0.15s;
 
-  &:hover:not(:disabled) {
-    background: ${(p) => p.theme.colors.accentHover};
+  ${(p) => p.theme.media.hover} {
+    &:hover:not(:disabled) {
+      background: ${(p) => p.theme.colors.accentHover};
+    }
   }
 
   &:active:not(:disabled) {
@@ -143,8 +145,10 @@ export const PlayButton = styled.button<{ $playing: boolean }>`
     transform: ${(p) => (p.$playing ? 'translateX(0)' : 'translateX(1px)')};
   }
 
-  &:hover {
-    background: ${(p) => p.theme.colors.accentHover};
+  ${(p) => p.theme.media.hover} {
+    &:hover {
+      background: ${(p) => p.theme.colors.accentHover};
+    }
   }
 
   &:active {
@@ -213,8 +217,10 @@ export const Scrub = styled.input<{ $progress: number }>`
     cursor: pointer;
   }
 
-  &:hover::-webkit-slider-thumb {
-    transform: scale(1.15);
+  ${(p) => p.theme.media.hover} {
+    &:hover::-webkit-slider-thumb {
+      transform: scale(1.15);
+    }
   }
 `;
 
@@ -254,10 +260,12 @@ export const RateButton = styled.button`
   text-align: center;
   transition: border-color 0.15s, color 0.15s, background 0.15s;
 
-  &:hover {
-    border-color: ${(p) => p.theme.colors.accent};
-    color: ${(p) => p.theme.colors.foreground};
-    background: ${(p) => p.theme.colors.accentMuted};
+  ${(p) => p.theme.media.hover} {
+    &:hover {
+      border-color: ${(p) => p.theme.colors.accent};
+      color: ${(p) => p.theme.colors.foreground};
+      background: ${(p) => p.theme.colors.accentMuted};
+    }
   }
 `;
 
@@ -305,9 +313,11 @@ export const MismatchAction = styled.button`
   cursor: pointer;
   transition: background 0.15s, color 0.15s;
 
-  &:hover:not(:disabled) {
-    background: ${(p) => p.theme.colors.tertiary};
-    color: ${(p) => p.theme.colors.surface};
+  ${(p) => p.theme.media.hover} {
+    &:hover:not(:disabled) {
+      background: ${(p) => p.theme.colors.tertiary};
+      color: ${(p) => p.theme.colors.surface};
+    }
   }
 
   &:disabled {

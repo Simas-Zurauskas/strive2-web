@@ -19,9 +19,9 @@ export const Header = styled.div`
 // serif emphasis on the verb + noun keeps the wizard's heading
 // vocabulary consistent.
 export const GoalTypeContext = styled.p`
-  font-size: 0.875rem;
+  font-size: 1rem;
   color: ${(p) => p.theme.colors.muted};
-  line-height: 1.4;
+  line-height: 1.5;
   margin: 0;
 
   strong {

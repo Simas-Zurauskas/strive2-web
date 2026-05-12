@@ -5,42 +5,23 @@ import { useMemo, useState } from 'react';
 import { startTopup } from '@/api/routes/billing';
 import { Button } from '@/components/Button';
 import { useBillingPlans } from '@/hooks/useBilling';
+import { formatTopupLessons, formatTopupYardstick } from '@/lib/pricingFormat';
 import * as S from './TopupControl.styles';
 
-const QUICK_PICKS = [5, 10, 25, 50, 100] as const;
-
-// Only digits are accepted — no cents, no decimals. Prevents rounding
-// weirdness on the credit grant (which is amountUsd × creditsPerUsd and
-// must be an integer). Keystroke filter runs on every change so paste of
-// "$25.00" lands as "25".
+// Digits only — credit grant must be integer (amountUsd × creditsPerUsd).
 const sanitizeInput = (raw: string): string => raw.replace(/[^\d]/g, '').replace(/^0+(?=\d)/, '');
 
 interface TopupControlProps {
-  /** Called after Stripe Checkout redirect is initiated (useful for closing a dialog). */
   onRedirect?: () => void;
-  /** Initial amount in USD. Defaults to the middle quick-pick. */
   defaultAmount?: number;
-  /** When true, render the Buy button at full width under the quick-picks (modal layout). */
   stacked?: boolean;
-  /**
-   * Modal-friendly layout: chips become the primary picker (5-col grid)
-   * and the custom-amount input collapses behind a toggle so the same
-   * value is not editable in two places at once. Implies `stacked`.
-   */
+  // Modal layout: chips as primary picker; custom-amount input collapses
+  // behind a toggle so the same value isn't editable in two places. Implies stacked.
   compact?: boolean;
 }
 
-/**
- * Variable-amount top-up widget. Single source of truth for purchasing extra
- * allowance across BillingPanel, OutOfCreditsModal, and PricingScreen —
- * ensures consistent validation, preview copy, and mutation handling.
- *
- * Flow: user types (or picks) a whole-dollar USD amount within [minUsd,
- * maxUsd] (range comes from `/api/billing/plans → topupRate`). On Buy, we
- * redirect to Stripe Checkout. Credits are granted on the
- * `checkout.session.completed` webhook and land in `bonusBalance` (never
- * expire). Server re-validates the amount — this component is UX only.
- */
+// Single source of truth across BillingPanel, OutOfCreditsModal, PricingScreen.
+// Server re-validates on checkout.session.completed; this component is UX only.
 export const TopupControl = ({
   onRedirect,
   defaultAmount = 25,
@@ -117,12 +98,21 @@ export const TopupControl = ({
     </S.InputWrap>
   );
 
+  // Quick-pick chip amounts now come from the catalog (server-side
+  // config). Falling back to the legacy ladder during catalog load so
+  // the SSR shell has something to render.
+  const quickPicks = catalog?.topupRate?.quickPicks ?? [5, 10, 25, 50, 100];
+
   const renderQuickPicks = ({ grid }: { grid: boolean }) => (
     <S.QuickPicks $grid={grid}>
-      {QUICK_PICKS.map((v) => {
+      {quickPicks.map((v) => {
         const withinRange = v >= minUsd && v <= maxUsd;
         if (!withinRange) return null;
         const selected = parsedAmount === v;
+        // Lesson-count approximation derived from the catalog's
+        // referenceCosts.lessonCredits range. No hardcoded divisors —
+        // when the backend retunes the ranges, this re-renders.
+        const lessonsLabel = catalog ? formatTopupLessons(v, catalog) : '';
         return (
           <S.QuickPick
             key={v}
@@ -131,13 +121,26 @@ export const TopupControl = ({
             onClick={() => setAmountStr(String(v))}
             disabled={isBusy}
             aria-pressed={selected}
+            aria-label={`Top up $${v}${lessonsLabel ? `, ${lessonsLabel}` : ''}`}
           >
-            ${v}
+            <S.QuickPickPrice>${v}</S.QuickPickPrice>
+            {lessonsLabel && <S.QuickPickCredits>{lessonsLabel}</S.QuickPickCredits>}
           </S.QuickPick>
         );
       })}
     </S.QuickPicks>
   );
+
+  /**
+   * Yardstick caption — derived from catalog so a change to the
+   * topup rate or reference lesson-cost range cascades automatically.
+   */
+  const renderYardstick = () => {
+    if (!catalog) return null;
+    const text = formatTopupYardstick(catalog);
+    if (!text) return null;
+    return <S.Yardstick>{text}</S.Yardstick>;
+  };
 
   const renderFootnote = () => (
     <S.Footnote>
@@ -161,6 +164,7 @@ export const TopupControl = ({
     return (
       <S.Wrap $stacked $compact>
         {renderQuickPicks({ grid: true })}
+        {renderYardstick()}
 
         {customOpen ? (
           <S.CustomAmountRow>
@@ -219,6 +223,8 @@ export const TopupControl = ({
           </Button>
         )}
       </S.Row>
+
+      {renderYardstick()}
 
       {customOpen ? (
         <S.CustomAmountRow>

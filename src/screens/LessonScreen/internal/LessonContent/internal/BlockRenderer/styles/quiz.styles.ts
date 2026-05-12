@@ -89,15 +89,19 @@ export const QuizOption = styled.button<{ $state: QuizOptionState }>`
 
   ${(p) =>
     p.$state === 'default' &&
-    `&:hover {
-      background: ${p.theme.colors.surface};
-      box-shadow: 0 0 0 1px ${p.theme.colors.border};
+    `${p.theme.media.hover} {
+      &:hover {
+        background: ${p.theme.colors.surface};
+        box-shadow: 0 0 0 1px ${p.theme.colors.border};
+      }
     }`}
 
   ${(p) =>
     p.$state === 'selected' &&
-    `&:hover {
-      background: ${p.theme.colors.accent}18;
+    `${p.theme.media.hover} {
+      &:hover {
+        background: ${p.theme.colors.accent}18;
+      }
     }`}
 `;
 
@@ -155,9 +159,11 @@ export const QuizConfirmButton = styled.button`
   cursor: pointer;
   transition: all 0.15s ease;
 
-  &:hover {
-    background: ${(p) => p.theme.colors.accent};
-    color: var(--on-accent);
+  ${(p) => p.theme.media.hover} {
+    &:hover {
+      background: ${(p) => p.theme.colors.accent};
+      color: var(--on-accent);
+    }
   }
 
   &:active {

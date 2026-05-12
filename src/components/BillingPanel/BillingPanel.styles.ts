@@ -142,10 +142,19 @@ export const PlanActions = styled.div`
   flex-wrap: wrap;
 `;
 
-// ── Allowance card ─────────────────────────────────────
+// ── Allowance section (inside PlanCard) ────────────────
+// Used to be its own card; merged into PlanCard so the plan identity,
+// allowance state, renewal date, and upgrade CTAs all live on one
+// surface — the allowance IS the plan's allowance, two cards were
+// two views of the same story.
 
-export const AllowanceCard = styled.section`
-  ${cardBase}
+export const AllowanceSection = styled.div`
+  display: flex;
+  flex-direction: column;
+  padding-top: 1.125rem;
+  margin-top: 0.25rem;
+  margin-bottom: 1.125rem;
+  border-top: 1px solid ${(p) => p.theme.colors.surfaceBorder};
 `;
 
 export const AllowanceEyebrow = styled(Eyebrow)``;
@@ -154,18 +163,22 @@ export const AllowanceHero = styled.div`
   display: flex;
   align-items: baseline;
   gap: 0.625rem;
-  margin: 0.25rem 0 1.125rem;
+  margin: 0.25rem 0 0.875rem;
 `;
 
 export const AllowanceValue = styled.span`
   font-family: var(--font-heading-serif), Georgia, serif;
   font-style: italic;
-  font-size: 4rem;
+  font-size: 3.25rem;
   font-weight: 400;
   line-height: 0.9;
   letter-spacing: -0.04em;
   color: ${(p) => p.theme.colors.foreground};
   font-variant-numeric: tabular-nums;
+
+  ${(p) => p.theme.media.mobile} {
+    font-size: 2.625rem;
+  }
 `;
 
 export const AllowanceLabel = styled.span`
@@ -244,6 +257,44 @@ export const TopupLead = styled.p`
   color: ${(p) => p.theme.colors.muted};
   margin: 0 0 1.125rem;
   max-width: 56ch;
+`;
+
+/** Quiet cross-link from the top-up section to the subscription plans.
+ *  Sits below the TopupControl as a soft footer note — we want users
+ *  to know plans exist (and are cheaper per credit) without making the
+ *  top-up surface feel like a sales pitch. */
+export const PlanNudge = styled.p`
+  margin: 1rem 0 0;
+  padding-top: 0.875rem;
+  border-top: 1px solid ${(p) => p.theme.colors.surfaceBorder};
+  font-size: 0.8125rem;
+  line-height: 1.55;
+  color: ${(p) => p.theme.colors.muted};
+`;
+
+export const PlanNudgeLink = styled.button`
+  background: none;
+  border: none;
+  padding: 0;
+  font: inherit;
+  color: ${(p) => p.theme.colors.tertiary};
+  cursor: pointer;
+  font-weight: 600;
+  transition: color 0.15s;
+
+  ${(p) => p.theme.media.hover} {
+    &:hover {
+      color: ${(p) => p.theme.colors.tertiaryHover};
+      text-decoration: underline;
+      text-underline-offset: 2px;
+    }
+  }
+
+  &:focus-visible {
+    outline: none;
+    text-decoration: underline;
+    text-underline-offset: 2px;
+  }
 `;
 
 // ── Loading state ──────────────────────────────────────
