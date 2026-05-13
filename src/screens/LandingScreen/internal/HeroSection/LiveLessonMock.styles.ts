@@ -32,6 +32,13 @@ export const Frame = styled.div`
 
   ${(p) => p.theme.media.mobile} {
     width: min(320px, 88vw);
+    /* The locked desktop aspect-ratio (460/580) shrinks to ~400px tall at
+       mobile widths — too short for the lesson stage, which doesn't shrink
+       in proportion (text wraps to more lines instead). Lock a taller
+       absolute height instead so dimensions stay fixed across stages
+       without layout shift. */
+    aspect-ratio: auto;
+    height: 560px;
   }
 `;
 
@@ -78,9 +85,6 @@ export const GoalLabel = styled.span`
 `;
 
 export const GoalInput = styled.div`
-  display: flex;
-  align-items: center;
-  gap: 4px;
   padding: var(--space-3) var(--space-4);
   border: 1px solid ${(p) => p.theme.colors.surfaceBorder};
   border-radius: var(--radius-lg);
@@ -89,7 +93,13 @@ export const GoalInput = styled.div`
   color: ${(p) => p.theme.colors.foreground};
   min-height: 48px;
   line-height: 1.4;
-  flex-wrap: wrap;
+  /* Block layout (not flex) keeps the caret inline with the trailing
+     word when the typed goal wraps. Flex with flex-wrap would push the
+     caret onto its own line after the wrapped text. */
+
+  & > span {
+    margin-right: 2px;
+  }
 `;
 
 export const Caret = styled.span`
@@ -141,7 +151,9 @@ export const BlockList = styled.div`
 export const BlockRow = styled.div<{ $visible: boolean }>`
   opacity: ${(p) => (p.$visible ? 1 : 0)};
   transform: translateY(${(p) => (p.$visible ? '0' : '4px')});
-  transition: opacity 0.35s ease-out, transform 0.35s ease-out;
+  transition:
+    opacity 0.35s ease-out,
+    transform 0.35s ease-out;
   display: flex;
   flex-direction: column;
   gap: 4px;
@@ -167,8 +179,7 @@ export const Prose = styled.p`
 // ── Code ──────────────────────────────────────────────
 
 export const CodeBlock = styled.div`
-  background: ${(p) =>
-    `color-mix(in oklab, ${p.theme.colors.foreground} 96%, ${p.theme.colors.tertiary})`};
+  background: ${(p) => `color-mix(in oklab, ${p.theme.colors.foreground} 96%, ${p.theme.colors.tertiary})`};
   border-radius: var(--radius-md);
   padding: var(--space-3) var(--space-3);
   font-family: ui-monospace, SFMono-Regular, 'Geist Mono', monospace;
@@ -284,15 +295,12 @@ export const QuizOption = styled.div<{ $correct?: boolean }>`
   border-radius: var(--radius-sm);
   border: 1px solid
     ${(p) =>
-      p.$correct
-        ? `color-mix(in oklab, ${p.theme.colors.success} 50%, transparent)`
-        : p.theme.colors.surfaceBorder};
+      p.$correct ? `color-mix(in oklab, ${p.theme.colors.success} 50%, transparent)` : p.theme.colors.surfaceBorder};
   background: ${(p) =>
     p.$correct
       ? `color-mix(in oklab, ${p.theme.colors.success} 10%, ${p.theme.colors.surface})`
       : p.theme.colors.surface};
-  color: ${(p) =>
-    p.$correct ? p.theme.colors.success : p.theme.colors.foreground};
+  color: ${(p) => (p.$correct ? p.theme.colors.success : p.theme.colors.foreground)};
   font-weight: ${(p) => (p.$correct ? 600 : 400)};
   display: flex;
   align-items: center;

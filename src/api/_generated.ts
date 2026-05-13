@@ -4,6 +4,356 @@
  */
 
 export interface paths {
+    "/api/admin/relaunch/recipients": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * List old-user relaunch recipients (admin-only)
+         * @description Returns rows from `RelaunchRecipient` with their `sentAt` state, plus
+         *     the matching `SignupCreditGrant.usdAmount` if a grant exists for that
+         *     email. Used by the admin UI to render the send list and disable the
+         *     per-row "send" button once `sentAt` is populated. Supports a free-text
+         *     email substring filter and a paying-user filter.
+         */
+        get: {
+            parameters: {
+                query?: {
+                    status?: "all" | "pending" | "sent";
+                    paying?: "any" | "only" | "exclude";
+                    /** @description Case-insensitive email substring match. */
+                    q?: string;
+                    limit?: number;
+                    offset?: number;
+                };
+                header?: never;
+                path?: never;
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": {
+                            data: {
+                                recipients: {
+                                    /** Format: email */
+                                    email: string;
+                                    sent: boolean;
+                                    /** Format: date-time */
+                                    sentAt?: string | null;
+                                    wasPayingUser: boolean;
+                                    signedUp: boolean;
+                                    /** Format: date-time */
+                                    signedUpAt?: string | null;
+                                    grantUsd?: number | null;
+                                    grantConsumed?: boolean | null;
+                                }[];
+                                total: number;
+                                pendingCount: number;
+                                sentCount: number;
+                                payingCount: number;
+                                signedUpCount: number;
+                            };
+                        };
+                    };
+                };
+            };
+        };
+        put?: never;
+        /**
+         * Add a single recipient to the relaunch roster (admin-only)
+         * @description Upserts a `RelaunchRecipient` row for `email`. Optionally seeds a
+         *     `SignupCreditGrant` row with the given `usdAmount` (only if the
+         *     email doesn't already have an unconsumed grant — existing claimed
+         *     grants are left alone). Idempotent: re-posting the same address is
+         *     a no-op on the recipient, and the grant update respects the
+         *     already-claimed guard.
+         */
+        post: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path?: never;
+                cookie?: never;
+            };
+            requestBody: {
+                content: {
+                    "application/json": {
+                        /** Format: email */
+                        email: string;
+                        usdAmount?: number;
+                        wasPayingUser?: boolean;
+                    };
+                };
+            };
+            responses: {
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": {
+                            data: {
+                                /** Format: email */
+                                email: string;
+                                wasPayingUser: boolean;
+                                grantUsd?: number | null;
+                                created: boolean;
+                            };
+                        };
+                    };
+                };
+            };
+        };
+        /**
+         * Remove a relaunch recipient (admin-only)
+         * @description Deletes the `RelaunchRecipient` row for `email`. Also deletes the
+         *     matching `SignupCreditGrant` row IF it has not yet been claimed —
+         *     a consumed grant is left in place because the credit has already
+         *     been applied to a User and the row is the audit trail tying that
+         *     award back to the relaunch campaign. Idempotent: deleting an
+         *     address that doesn't exist returns 200 with `deleted: false`.
+         */
+        delete: {
+            parameters: {
+                query: {
+                    email: string;
+                };
+                header?: never;
+                path?: never;
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": {
+                            data: {
+                                /** Format: email */
+                                email: string;
+                                deleted: boolean;
+                                grantDeleted: boolean;
+                                grantPreservedConsumed?: boolean;
+                            };
+                        };
+                    };
+                };
+            };
+        };
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/admin/relaunch/send": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Send the relaunch email to a batch of recipients (admin-only)
+         * @description Sends synchronously to each address in `emails`, in order. The
+         *     template is chosen per-recipient from the recipient row's
+         *     `wasPayingUser` flag — paying users get the founder-voiced
+         *     thanks/apology template, everyone else gets the standard relaunch.
+         *     This keeps the operator from accidentally sending the wrong copy
+         *     to a paying user.
+         *
+         *     Per-address contract: only sends if the recipient row exists and
+         *     `sentAt` is unset (re-clicking "send" never double-mails). Flips
+         *     `sentAt` to now on success.
+         *
+         *     Returns a per-address outcome (including which template shipped)
+         *     the UI uses to update its row state. Throughput is intentionally
+         *     low — the operator drives batch size from the admin tab. Warm the
+         *     sender (start small, watch bounce/spam in Mailjet) before scaling.
+         */
+        post: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path?: never;
+                cookie?: never;
+            };
+            requestBody: {
+                content: {
+                    "application/json": {
+                        emails: string[];
+                    };
+                };
+            };
+            responses: {
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": {
+                            data: {
+                                results: {
+                                    /** Format: email */
+                                    email: string;
+                                    /** @enum {string} */
+                                    status: "sent" | "already_sent" | "not_in_list" | "failed";
+                                    /** @enum {string|null} */
+                                    template?: "old_user_relaunch" | "old_paying_user_thanks" | null;
+                                    error?: string | null;
+                                }[];
+                                sentCount: number;
+                                skippedCount: number;
+                                failedCount: number;
+                            };
+                        };
+                    };
+                };
+            };
+        };
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/admin/relaunch/recipients/grant": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        /**
+         * Update signup grant amount for a relaunch recipient (admin-only)
+         * @description Upserts the `SignupCreditGrant` row for `email` with the given
+         *     `usdAmount`. Refuses to modify a grant that has already been claimed
+         *     — once `consumedAt` is set the user has been awarded the credit and
+         *     editing the dollar amount post-hoc would only confuse the audit
+         *     trail.
+         */
+        patch: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path?: never;
+                cookie?: never;
+            };
+            requestBody: {
+                content: {
+                    "application/json": {
+                        /** Format: email */
+                        email: string;
+                        usdAmount: number;
+                    };
+                };
+            };
+            responses: {
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": {
+                            data: {
+                                /** Format: email */
+                                email: string;
+                                usdAmount: number;
+                                consumed: boolean;
+                            };
+                        };
+                    };
+                };
+                409: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ApiError"];
+                    };
+                };
+            };
+        };
+        trace?: never;
+    };
+    "/api/admin/relaunch/recipients/paying": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        /**
+         * Toggle the wasPayingUser flag on a relaunch recipient (admin-only)
+         * @description Flips `wasPayingUser` on the recipient row so the operator can mark
+         *     users from the UI without re-running the import script.
+         */
+        patch: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path?: never;
+                cookie?: never;
+            };
+            requestBody: {
+                content: {
+                    "application/json": {
+                        /** Format: email */
+                        email: string;
+                        wasPayingUser: boolean;
+                    };
+                };
+            };
+            responses: {
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": {
+                            data: {
+                                /** Format: email */
+                                email: string;
+                                wasPayingUser: boolean;
+                            };
+                        };
+                    };
+                };
+                404: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ApiError"];
+                    };
+                };
+            };
+        };
+        trace?: never;
+    };
     "/api/admin/email/send-promotional-test": {
         parameters: {
             query?: never;
@@ -36,7 +386,7 @@ export interface paths {
                         /** Format: email */
                         to: string;
                         /** @enum {string} */
-                        template: "old_user_relaunch";
+                        template: "old_user_relaunch" | "old_paying_user_thanks";
                     };
                 };
             };
@@ -4129,7 +4479,6 @@ export interface components {
             audioGeneratedAt?: string | null;
             summary?: string | null;
             version: number;
-            /** Number of recall cards persisted for this lesson. */
             recallCardCount?: number;
             /** Format: date-time */
             createdAt?: string;
@@ -4627,7 +4976,7 @@ export interface components {
             chargedMicroCents: number;
             creditsCharged: number;
             planAtTime: components["schemas"]["PlanKey"] | null;
-            pricingVersion: string | null;
+            pricingVersion?: string | null;
             /** @enum {string|null} */
             source: "allowance" | "topup" | "mixed" | null;
             userPaidUsd: number | null;

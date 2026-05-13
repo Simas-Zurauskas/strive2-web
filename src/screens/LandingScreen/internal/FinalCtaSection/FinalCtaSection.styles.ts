@@ -33,7 +33,7 @@ export const Wrap = styled.section`
   }
 
   ${(p) => p.theme.media.tabletLarge} {
-    padding: var(--space-14) 0;
+    padding: var(--space-16) 0;
   }
 `;
 

@@ -15,6 +15,12 @@ const TEMPLATES: { key: PromotionalTemplateKey; label: string; description: stri
     description:
       'Sent to addresses that signed up for the original Strive, letting them know the rebuilt version is live.',
   },
+  {
+    key: 'old_paying_user_thanks',
+    label: 'Old paying user — thanks + apology',
+    description:
+      'Founder-voiced thank-you + apology for users who paid for the original Strive. Use for the curated paying-user subset.',
+  },
 ];
 
 type Status = { kind: 'success'; message: string } | { kind: 'error'; message: string } | null;

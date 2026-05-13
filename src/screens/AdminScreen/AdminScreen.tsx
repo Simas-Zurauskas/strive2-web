@@ -6,10 +6,12 @@ import { ROUTES } from '@/constants/routes';
 import * as S from './AdminScreen.styles';
 import { OgImagesTab } from './internal/OgImagesTab';
 import { PromotionalEmailsTab } from './internal/PromotionalEmailsTab';
+import { RelaunchTab } from './internal/RelaunchTab';
 
 // Tab list lives at top level so it stays a stable type. New tabs land
 // here as a single addition + a render-arm in `renderActive`.
 const TABS = [
+  { key: 'relaunch', label: 'Old-user relaunch' },
   { key: 'promotional-emails', label: 'Promotional emails' },
   { key: 'og-images', label: 'OG images' },
 ] as const;
@@ -17,6 +19,8 @@ type TabKey = (typeof TABS)[number]['key'];
 
 const renderActive = (key: TabKey) => {
   switch (key) {
+    case 'relaunch':
+      return <RelaunchTab />;
     case 'promotional-emails':
       return <PromotionalEmailsTab />;
     case 'og-images':
@@ -25,7 +29,7 @@ const renderActive = (key: TabKey) => {
 };
 
 const AdminScreen: React.FC = () => {
-  const [active, setActive] = useState<TabKey>('promotional-emails');
+  const [active, setActive] = useState<TabKey>('relaunch');
 
   return (
     <S.Layout>
