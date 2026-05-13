@@ -59,7 +59,7 @@ export const themeColors: Record<'light' | 'dark', ColorsSet> = {
     foreground: '#d5d0cb',
     // ~5.2:1 on gray800 — gray400 lands at ~3.6:1, also failing AA.
     muted: '#a39c93',
-    border: colorsLib.gray800,
+    border: colorsLib.gray700,
     surface: colorsLib.gray800,
     surfaceBorder: colorsLib.gray700,
     accent: '#4a8a72',

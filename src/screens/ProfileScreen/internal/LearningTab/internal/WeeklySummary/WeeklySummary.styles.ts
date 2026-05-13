@@ -66,6 +66,12 @@ export const Grid = styled.div`
     & > *:nth-child(5) {
       border-top: 1px solid ${(p) => p.theme.colors.surfaceBorder};
     }
+
+    /* Orphan trailing cell: span the empty column so the top divider runs
+       fully across the row instead of stopping mid-card. */
+    & > *:nth-child(5):last-child {
+      grid-column: 2 / -1;
+    }
   }
 
   ${(p) => p.theme.media.tablet} {
@@ -76,6 +82,12 @@ export const Grid = styled.div`
     }
     & > *:nth-child(n+3) {
       border-top: 1px solid ${(p) => p.theme.colors.surfaceBorder};
+    }
+
+    /* Orphan trailing cell on an odd row count fills the empty second
+       column so the row's top divider isn't a half-width line. */
+    & > *:last-child:nth-child(odd) {
+      grid-column: 1 / -1;
     }
   }
 `;

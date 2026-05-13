@@ -7,7 +7,17 @@ import { useTheme } from 'styled-components';
 import { formatDate } from '@/lib/formatDate';
 import { themeColors } from '@/theme';
 import { buildTooltipHtml, type TooltipRow } from '../_shared/chartTooltip';
-import { Section, SectionHeader, SectionEyebrow, SectionMeta } from '../_shared/styles';
+import {
+  Section,
+  SectionHeader,
+  SectionEyebrow,
+  SectionMeta,
+  EmptyBlock,
+  EmptyRule,
+  EmptyEyebrow,
+  EmptyTitle,
+  EmptyText,
+} from '../_shared/styles';
 import type { XpDayEntry } from '@/api/types';
 
 interface XpChartProps {
@@ -155,6 +165,8 @@ export const XpChart: React.FC<XpChartProps> = ({ data, loading }) => {
   }, [last30, c]);
 
   const showSkeleton = loading && last30.length === 0;
+  const totalXp = useMemo(() => last30.reduce((s, d) => s + (d.xp ?? 0), 0), [last30]);
+  const showEmpty = !loading && totalXp === 0;
 
   const startDate = last30[0]?.date;
   const endDate = last30[last30.length - 1]?.date;
@@ -170,7 +182,7 @@ export const XpChart: React.FC<XpChartProps> = ({ data, loading }) => {
         ) : (
           <>
             <SectionEyebrow>Daily XP</SectionEyebrow>
-            {startDate && endDate && (
+            {!showEmpty && startDate && endDate && (
               <SectionMeta>
                 {formatDate({ input: startDate })} — {formatDate({ input: endDate })}
               </SectionMeta>
@@ -178,13 +190,25 @@ export const XpChart: React.FC<XpChartProps> = ({ data, loading }) => {
           </>
         )}
       </SectionHeader>
-      <div style={{ height: CHART_HEIGHT }}>
-        {showSkeleton ? (
+      {showSkeleton ? (
+        <div style={{ height: CHART_HEIGHT }}>
           <Skeleton height={CHART_HEIGHT} borderRadius={8} />
-        ) : last30.length > 0 ? (
+        </div>
+      ) : showEmpty ? (
+        <EmptyBlock>
+          <EmptyRule aria-hidden />
+          <EmptyEyebrow>Nothing to chart yet</EmptyEyebrow>
+          <EmptyTitle>Earn XP to light up the chart.</EmptyTitle>
+          <EmptyText>
+            Complete a lesson, quiz, or recall review to start tracking your daily XP across the
+            last 30 days.
+          </EmptyText>
+        </EmptyBlock>
+      ) : (
+        <div style={{ height: CHART_HEIGHT }}>
           <HighchartsReact highcharts={Highcharts} options={options} />
-        ) : null}
-      </div>
+        </div>
+      )}
     </Section>
   );
 };

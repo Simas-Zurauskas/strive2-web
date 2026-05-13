@@ -32,6 +32,11 @@ export const authOptions: NextAuthOptions = {
     GoogleProvider({
       clientId: GOOGLE_CLIENT_ID,
       clientSecret: GOOGLE_CLIENT_SECRET,
+      // Force the Google account chooser on every sign-in. Without this,
+      // Google silently reuses the last authenticated session, which is
+      // confusing on shared devices and blocks users who want to sign in
+      // with a different Google account.
+      authorization: { params: { prompt: 'select_account' } },
     }),
     CredentialsProvider({
       name: 'credentials',
