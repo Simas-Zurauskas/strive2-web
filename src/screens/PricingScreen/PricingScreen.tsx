@@ -37,10 +37,14 @@ const buildCheckoutCta = ({
   planKey,
   currentPlan,
   isAuthenticated,
+  cancelAtPeriodEnd,
+  periodEnd,
 }: {
   planKey: PlanKey;
   currentPlan: PlanKey | undefined;
   isAuthenticated: boolean;
+  cancelAtPeriodEnd: boolean;
+  periodEnd: string | null | undefined;
 }): {
   label: string;
   action: 'signup' | 'checkout' | 'upgrade' | 'downgrade' | 'cancel' | 'current' | 'hidden';
@@ -53,6 +57,16 @@ const buildCheckoutCta = ({
   if (planKey === currentPlan) return { label: 'Current plan', action: 'current' };
 
   if (planKey === 'free') {
+    // User is on a paid plan already scheduled to cancel — show where they're
+    // headed instead of offering "Cancel subscription" again (which would 409
+    // on the API). Disabled-state via action='current'.
+    if (cancelAtPeriodEnd) {
+      const dateLabel = periodEnd ? formatDate({ input: periodEnd, format: 'short' }) : null;
+      return {
+        label: dateLabel ? `Drops here on ${dateLabel}` : 'Drops here at period end',
+        action: 'current',
+      };
+    }
     return { label: 'Cancel subscription', action: 'cancel' };
   }
 
@@ -183,7 +197,13 @@ export const PricingScreen: React.FC = () => {
   });
 
   const handleCtaClick = (plan: BillingPlan) => {
-    const cta = buildCheckoutCta({ planKey: plan.key, currentPlan, isAuthenticated });
+    const cta = buildCheckoutCta({
+      planKey: plan.key,
+      currentPlan,
+      isAuthenticated,
+      cancelAtPeriodEnd: Boolean(summary?.cancelAtPeriodEnd),
+      periodEnd: summary?.credits.periodEnd,
+    });
     analytics.track('pricing_plan_cta_clicked', {
       plan: plan.key,
       cycle: cadence,
@@ -334,7 +354,13 @@ export const PricingScreen: React.FC = () => {
         <S.Grid>
           {catalog.plans.map((plan) => {
             const priceMonthly = cadence === 'monthly' ? plan.monthlyUsd : plan.annualMonthlyUsd;
-            const cta = buildCheckoutCta({ planKey: plan.key, currentPlan, isAuthenticated });
+            const cta = buildCheckoutCta({
+              planKey: plan.key,
+              currentPlan,
+              isAuthenticated,
+              cancelAtPeriodEnd: Boolean(summary?.cancelAtPeriodEnd),
+              periodEnd: summary?.credits.periodEnd,
+            });
             const isPro = plan.key === 'pro';
             const allowanceLabel = formatAllowance(plan.monthlyAllowance, allowanceUnit);
             // "×" suffix on paid plans compares to Free (1× by definition).
