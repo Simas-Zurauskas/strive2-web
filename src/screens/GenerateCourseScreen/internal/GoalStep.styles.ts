@@ -107,3 +107,20 @@ export const SubmitRow = styled.div`
     align-items: stretch;
   }
 `;
+
+export const SubmitRowEnd = styled.div`
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+
+  ${(p) => p.theme.media.mobile} {
+    justify-content: space-between;
+  }
+`;
+
+export const CharCount = styled.span<{ $atLimit: boolean }>`
+  font-size: 0.8125rem;
+  color: ${(p) => (p.$atLimit ? p.theme.colors.error : p.theme.colors.muted)};
+  font-variant-numeric: tabular-nums;
+  transition: color 0.15s ease;
+`;

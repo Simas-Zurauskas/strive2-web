@@ -25,9 +25,21 @@ import {
   ThemeSessionSync,
 } from './comps';
 
+// Skip retries on 4xx — they're deterministic (wrong slug, missing
+// permission, validation reject) so retrying just multiplies Sentry noise
+// without improving outcomes. Sentry issue API-B fired 6× for one user
+// hitting GET /api/course/:courseId/progress with a slug they no longer
+// owned, because react-query was retrying a 404 and the page also
+// refetched on focus. Server (5xx) and network (no status) errors still
+// retry once — those are the cases where a single retry meaningfully
+// improves resilience.
 const defaultOptions: DefaultOptions = {
   queries: {
-    retry: 1,
+    retry: (failureCount, error) => {
+      const status = (error as { status?: number } | null)?.status;
+      if (typeof status === 'number' && status >= 400 && status < 500) return false;
+      return failureCount < 1;
+    },
     staleTime: 30 * 1000, // 30 seconds
   },
 };
