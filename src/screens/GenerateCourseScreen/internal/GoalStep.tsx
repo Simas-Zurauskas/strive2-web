@@ -71,9 +71,11 @@ export const GoalStep = ({ initialGoal, hasExistingData, loading, error, onSubmi
                     Be as specific or broad as you like. The more detail, the better the course fits you.
                   </S.HelperText>
                   <S.SubmitRowEnd>
-                    <S.CharCount $atLimit={values.goal.length >= GOAL_MAX_LENGTH}>
-                      {values.goal.length}/{GOAL_MAX_LENGTH}
-                    </S.CharCount>
+                    {values.goal.length > GOAL_MAX_LENGTH * 0.9 && (
+                      <S.CharCount $atLimit={values.goal.length >= GOAL_MAX_LENGTH}>
+                        {values.goal.length}/{GOAL_MAX_LENGTH}
+                      </S.CharCount>
+                    )}
                     <Button type="submit" loading={loading} disabled={!values.goal.trim()}>
                       {goalUnchanged ? 'Continue' : 'Next \u2192'}
                     </Button>
