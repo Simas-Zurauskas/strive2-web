@@ -5,6 +5,11 @@ import * as S from './RadioGroup.styles';
 
 const OTHER_PREFIX = 'Other: ';
 const OTHER_VALUE = '__other__';
+// Server caps a single free-text answer at 2000 chars (zod
+// answerValueSchema in api/src/controlers/course/validation.ts). The stored
+// value is the user-typed text prefixed with "Other: " (7 chars), so the
+// typeable maximum lands at 1993. Round to 1990 for breathing room.
+const OTHER_MAX_LENGTH = 1990;
 
 interface RadioOption {
   value: string;
@@ -74,6 +79,7 @@ export const RadioGroup = ({ name, options, value, onChange, allowOther = false 
                 type="text"
                 placeholder="Please specify..."
                 value={otherText}
+                maxLength={OTHER_MAX_LENGTH}
                 onChange={(e) => handleOtherTextChange(e.target.value)}
                 autoFocus
               />

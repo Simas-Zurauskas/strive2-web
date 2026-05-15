@@ -4,6 +4,11 @@ import { useState } from 'react';
 import * as S from './CheckboxGroup.styles';
 
 const OTHER_PREFIX = 'Other: ';
+// Server caps each array element (multi-select answer) at 500 chars (zod
+// answerValueSchema in api/src/controlers/course/validation.ts). The stored
+// element is the user-typed text prefixed with "Other: " (7 chars), so the
+// typeable maximum lands at 493. Round to 490 for breathing room.
+const OTHER_MAX_LENGTH = 490;
 
 interface CheckboxOption {
   value: string;
@@ -93,6 +98,7 @@ export const CheckboxGroup = ({ name, options, value, onChange, allowOther = fal
                 type="text"
                 placeholder="Please specify..."
                 value={otherText}
+                maxLength={OTHER_MAX_LENGTH}
                 onChange={(e) => handleOtherTextChange(e.target.value)}
                 autoFocus
               />
