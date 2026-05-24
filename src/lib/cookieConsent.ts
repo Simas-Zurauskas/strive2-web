@@ -2,9 +2,10 @@
  * Cookie-consent state machine. Read by `lib/analytics.ts` and the gtag
  * Consent Mode v2 bridge before any non-essential script fires.
  *
- * Three states:
- *   - `null`        — user has not chosen yet; banner is shown; only
- *                     strictly-necessary cookies are set.
+ * Three states (opt-out model — analytics default ON):
+ *   - `null`        — user has not chosen yet; banner is shown, but
+ *                     Mixpanel, GA4, and Google Ads already fire. Only an
+ *                     explicit "essential only" turns them off.
  *   - `'all'`       — user accepted analytics + marketing.
  *   - `'essential'` — user rejected non-essential. Sentry + Stripe +
  *                     NextAuth + theme persistence stay on; Mixpanel,
@@ -137,7 +138,9 @@ export const clearConsent = (): void => {
   window.dispatchEvent(new CustomEvent<ConsentValue | null>(CHANGE_EVENT, { detail: null }));
 };
 
-export const hasAnalyticsConsent = (): boolean => getConsent() === 'all';
+// Opt-out model: analytics fire by default and stay on unless the user
+// explicitly chooses "essential only". `null` (no choice yet) counts as ON.
+export const hasAnalyticsConsent = (): boolean => getConsent() !== 'essential';
 
 /**
  * Subscribe to consent changes. Fires for both same-tab `setConsent`

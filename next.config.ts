@@ -39,6 +39,11 @@ const nextConfig: NextConfig = {
     return [
       { source: '/faq', destination: '/help', permanent: true },
       { source: '/faq/:path*', destination: '/help/:path*', permanent: true },
+      // v1 → v2 slug changes. Old URLs were indexed by Google; 301 here so
+      // ranking signal transfers instead of decaying on a 404. /dashboard is
+      // intentionally not redirected — it was retired in v2.
+      { source: '/privacy-policy', destination: '/privacy', permanent: true },
+      { source: '/terms-of-service', destination: '/terms', permanent: true },
     ];
   },
 };

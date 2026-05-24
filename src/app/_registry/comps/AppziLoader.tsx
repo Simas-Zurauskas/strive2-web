@@ -7,11 +7,10 @@ import { getConsent, subscribeConsent, type ConsentValue } from '@/lib/cookieCon
 /**
  * Gates the Appzi feedback widget script on cookie consent.
  *
- * Appzi sets cookies the moment its script executes; loading it
- * unconditionally contradicts the privacy policy's "consent-gated" claim
- * for that sub-processor. Only render the `<Script>` once consent is
- * `'all'` — when consent is `'essential'` (or unset), the script is
- * never injected and the Navbar Feedback button is a no-op.
+ * Appzi sets cookies the moment its script executes. In the opt-out model
+ * the `<Script>` loads by default — for both `'all'` and the unset
+ * (`null`) state — and is only withheld when the user explicitly chooses
+ * `'essential'`, in which case the Navbar Feedback button is a no-op.
  *
  * Caveat: once Appzi has loaded in a session, revoking consent later
  * unmounts this component (so we stop offering the script on subsequent
@@ -30,7 +29,7 @@ export const AppziLoader = () => {
     return subscribeConsent(setConsent);
   }, []);
 
-  if (consent !== 'all') return null;
+  if (consent === 'essential') return null;
 
   return <Script id="appzi" src="https://w.appzi.io/w.js?token=vYiQf" strategy="lazyOnload" />;
 };
