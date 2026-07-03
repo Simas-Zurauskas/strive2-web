@@ -2,7 +2,7 @@
 
 The Strive web app: a Next.js 16 + React 19 App Router frontend that fronts the Strive API. It owns authentication, the course-creation wizard, the realtime learning experience (lesson streaming, quizzes, retrieval-practice recall), billing UI, and the marketing surface.
 
-## Stack
+## Stack.
 
 - **Framework** — Next.js 16 (App Router, Turbopack), React 19, TypeScript 5
 - **Auth** — NextAuth 4 (JWT strategy, Google OAuth + Credentials provider, server-revoke sign-out via API)
@@ -34,14 +34,14 @@ This writes `src/api/_generated.ts` from `${NEXT_PUBLIC_API_URL}/swagger.json` (
 
 ## Scripts
 
-| Command | Purpose |
-| --- | --- |
-| `yarn dev` | Next dev server with Turbopack |
-| `yarn build` | Production build (Turbopack) |
-| `yarn start` | Run the production build |
-| `yarn lint` | ESLint check |
-| `yarn lint:fix` | ESLint auto-fix |
-| `yarn codegen` | Regenerate `src/api/_generated.ts` from the API's `swagger.json` |
+| Command         | Purpose                                                          |
+| --------------- | ---------------------------------------------------------------- |
+| `yarn dev`      | Next dev server with Turbopack                                   |
+| `yarn build`    | Production build (Turbopack)                                     |
+| `yarn start`    | Run the production build                                         |
+| `yarn lint`     | ESLint check                                                     |
+| `yarn lint:fix` | ESLint auto-fix                                                  |
+| `yarn codegen`  | Regenerate `src/api/_generated.ts` from the API's `swagger.json` |
 
 ## Project structure
 
