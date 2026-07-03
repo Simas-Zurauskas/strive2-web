@@ -34,14 +34,14 @@ This writes `src/api/_generated.ts` from `${NEXT_PUBLIC_API_URL}/swagger.json` (
 
 ## Scripts
 
-| Command | Purpose |
-| --- | --- |
-| `yarn dev` | Next dev server with Turbopack |
-| `yarn build` | Production build (Turbopack) |
-| `yarn start` | Run the production build |
-| `yarn lint` | ESLint check |
-| `yarn lint:fix` | ESLint auto-fix |
-| `yarn codegen` | Regenerate `src/api/_generated.ts` from the API's `swagger.json` |
+| Command         | Purpose                                                          |
+| --------------- | ---------------------------------------------------------------- |
+| `yarn dev`      | Next dev server with Turbopack                                   |
+| `yarn build`    | Production build (Turbopack)                                     |
+| `yarn start`    | Run the production build                                         |
+| `yarn lint`     | ESLint check                                                     |
+| `yarn lint:fix` | ESLint auto-fix                                                  |
+| `yarn codegen`  | Regenerate `src/api/_generated.ts` from the API's `swagger.json` |
 
 ## Project structure
 
