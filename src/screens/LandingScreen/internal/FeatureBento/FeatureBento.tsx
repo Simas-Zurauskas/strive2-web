@@ -15,7 +15,7 @@ export const FeatureBento = () => {
           animate={fadeUp.animate}
           transition={fadeUp.transition}
         >
-          <S.Eyebrow>Built for real learning</S.Eyebrow>
+          <S.Eyebrow>Under the hood</S.Eyebrow>
           <S.Heading>Everything the loop needs. None of the homework feel.</S.Heading>
         </S.SectionHeader>
 

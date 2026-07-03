@@ -4,9 +4,17 @@
 
 export const HERO = {
   eyebrow: 'Your private tutor. Your own course.',
-  headline: 'A real course on anything you want to learn.',
+  // Headline reinstates the launch value proposition ("personalised path to
+  // mastery") that converted best, hybridised with the "real course on
+  // anything" line that kept the breadth promise. `personalised` carries the
+  // italic-gold emphasis; the sub-line below it keeps the breadth claim.
+  headline: 'Your personalised path to mastery.',
+  headlineSub: 'A real course on anything you want to learn.',
+  // Outcome-first: leads with what the learner *gets*, not the work they have
+  // to do. The old subhead opened on "Tell Strive your goal… answer a
+  // questionnaire", which read as effort before reward.
   subhead:
-    'Tell Strive your goal and what you already know. Minutes later, you have a full course — modules, lessons, quizzes, and daily recall — built around exactly where you are, adapting as you progress.',
+    'Describe what you want to learn and where you’re starting from. Minutes later you have a complete course — modules, lessons, quizzes, and daily recall — shaped around exactly where you are and adapting as you progress.',
   ctaPrimary: 'Build my first course — free',
   ctaMicrocopy: 'Free tier included. No credit card.',
   ctaSecondary: 'See how it works',
@@ -220,6 +228,111 @@ export const GOAL_TYPES: {
     verb: 'Get conversational',
     example: 'Order coffee in Spanish by July',
   },
+];
+
+// ── Roadmap strip: the compact, scannable "how it works" overview that
+// sits directly under the hero. This restores the launch version's
+// front-and-center 4-step process (the original's highest-converting
+// element) and reinstates the word "roadmap", which had vanished from the
+// page. The detailed HOW_IT_WORKS section below is the deeper walk-through.
+export type RoadmapStepIcon = 'PenLine' | 'Sparkles' | 'SlidersHorizontal' | 'GraduationCap';
+
+export const ROADMAP_SECTION = {
+  eyebrow: 'How it works',
+  heading: 'From a goal to a roadmap, in four steps.',
+  subhead: "There's no catalogue to browse. You describe the destination; Strive builds the path.",
+} as const;
+
+export const ROADMAP_STEPS: {
+  n: number;
+  icon: RoadmapStepIcon;
+  title: string;
+  body: string;
+}[] = [
+  {
+    n: 1,
+    icon: 'PenLine',
+    title: 'Define your goal',
+    body: 'Say what you want to learn and where you’re starting from — in one sentence.',
+  },
+  {
+    n: 2,
+    icon: 'Sparkles',
+    title: 'AI generates your roadmap',
+    body: 'Strive shapes a full course — modules, lessons, and quizzes — around your answers.',
+  },
+  {
+    n: 3,
+    icon: 'SlidersHorizontal',
+    title: 'Customise your path',
+    body: 'Refine depth, length, and difficulty by chatting with the AI before you commit.',
+  },
+  {
+    n: 4,
+    icon: 'GraduationCap',
+    title: 'Start learning',
+    body: 'Lessons stream onto the page, and a daily recall queue keeps them from fading.',
+  },
+];
+
+// ── Use-case grid: concrete, diverse course titles a visitor can scan to
+// "find themselves" (the launch version's middle-of-page social proof).
+// More than the five abstract goal types — these are specific topics, each a
+// clickable entry into sign-up. Scope is limited to domains the FAQ says
+// Strive serves well (no medical/legal/clinical). Category tags reuse the
+// tertiary eyebrow treatment rather than a rainbow of per-category colours,
+// staying within the restrained palette.
+export type CourseExampleIcon =
+  | 'Code'
+  | 'BarChart3'
+  | 'Cpu'
+  | 'ShieldCheck'
+  | 'Megaphone'
+  | 'TrendingUp'
+  | 'Rocket'
+  | 'Compass'
+  | 'PenLine'
+  | 'Music'
+  | 'Palette'
+  | 'Camera'
+  | 'Languages'
+  | 'MessagesSquare'
+  | 'Mic'
+  | 'Handshake'
+  | 'Sigma'
+  | 'Brain';
+
+export const COURSE_EXAMPLES_SECTION = {
+  eyebrow: 'A course for anything',
+  heading: 'See yourself in one of these.',
+  subhead:
+    'A sample of what learners have generated. Pick one to preview the idea — or start from your own goal.',
+} as const;
+
+export const COURSE_EXAMPLES: {
+  category: string;
+  title: string;
+  blurb: string;
+  icon: CourseExampleIcon;
+}[] = [
+  { category: 'Tech', title: 'Web Development', blurb: 'Ship a full-stack app with React, Node, and a real database.', icon: 'Code' },
+  { category: 'Tech', title: 'Data Science', blurb: 'Analyse data with Python, pandas, and the statistics behind it.', icon: 'BarChart3' },
+  { category: 'Tech', title: 'AI Engineering', blurb: 'Build with LLMs, embeddings, and retrieval pipelines.', icon: 'Cpu' },
+  { category: 'Tech', title: 'Cybersecurity', blurb: 'Threat models, penetration testing, and secure-by-design habits.', icon: 'ShieldCheck' },
+  { category: 'Business', title: 'Digital Marketing', blurb: 'SEO, paid ads, and content that actually converts.', icon: 'Megaphone' },
+  { category: 'Business', title: 'Investment Strategy', blurb: 'Markets, asset classes, and building a portfolio.', icon: 'TrendingUp' },
+  { category: 'Business', title: 'Entrepreneurship', blurb: 'From idea validation to first paying customers.', icon: 'Rocket' },
+  { category: 'Business', title: 'Product Management', blurb: 'Discovery, roadmaps, and shipping the right thing.', icon: 'Compass' },
+  { category: 'Creative', title: 'Creative Writing', blurb: 'Story structure, character, and a voice of your own.', icon: 'PenLine' },
+  { category: 'Creative', title: 'Music Production', blurb: 'Composition, arrangement, and mixing your first track.', icon: 'Music' },
+  { category: 'Creative', title: 'Digital Art', blurb: 'Illustration, concept art, and colour from the ground up.', icon: 'Palette' },
+  { category: 'Creative', title: 'Photography', blurb: 'Light, composition, and editing that makes shots sing.', icon: 'Camera' },
+  { category: 'Languages', title: 'Spanish Fluency', blurb: 'Hold a real conversation, not just memorise verbs.', icon: 'Languages' },
+  { category: 'Languages', title: 'Business English', blurb: 'Email, meetings, and presentations with confidence.', icon: 'MessagesSquare' },
+  { category: 'Skills', title: 'Public Speaking', blurb: 'Structure a talk and command the room.', icon: 'Mic' },
+  { category: 'Skills', title: 'Negotiation', blurb: 'Anchoring, framing, and closing without flinching.', icon: 'Handshake' },
+  { category: 'Science', title: 'Statistics', blurb: 'From distributions to hypothesis testing, intuitively.', icon: 'Sigma' },
+  { category: 'Science', title: 'Cognitive Psychology', blurb: 'Memory, attention, and how decisions really get made.', icon: 'Brain' },
 ];
 
 // Heading is rendered inline in JSX so italic emphasis on `<em>gone</em>`

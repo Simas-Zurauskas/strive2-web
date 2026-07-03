@@ -5,6 +5,7 @@ import { KbChatPanel } from '@/components';
 import { analytics } from '@/lib/analytics';
 import { AuthModal, AuthMode } from './internal/AuthModal/AuthModal';
 import { ComparisonTable } from './internal/ComparisonTable/ComparisonTable';
+import { CourseExamplesSection } from './internal/CourseExamplesSection/CourseExamplesSection';
 import { FaqSection } from './internal/FaqSection/FaqSection';
 import { FeatureBento } from './internal/FeatureBento/FeatureBento';
 import { FinalCtaSection } from './internal/FinalCtaSection/FinalCtaSection';
@@ -14,6 +15,7 @@ import { HowItWorksSection } from './internal/HowItWorksSection/HowItWorksSectio
 import { LandingTopBar } from './internal/LandingTopBar/LandingTopBar';
 import { PricingTeaser } from './internal/PricingTeaser/PricingTeaser';
 import { ProblemSection } from './internal/ProblemSection/ProblemSection';
+import { RoadmapSection } from './internal/RoadmapSection/RoadmapSection';
 import * as S from './LandingScreen.styles';
 
 // Landing-specific suggested prompts for the floating Strive guide chat.
@@ -38,6 +40,7 @@ interface LandingScreenProps {
 type AuthSource =
   | 'hero'
   | 'top_bar'
+  | 'course_examples'
   | 'pricing_teaser'
   | 'final_cta'
   | 'deep_link'
@@ -57,6 +60,7 @@ export const LandingScreen = ({ redirect, initialAuthMode }: LandingScreenProps)
   }, []);
 
   const openSignUpFromHero = useCallback(() => openModal('signup', 'hero'), [openModal]);
+  const openSignUpFromExamples = useCallback(() => openModal('signup', 'course_examples'), [openModal]);
   const openSignUpFromPricing = useCallback(() => openModal('signup', 'pricing_teaser'), [openModal]);
   const openSignUpFromFinal = useCallback(() => openModal('signup', 'final_cta'), [openModal]);
   const openSignInFromTopBar = useCallback(() => openModal('signin', 'top_bar'), [openModal]);
@@ -80,7 +84,9 @@ export const LandingScreen = ({ redirect, initialAuthMode }: LandingScreenProps)
     <S.Page>
       <LandingTopBar onOpenSignIn={openSignInFromTopBar} />
       <HeroSection onOpenSignUp={openSignUpFromHero} />
+      <RoadmapSection />
       <GoalTypesSection />
+      <CourseExamplesSection onOpenSignUp={openSignUpFromExamples} />
       <ProblemSection />
       <HowItWorksSection />
       <FeatureBento />
