@@ -2,7 +2,7 @@
 
 The Strive web app: a Next.js 16 + React 19 App Router frontend that fronts the Strive API. It owns authentication, the course-creation wizard, the realtime learning experience (lesson streaming, quizzes, retrieval-practice recall), billing UI, and the marketing surface.
 
-## Stack.
+## Stack
 
 - **Framework** — Next.js 16 (App Router, Turbopack), React 19, TypeScript 5
 - **Auth** — NextAuth 4 (JWT strategy, Google OAuth + Credentials provider, server-revoke sign-out via API)
