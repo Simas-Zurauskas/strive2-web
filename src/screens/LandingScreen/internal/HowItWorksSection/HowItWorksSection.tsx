@@ -61,8 +61,8 @@ export const HowItWorksSection = () => {
     <S.Wrap id="how-it-works">
       <S.Inner>
         <S.SectionHeader>
-          <S.Eyebrow>How it works</S.Eyebrow>
-          <S.Heading>Three steps. From a sentence to your first lesson.</S.Heading>
+          <S.Eyebrow>A closer look</S.Eyebrow>
+          <S.Heading>From a sentence to your first lesson.</S.Heading>
         </S.SectionHeader>
 
         {HOW_IT_WORKS.map((step, i) => (

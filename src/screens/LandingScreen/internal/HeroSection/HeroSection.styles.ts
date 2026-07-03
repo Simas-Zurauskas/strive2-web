@@ -65,6 +65,21 @@ export const Headline = styled.h1`
   }
 `;
 
+// Second headline line — a serif tagline that keeps the "real course on
+// anything" breadth promise prominent without the weight of a second H1.
+// Reads as a calm restatement between the bold H1 and the muted subhead.
+export const HeadlineSub = styled.p`
+  font-family: var(--font-heading-serif), Georgia, serif;
+  font-weight: 500;
+  font-size: clamp(1.25rem, 2.6vw, 1.625rem);
+  line-height: 1.25;
+  letter-spacing: -0.01em;
+  color: ${(p) => p.theme.colors.foreground};
+  margin: 0;
+  max-width: 24ch;
+  text-wrap: balance;
+`;
+
 export const Subhead = styled.p`
   font-size: 1.0625rem;
   line-height: 1.55;

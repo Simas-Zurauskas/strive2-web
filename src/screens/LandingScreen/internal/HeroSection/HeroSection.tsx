@@ -34,12 +34,15 @@ export const HeroSection = ({ onOpenSignUp }: HeroSectionProps) => {
             {HERO.eyebrow}
           </S.Eyebrow>
           <S.Headline as={motion.h1} {...stagger(1)}>
-            A <em>real</em> course on anything you want to learn.
+            Your <em>personalised</em> path to mastery.
           </S.Headline>
-          <S.Subhead as={motion.p} {...stagger(2)}>
+          <S.HeadlineSub as={motion.p} {...stagger(2)}>
+            {HERO.headlineSub}
+          </S.HeadlineSub>
+          <S.Subhead as={motion.p} {...stagger(3)}>
             {HERO.subhead}
           </S.Subhead>
-          <S.CtaRow as={motion.div} {...stagger(3)}>
+          <S.CtaRow as={motion.div} {...stagger(4)}>
             <S.PrimaryCta
               type="button"
               onClick={onOpenSignUp}
