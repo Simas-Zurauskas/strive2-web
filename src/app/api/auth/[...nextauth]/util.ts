@@ -51,14 +51,12 @@ export const authOptions: NextAuthOptions = {
         const endpoint = type === 'signup' ? 'signup' : 'signin';
 
         try {
-          const token = await axios
-            .post<{ data: string }>(`${NEXT_PUBLIC_API_URL}/api/auth/${endpoint}`, {
-              email,
-              password,
-            })
-            .then((res) => res.data.data);
+          const { data } = await axios.post<{ data: string; isNewUser?: boolean }>(
+            `${NEXT_PUBLIC_API_URL}/api/auth/${endpoint}`,
+            { email, password },
+          );
 
-          return { id: '', token };
+          return { id: '', token: data.data, isNewUser: data.isNewUser === true };
         } catch (error) {
           if (axios.isAxiosError(error)) {
             const data = error.response?.data;
@@ -82,18 +80,34 @@ export const authOptions: NextAuthOptions = {
         return token;
       }
 
+      // One-shot consume of the new-account flag. `isNewUser` is written into
+      // the JWT at sign-up, and the JWT lives for 30 days — without an explicit
+      // clear it would keep reporting "just signed up" for a month, and any
+      // consumer that fires once per truthy read would fire again on every new
+      // device the session reached. The client calls
+      // `update({ consumeNewUser: true })` the moment it has acted on the flag.
+      if (trigger === 'update' && (session as { consumeNewUser?: boolean } | undefined)?.consumeNewUser) {
+        delete token.isNewUser;
+        return token;
+      }
+
       // Credentials flow: token comes from the authorize return
       if (user) {
         token.token = user.token;
+        if (user.isNewUser) token.isNewUser = true;
       }
 
       // Google flow: send the ID token for server-side verification
       if (account?.provider === 'google' && account.id_token) {
         try {
-          const response = await axios.post<{ data: string }>(`${NEXT_PUBLIC_API_URL}/api/auth/google`, {
-            idToken: account.id_token,
-          });
+          const response = await axios.post<{ data: string; isNewUser?: boolean }>(
+            `${NEXT_PUBLIC_API_URL}/api/auth/google`,
+            { idToken: account.id_token },
+          );
           token.token = response.data.data;
+          // Google sign-in and sign-up share this endpoint; `isNewUser` is the
+          // only thing distinguishing the two, and 92% of accounts arrive here.
+          if (response.data.isNewUser) token.isNewUser = true;
         } catch (error) {
           console.error('Failed to authenticate with Google:', error);
           token.error = 'GoogleAuthFailed';
@@ -137,6 +151,9 @@ export const authOptions: NextAuthOptions = {
       }
       if (token.error) {
         session.error = token.error;
+      }
+      if (token.isNewUser) {
+        session.isNewUser = true;
       }
 
       return session;
