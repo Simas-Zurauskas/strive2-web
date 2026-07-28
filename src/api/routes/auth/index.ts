@@ -179,3 +179,23 @@ export const updateMarketingPreference = (params: UpdateMarketingPreferenceBody)
     data: params,
   }).then((res) => res.data.data);
 };
+
+// ── First-touch marketing attribution ───────────────────────
+
+// Posted once, just after sign-up, from the campaign parameters the browser
+// captured on first landing (see lib/attribution.ts). The server is
+// first-write-wins, so replays are harmless and the call is fire-and-forget at
+// every call site — a failed attribution write must never surface to a user
+// who has just created an account.
+type RecordAttributionBody =
+  paths['/api/auth/me/attribution']['post']['requestBody']['content']['application/json'];
+type RecordAttributionResponse =
+  paths['/api/auth/me/attribution']['post']['responses']['200']['content']['application/json'];
+
+export const recordAttribution = (params: RecordAttributionBody) => {
+  return client<RecordAttributionResponse>({
+    url: '/auth/me/attribution',
+    method: 'POST',
+    data: params,
+  }).then((res) => res.data.data);
+};

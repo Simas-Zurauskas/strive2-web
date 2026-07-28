@@ -791,7 +791,10 @@ export interface paths {
                     };
                     content: {
                         "application/json": {
+                            /** @description Bearer JWT for the authenticated session. */
                             data: string;
+                            /** @description True when this request created the account, false when an existing account signed in. Google sign-in and sign-up share one endpoint, so this is the only way a caller can tell the two apart. */
+                            isNewUser: boolean;
                         };
                     };
                 };
@@ -833,6 +836,88 @@ export interface paths {
                         "application/json": {
                             data: {
                                 message: string;
+                            };
+                        };
+                    };
+                };
+            };
+        };
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/auth/me/attribution": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Record first-touch marketing attribution for the signed-in user
+         * @description Writes the campaign parameters the browser captured on the visitor's
+         *     first landing (UTM tags, Google/Meta click ids, referrer, landing
+         *     path) onto the user record.
+         *
+         *     First-write-wins: once a user has attribution it is never replaced, so
+         *     the stored value always answers "which campaign produced this account"
+         *     rather than "which link did they last click". Calling this repeatedly
+         *     is safe — replays return `recorded: false` and change nothing.
+         *
+         *     Every field is optional; a payload carrying no usable signal is
+         *     accepted and ignored rather than rejected, so callers never have to
+         *     branch on whether a visitor arrived with campaign parameters.
+         */
+        post: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path?: never;
+                cookie?: never;
+            };
+            requestBody: {
+                content: {
+                    "application/json": {
+                        /** @description utm_source */
+                        source?: string;
+                        /** @description utm_medium */
+                        medium?: string;
+                        /** @description utm_campaign */
+                        campaign?: string;
+                        /** @description utm_term */
+                        term?: string;
+                        /** @description utm_content */
+                        content?: string;
+                        /** @description Google Ads click id */
+                        gclid?: string;
+                        /** @description Meta click id */
+                        fbclid?: string;
+                        /** @description document.referrer at first landing */
+                        referrer?: string;
+                        /** @description Path of the first page seen, without host or query */
+                        landingPath?: string;
+                        /**
+                         * Format: date-time
+                         * @description When the browser captured this, not when it was sent
+                         */
+                        capturedAt?: string;
+                    };
+                };
+            };
+            responses: {
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": {
+                            data: {
+                                /** @description True when this call stored the attribution. False when the user already had one, or the payload carried no usable signal. */
+                                recorded: boolean;
                             };
                         };
                     };
@@ -1376,7 +1461,10 @@ export interface paths {
                     };
                     content: {
                         "application/json": {
+                            /** @description Bearer JWT for the newly created session. */
                             data: string;
+                            /** @description Always true — this endpoint only ever creates accounts, and 409s when the email is already registered. Present so the credential and Google sign-up paths carry the same field. */
+                            isNewUser: boolean;
                         };
                     };
                 };
