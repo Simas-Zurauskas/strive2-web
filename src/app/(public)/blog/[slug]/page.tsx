@@ -11,7 +11,11 @@ import {
   buildBreadcrumbJsonLd,
   renderJsonLd,
 } from '@/lib/seo/jsonLd';
-import { DEFAULT_OG_IMAGES, DEFAULT_TWITTER_IMAGES } from '@/lib/seo/sharedMetadata';
+import {
+  DEFAULT_OG_IMAGES,
+  DEFAULT_TWITTER_ACCOUNT,
+  DEFAULT_TWITTER_IMAGES,
+} from '@/lib/seo/sharedMetadata';
 import { BlogPostScreen } from '@/screens/BlogScreen';
 import type { Metadata } from 'next';
 
@@ -52,6 +56,7 @@ export const generateMetadata = async ({ params }: RouteParams): Promise<Metadat
     },
     twitter: {
       card: 'summary_large_image',
+      ...DEFAULT_TWITTER_ACCOUNT,
       title: post.title,
       description: post.summary,
       images: post.hero ? [post.hero] : DEFAULT_TWITTER_IMAGES,
