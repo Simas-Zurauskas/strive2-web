@@ -5,7 +5,11 @@ import {
   buildBreadcrumbJsonLd,
   renderJsonLd,
 } from '@/lib/seo/jsonLd';
-import { DEFAULT_OG_IMAGES, DEFAULT_TWITTER_IMAGES } from '@/lib/seo/sharedMetadata';
+import {
+  DEFAULT_OG_IMAGES,
+  DEFAULT_TWITTER_ACCOUNT,
+  DEFAULT_TWITTER_IMAGES,
+} from '@/lib/seo/sharedMetadata';
 import { BlogHubScreen } from '@/screens/BlogScreen';
 import type { Metadata } from 'next';
 
@@ -28,6 +32,7 @@ export const metadata: Metadata = {
   },
   twitter: {
     card: 'summary_large_image',
+    ...DEFAULT_TWITTER_ACCOUNT,
     title: 'Strive blog',
     description: 'Field notes from teaching, AI, and the design of Strive.',
     images: DEFAULT_TWITTER_IMAGES,

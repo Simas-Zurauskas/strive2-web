@@ -13,3 +13,11 @@ export const DEFAULT_OG_IMAGE = {
 export const DEFAULT_OG_IMAGES = [DEFAULT_OG_IMAGE];
 
 export const DEFAULT_TWITTER_IMAGES = ['/og.png'];
+
+// Twitter Card attribution for the brand's X account. Same shallow-merge caveat
+// as the images above: a route that defines its own `twitter` block must spread
+// this too, or the attribution silently drops on that route only.
+export const DEFAULT_TWITTER_ACCOUNT = {
+  site: '@strivelearnhq',
+  creator: '@strivelearnhq',
+} as const;

@@ -63,6 +63,8 @@ export const metadata: Metadata = {
 
   twitter: {
     card: 'summary_large_image',
+    site: '@strivelearnhq',
+    creator: '@strivelearnhq',
     title: 'Strive — A real AI course on anything you want to learn',
     description: 'Modules, lessons, quizzes, and daily recall — generated live.',
     images: DEFAULT_TWITTER_IMAGES,

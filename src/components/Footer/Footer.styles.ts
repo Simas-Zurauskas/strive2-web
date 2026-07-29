@@ -85,23 +85,22 @@ export const Tagline = styled.p`
 // ── Column grid (Learn / Legal / Contact) ──────────────
 
 /**
- * Three-up column grid sitting flush against the footer's right edge.
+ * Four-up column grid sitting flush against the footer's right edge.
  * Each column has its own header + stack. "auto" columns + start-aligned
  * items keep everything baseline-aligned regardless of which column is
- * tallest. Collapses to a 2-up grid on tablet (Contact wraps below the
- * Learn/Legal pair) and a single column on phone.
+ * tallest. Collapses to a 2-up grid on tablet and a single column on phone.
  */
 export const ColumnGrid = styled.div`
   display: grid;
-  grid-template-columns: repeat(3, auto);
+  grid-template-columns: repeat(4, auto);
   gap: 1rem 4rem;
   align-items: start;
 
-  /* Three even tracks at tablet (Brand has stacked above, so the row
-     can use the full content width). Drop to two at small tablet, one
-     at mobile. */
+  /* Two even tracks from tablet down — four 1fr tracks squeeze the longer
+     labels ("Cookie preferences") into two-line wraps at this width, and a
+     2×2 block reads better than four cramped columns. */
   ${(p) => p.theme.media.desktop} {
-    grid-template-columns: repeat(3, 1fr);
+    grid-template-columns: repeat(2, 1fr);
     gap: 1.5rem 2rem;
   }
 

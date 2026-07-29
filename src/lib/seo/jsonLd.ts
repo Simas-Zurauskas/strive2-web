@@ -6,13 +6,35 @@ interface OrgInput {
   siteUrl: string;
 }
 
+// Claimed brand profiles, in the order they were verified. This is the field
+// Google reads to connect the site to its social presence, so every entry must
+// resolve — a sameAs pointing at a 404 is worse than an empty array. Append
+// only after the profile is live and publicly reachable.
+//
+// Verify these in a browser, not with curl: Product Hunt sits behind Cloudflare
+// and returns 403 to any scripted client regardless of user-agent, while
+// serving real browsers and search crawlers normally. A failing curl is not
+// evidence the entry is dead.
+//
+// GitHub (github.com/Strive-learning) is deliberately absent: the profile's
+// website field is still empty, so it references strive-learning.com nowhere
+// and corroborates nothing. Add it once that field is set.
+export const SAME_AS: readonly string[] = [
+  'https://www.linkedin.com/company/strivelearnhq/',
+  'https://www.facebook.com/profile.php?id=61592246957087',
+  'https://www.instagram.com/strivelearnhq/',
+  'https://www.threads.net/@strivelearnhq',
+  'https://x.com/strivelearnhq',
+  'https://www.producthunt.com/products/strive-10',
+];
+
 export const buildOrganizationJsonLd = ({ siteUrl }: OrgInput) => ({
   '@context': 'https://schema.org',
   '@type': 'Organization',
   name: 'Strive',
   url: siteUrl,
   logo: `${siteUrl}/icon1.png`,
-  sameAs: [] as string[],
+  sameAs: [...SAME_AS],
 });
 
 export const buildWebSiteJsonLd = ({ siteUrl }: OrgInput) => ({

@@ -22,6 +22,21 @@ const LEGAL_LINKS: { label: string; href: string }[] = [
   { label: 'Privacy policy', href: '/privacy' },
 ];
 
+/**
+ * Claimed brand profiles. Hrefs must stay in step with `SAME_AS` in
+ * `lib/seo/jsonLd.ts` — that array is what Google reads to connect the site
+ * to its social presence, and the two disagreeing is a weaker signal than
+ * either alone. Add here only once the profile is live and reachable.
+ */
+const SOCIAL_LINKS: { label: string; href: string }[] = [
+  { label: 'LinkedIn', href: 'https://www.linkedin.com/company/strivelearnhq/' },
+  { label: 'Facebook', href: 'https://www.facebook.com/profile.php?id=61592246957087' },
+  { label: 'Instagram', href: 'https://www.instagram.com/strivelearnhq/' },
+  { label: 'Threads', href: 'https://www.threads.net/@strivelearnhq' },
+  { label: 'X', href: 'https://x.com/strivelearnhq' },
+  { label: 'Product Hunt', href: 'https://www.producthunt.com/products/strive-10' },
+];
+
 const SUPPORT_EMAIL = 'admin@strive-learning.com';
 
 export const Footer = () => {
@@ -74,6 +89,20 @@ export const Footer = () => {
               <S.FooterLinkButton type="button" onClick={() => clearConsent()}>
                 Cookie preferences
               </S.FooterLinkButton>
+            </S.Column>
+
+            <S.Column>
+              <S.ColumnTitle>Follow</S.ColumnTitle>
+              {SOCIAL_LINKS.map((link) => (
+                <S.FooterLink
+                  key={link.href}
+                  href={link.href}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                >
+                  {link.label}
+                </S.FooterLink>
+              ))}
             </S.Column>
 
             <S.Column>
