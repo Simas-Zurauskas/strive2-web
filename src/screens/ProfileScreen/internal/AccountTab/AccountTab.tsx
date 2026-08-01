@@ -3,6 +3,7 @@ import { signOut as nextAuthSignOut } from 'next-auth/react';
 import { useEffect, useState } from 'react';
 import { toast } from 'sonner';
 import { deleteAccount, requestSecurityActionCode } from '@/api/routes/auth';
+import { ClientApiError } from '@/api/types';
 import { Button } from '@/components';
 import { TOASTS } from '@/constants/toasts';
 import { useAuth } from '@/hooks';
@@ -70,8 +71,11 @@ export const AccountTab: React.FC = () => {
       setResendUntil(Date.now() + RESEND_COOLDOWN_SECONDS * 1000);
       setDeleteStep('code');
     } catch (err: unknown) {
-      const message = err instanceof Error ? err.message : TOASTS.CODE_SEND_ERROR;
-      toast.error(message);
+      // The axios interceptor rejects with a plain ClientApiError object, not
+      // an Error instance — an `instanceof Error` test here always fell
+      // through to the generic copy and swallowed the server's reason
+      // (rate-limit wording, "Unauthorized", …).
+      toast.error((err as ClientApiError)?.message || TOASTS.CODE_SEND_ERROR);
     } finally {
       setRequestingCode(false);
     }
@@ -89,8 +93,7 @@ export const AccountTab: React.FC = () => {
       // Use raw nextAuthSignOut to just clear the NextAuth session.
       await nextAuthSignOut();
     } catch (err: unknown) {
-      const message = err instanceof Error ? err.message : 'Failed to delete account';
-      toast.error(message);
+      toast.error((err as ClientApiError)?.message || 'Failed to delete account');
       setDeleting(false);
     }
   };

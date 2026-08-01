@@ -49,6 +49,15 @@ export const TOASTS = {
   RESET_PASSWORD_SUCCESS: 'Password reset. Please sign in with your new password.',
   FORGOT_PASSWORD_ERROR: 'Could not send reset link. Please try again.',
 
+  // ── Course from documents ────────────────────────────
+  SOURCE_ANALYSIS_READY: 'Source analysis ready.',
+  SOURCES_PREPARED: 'Sources prepared.',
+  SOURCES_CONTENT_REJECTED: "Some of your sources couldn't be used. Review the analysis for details.",
+  STRUCTURE_SIZE_MISMATCH: "We couldn't fit the course to your sources' size — please try again.",
+  INGEST_ERROR: 'Failed to start source analysis. Please try again.',
+  PREPARE_SOURCES_ERROR: 'Failed to prepare your sources. Please try again.',
+  DOCUMENT_DELETE_ERROR: 'Failed to remove the document.',
+
   // ── Chat ─────────────────────────────────────────────
   CHAT_HISTORY_ERROR: 'Failed to load chat history.',
 

@@ -47,7 +47,12 @@ export const MarketingPreference: React.FC = () => {
     },
   });
 
-  const subscribed = query.data?.subscribed ?? true;
+  // Default OFF, never on. This is a consent control: rendering it
+  // pre-checked while the real answer is still in flight (or after a failed
+  // read) shows the user a consent they never gave, and a stray click then
+  // reads as them *withdrawing* one. The server's default for an unknown
+  // contact is `false` too — these two must not disagree.
+  const subscribed = query.data?.subscribed ?? false;
   const disabled = query.isLoading || mutation.isPending;
 
   return (

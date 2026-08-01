@@ -2,6 +2,7 @@
 
 import { useEffect } from 'react';
 import { getConsent, subscribeConsent, type ConsentValue } from '@/lib/cookieConsent';
+import { fbqConsent } from '@/lib/metaPixel';
 
 /**
  * Bridges the localStorage consent flag to runtime tracking surfaces:
@@ -24,6 +25,12 @@ import { getConsent, subscribeConsent, type ConsentValue } from '@/lib/cookieCon
 export const CookieConsentBootstrap = () => {
   useEffect(() => {
     const apply = (value: ConsentValue | null): void => {
+      // Meta Pixel: the base snippet revokes before `init`, so this is what
+      // actually releases the queue. Runs before the gtag guard below —
+      // otherwise a page where gtag failed to load would silently leave the
+      // pixel revoked forever.
+      fbqConsent(value !== 'essential');
+
       if (typeof window === 'undefined' || typeof window.gtag !== 'function') return;
       if (value === 'essential') {
         window.gtag('consent', 'update', {

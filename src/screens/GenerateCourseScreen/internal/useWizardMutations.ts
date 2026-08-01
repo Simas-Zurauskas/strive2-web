@@ -8,6 +8,13 @@ import {
   updateCourse,
   deleteCourse,
 } from '@/api/routes/course';
+import {
+  addUrlDocument,
+  deleteSourceDocument,
+  ingestDocuments,
+  prepareCorpus,
+  uploadSourceDocument,
+} from '@/api/routes/course/documents';
 import { ROUTES } from '@/constants/routes';
 import { TOASTS } from '@/constants/toasts';
 import { QKeys } from '@/types';
@@ -17,7 +24,10 @@ export const useWizardMutations = (courseId: string | null) => {
   const queryClient = useQueryClient();
 
   const createCourseMutation = useMutation({
-    mutationFn: (params: { goal: string }) => createCourse(params),
+    // Accepts the full create body: `{ goal }` for the classic flow,
+    // `{ source: 'documents' }` for the documents flow (server persists a
+    // placeholder goal until the analysis suggests one).
+    mutationFn: (params: Parameters<typeof createCourse>[0]) => createCourse(params),
     meta: { errorMessage: TOASTS.COURSE_CREATE_ERROR },
   });
 
@@ -53,6 +63,38 @@ export const useWizardMutations = (courseId: string | null) => {
     meta: { errorMessage: TOASTS.COURSE_DELETE_ERROR },
   });
 
+  // ── Course-from-documents mutations ─────────────────
+  //
+  // Upload / add-URL failures render inline on the specific file/URL row
+  // (typed errorCode → friendly copy in SourcesStep), so the global
+  // error toast is silenced for those two. Ingest / prepare-corpus keep
+  // the global policy — their 402 must open the Out-of-Credits modal.
+
+  const uploadDocumentMutation = useMutation({
+    mutationFn: (params: Parameters<typeof uploadSourceDocument>[0]) => uploadSourceDocument(params),
+    meta: { silent: true },
+  });
+
+  const addUrlDocumentMutation = useMutation({
+    mutationFn: (params: Parameters<typeof addUrlDocument>[0]) => addUrlDocument(params),
+    meta: { silent: true },
+  });
+
+  const deleteDocumentMutation = useMutation({
+    mutationFn: (params: Parameters<typeof deleteSourceDocument>[0]) => deleteSourceDocument(params),
+    meta: { errorMessage: TOASTS.DOCUMENT_DELETE_ERROR },
+  });
+
+  const ingestDocumentsMutation = useMutation({
+    mutationFn: (id: string) => ingestDocuments(id),
+    meta: { errorMessage: TOASTS.INGEST_ERROR },
+  });
+
+  const prepareCorpusMutation = useMutation({
+    mutationFn: (id: string) => prepareCorpus(id),
+    meta: { errorMessage: TOASTS.PREPARE_SOURCES_ERROR },
+  });
+
   return {
     createCourseMutation,
     clarifyMutation,
@@ -60,6 +102,11 @@ export const useWizardMutations = (courseId: string | null) => {
     structureMutation,
     depthPreviewsMutation,
     deleteMutation,
+    uploadDocumentMutation,
+    addUrlDocumentMutation,
+    deleteDocumentMutation,
+    ingestDocumentsMutation,
+    prepareCorpusMutation,
     queryClient,
   };
 };

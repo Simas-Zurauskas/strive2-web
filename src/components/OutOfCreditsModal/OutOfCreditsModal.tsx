@@ -106,11 +106,11 @@ export const OutOfCreditsModal = () => {
 
         <S.Header>
           <TopupBar />
-          <S.Title id="out-of-allowance-title">You&rsquo;re out of allowance</S.Title>
+          <S.Title id="out-of-allowance-title">Your next lesson is ready when you are</S.Title>
           <S.Lede>
             {canUpgrade
-              ? 'Pick up where you left off — upgrade for a bigger monthly pool, or buy a one-off top-up.'
-              : 'Top up to keep going. Your monthly Studio allowance still refreshes at the period end.'}
+              ? 'You’ve used this month’s allowance. Continue with a bigger monthly pool or a one-off top-up — everything you’ve already generated stays yours.'
+              : 'You’ve used this month’s allowance. Top up to keep going — your Studio allowance still refreshes at the period end.'}
           </S.Lede>
         </S.Header>
 

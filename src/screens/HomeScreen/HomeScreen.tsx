@@ -1,7 +1,7 @@
 'use client';
 
 import { useRouter } from 'next/navigation';
-import { useMemo } from 'react';
+import { useEffect, useMemo } from 'react';
 import { Button, HelpAnchor } from '@/components';
 import { useCourses, useProgressSummary } from '@/hooks';
 import { useJobManager } from '@/hooks/useJobManager';
@@ -60,6 +60,30 @@ export const HomeScreen: React.FC = () => {
 
   /** Empty state: rendered when the user has no courses. */
   const isFirstRun = !coursesLoading && !!courses && courses.length === 0;
+
+  // A brand-new account's first destination is course creation, not an empty
+  // dashboard — production showed ~53% of signups never reached the wizard
+  // when it sat one optional click away. This is the single mechanism for
+  // every entry path (Google OAuth return, verified-credentials continue,
+  // plain navigation): once the courses query proves "zero courses, zero
+  // drafts" (`courses.length === 0` covers both — drafts are course rows
+  // with status 'creating'), replace into the wizard. The wizard stamps a
+  // session flag on mount, so anyone who backs out of it is NOT bounced
+  // again — no redirect loop. `replace` (not `push`) keeps the empty
+  // dashboard out of history so Back doesn't re-trigger the hop.
+  useEffect(() => {
+    if (!isFirstRun) return;
+    let skip = false;
+    try {
+      skip = sessionStorage.getItem('strive.skipWizardRedirect') === '1';
+    } catch {
+      // Storage denied (private mode etc.) — worst case is one extra
+      // redirect into the wizard per visit, never a loop: the guard flag
+      // is only read here and the wizard never redirects back.
+    }
+    if (skip) return;
+    router.replace('/courses/new?trigger=home_redirect');
+  }, [isFirstRun, router]);
 
   if (isFirstRun) {
     return (

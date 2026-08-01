@@ -10,7 +10,7 @@ import {
   Target,
   Wand2,
 } from 'lucide-react';
-import { useMotion } from '@/theme/motionPresets';
+import { useMotion, VIEWPORT_ONCE } from '@/theme/motionPresets';
 import * as S from './ComparisonTable.styles';
 import {
   COMPARISON,
@@ -64,7 +64,8 @@ export const ComparisonTable = () => {
     <S.Wrap>
       <S.Inner
         initial={fadeUp.initial}
-        animate={fadeUp.animate}
+        whileInView={fadeUp.animate}
+        viewport={VIEWPORT_ONCE}
         transition={{ ...fadeUp.transition, duration: 0.4 }}
       >
         <S.SectionHeader>

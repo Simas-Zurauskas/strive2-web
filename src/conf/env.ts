@@ -21,9 +21,10 @@ export const NEXT_PUBLIC_API_URL = _apiUrl;
 export const DEV_MODE = process.env.NEXT_PUBLIC_DEV_MODE === 'true';
 
 /**
- * Google Ads conversion tag, e.g. `AW-1234567890`. Required — drives the
- * gtag bootstrap and any future `adsConversion()` calls. Format-validated
- * so a typo fails fast at module load rather than silently mis-attributing.
+ * Google Ads conversion tag, e.g. `AW-1234567890`. Required — it is the ID
+ * the gtag.js loader is parameterised with (a `G-…` URL 404s) and one of the
+ * two destinations every app event is sent to. No conversion actions are
+ * wired up; the tag exists for pageview/remarketing signal only.
  */
 const _adsId = process.env.NEXT_PUBLIC_GOOGLE_ADS_ID;
 
@@ -45,6 +46,18 @@ if (!_gaId) {
 }
 
 export const NEXT_PUBLIC_GA_MEASUREMENT_ID = _gaId;
+
+/**
+ * Meta (Facebook) Pixel ID — a 15–16 digit number from Events Manager →
+ * Data sources. Optional: unset means the pixel never loads and nothing else
+ * changes, so it can be provisioned per-environment without a code change.
+ *
+ * Loaded only when `NEXT_PUBLIC_DEV_MODE` is unset, so local and preview
+ * builds never pollute the dataset. Consent is bridged in
+ * `CookieConsentBootstrap` — the pixel starts revoked and is granted only
+ * when the banner allows analytics.
+ */
+export const NEXT_PUBLIC_META_PIXEL_ID = process.env.NEXT_PUBLIC_META_PIXEL_ID ?? '';
 
 /**
  * Mixpanel project token. Same value as the api's MIXPANEL_PROJECT_TOKEN —

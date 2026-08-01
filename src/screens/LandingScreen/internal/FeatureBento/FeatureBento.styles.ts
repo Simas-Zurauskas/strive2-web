@@ -8,10 +8,10 @@ export const Wrap = styled.section`
   width: 100%;
   display: flex;
   justify-content: center;
-  padding: var(--space-20) var(--space-8);
+  padding: var(--space-16) var(--space-8);
 
   ${(p) => p.theme.media.tabletLarge} {
-    padding: var(--space-12) var(--space-5);
+    padding: var(--space-10) var(--space-5);
   }
 `;
 
@@ -35,7 +35,7 @@ export const Eyebrow = styled.span`
   font-weight: 600;
   text-transform: uppercase;
   letter-spacing: 0.16em;
-  color: ${(p) => p.theme.colors.tertiary};
+  color: ${(p) => p.theme.colors.tertiaryText};
 `;
 
 export const Heading = styled.h2`
@@ -101,6 +101,32 @@ export const Tile = styled(motion.section)<{ $hero: boolean }>`
   ${(p) => p.theme.media.tabletLarge} {
     grid-column: span 1 !important;
     grid-row: span 1 !important;
+  }
+`;
+
+/* Handwritten-register gold aside (serif italic + drawn arrow), pinned to
+   the tile's top-right corner. */
+export const Marginalia = styled.span`
+  position: absolute;
+  top: var(--space-3);
+  right: var(--space-4);
+  display: flex;
+  align-items: flex-start;
+  gap: 4px;
+  color: ${(p) => p.theme.colors.tertiaryText};
+  pointer-events: none;
+
+  span {
+    font-family: var(--font-heading-serif), Georgia, serif;
+    font-style: italic;
+    font-size: 0.8125rem;
+    white-space: nowrap;
+    transform: rotate(-2deg);
+  }
+
+  svg {
+    margin-top: 8px;
+    transform: scaleX(-1) rotate(8deg);
   }
 `;
 

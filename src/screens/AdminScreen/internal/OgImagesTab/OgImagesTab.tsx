@@ -1,16 +1,22 @@
 'use client';
 
 import * as S from './OgImagesTab.styles';
-import { NotifSingleVariant } from './variants/V52_NotifSingle';
+import { UnderlineVariant } from './variants/V87_Underline';
 
 /**
- * Open Graph image lab — V52 selected.
+ * Open Graph image lab — V87 selected ("The Stroke, green").
  *
- * Earlier iteration cycles produced ~57 candidate variants; the
- * "Notification — single hero" direction (V52) was the keeper. The
- * remaining variant folders have been pruned. To explore a new
- * direction in the future, drop a fresh folder under `variants/` and
- * import it here.
+ * The keeper of the 2026-08-01 cycle: letterpress double rules and a
+ * cream masthead wordmark over the lit deep-green plate, the line
+ * "A real course on anything you want to learn." with "anything" in
+ * gold italic under a drawn gold stroke. Every other candidate from
+ * rounds two through six (V52–V92) has been pruned — see
+ * `wiki-strive/notes/WORKING/011-landing/PROGRESS.md` for the round
+ * history and what was rejected (landing motifs, app-UI mocks,
+ * pure-type minimal, low-brand graphical).
+ *
+ * To explore a new direction, drop a fresh folder under `variants/` and
+ * import it here. Shared OG-fixed tones live in `variants/ogTones.ts`.
  */
 export const OgImagesTab: React.FC = () => {
   return (
@@ -23,7 +29,7 @@ export const OgImagesTab: React.FC = () => {
         </S.IntroText>
       </S.Intro>
 
-      <NotifSingleVariant />
+      <UnderlineVariant />
     </S.TabWrapper>
   );
 };

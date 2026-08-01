@@ -54,7 +54,11 @@ export const Title = styled.h3`
   margin: 0;
 `;
 
-export const Description = styled.p`
+// div, not p: callers pass rich ReactNode descriptions (FidelityPickerDialog's
+// radiogroup of option cards, DepthOverrideDialog's <p> magnitude line) and
+// block elements inside a <p> are invalid HTML — React logs a DOM-nesting
+// error and it can surface as a hydration mismatch.
+export const Description = styled.div`
   font-size: 0.9375rem;
   color: ${(p) => p.theme.colors.muted};
   line-height: 1.55;

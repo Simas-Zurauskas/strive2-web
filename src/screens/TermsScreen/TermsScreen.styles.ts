@@ -70,4 +70,51 @@ export const MarkdownBody = styled.div`
   strong {
     font-weight: 600;
   }
+
+  code {
+    font-size: 0.875em;
+    padding: 0.1em 0.35em;
+    border-radius: 4px;
+    background: ${(p) => p.theme.colors.surface};
+    border: 1px solid ${(p) => p.theme.colors.surfaceBorder};
+    word-break: break-word;
+  }
+
+  /* GFM tables (legal-basis, sub-processor, retention, cookie tables).
+     display:block + overflow-x:auto keeps the widest table — the
+     sub-processor list — scrolling inside its own box instead of pushing
+     the whole document sideways on a phone. */
+  table {
+    display: block;
+    width: 100%;
+    max-width: 100%;
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+    border-collapse: collapse;
+    margin: 0 0 1.5rem 0;
+    font-size: 0.8125rem;
+    line-height: 1.55;
+  }
+
+  th,
+  td {
+    padding: 0.5rem 0.75rem;
+    text-align: left;
+    vertical-align: top;
+    border-bottom: 1px solid ${(p) => p.theme.colors.surfaceBorder};
+  }
+
+  th {
+    font-size: 0.6875rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    white-space: nowrap;
+    color: ${(p) => p.theme.colors.muted};
+    border-bottom: 2px solid ${(p) => p.theme.colors.surfaceBorder};
+  }
+
+  tbody tr:last-child td {
+    border-bottom: none;
+  }
 `;

@@ -2,6 +2,7 @@
 
 import Link from 'next/link';
 import { useEffect, useState } from 'react';
+import { analytics } from '@/lib/analytics';
 import * as S from './LandingTopBar.styles';
 
 interface LandingTopBarProps {
@@ -25,10 +26,20 @@ export const LandingTopBar = ({ onOpenSignIn }: LandingTopBarProps) => {
           Strive
         </S.Wordmark>
         <S.NavLinks>
-          <S.PricingLink as={Link} href="/blog" data-analytics-id="landing.topbar.blog">
+          <S.PricingLink
+            as={Link}
+            href="/blog"
+            data-analytics-id="landing.topbar.blog"
+            onClick={() => analytics.track('landing_cta_clicked', { cta: 'top_bar_blog' })}
+          >
             Blog
           </S.PricingLink>
-          <S.PricingLink as={Link} href="/pricing" data-analytics-id="landing.topbar.pricing">
+          <S.PricingLink
+            as={Link}
+            href="/pricing"
+            data-analytics-id="landing.topbar.pricing"
+            onClick={() => analytics.track('landing_cta_clicked', { cta: 'top_bar_pricing' })}
+          >
             Pricing
           </S.PricingLink>
           <S.SignInLink

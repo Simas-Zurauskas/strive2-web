@@ -1,0 +1,1 @@
+export { SourceProvenanceBadge } from './SourceProvenanceBadge';

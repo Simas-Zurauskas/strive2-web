@@ -38,8 +38,9 @@ export const CookieBanner = () => {
     <S.Container role="region" aria-label="Cookie consent">
       <S.Card>
         <S.Copy>
-          We use cookies for analytics and ads to improve Strive. Strictly necessary
-          cookies are always on. See our <Link href="/privacy">Privacy Policy</Link>.
+          We use cookies for analytics and ads to improve Strive.{' '}
+          <S.MobileHidden>Strictly necessary cookies are always on.</S.MobileHidden> See our{' '}
+          <Link href="/privacy">Privacy Policy</Link>.
         </S.Copy>
         <S.Actions>
           <S.Reject type="button" onClick={() => choose('essential')}>

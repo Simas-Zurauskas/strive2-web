@@ -7,10 +7,10 @@ export const Wrap = styled.section`
   width: 100%;
   display: flex;
   justify-content: center;
-  padding: var(--space-12) var(--space-8) var(--space-16);
+  padding: var(--space-16) var(--space-8);
 
   ${(p) => p.theme.media.tabletLarge} {
-    padding: var(--space-10) var(--space-5) var(--space-12);
+    padding: var(--space-10) var(--space-5);
   }
 `;
 
@@ -19,7 +19,7 @@ export const Inner = styled(motion.div)`
   max-width: 1120px;
   display: flex;
   flex-direction: column;
-  gap: var(--space-8);
+  gap: var(--space-10);
 `;
 
 export const Header = styled.div`
@@ -34,7 +34,7 @@ export const Eyebrow = styled.span`
   font-weight: 600;
   text-transform: uppercase;
   letter-spacing: 0.16em;
-  color: ${(p) => p.theme.colors.tertiary};
+  color: ${(p) => p.theme.colors.tertiaryText};
 `;
 
 export const Heading = styled.h2`
@@ -55,64 +55,82 @@ export const Subhead = styled.p`
   color: ${(p) => p.theme.colors.muted};
 `;
 
-export const Grid = styled.div`
+/* The trail: four columns whose seals sit on one dotted route line.
+   Desktop draws the line horizontally through the seal centers (top: 21px
+   = half the 42px seal); mobile rotates the trail vertical down the left
+   edge — the same shape as the product's course sidebar. */
+export const Track = styled.div`
+  position: relative;
   display: grid;
   grid-template-columns: repeat(4, 1fr);
-  gap: var(--space-4);
+  gap: var(--space-6);
+
+  &::before {
+    content: '';
+    position: absolute;
+    top: 21px;
+    left: 40px;
+    right: 40px;
+    border-top: 2px dotted
+      ${(p) => `color-mix(in srgb, ${p.theme.colors.tertiary} 55%, transparent)`};
+  }
 
   ${(p) => p.theme.media.tabletLarge} {
-    grid-template-columns: repeat(2, 1fr);
-    gap: var(--space-3);
-  }
-
-  ${(p) => p.theme.media.mobile} {
     grid-template-columns: 1fr;
-  }
-`;
+    gap: var(--space-8);
 
-export const Step = styled(motion.div)`
-  display: flex;
-  flex-direction: column;
-  gap: var(--space-3);
-  padding: var(--space-5);
-  background: ${(p) => p.theme.colors.surface};
-  border: 1px solid ${(p) => p.theme.colors.surfaceBorder};
-  border-radius: var(--radius-lg);
-  transition: border-color 0.15s, box-shadow 0.15s, transform 0.15s;
-
-  ${(p) => p.theme.media.hover} {
-    &:hover {
-      border-color: ${(p) =>
-        `color-mix(in oklab, ${p.theme.colors.tertiary} 35%, ${p.theme.colors.surfaceBorder})`};
-      box-shadow: var(--shadow-card);
-      transform: translateY(-1px);
+    &::before {
+      top: 21px;
+      bottom: 21px;
+      left: 21px;
+      right: auto;
+      border-top: none;
+      border-left: 2px dotted
+        ${(p) => `color-mix(in srgb, ${p.theme.colors.tertiary} 55%, transparent)`};
     }
   }
 `;
 
-export const StepHeader = styled.div`
+export const Step = styled(motion.div)`
+  position: relative;
   display: flex;
-  align-items: center;
-  justify-content: space-between;
+  flex-direction: column;
+  gap: var(--space-2);
+
+  ${(p) => p.theme.media.tabletLarge} {
+    display: grid;
+    grid-template-columns: 42px 1fr;
+    column-gap: var(--space-4);
+    row-gap: var(--space-1);
+  }
 `;
 
-export const StepNumber = styled.span`
+/* Numbered map seal: serif numeral in a double-ringed gold circle, opaque
+   so the trail appears to pass behind it. */
+export const Seal = styled.span`
+  position: relative;
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  width: 28px;
-  height: 28px;
+  width: 42px;
+  height: 42px;
+  margin-bottom: var(--space-2);
   border-radius: var(--radius-pill);
-  background: ${(p) => p.theme.colors.accentMuted};
-  color: ${(p) => p.theme.colors.accent};
-  font-size: 0.8125rem;
-  font-weight: 700;
+  background: ${(p) => p.theme.colors.background};
+  border: 1px solid ${(p) => p.theme.colors.tertiary};
+  box-shadow: inset 0 0 0 3px ${(p) => p.theme.colors.background},
+    inset 0 0 0 4px
+      ${(p) => `color-mix(in srgb, ${p.theme.colors.tertiary} 45%, transparent)`};
+  font-family: var(--font-heading-serif), Georgia, serif;
+  font-size: 1.125rem;
+  font-weight: 600;
+  color: ${(p) => p.theme.colors.tertiaryText};
   font-variant-numeric: tabular-nums;
-`;
 
-export const StepIcon = styled.span`
-  display: inline-flex;
-  color: ${(p) => p.theme.colors.tertiary};
+  ${(p) => p.theme.media.tabletLarge} {
+    grid-row: span 2;
+    margin-bottom: 0;
+  }
 `;
 
 export const StepTitle = styled.h3`
@@ -124,6 +142,11 @@ export const StepTitle = styled.h3`
   line-height: 1.25;
   color: ${(p) => p.theme.colors.foreground};
   margin: 0;
+
+  ${(p) => p.theme.media.tabletLarge} {
+    grid-column: 2;
+    align-self: center;
+  }
 `;
 
 export const StepBody = styled.p`
@@ -131,4 +154,8 @@ export const StepBody = styled.p`
   line-height: 1.55;
   color: ${(p) => p.theme.colors.muted};
   margin: 0;
+
+  ${(p) => p.theme.media.tabletLarge} {
+    grid-column: 2;
+  }
 `;

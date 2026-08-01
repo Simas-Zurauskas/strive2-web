@@ -5,11 +5,13 @@ topic: getting-started
 summary: Strive is an AI-powered learning platform that builds you a personalized course from a single sentence about what you want to learn.
 tags: [overview, getting-started, courses]
 order: 10
-updated: 2026-05-02
+updated: '2026-07-30'
 related: [creating-your-first-course, how-spaced-review-works]
 ---
 
 You arrive at Strive with a goal — *"I want to understand transformer neural networks"*, *"I'm prepping for the AWS Solutions Architect exam"*, *"I want to be conversational in Mandarin in three months"* — and a few honest sentences about what you already know. Strive's AI takes those answers and builds you a course shaped to your starting point and your destination. Not a generic syllabus. Yours.
+
+There is a second way in. Instead of describing a goal, you can hand Strive the material you already have — documents, slides, recordings, links — and have the course built on top of it; [Build a course from your own documents](/help/building-and-studying/build-a-course-from-your-documents) covers that path.
 
 ## The core loop
 

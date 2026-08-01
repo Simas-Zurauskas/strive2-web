@@ -23,7 +23,8 @@ import {
   TrendingUp,
   type LucideIcon,
 } from 'lucide-react';
-import { useMotion } from '@/theme/motionPresets';
+import { clearPendingGoal, setPendingGoal } from '@/lib/pendingGoal';
+import { useMotion, VIEWPORT_ONCE } from '@/theme/motionPresets';
 import * as S from './CourseExamplesSection.styles';
 import {
   COURSE_EXAMPLES,
@@ -63,7 +64,8 @@ export const CourseExamplesSection = ({ onOpenSignUp }: CourseExamplesSectionPro
     <S.Wrap>
       <S.Inner
         initial={fadeUp.initial}
-        animate={fadeUp.animate}
+        whileInView={fadeUp.animate}
+        viewport={VIEWPORT_ONCE}
         transition={{ ...fadeUp.transition, duration: 0.45 }}
       >
         <S.Header>
@@ -79,12 +81,19 @@ export const CourseExamplesSection = ({ onOpenSignUp }: CourseExamplesSectionPro
               <S.Card
                 key={example.title}
                 type="button"
-                onClick={onOpenSignUp}
+                onClick={() => {
+                  // The card's topic becomes the visitor's starting goal —
+                  // stashed through auth and prefilled into wizard step 1,
+                  // so "pick one" actually picks one instead of dead-ending
+                  // in a bare signup form.
+                  setPendingGoal(`${example.title} — ${example.blurb}`);
+                  onOpenSignUp();
+                }}
                 aria-haspopup="dialog"
-                aria-label={`Start a course on ${example.title}`}
                 data-analytics-id="landing.course_examples.card"
                 initial={{ opacity: 0, y: prefersReduced ? 0 : 8 }}
-                animate={{ opacity: 1, y: 0 }}
+                whileInView={{ opacity: 1, y: 0 }}
+                viewport={VIEWPORT_ONCE}
                 transition={{
                   duration: 0.35,
                   delay: prefersReduced ? 0 : Math.min(i * 0.03, 0.3),
@@ -111,7 +120,10 @@ export const CourseExamplesSection = ({ onOpenSignUp }: CourseExamplesSectionPro
           Don’t see your topic? Strive builds a course for almost any goal.
           <S.FootnoteCta
             type="button"
-            onClick={onOpenSignUp}
+            // "Your own goal" = blank slate: drop any example stashed by an
+            // earlier card click so the wizard doesn't prefill the abandoned
+            // topic under a button that promised the opposite.
+            onClick={() => { clearPendingGoal(); onOpenSignUp(); }}
             aria-haspopup="dialog"
             data-analytics-id="landing.course_examples.footnote_cta"
           >

@@ -1,0 +1,1 @@
+export { LegalUpdateNotice } from './LegalUpdateNotice';

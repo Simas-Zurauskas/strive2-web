@@ -223,7 +223,12 @@ export const CourseOverviewScreen = () => {
       </S.SectionTitle>
       {modules.map((mod, mi) => {
         const mp = getModuleProgress(mi);
-        const isModuleComplete = mp.completed === mp.total && mp.total > 0;
+        // Quiz unlocks at 2 completed lessons (or all of them in a 1-lesson
+        // module) instead of full module completion — production data showed
+        // the all-lessons gate meant no quiz was EVER generated. Completion
+        // implies generation, so this stays safely above the API's own
+        // ≥2-generated gate. The quiz covers the lessons generated so far.
+        const quizUnlocked = mp.total > 0 && mp.completed >= Math.min(2, mp.total);
         const qp = quizProgressMap.get(mi);
         const expanded = expandedModules?.has(mi) ?? false;
         const lessonListId = `overview-module-lessons-${mi}`;
@@ -231,7 +236,7 @@ export const CourseOverviewScreen = () => {
         // Surface an inline quiz indicator on the COLLAPSED header when the
         // quiz is actionable (unattempted-but-unlocked, or review-due) so
         // collapsing the module doesn't bury anything the user should act on.
-        const headerQuizVariant: QuizIconVariant | null = !expanded && isModuleComplete
+        const headerQuizVariant: QuizIconVariant | null = !expanded && quizUnlocked
           ? (qp?.bestTier === 'needs_review' || qp?.reviewDue
               ? 'needs_review'
               : !qp
@@ -298,15 +303,15 @@ export const CourseOverviewScreen = () => {
 
                   {/* Module quiz */}
                   {(() => {
-                    const variant: QuizIconVariant = !isModuleComplete
+                    const variant: QuizIconVariant = !quizUnlocked
                       ? 'locked'
                       : qp?.bestTier ?? 'not-taken';
                     const QuizIcon = quizIconFor[variant];
                     return (
                       <S.QuizRow
-                        $locked={!isModuleComplete}
+                        $locked={!quizUnlocked}
                         onClick={() =>
-                          isModuleComplete &&
+                          quizUnlocked &&
                           router.push(`${courseBasePath}/quiz/${mi}${qp?.reviewDue ? '?review=true' : ''}`)
                         }
                       >
@@ -314,7 +319,7 @@ export const CourseOverviewScreen = () => {
                           <QuizIcon size={14} strokeWidth={2} />
                         </S.QuizIcon>
                         <S.QuizLabel>Module Quiz</S.QuizLabel>
-                        {isModuleComplete && !qp && <S.TakeQuizBadge>Take quiz</S.TakeQuizBadge>}
+                        {quizUnlocked && !qp && <S.TakeQuizBadge>Take quiz</S.TakeQuizBadge>}
                         {qp?.reviewDue && <S.ReviewDueBadge>Review due</S.ReviewDueBadge>}
                         {qp?.bestTier && <S.QuizBadge $tier={qp.bestTier}>{qp.bestScore}%</S.QuizBadge>}
                       </S.QuizRow>

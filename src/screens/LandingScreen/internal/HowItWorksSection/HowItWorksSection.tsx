@@ -1,6 +1,6 @@
 'use client';
 
-import { useMotion } from '@/theme/motionPresets';
+import { useMotion, VIEWPORT_ONCE } from '@/theme/motionPresets';
 import * as S from './HowItWorksSection.styles';
 import { HOW_IT_WORKS } from '../../constants';
 
@@ -70,7 +70,8 @@ export const HowItWorksSection = () => {
             key={step.n}
             $reverse={i % 2 === 1}
             initial={fadeUp.initial}
-            animate={fadeUp.animate}
+            whileInView={fadeUp.animate}
+        viewport={VIEWPORT_ONCE}
             transition={{ ...fadeUp.transition, duration: 0.5 }}
           >
             <S.StepCopy>

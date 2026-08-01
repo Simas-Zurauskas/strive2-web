@@ -64,3 +64,41 @@ export const CourseName = styled.p`
   letter-spacing: -0.01em;
   font-style: italic;
 `;
+
+// ── Step-level error card (documents pre-structure flow) ──
+// Pairs the step-5 loader with an inline retry state so a failed
+// prepare_corpus / structure submit never leaves the step body blank.
+
+export const StepErrorCard = styled.div`
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+  padding: 2rem 1.75rem;
+  border-radius: 8px;
+  background: ${(p) => p.theme.colors.surface};
+  border: 1px solid color-mix(in srgb, ${(p) => p.theme.colors.error} 35%, ${(p) => p.theme.colors.surfaceBorder});
+  box-shadow: var(--shadow-card);
+  max-width: 560px;
+  margin: 2rem auto 0;
+`;
+
+export const StepErrorTitle = styled.p`
+  font-family: var(--font-heading-serif), Georgia, serif;
+  font-style: italic;
+  font-size: 1.375rem;
+  font-weight: 500;
+  color: ${(p) => p.theme.colors.foreground};
+`;
+
+export const StepErrorBody = styled.p`
+  font-size: 0.9375rem;
+  color: ${(p) => p.theme.colors.muted};
+  line-height: 1.6;
+`;
+
+export const StepErrorActions = styled.div`
+  display: flex;
+  justify-content: flex-end;
+  gap: 1rem;
+  margin-top: 0.5rem;
+`;

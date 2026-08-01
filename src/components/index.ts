@@ -11,6 +11,14 @@ export { RadioGroup } from './RadioGroup';
 export { DropdownMenu } from './DropdownMenu';
 export type { DropdownMenuItem } from './DropdownMenu';
 export {
+  FileDropzone,
+  formatBytes,
+  MAX_SOURCE_DOCUMENT_BYTES,
+  SOURCE_DOCUMENT_ACCEPT,
+  SOURCE_DOCUMENT_EXTENSIONS,
+} from './FileDropzone';
+export type { FileDropzoneItem, FileDropzoneItemStatus } from './FileDropzone';
+export {
   AuthForm,
   AuthFormTitle,
   AuthFormError,
@@ -36,9 +44,12 @@ export { PublicTopBar } from './PublicTopBar';
 export { ConceptModal } from './ConceptsModal';
 export { HelpAnchor } from './HelpAnchor';
 export { CookieBanner } from './CookieBanner';
+export { LegalUpdateNotice } from './LegalUpdateNotice';
+export { Tooltip } from './Tooltip';
 
 // Data Display
 export { Badge } from './Badge';
+export { SourceProvenanceBadge } from './SourceProvenanceBadge';
 export { Card } from './Card';
 export { Markdown } from './Markdown';
 export { Chat } from './Chat';
@@ -58,6 +69,7 @@ export type { LessonIndicatorState } from './LessonIndicator';
 export { BillingPanel } from './BillingPanel';
 export { CreditPill } from './CreditPill';
 export { OutOfCreditsModal } from './OutOfCreditsModal';
+export { UpgradeBanner } from './UpgradeBanner';
 export { PurchaseSuccessModal } from './PurchaseSuccessModal';
 export type { PurchaseKind } from './PurchaseSuccessModal';
 export { TopupControl } from './TopupControl';

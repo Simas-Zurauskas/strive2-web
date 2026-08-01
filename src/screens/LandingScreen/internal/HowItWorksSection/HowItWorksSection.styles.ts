@@ -7,13 +7,10 @@ export const Wrap = styled.section`
   width: 100%;
   display: flex;
   justify-content: center;
-  padding: var(--space-20) var(--space-8);
-  background: ${(p) => p.theme.colors.surface};
-  border-top: 1px solid ${(p) => p.theme.colors.surfaceBorder};
-  border-bottom: 1px solid ${(p) => p.theme.colors.surfaceBorder};
+  padding: var(--space-16) var(--space-8);
 
   ${(p) => p.theme.media.tabletLarge} {
-    padding: var(--space-12) var(--space-5);
+    padding: var(--space-10) var(--space-5);
   }
 `;
 
@@ -43,7 +40,7 @@ export const Eyebrow = styled.span`
   font-weight: 600;
   text-transform: uppercase;
   letter-spacing: 0.16em;
-  color: ${(p) => p.theme.colors.tertiary};
+  color: ${(p) => p.theme.colors.tertiaryText};
 `;
 
 export const Heading = styled.h2`

@@ -4,7 +4,7 @@
  */
 
 export interface paths {
-    "/api/admin/relaunch/recipients": {
+    "/api/admin/marketing/claims": {
         parameters: {
             query?: never;
             header?: never;
@@ -12,22 +12,22 @@ export interface paths {
             cookie?: never;
         };
         /**
-         * List old-user relaunch recipients (admin-only)
-         * @description Returns rows from `RelaunchRecipient` with their `sentAt` state, plus
-         *     the matching `SignupCreditGrant.usdAmount` if a grant exists for that
-         *     email. Used by the admin UI to render the send list and disable the
-         *     per-row "send" button once `sentAt` is populated. Supports a free-text
-         *     email substring filter and a paying-user filter.
+         * Campaign progress and stranded send claims (admin-only)
+         * @description Returns the campaign's audience and progress counts, plus any send
+         *     claims left behind by a process that died between claiming a
+         *     recipient and delivering to them. A stranded claim blocks that
+         *     address from every later batch until it is released via the reclaim
+         *     endpoint.
+         *
+         *     Claims younger than the strand threshold are not reported — they may
+         *     belong to a batch still running.
+         *
+         *     Gated by `protect → requireVerified → requireAdmin`.
          */
         get: {
             parameters: {
-                query?: {
-                    status?: "all" | "pending" | "sent";
-                    paying?: "any" | "only" | "exclude";
-                    /** @description Case-insensitive email substring match. */
-                    q?: string;
-                    limit?: number;
-                    offset?: number;
+                query: {
+                    campaignKey: "documents-feature-2026-08";
                 };
                 header?: never;
                 path?: never;
@@ -42,120 +42,62 @@ export interface paths {
                     content: {
                         "application/json": {
                             data: {
-                                recipients: {
+                                /** @enum {string} */
+                                campaignKey: "documents-feature-2026-08";
+                                /** @description Marketing contacts eligible for promotional email. */
+                                audienceCount: number;
+                                sentCount: number;
+                                /** @description Rolled-back attempts awaiting a retry. */
+                                failedCount: number;
+                                hardBouncedCount: number;
+                                /** @description Eligible contacts with no delivered or in-flight send row. */
+                                remainingCount: number;
+                                strandedClaims: {
                                     /** Format: email */
                                     email: string;
-                                    sent: boolean;
                                     /** Format: date-time */
-                                    sentAt?: string | null;
-                                    wasPayingUser: boolean;
-                                    signedUp: boolean;
-                                    /** Format: date-time */
-                                    signedUpAt?: string | null;
-                                    grantUsd?: number | null;
-                                    grantConsumed?: boolean | null;
+                                    claimedAt: string;
+                                    attempts: number;
                                 }[];
-                                total: number;
-                                pendingCount: number;
-                                sentCount: number;
-                                payingCount: number;
-                                signedUpCount: number;
                             };
                         };
+                    };
+                };
+                400: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ApiError"];
+                    };
+                };
+                401: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ApiError"];
+                    };
+                };
+                403: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ApiError"];
                     };
                 };
             };
         };
         put?: never;
-        /**
-         * Add a single recipient to the relaunch roster (admin-only)
-         * @description Upserts a `RelaunchRecipient` row for `email`. Optionally seeds a
-         *     `SignupCreditGrant` row with the given `usdAmount` (only if the
-         *     email doesn't already have an unconsumed grant — existing claimed
-         *     grants are left alone). Idempotent: re-posting the same address is
-         *     a no-op on the recipient, and the grant update respects the
-         *     already-claimed guard.
-         */
-        post: {
-            parameters: {
-                query?: never;
-                header?: never;
-                path?: never;
-                cookie?: never;
-            };
-            requestBody: {
-                content: {
-                    "application/json": {
-                        /** Format: email */
-                        email: string;
-                        usdAmount?: number;
-                        wasPayingUser?: boolean;
-                    };
-                };
-            };
-            responses: {
-                200: {
-                    headers: {
-                        [name: string]: unknown;
-                    };
-                    content: {
-                        "application/json": {
-                            data: {
-                                /** Format: email */
-                                email: string;
-                                wasPayingUser: boolean;
-                                grantUsd?: number | null;
-                                created: boolean;
-                            };
-                        };
-                    };
-                };
-            };
-        };
-        /**
-         * Remove a relaunch recipient (admin-only)
-         * @description Deletes the `RelaunchRecipient` row for `email`. Also deletes the
-         *     matching `SignupCreditGrant` row IF it has not yet been claimed —
-         *     a consumed grant is left in place because the credit has already
-         *     been applied to a User and the row is the audit trail tying that
-         *     award back to the relaunch campaign. Idempotent: deleting an
-         *     address that doesn't exist returns 200 with `deleted: false`.
-         */
-        delete: {
-            parameters: {
-                query: {
-                    email: string;
-                };
-                header?: never;
-                path?: never;
-                cookie?: never;
-            };
-            requestBody?: never;
-            responses: {
-                200: {
-                    headers: {
-                        [name: string]: unknown;
-                    };
-                    content: {
-                        "application/json": {
-                            data: {
-                                /** Format: email */
-                                email: string;
-                                deleted: boolean;
-                                grantDeleted: boolean;
-                                grantPreservedConsumed?: boolean;
-                            };
-                        };
-                    };
-                };
-            };
-        };
+        post?: never;
+        delete?: never;
         options?: never;
         head?: never;
         patch?: never;
         trace?: never;
     };
-    "/api/admin/relaunch/send": {
+    "/api/admin/marketing/reclaim": {
         parameters: {
             query?: never;
             header?: never;
@@ -165,22 +107,17 @@ export interface paths {
         get?: never;
         put?: never;
         /**
-         * Send the relaunch email to a batch of recipients (admin-only)
-         * @description Sends synchronously to each address in `emails`, in order. The
-         *     template is chosen per-recipient from the recipient row's
-         *     `wasPayingUser` flag — paying users get the founder-voiced
-         *     thanks/apology template, everyone else gets the standard relaunch.
-         *     This keeps the operator from accidentally sending the wrong copy
-         *     to a paying user.
+         * Release stranded send claims so they can be retried (admin-only)
+         * @description Clears the claim on send rows left in flight by a process that died
+         *     before delivering, returning them to the pool the next batch draws
+         *     from. Only claims older than the strand threshold are affected, so a
+         *     batch running in another session cannot have its recipients taken.
          *
-         *     Per-address contract: only sends if the recipient row exists and
-         *     `sentAt` is unset (re-clicking "send" never double-mails). Flips
-         *     `sentAt` to now on success.
+         *     Rows that were actually delivered are untouched — the operation
+         *     matches on the in-flight status only, so it can never resurrect a
+         *     completed send into a second delivery.
          *
-         *     Returns a per-address outcome (including which template shipped)
-         *     the UI uses to update its row state. Throughput is intentionally
-         *     low — the operator drives batch size from the admin tab. Warm the
-         *     sender (start small, watch bounce/spam in Mailjet) before scaling.
+         *     Gated by `protect → requireVerified → requireAdmin`.
          */
         post: {
             parameters: {
@@ -192,7 +129,10 @@ export interface paths {
             requestBody: {
                 content: {
                     "application/json": {
-                        emails: string[];
+                        /** @enum {string} */
+                        campaignKey: "documents-feature-2026-08";
+                        /** @description Restrict the reclaim to these addresses. Omitted, all stranded claims are released. */
+                        emails?: string[];
                     };
                 };
             };
@@ -204,20 +144,160 @@ export interface paths {
                     content: {
                         "application/json": {
                             data: {
+                                reclaimedCount: number;
+                            };
+                        };
+                    };
+                };
+                400: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ApiError"];
+                    };
+                };
+                401: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ApiError"];
+                    };
+                };
+                403: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ApiError"];
+                    };
+                };
+            };
+        };
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/admin/marketing/send": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Send one paced batch of a promotional campaign (admin-only)
+         * @description Sends the campaign's pinned template to eligible marketing contacts,
+         *     one batch per request. The audience is derived on the server from the
+         *     marketing contact ledger; the template is bound to the campaign key
+         *     server-side and cannot be chosen by the caller.
+         *
+         *     Idempotent per recipient: a unique `(campaignKey, email)` constraint
+         *     backs an atomic claim, so a repeated request reports `already_sent`
+         *     rather than sending twice, and two concurrent callers resolve to one
+         *     message per address. A send failure rolls the claim back so the
+         *     address is retried by a later batch.
+         *
+         *     Before each batch the vendor suppression list is re-read; if it
+         *     cannot be read the batch is refused rather than sent to an audience
+         *     of unknown opt-out state. Addresses recorded as hard bounces on any
+         *     campaign are excluded.
+         *
+         *     Sends are paced, and a batch that exhausts its wall-clock budget
+         *     reports the remaining recipients as `deferred` without claiming them.
+         *
+         *     Gated by `protect → requireVerified → requireAdmin`.
+         */
+        post: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path?: never;
+                cookie?: never;
+            };
+            requestBody: {
+                content: {
+                    "application/json": {
+                        /** @enum {string} */
+                        campaignKey: "documents-feature-2026-08";
+                        /** @description Recipients to attempt in this request. Defaults to 50. */
+                        batchSize?: number;
+                        /**
+                         * @description Optional targeted list. When present it replaces the
+                         *     next-eligible selection. An address with no contact
+                         *     ledger row is refused, never created.
+                         */
+                        emails?: string[];
+                        /** @description Must equal `campaignKey`. */
+                        confirm: string;
+                    };
+                };
+            };
+            responses: {
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": {
+                            data: {
+                                /** @enum {string} */
+                                campaignKey: "documents-feature-2026-08";
                                 results: {
                                     /** Format: email */
                                     email: string;
                                     /** @enum {string} */
-                                    status: "sent" | "already_sent" | "not_in_list" | "failed";
-                                    /** @enum {string|null} */
-                                    template?: "old_user_relaunch" | "old_paying_user_thanks" | null;
+                                    status: "sent" | "already_sent" | "not_in_audience" | "suppressed" | "failed" | "deferred";
                                     error?: string | null;
                                 }[];
                                 sentCount: number;
                                 skippedCount: number;
                                 failedCount: number;
+                                /** @description Contacts eligible for this campaign in total. */
+                                audienceCount: number;
+                                /** @description Eligible contacts still awaiting a send after this batch. */
+                                remainingCount: number;
+                                /** @description Addresses excluded by the vendor suppression list or a recorded hard bounce. */
+                                suppressedCount: number;
                             };
                         };
+                    };
+                };
+                400: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ApiError"];
+                    };
+                };
+                401: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ApiError"];
+                    };
+                };
+                403: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ApiError"];
+                    };
+                };
+                503: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ApiError"];
                     };
                 };
             };
@@ -226,132 +306,6 @@ export interface paths {
         options?: never;
         head?: never;
         patch?: never;
-        trace?: never;
-    };
-    "/api/admin/relaunch/recipients/grant": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        get?: never;
-        put?: never;
-        post?: never;
-        delete?: never;
-        options?: never;
-        head?: never;
-        /**
-         * Update signup grant amount for a relaunch recipient (admin-only)
-         * @description Upserts the `SignupCreditGrant` row for `email` with the given
-         *     `usdAmount`. Refuses to modify a grant that has already been claimed
-         *     — once `consumedAt` is set the user has been awarded the credit and
-         *     editing the dollar amount post-hoc would only confuse the audit
-         *     trail.
-         */
-        patch: {
-            parameters: {
-                query?: never;
-                header?: never;
-                path?: never;
-                cookie?: never;
-            };
-            requestBody: {
-                content: {
-                    "application/json": {
-                        /** Format: email */
-                        email: string;
-                        usdAmount: number;
-                    };
-                };
-            };
-            responses: {
-                200: {
-                    headers: {
-                        [name: string]: unknown;
-                    };
-                    content: {
-                        "application/json": {
-                            data: {
-                                /** Format: email */
-                                email: string;
-                                usdAmount: number;
-                                consumed: boolean;
-                            };
-                        };
-                    };
-                };
-                409: {
-                    headers: {
-                        [name: string]: unknown;
-                    };
-                    content: {
-                        "application/json": components["schemas"]["ApiError"];
-                    };
-                };
-            };
-        };
-        trace?: never;
-    };
-    "/api/admin/relaunch/recipients/paying": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        get?: never;
-        put?: never;
-        post?: never;
-        delete?: never;
-        options?: never;
-        head?: never;
-        /**
-         * Toggle the wasPayingUser flag on a relaunch recipient (admin-only)
-         * @description Flips `wasPayingUser` on the recipient row so the operator can mark
-         *     users from the UI without re-running the import script.
-         */
-        patch: {
-            parameters: {
-                query?: never;
-                header?: never;
-                path?: never;
-                cookie?: never;
-            };
-            requestBody: {
-                content: {
-                    "application/json": {
-                        /** Format: email */
-                        email: string;
-                        wasPayingUser: boolean;
-                    };
-                };
-            };
-            responses: {
-                200: {
-                    headers: {
-                        [name: string]: unknown;
-                    };
-                    content: {
-                        "application/json": {
-                            data: {
-                                /** Format: email */
-                                email: string;
-                                wasPayingUser: boolean;
-                            };
-                        };
-                    };
-                };
-                404: {
-                    headers: {
-                        [name: string]: unknown;
-                    };
-                    content: {
-                        "application/json": components["schemas"]["ApiError"];
-                    };
-                };
-            };
-        };
         trace?: never;
     };
     "/api/admin/email/send-promotional-test": {
@@ -370,6 +324,13 @@ export interface paths {
          *     outcome — failures bubble up as 500s so the operator sees the
          *     problem immediately rather than discovering it via Sentry.
          *
+         *     Sends to one address only and writes no send-ledger row, so it is
+         *     not a campaign and does not affect campaign idempotency. When the
+         *     address is a known marketing contact the message carries that
+         *     contact's real one-click unsubscribe link, so the opt-out flow can
+         *     be exercised end to end; otherwise the mail provider's hosted
+         *     unsubscribe link is used.
+         *
          *     Gated by `protect → requireVerified → requireAdmin`. Not exposed
          *     through any UI affordance to non-admins.
          */
@@ -386,7 +347,7 @@ export interface paths {
                         /** Format: email */
                         to: string;
                         /** @enum {string} */
-                        template: "old_user_relaunch" | "old_paying_user_thanks";
+                        template: "documents_feature";
                     };
                 };
             };
@@ -651,11 +612,11 @@ export interface paths {
         };
         /**
          * Get the authenticated user's promotional-email subscription state
-         * @description Reads the user's subscription status on the Mailjet "promotional"
-         *     contact list. The Mailjet record is the source of truth — clicks
-         *     on the unsubscribe link in any promotional email also write to it,
-         *     so this endpoint and the email-link path stay consistent without
-         *     sync logic.
+         * @description Returns false immediately if our own `MarketingContact` ledger
+         *     records a suppression for this address — the ledger is what decides
+         *     whether a send happens, so it cannot be contradicted by a vendor
+         *     read. Otherwise falls through to the Mailjet "promotional" list,
+         *     which still receives unsubscribes from its own hosted page.
          */
         get: {
             parameters: {
@@ -687,10 +648,12 @@ export interface paths {
         head?: never;
         /**
          * Toggle the authenticated user's promotional-email subscription
-         * @description Writes the new state to the user's record on the Mailjet
-         *     "promotional" contact list. `true` upserts the contact and clears
-         *     the unsubscribe flag; `false` flags it unsubscribed (matching what
-         *     the email-link unsubscribe does on Mailjet's hosted page).
+         * @description Writes the new state to our own `MarketingContact` ledger first —
+         *     an opt-in recorded as `basis: consent`, an opt-out as a suppression
+         *     — and only then mirrors it to the Mailjet "promotional" contact
+         *     list. Ledger-first is deliberate: if the Mailjet call fails, the
+         *     user's decision is already recorded on the side that decides the
+         *     audience.
          */
         patch: {
             parameters: {
@@ -1476,6 +1439,89 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/auth/marketing/unsubscribe": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Human-visible unsubscribe confirmation
+         * @description Public endpoint — no session. Applies the opt-out and redirects to
+         *     the `/unsubscribed` confirmation page. Redirects to the same page
+         *     whatever the token turns out to be, for the same
+         *     no-existence-oracle reason as the POST variant.
+         *
+         *     Note on GET-mutates-state: a link scanner that prefetches the URL
+         *     will unsubscribe the recipient. That is the safe direction to be
+         *     wrong in (over-suppression, never under), and the profile toggle is
+         *     an always-available re-opt-in — whereas a confirmation page that
+         *     required a second click would lose opt-outs from anyone who did not
+         *     take it.
+         */
+        get: {
+            parameters: {
+                query: {
+                    token: string;
+                };
+                header?: never;
+                path?: never;
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description Redirect to the public confirmation page. */
+                302: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content?: never;
+                };
+            };
+        };
+        put?: never;
+        /**
+         * One-click unsubscribe from promotional email (RFC 8058)
+         * @description Public endpoint — no session. Authorised solely by the per-contact
+         *     HMAC token in the `token` query parameter, which is the target of
+         *     the `List-Unsubscribe` header on every promotional message.
+         *     Idempotent, and deliberately uniform: an unknown or tampered token
+         *     returns the same 200 as a valid one so the endpoint cannot be used
+         *     to test whether an address is a subscriber.
+         */
+        post: {
+            parameters: {
+                query: {
+                    /** @description Per-contact HMAC unsubscribe token. */
+                    token: string;
+                };
+                header?: never;
+                path?: never;
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": {
+                            data: {
+                                unsubscribed: boolean;
+                            };
+                        };
+                    };
+                };
+            };
+        };
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/auth/me/preferences": {
         parameters: {
             query?: never;
@@ -2165,7 +2211,10 @@ export interface paths {
             };
         };
         put?: never;
-        /** Create a new course */
+        /**
+         * Create a new course
+         * @description Creates a course from a typed goal (the classic flow — `goal` required), or, with `source: documents`, creates the shell for a course-from-documents flow: `goal` becomes optional and the server persists a placeholder until the source analysis suggests one. Omitting `source` behaves exactly as before. At most 5 document courses per user per day (400 DOCUMENT_LIMIT_EXCEEDED, meta {limit, have}); goal-based creation is not capped.
+         */
         post: {
             parameters: {
                 query?: never;
@@ -2176,7 +2225,9 @@ export interface paths {
             requestBody: {
                 content: {
                     "application/json": {
-                        goal: string;
+                        /** @description Required unless source is documents. */
+                        goal?: string;
+                        source?: components["schemas"]["CourseSource"];
                     };
                 };
             };
@@ -2288,6 +2339,8 @@ export interface paths {
                         goalTypeConfirmedAt?: "now" | null;
                         /** @description Transport-only flag. Set to true on retry after a 409 DEPTH_OVERRIDE_REQUIRES_ACK response to confirm the learner has seen the course-magnitude modal and chooses to proceed with the selected depth. Never persisted. */
                         depthOverrideAcknowledged?: boolean;
+                        /** @description Course-from-documents fidelity dial — how tightly generation sticks to the uploaded material. Only accepted on courses with source documents; a 400 is returned when set on a goal-based course. */
+                        sourceFidelity?: components["schemas"]["SourceFidelity"];
                     };
                 };
             };
@@ -2411,6 +2464,223 @@ export interface paths {
                 };
             };
         };
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/course/{courseId}/documents/url": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Add a public article URL as a course source document
+         * @description Registers a public http(s) article URL as a source document. The URL is validated only (scheme, public-host shape) — nothing is fetched by this endpoint; the ingest job fetches a snapshot later via an external reader. Local, private-network, IP-literal and credentialed URLs are rejected. Idempotent per course and URL — re-adding the same URL returns the existing document. At most 10 URLs per course.
+         *     Errors: 400 CUSTOM_ERROR (invalid or non-public URL, not a documents course), 400 DOCUMENT_LIMIT_EXCEEDED (URL cap, meta {limit, have}), 409 TOO_MANY_ACTIVE_JOBS (a job is running on the course).
+         */
+        post: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path: {
+                    courseId: string;
+                };
+                cookie?: never;
+            };
+            requestBody: {
+                content: {
+                    "application/json": {
+                        /** @description Public http(s) article URL. */
+                        url: string;
+                    };
+                };
+            };
+            responses: {
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": {
+                            data: components["schemas"]["SourceDocument"];
+                        };
+                    };
+                };
+            };
+        };
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/course/{courseId}/documents/{documentId}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post?: never;
+        /**
+         * Delete a source document from a course
+         * @description Removes the document row and its stored raw file. Owner-scoped — a documentId belonging to another user's course returns 404.
+         *     Errors: 404 NOT_FOUND (unknown document), 400 CUSTOM_ERROR (not a documents course), 409 TOO_MANY_ACTIVE_JOBS (a job is running on the course).
+         */
+        delete: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path: {
+                    courseId: string;
+                    documentId: string;
+                };
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": {
+                            data: {
+                                deleted: boolean;
+                            };
+                        };
+                    };
+                };
+            };
+        };
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/course/{courseId}/documents/ingest": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Start the free ingest-and-assess job for a documents course
+         * @description Submits an `ingest_documents` job that extracts, moderates, assesses, chunks and embeds every pending source document (status uploaded, failed, or stale parsing). Free by policy — no credits are debited. Progress streams as `document_status` events on the job:progress socket channel; completion lands the coarse SourceAnalysis on the course. At most 3 ingest runs per course per day.
+         *     Errors: 400 CUSTOM_ERROR (not a documents course / nothing to ingest), 400 DOCUMENT_LIMIT_EXCEEDED (daily run cap, meta {limit, have}), 402 INSUFFICIENT_CREDITS (pre-flight gate), 409 TOO_MANY_ACTIVE_JOBS / job-already-running (per-course mutex).
+         */
+        post: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path: {
+                    courseId: string;
+                };
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                202: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": {
+                            data: {
+                                jobId: string;
+                            };
+                        };
+                    };
+                };
+            };
+        };
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/course/{courseId}/documents": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * List the source documents of a course
+         * @description Returns the course's source documents (uploaded files and article URLs), oldest first. The set is bounded by the per-course caps (10 files + 10 URLs), so the list is complete — no pagination. A goal-based course returns an empty list. The response contains metadata only — never storage keys, hashes, or extracted content.
+         */
+        get: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path: {
+                    courseId: string;
+                };
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": {
+                            data: components["schemas"]["SourceDocument"][];
+                        };
+                    };
+                };
+            };
+        };
+        put?: never;
+        /**
+         * Upload a source document to a course-from-documents course
+         * @description Multipart upload (field name `file`, max 50 MB). Accepted formats: pdf, docx, pptx, xlsx, odt, odp, ods, epub, txt, md, html, csv, png, jpg, webp, heic, mp3, m4a, wav. The server verifies the claimed type against the file bytes; the raw file is stored privately and processed later by the ingest job. Idempotent per course and content — re-uploading identical bytes returns the existing document instead of creating a duplicate. At most 10 files per course.
+         *     Errors: 400 UNSUPPORTED_FILE_TYPE (bytes fail the allowlist), 400 DOCUMENT_LIMIT_EXCEEDED (file cap, meta {limit, have}), 413 DOCUMENT_LIMIT_EXCEEDED (file too large), 400 CUSTOM_ERROR (not a documents course / empty file), 409 TOO_MANY_ACTIVE_JOBS (a job is running on the course).
+         */
+        post: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path: {
+                    courseId: string;
+                };
+                cookie?: never;
+            };
+            requestBody: {
+                content: {
+                    "multipart/form-data": {
+                        /** Format: binary */
+                        file: string;
+                    };
+                };
+            };
+            responses: {
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": {
+                            data: components["schemas"]["SourceDocument"];
+                        };
+                    };
+                };
+            };
+        };
+        delete?: never;
         options?: never;
         head?: never;
         patch?: never;
@@ -3443,6 +3713,51 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/course/{courseId}/prepare-corpus": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Start the debited corpus-preparation job for a documents course
+         * @description Submits a `prepare_corpus` job that completes the paid extraction the free ingest pass deferred — full vision escalation of scanned pages beyond the triage sample and full audio transcription beyond the free window — then moderates all newly extracted text, re-indexes the affected documents and refreshes the source digest. Debited like generation jobs (real accumulated spend on success; a failed run charges nothing). Idempotent: with no outstanding work the job completes quickly as a no-op. The client detects outstanding work from GET /documents: `scannedPageCount > escalatedPages.length` or `transcribedSec < audioDurationSec`. Progress streams as `document_status` events on the job:progress socket channel.
+         *     Errors: 400 CUSTOM_ERROR (not a documents course), 400 CONTENT_REJECTED via the job-failure socket payload (moderation hit in newly extracted content, meta {rejected, failed, prepared}), 402 INSUFFICIENT_CREDITS (pre-flight gate), 409 TOO_MANY_ACTIVE_JOBS / job-already-running (per-course mutex).
+         */
+        post: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path: {
+                    courseId: string;
+                };
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                202: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": {
+                            data: {
+                                jobId: string;
+                            };
+                        };
+                    };
+                };
+            };
+        };
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/course/{courseId}/refine-structure": {
         parameters: {
             query?: never;
@@ -4310,7 +4625,7 @@ export type webhooks = Record<string, never>;
 export interface components {
     schemas: {
         /** @enum {string} */
-        ErrorCode: "CUSTOM_ERROR" | "NOT_FOUND" | "EMAIL_NOT_VERIFIED" | "EMAIL_ALREADY_VERIFIED" | "EMAIL_VERIFICATION_EXPIRED" | "EMAIL_VERIFICATION_INVALID" | "VERIFICATION_RESEND_TOO_SOON" | "PASSWORD_RESET_INVALID" | "PASSWORD_RESET_EXPIRED" | "PASSWORD_ALREADY_SET" | "PASSWORD_NOT_SET" | "INSUFFICIENT_CREDITS" | "SUBSCRIPTION_ALREADY_EXISTS" | "TOO_MANY_ACTIVE_JOBS" | "CODE_REQUEST_TOO_SOON" | "CODE_REQUEST_RATE_EXCEEDED" | "SECURITY_CODE_INVALID" | "SECURITY_CODE_EXPIRED" | "SECURITY_CODE_TOO_MANY_ATTEMPTS" | "SESSION_INVALID";
+        ErrorCode: "CUSTOM_ERROR" | "NOT_FOUND" | "EMAIL_NOT_VERIFIED" | "EMAIL_ALREADY_VERIFIED" | "EMAIL_VERIFICATION_EXPIRED" | "EMAIL_VERIFICATION_INVALID" | "VERIFICATION_RESEND_TOO_SOON" | "PASSWORD_RESET_INVALID" | "PASSWORD_RESET_EXPIRED" | "PASSWORD_ALREADY_SET" | "PASSWORD_NOT_SET" | "INSUFFICIENT_CREDITS" | "SUBSCRIPTION_ALREADY_EXISTS" | "TOO_MANY_ACTIVE_JOBS" | "CODE_REQUEST_TOO_SOON" | "CODE_REQUEST_RATE_EXCEEDED" | "SECURITY_CODE_INVALID" | "SECURITY_CODE_EXPIRED" | "SECURITY_CODE_TOO_MANY_ATTEMPTS" | "SESSION_INVALID" | "CONTENT_REJECTED" | "UNSUPPORTED_FILE_TYPE" | "DOCUMENT_LIMIT_EXCEEDED" | "DOCUMENT_EXTRACTION_FAILED" | "STRUCTURE_SIZE_VIOLATION";
         /** @enum {string} */
         AuthProviderType: "GOOGLE" | "CREDENTIALS";
         /** @enum {string} */
@@ -4328,7 +4643,7 @@ export interface components {
         /** @enum {string} */
         JobStatusEnum: "pending" | "processing" | "completed" | "failed";
         /** @enum {string} */
-        JobType: "clarify" | "generate_structure" | "refine_structure" | "generate_lesson" | "generate_depth_previews" | "generate_module_quiz" | "regenerate_hero" | "regenerate_links" | "regenerate_recall" | "lesson_narration";
+        JobType: "clarify" | "generate_structure" | "refine_structure" | "generate_lesson" | "generate_depth_previews" | "generate_module_quiz" | "regenerate_hero" | "regenerate_links" | "regenerate_recall" | "lesson_narration" | "ingest_documents" | "prepare_corpus";
         /** @enum {string} */
         LessonProgressStatus: "not_started" | "in_progress" | "completed";
         /** @enum {string} */
@@ -4339,6 +4654,16 @@ export interface components {
         ReviewReason: "time" | "progression";
         /** @enum {string} */
         UsageService: "anthropic" | "openai" | "pinecone" | "bfl" | "tavily" | "jina" | "judge0" | "tts";
+        /** @enum {string} */
+        CourseSource: "documents";
+        /** @enum {string} */
+        SourceDocumentStatus: "uploaded" | "parsing" | "parsed" | "rejected" | "failed";
+        /** @enum {string} */
+        SourceDocumentKind: "file" | "url";
+        /** @enum {string} */
+        SourceFidelity: "strict" | "guided" | "enrich";
+        /** @enum {string} */
+        SourceAnalysisMode: "source_only" | "needs_supplement" | "multi_course";
         ApiError: {
             message: string;
             errorCode?: components["schemas"]["ErrorCode"];
@@ -4509,8 +4834,10 @@ export interface components {
             bullets: string[];
             /** @description Optional. [min, max] estimated total lesson count for this tier, derived from the (depth, isSoft) lesson-count hints. Computed server-side at depth-previews generation time, or backfilled at read time on legacy courses. Absent on courses persisted before this field was added. */
             lessonCountRange?: number[];
-            /** @description Optional. [min, max] estimated total learner-facing hours for this tier. Derived from lessonCountRange × ~25 minutes per lesson, rounded up, with a floor of 1 hour. Absent on legacy courses. */
+            /** @description Optional. [min, max] estimated total learner-facing hours for this tier. Goal courses: derived from lessonCountRange × ~25 minutes per lesson, rounded up, with a floor of 1 hour. Documents courses with a clamping size band: derived from the band-clamped lessonCountRange × a per-tier depth factor (overview ~15 min, comprehensive ~30 min, deep_dive ~45 min per lesson), so tiers sharing a lesson count still differ visibly in hours. Absent on legacy courses. */
             estimatedHoursRange?: number[];
+            /** @description Optional; documents courses whose lesson counts are clamped to the corpus size band only. Short learner-facing note explaining the depth-of-treatment differentiation (e.g. "Same source scope, deeper treatment per lesson") — rendered on the depth card so equal lesson counts across tiers read as deliberate. Absent on goal courses, multi_course corpora, and legacy rows. */
+            sourceTierNote?: string;
         };
         DepthPreviewsResponse: {
             overview: components["schemas"]["DepthPreview"];
@@ -4848,7 +5175,17 @@ export interface components {
             cached: boolean;
             voiceId: string;
         };
-        LessonProgressEvent: components["schemas"]["LessonProgressBlockEvent"] | components["schemas"]["LessonProgressHeroImageEvent"] | components["schemas"]["LessonProgressContentReadyEvent"] | components["schemas"]["LessonProgressRecallCardEvent"] | components["schemas"]["LessonProgressRecallCardsSavedEvent"] | components["schemas"]["LessonProgressNarrationStartedEvent"] | components["schemas"]["LessonProgressNarrationReadyEvent"];
+        LessonProgressDocumentStatusEvent: {
+            /**
+             * @description discriminator enum property added by openapi-typescript
+             * @enum {string}
+             */
+            type: "document_status";
+            documentId: string;
+            status: components["schemas"]["SourceDocumentStatus"];
+            warnings?: string[];
+        };
+        LessonProgressEvent: components["schemas"]["LessonProgressBlockEvent"] | components["schemas"]["LessonProgressHeroImageEvent"] | components["schemas"]["LessonProgressContentReadyEvent"] | components["schemas"]["LessonProgressRecallCardEvent"] | components["schemas"]["LessonProgressRecallCardsSavedEvent"] | components["schemas"]["LessonProgressNarrationStartedEvent"] | components["schemas"]["LessonProgressNarrationReadyEvent"] | components["schemas"]["LessonProgressDocumentStatusEvent"];
         JobProgressEvent: {
             jobId: string;
             courseId: string;
@@ -4962,6 +5299,8 @@ export interface components {
             structure?: components["schemas"]["GenerateStructureResponse"];
             feedbackHistory?: string[];
             pendingFeedback?: string;
+            source?: components["schemas"]["CourseSource"] | null;
+            sourceFidelity?: components["schemas"]["SourceFidelity"] | null;
             currentStep?: number;
             activeJobId?: string;
             activeLesson?: {
@@ -5216,6 +5555,60 @@ export interface components {
             approxTokens: number;
             /** @description True when this exact file (sha256 match) was already on the session. */
             dedupedFromExisting: boolean;
+        };
+        SourceDocument: {
+            id: string;
+            kind: components["schemas"]["SourceDocumentKind"];
+            /** @description For url-kind documents — the public article URL. Null for file uploads. */
+            sourceUrl?: string | null;
+            filename: string;
+            mimeType: string;
+            byteSize: number;
+            status: components["schemas"]["SourceDocumentStatus"];
+            /** @description Category-level reason when status is rejected — never echoes document content. */
+            rejectionReason?: string | null;
+            pageCount?: number | null;
+            /** @description Pages detected as scanned (image-only). Compare with escalatedPages.length: a surplus means paid vision extraction is still outstanding (prepare-corpus). */
+            scannedPageCount?: number | null;
+            /** @description 1-based scanned pages already put through vision escalation — including pages that came back blank, which are never re-escalated. scannedPageCount > escalatedPages.length ⇒ the document needs the prepare-corpus pass. */
+            escalatedPages?: number[];
+            /** @description Total audio duration (audio documents only). */
+            audioDurationSec?: number | null;
+            /** @description Seconds actually transcribed. transcribedSec < audioDurationSec ⇒ the document needs the prepare-corpus pass. */
+            transcribedSec?: number | null;
+            /** @description url-kind documents only — the machine-readable rights-reservation signal honoured before fetching (no_reservation | robots_disallow | tdm_reservation | robots_unavailable | tdm_unavailable | tdm_malformed | unsafe_host | host_unresolvable). Null for file uploads and for documents ingested before the gate existed. */
+            reservationSignal?: string | null;
+            /**
+             * Format: date-time
+             * @description When that reservation signal was read. May predate the fetch by the per-host cache TTL.
+             */
+            reservationCheckedAt?: string | null;
+            warnings: string[];
+            /** Format: date-time */
+            createdAt: string;
+        };
+        /** @description Coarse, client-safe assessment of the uploaded corpus. Deliberately metadata-only — it never contains extracted document text. */
+        SourceAnalysis: {
+            topics: string[];
+            sizeBand: {
+                minLessons: number;
+                maxLessons: number;
+                mode: components["schemas"]["SourceAnalysisMode"];
+            };
+            /** @description 0–1 score of how much teachable substance the corpus holds. */
+            teachableDensity: number;
+            /** @description Editable course-goal suggestion synthesized from the corpus. */
+            suggestedGoal: string;
+            /** @description Up to 3 clarifying questions the assessment wants answered before design. */
+            questions: string[];
+            warnings: string[];
+            perDocument: {
+                documentId: string;
+                filename: string;
+                status: components["schemas"]["SourceDocumentStatus"];
+                rejectionReason?: string | null;
+                warnings: string[];
+            }[];
         };
     };
     responses: never;

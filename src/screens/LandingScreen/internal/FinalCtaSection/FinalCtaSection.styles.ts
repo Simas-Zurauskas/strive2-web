@@ -10,7 +10,7 @@ export const Wrap = styled.section`
   /* Closing band — visual weight comes from the 3D scene, not from a
      decorated background. Generous padding gives the page a deliberate
      full-stop. */
-  padding: var(--space-20) 0;
+  padding: var(--space-16) 0;
   background: ${(p) => p.theme.colors.background};
   position: relative;
 
@@ -33,7 +33,7 @@ export const Wrap = styled.section`
   }
 
   ${(p) => p.theme.media.tabletLarge} {
-    padding: var(--space-16) 0;
+    padding: var(--space-10) 0;
   }
 `;
 
@@ -68,7 +68,7 @@ export const Eyebrow = styled.span`
   font-weight: 600;
   text-transform: uppercase;
   letter-spacing: 0.16em;
-  color: ${(p) => p.theme.colors.tertiary};
+  color: ${(p) => p.theme.colors.tertiaryText};
 `;
 
 export const Heading = styled.h2`

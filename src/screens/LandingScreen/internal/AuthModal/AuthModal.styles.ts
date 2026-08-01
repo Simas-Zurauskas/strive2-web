@@ -157,18 +157,14 @@ export const Tab = styled.button<{ $active: boolean }>`
   }
 `;
 
-// Stable height between sign-in/sign-up so the dialog doesn't jolt during
-// tab switches. Tuned for the sign-up form rendered with PasswordRequirements
-// fully visible — the taller of the two layouts.
+// Sized by content. The old fixed min-height (480px, tuned for the signup
+// form with its password checklist expanded) left ~150px of dead space
+// below the form in the common collapsed state; the mild height change on
+// tab switch is far less jarring than the permanent void was.
 export const FormArea = styled.div`
   position: relative;
-  min-height: 480px;
   display: flex;
   flex-direction: column;
-
-  ${(p) => p.theme.media.mobile} {
-    min-height: 0;
-  }
 `;
 
 export const FormSlot = styled.div<{ $active: boolean }>`
@@ -178,6 +174,31 @@ export const FormSlot = styled.div<{ $active: boolean }>`
   flex-direction: column;
   opacity: ${(p) => (p.$active ? 1 : 0)};
   transition: opacity 0.12s linear;
+
+  /* The shared AuthForm caps itself at 360px for the standalone auth
+     pages; inside the dialog that left it narrower than the tabs and
+     goal-context line above it (ragged right edge). Full-bleed here —
+     the dialog's own padding is the measure. */
+  form {
+    max-width: none;
+  }
+`;
+
+export const GoalContext = styled.p`
+  margin: var(--space-2) 0 0;
+  padding: var(--space-3) var(--space-4);
+  font-size: 0.875rem;
+  line-height: 1.5;
+  color: ${(p) => p.theme.colors.foreground};
+  background: ${(p) => p.theme.colors.surface};
+  border: 1px solid ${(p) => p.theme.colors.surfaceBorder};
+  border-radius: var(--radius-md);
+
+  em {
+    font-family: var(--font-heading-serif, inherit);
+    font-style: italic;
+    color: ${(p) => p.theme.colors.tertiary};
+  }
 `;
 
 export const FinePrint = styled.p`

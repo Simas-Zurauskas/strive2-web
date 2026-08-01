@@ -24,6 +24,7 @@ import { useSession } from 'next-auth/react';
 import { useMemo, useState } from 'react';
 import { Chat, type ChatMessageData } from '@/components/Chat';
 import { NEXT_PUBLIC_API_URL } from '@/conf/env';
+import { analytics } from '@/lib/analytics';
 import { PANEL_CLOSE_TRANSITION, PANEL_OPEN_TRANSITION } from '@/theme/motionPresets';
 import * as S from './KbChatPanel.styles';
 
@@ -130,7 +131,18 @@ export const KbChatPanel = ({ suggestedPrompts }: KbChatPanelProps = {}) => {
           </motion.div>
         ) : (
           <motion.div key="fab" {...fabMotion} style={{ transformOrigin: 'bottom right' }}>
-            <S.Fab type="button" onClick={() => setOpen(true)} aria-label="Open the Strive guide chat">
+            <S.Fab
+              type="button"
+              onClick={() => {
+                setOpen(true);
+                // The guide chat is the only surface where anonymous visitors
+                // express intent in free text — worth its own funnel line.
+                analytics.track('kb_chat_opened', {
+                  page_path: typeof window !== 'undefined' ? window.location.pathname : undefined,
+                });
+              }}
+              aria-label="Open the Strive guide chat"
+            >
               <Sparkles size={18} strokeWidth={2} />
               <S.FabLabel>Ask the guide</S.FabLabel>
             </S.Fab>
@@ -187,11 +199,22 @@ const ChatBody = ({ chat, prompts }: ChatBodyProps) => {
     const trimmed = inputValue.trim();
     if (!trimmed) return;
     setInputValue('');
+    analytics.track('kb_chat_message_sent', {
+      source: 'input',
+      page_path: typeof window !== 'undefined' ? window.location.pathname : undefined,
+    });
     sendMessage({ text: trimmed });
   };
 
   const handleSuggestedPromptClick = (prompt: string) => {
     setInputValue('');
+    // Suggested prompts are a curated set — the prompt text itself is safe
+    // to log and tells us which first-visitor question actually pulls.
+    analytics.track('kb_chat_message_sent', {
+      source: 'suggested_prompt',
+      prompt,
+      page_path: typeof window !== 'undefined' ? window.location.pathname : undefined,
+    });
     sendMessage({ text: prompt });
   };
 

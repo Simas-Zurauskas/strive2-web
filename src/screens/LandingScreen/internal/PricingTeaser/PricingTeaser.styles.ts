@@ -41,11 +41,11 @@ export const Heading = styled.h2`
 export const TierGrid = styled.div`
   width: 100%;
   display: grid;
-  grid-template-columns: repeat(2, 1fr);
+  grid-template-columns: repeat(3, 1fr);
   gap: var(--space-4);
   margin-top: var(--space-3);
 
-  ${(p) => p.theme.media.mobile} {
+  ${(p) => p.theme.media.tabletLarge} {
     grid-template-columns: 1fr;
   }
 `;

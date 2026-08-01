@@ -276,6 +276,13 @@ export const LessonContent = styled.div`
   gap: 0.125rem;
 `;
 
+export const LessonNameRow = styled.span`
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  flex-wrap: wrap;
+`;
+
 export const LessonName = styled.span`
   font-size: 0.9375rem;
   font-weight: 500;

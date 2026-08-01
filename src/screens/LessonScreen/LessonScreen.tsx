@@ -7,7 +7,7 @@ import { getAuthToken } from '@/api/client';
 import { upsertLessonProgress } from '@/api/routes/course';
 import { NEXT_PUBLIC_API_URL } from '@/conf/env';
 import { ROUTES } from '@/constants/routes';
-import { useLessonContent } from '@/hooks';
+import { useLessonContent, useReadQuartiles } from '@/hooks';
 import { analytics } from '@/lib/analytics';
 import { useCourseContext } from '@/screens/CourseShell';
 import { QKeys } from '@/types';
@@ -82,6 +82,22 @@ export const LessonScreen = () => {
   });
   const hasContent = !!thisLessonContent?.blocks?.length;
   const shouldTrackProgress = hasContent || isThisLessonGenerating;
+
+  // Scroll-depth quartiles — the only signal between `lesson_opened` and
+  // `lesson_completed`, which production showed as a 7× cliff with nothing
+  // observable in between (readers who leave mid-lesson vs. at the top).
+  useReadQuartiles({
+    enabled: shouldTrackProgress,
+    resetKey: `${courseSlug}-${moduleIndex}-${lessonIndex}`,
+    onQuartile: (quartile) => {
+      analytics.track('lesson_read_progress', {
+        quartile,
+        course_id: course?._id,
+        module_index: moduleIndex,
+        lesson_index: lessonIndex,
+      });
+    },
+  });
 
   const timeRef = useRef(0);
 
@@ -173,6 +189,7 @@ export const LessonScreen = () => {
       moduleIndex={moduleIndex}
       lessonIndex={lessonIndex}
       lesson={currentLesson}
+      isDocumentsCourse={course?.source === 'documents'}
       modules={modules}
       hasPrev={hasPrev}
       hasNext={hasNext}

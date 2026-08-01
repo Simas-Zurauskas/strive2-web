@@ -25,7 +25,7 @@ const CHANGE_EVENT = 'strive:cookie-consent-changed';
 // Bumped manually whenever the cookie-consent UX or the policy text it
 // references changes substantively. Persisted with each consent record so
 // past consents can be tied to the policy that was in effect at the time.
-const POLICY_VERSION = '2026-05-09';
+const POLICY_VERSION = '2026-07-30';
 
 export type ConsentValue = 'all' | 'essential';
 

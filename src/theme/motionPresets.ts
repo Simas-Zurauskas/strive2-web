@@ -26,6 +26,17 @@ export const PANEL_CLOSE_TRANSITION: Transition = {
   ease: PANEL_EASE,
 };
 
+// Scroll-triggered variant plumbing for the public landing page. The
+// landing's sections used to mount-animate (`animate`), which serialises
+// `opacity: 0` into the SSR HTML — the whole page painted blank until the
+// JS bundle hydrated. Sections now pass `whileInView={fadeUp.animate}`
+// with this viewport config instead: SSR still carries the initial style,
+// but only for below-fold sections, and they reveal on scroll without
+// needing a hydration round-trip first. Deliberately a NEW export — the
+// FADE_UP/FADE_IN presets below are consumed app-wide (recall, quizzes,
+// wizard, shell panels) and must keep their mount-animation semantics.
+export const VIEWPORT_ONCE = { once: true, amount: 0.1 } as const;
+
 const FADE_UP = {
   initial: { opacity: 0, y: 12 },
   animate: { opacity: 1, y: 0 },

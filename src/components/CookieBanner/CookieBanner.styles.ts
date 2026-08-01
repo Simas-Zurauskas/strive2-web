@@ -48,6 +48,19 @@ export const Copy = styled.p`
   }
 `;
 
+/**
+ * Mobile-first-paint diet: on phones the banner covered the lower third of
+ * the landing hero, and the always-on-cookies clarification is the least
+ * load-bearing sentence (the Privacy Policy link carries the detail). Hidden
+ * below the mobile breakpoint, shown everywhere else. Consent semantics are
+ * untouched — same two actions, same copy meaningfully.
+ */
+export const MobileHidden = styled.span`
+  ${(p) => p.theme.media.mobile} {
+    display: none;
+  }
+`;
+
 export const Actions = styled.div`
   display: flex;
   gap: 0.5rem;

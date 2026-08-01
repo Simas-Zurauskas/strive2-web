@@ -25,6 +25,12 @@ const OPEN_PATHS = new Set([
   '/pricing',
   '/terms',
   '/privacy',
+  // Landing page for the email unsubscribe link. MUST be open: the
+  // recipient is by definition logged out, and the unauthed branch below
+  // would bounce them to `/` *and strip the query string*, so they would
+  // see the marketing site instead of a confirmation that we honoured
+  // their opt-out.
+  '/unsubscribed',
 ]);
 
 const OPEN_PREFIXES = ['/help', '/learn', '/blog'];

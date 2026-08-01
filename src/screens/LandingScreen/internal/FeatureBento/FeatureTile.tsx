@@ -1,6 +1,6 @@
 'use client';
 
-import { useMotion } from '@/theme/motionPresets';
+import { useMotion, VIEWPORT_ONCE } from '@/theme/motionPresets';
 import * as S from './FeatureBento.styles';
 import type { BentoVisual } from '../../constants';
 import type { ReactNode } from 'react';
@@ -146,12 +146,37 @@ export const FeatureTile = ({ size, title, body, visual, index }: FeatureTilePro
     <S.Tile
       $hero={isHero}
       initial={{ opacity: 0, scale: prefersReduced ? 1 : 0.94 }}
-      animate={{ opacity: 1, scale: 1 }}
+      whileInView={{ opacity: 1, scale: 1 }}
+      viewport={VIEWPORT_ONCE}
       transition={{ duration: 0.45, delay, ease: [0.16, 1, 0.3, 1] }}
     >
       <TitleEl>{renderTitle(title)}</TitleEl>
       <S.TileBody>{body}</S.TileBody>
       <S.VisualSlot $hero={isHero}>{VISUAL[visual]}</S.VisualSlot>
+      {/* Gold marginalia on the streaming tile — a handwritten-style aside
+          pointing at the product's best six seconds. Decorative only. */}
+      {visual === 'streaming-blocks' && (
+        <S.Marginalia aria-hidden="true">
+          <svg viewBox="0 0 40 28" width="34" height="24">
+            <path
+              d="M 36 4 C 26 6 14 10 6 22"
+              fill="none"
+              stroke="currentColor"
+              strokeWidth="1.4"
+              strokeLinecap="round"
+            />
+            <path
+              d="M 4 15 L 6 23 L 13 20"
+              fill="none"
+              stroke="currentColor"
+              strokeWidth="1.4"
+              strokeLinecap="round"
+              strokeLinejoin="round"
+            />
+          </svg>
+          <span>streams as you read</span>
+        </S.Marginalia>
+      )}
     </S.Tile>
   );
 };

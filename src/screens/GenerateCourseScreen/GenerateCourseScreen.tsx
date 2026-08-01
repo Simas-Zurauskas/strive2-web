@@ -3,12 +3,13 @@
 import { useRouter, useSearchParams } from 'next/navigation';
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { Course, CourseDepth } from '@/api/types';
-import { Stepper, AlertDialog, TextLoader } from '@/components';
+import { Stepper, AlertDialog, Button, TextLoader } from '@/components';
 import { DepthOverrideDialog } from '@/components/DepthOverrideDialog';
 import { useCourse } from '@/hooks/useCourses';
 import { analytics } from '@/lib/analytics';
+import { peekPendingGoal } from '@/lib/pendingGoal';
 import * as S from './GenerateCourseScreen.styles';
-import { GoalStep, PurposeStep, ClarifyStep, DepthStep, StructureStep, useWizardMutations, useWizardHandlers } from './internal';
+import { GoalStep, PurposeStep, ClarifyStep, DepthStep, StructureStep, SourcesStep, useWizardMutations, useWizardHandlers } from './internal';
 import { useDepthOverrideDialog } from './internal/useDepthOverrideDialog';
 
 type Step = 1 | 2 | 3 | 4 | 5;
@@ -19,6 +20,14 @@ type Step = 1 | 2 | 3 | 4 | 5;
 // `goalTypeConfirmedAt` field is the only reliable signal that the user
 // has moved past Purpose; relying on `goalTypeConfidence === 'high'`
 // would misclassify because the AI classifier itself can output `high`.
+//
+// Documents courses (`course.source === 'documents'`) need no extra rule:
+// their step 1 is the Sources step, and the `!clarifyData → 1` branch
+// keeps them there through upload, ingest, and the analysis panel — the
+// upload-vs-analysis substate is derived INSIDE SourcesStep from
+// `course.sourceAssessment` presence, never from a step number. Once the
+// suggested goal is confirmed a clarify job runs and, on completion,
+// `clarifyData` routes them through the same rules as a goal course.
 const determineStepFromCourse = (course: Course | null): Step => {
   if (!course) return 1;
   if (course.structure) return 5;
@@ -34,6 +43,16 @@ const determineStepFromCourse = (course: Course | null): Step => {
 export const GenerateCourseScreen = () => {
   const searchParams = useSearchParams();
   const resumeCourseId = searchParams.get('courseId');
+  // Entry option (b): /courses/new?source=documents swaps step 1's body
+  // for the Sources step. On resume the persisted course field wins so a
+  // refresh without the param still lands in documents mode.
+  const documentsParam = searchParams.get('source') === 'documents';
+  // How the visitor got here — `post_signup` (verify-email continue),
+  // `home_redirect` (zero-course dashboard replace), or absent for plain
+  // navigation. Only whitelisted values reach analytics.
+  const triggerParam = searchParams.get('trigger');
+  const entryTrigger =
+    triggerParam === 'post_signup' || triggerParam === 'home_redirect' ? triggerParam : null;
 
   const [stableKey] = useState(() => resumeCourseId ?? 'new');
 
@@ -50,11 +69,26 @@ export const GenerateCourseScreen = () => {
     );
   }
 
-  return <GenerateCourseWizard key={stableKey} resumeCourse={resumeCourse ?? null} />;
+  return (
+    <GenerateCourseWizard
+      key={stableKey}
+      resumeCourse={resumeCourse ?? null}
+      documentsMode={resumeCourse ? resumeCourse.source === 'documents' : documentsParam}
+      entryTrigger={entryTrigger}
+    />
+  );
 };
 
 // Inner wizard: receives initial values as props, no effects needed
-const GenerateCourseWizard = ({ resumeCourse }: { resumeCourse: Course | null }) => {
+const GenerateCourseWizard = ({
+  resumeCourse,
+  documentsMode,
+  entryTrigger,
+}: {
+  resumeCourse: Course | null;
+  documentsMode: boolean;
+  entryTrigger: 'post_signup' | 'home_redirect' | null;
+}) => {
   const router = useRouter();
   const initialStep = useMemo(() => determineStepFromCourse(resumeCourse), [resumeCourse]);
   const [step, setStep] = useState<Step>(initialStep);
@@ -67,7 +101,28 @@ const GenerateCourseWizard = ({ resumeCourse }: { resumeCourse: Course | null })
   const acceptedRef = useRef(false);
   const lastStepRef = useRef<Step>(initialStep);
   const [courseId, setCourseId] = useState<string | null>(resumeCourse?._id ?? null);
-  const [goal, setGoal] = useState(resumeCourse?.goal ?? '');
+  // Fresh goal-mode wizards prefill from the landing page's stashed goal
+  // (lib/pendingGoal) — the P3 bridge that carries "I want to learn X"
+  // across the signup interruption. Peek (not consume) in the initializer:
+  // initializers may run twice under StrictMode, and clearing belongs to
+  // step-1 submit (useWizardHandlers), after the goal is persisted
+  // server-side. Resume flows and documents mode never prefill.
+  const [goal, setGoal] = useState(() => {
+    if (resumeCourse?.goal) return resumeCourse.goal;
+    if (!resumeCourse && !documentsMode) return peekPendingGoal() ?? '';
+    return '';
+  });
+
+  // Measurement for the bridge: one event when a stashed goal actually
+  // landed in the form. Ref-guarded against StrictMode double-effects.
+  const prefillTrackedRef = useRef(false);
+  useEffect(() => {
+    if (prefillTrackedRef.current || resumeCourse || documentsMode) return;
+    prefillTrackedRef.current = true;
+    const pending = peekPendingGoal();
+    if (pending) analytics.track('wizard_goal_prefilled', { length: pending.length });
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
   const [generatedForGoal, setGeneratedForGoal] = useState(resumeCourse?.goal ?? '');
   const [answers, setAnswers] = useState<Record<string, string | string[]>>(
     (resumeCourse?.answers as Record<string, string | string[]>) ?? {},
@@ -126,6 +181,10 @@ const GenerateCourseWizard = ({ resumeCourse }: { resumeCourse: Course | null })
 
   const courseName = course?.name || null;
 
+  // Documents mode: sticky for the session once entered via param, and
+  // authoritative once the created/resumed course carries the field.
+  const isDocumentsMode = documentsMode || course?.source === 'documents';
+
   // Update URL with courseId for resume-on-refresh
   useEffect(() => {
     if (courseId) {
@@ -139,13 +198,35 @@ const GenerateCourseWizard = ({ resumeCourse }: { resumeCourse: Course | null })
     lastStepRef.current = step;
   }, [step]);
 
+  // Anyone who reaches the wizard has "seen" it for this session — stamp the
+  // flag that stops HomeScreen's zero-course redirect from bouncing them
+  // back in if they leave without creating anything. Set on mount (not on an
+  // explicit cancel) so every exit path — back button, navbar, tab close —
+  // counts as an opt-out for the rest of the session.
+  useEffect(() => {
+    try {
+      sessionStorage.setItem('strive.skipWizardRedirect', '1');
+    } catch {
+      // Storage denied — HomeScreen tolerates the missing flag (worst case
+      // one redirect per visit, never a loop).
+    }
+  }, []);
+
   // Mixpanel: `wizard_started` once on mount. `entry_point` defaults to
   // 'home' for fresh sessions; the search-param branch on resume is
-  // covered separately via `entry_point: 'resume'`.
+  // covered separately via `entry_point: 'resume'`. `trigger` records how
+  // the visitor arrived (post_signup | home_redirect | nav) so the P2
+  // handoff change is measurable against plain navigation.
   useEffect(() => {
     analytics.track('wizard_started', {
       entry_point: resumeCourse ? 'resume' : 'home',
+      trigger: entryTrigger ?? (resumeCourse ? 'resume' : 'nav'),
     });
+    // Mixpanel: documents-flow entry — fresh sessions that land on the
+    // Sources step (via the GoalStep affordance or a direct link).
+    if (documentsMode && !resumeCourse) {
+      analytics.track('wizard_documents_entry', {});
+    }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
@@ -268,7 +349,7 @@ const GenerateCourseWizard = ({ resumeCourse }: { resumeCourse: Course | null })
               <Stepper
                 currentStep={step}
                 totalSteps={5}
-                labels={['Goal', 'Purpose', 'Questions', 'Depth', 'Structure']}
+                labels={[isDocumentsMode ? 'Sources' : 'Goal', 'Purpose', 'Questions', 'Depth', 'Structure']}
                 completedSteps={completedSteps}
                 navigableSteps={navigableSteps}
                 onStepClick={(s) => handlers.handleStepClick(s, navigableSteps)}
@@ -278,13 +359,28 @@ const GenerateCourseWizard = ({ resumeCourse }: { resumeCourse: Course | null })
         )}
 
         <S.Content>
-          {step === 1 && (
+          {step === 1 && !isDocumentsMode && (
             <GoalStep
               initialGoal={goal}
               hasExistingData={!!handlers.clarifyData && goal === generatedForGoal}
               loading={isGoalLoading}
               error={goalError ? (goalError as Error).message : ''}
+              showDocumentsEntry={!courseId}
               onSubmit={handlers.handleGoalSubmit}
+            />
+          )}
+
+          {step === 1 && isDocumentsMode && (
+            <SourcesStep
+              courseId={courseId}
+              course={course}
+              mutations={mutations}
+              isJobRunning={handlers.isJobRunning}
+              ingestFailure={handlers.ingestFailure}
+              confirmLoading={handlers.updateCourseMutation.isPending || handlers.clarifyMutation.isPending}
+              onEnsureCourse={handlers.ensureDocumentsCourse}
+              onIngest={handlers.handleIngestSources}
+              onConfirm={handlers.handleSourcesConfirm}
             />
           )}
 
@@ -349,13 +445,37 @@ const GenerateCourseWizard = ({ resumeCourse }: { resumeCourse: Course | null })
             />
           )}
 
-          {step === 5 && !handlers.structureData && handlers.isJobRunning && (
-            <TextLoader text="Building your course structure..." />
+          {/* Documents flow: the pre-structure chain (prepare_corpus /
+              structure submit) failed — render a retry card instead of a
+              blank step (the DepthStep retry-mode pattern). */}
+          {step === 5 && !handlers.structureData && handlers.sourcesFlowFailed && (
+            <S.StepErrorCard role="alert">
+              <S.StepErrorTitle>We couldn&apos;t prepare your course</S.StepErrorTitle>
+              <S.StepErrorBody>
+                Something went wrong while preparing your sources for structure generation. Your documents are
+                safe — you can try again.
+              </S.StepErrorBody>
+              <S.StepErrorActions>
+                <Button variant="secondary" type="button" onClick={() => setStep(4)}>
+                  Back
+                </Button>
+                <Button type="button" onClick={handlers.retrySourcesFlow}>
+                  Try again
+                </Button>
+              </S.StepErrorActions>
+            </S.StepErrorCard>
+          )}
+
+          {step === 5 && !handlers.structureData && !handlers.sourcesFlowFailed && handlers.isJobRunning && (
+            <TextLoader
+              text={handlers.isPreparingSources ? 'Preparing your sources...' : 'Building your course structure...'}
+            />
           )}
 
           {step === 5 && handlers.structureData && courseId && (
             <StructureStep
               courseId={courseId}
+              isDocumentsCourse={handlers.isDocumentsCourse}
               modules={handlers.structureData}
               selectedDepth={course?.depth ?? null}
               recommendedDepth={

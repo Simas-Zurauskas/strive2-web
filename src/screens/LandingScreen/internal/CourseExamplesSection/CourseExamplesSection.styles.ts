@@ -7,10 +7,10 @@ export const Wrap = styled.section`
   width: 100%;
   display: flex;
   justify-content: center;
-  padding: var(--space-20) var(--space-8);
+  padding: var(--space-16) var(--space-8);
 
   ${(p) => p.theme.media.tabletLarge} {
-    padding: var(--space-12) var(--space-5);
+    padding: var(--space-10) var(--space-5);
   }
 `;
 
@@ -34,7 +34,7 @@ export const Eyebrow = styled.span`
   font-weight: 600;
   text-transform: uppercase;
   letter-spacing: 0.16em;
-  color: ${(p) => p.theme.colors.tertiary};
+  color: ${(p) => p.theme.colors.tertiaryText};
 `;
 
 export const Heading = styled.h2`
@@ -66,31 +66,61 @@ export const Grid = styled.div`
 `;
 
 // Whole card is the click target → a real <button> for keyboard + a11y.
+// Card-catalogue treatment: the punched "pinhole" dot and the stamped
+// category label carry the specimen-card character. Rotation jitter and
+// per-column vertical stagger were tried and REMOVED (2026-07-30): at four
+// columns they pushed titles and baselines to different heights across
+// each row, which read as broken alignment rather than a pinboard.
 export const Card = styled(motion.button)`
+  position: relative;
   display: flex;
   flex-direction: column;
   align-items: flex-start;
   text-align: left;
   gap: var(--space-2);
-  padding: var(--space-4);
+  padding: var(--space-5) var(--space-4) var(--space-4);
   background: ${(p) => p.theme.colors.surface};
   border: 1px solid ${(p) => p.theme.colors.surfaceBorder};
-  border-radius: var(--radius-lg);
+  border-radius: var(--radius-sm);
   cursor: pointer;
-  transition: border-color 0.15s, box-shadow 0.15s, transform 0.15s;
+  box-shadow: var(--shadow-card-soft, var(--shadow-card));
+  transition: border-color 0.15s, box-shadow 0.2s, rotate 0.2s, translate 0.2s;
+
+  /* Punched pinhole — the catalogue-card detail. */
+  &::before {
+    content: '';
+    position: absolute;
+    top: 9px;
+    left: 50%;
+    transform: translateX(-50%);
+    width: 7px;
+    height: 7px;
+    border-radius: 50%;
+    background: ${(p) => p.theme.colors.background};
+    box-shadow: inset 0 0 0 1.5px
+      ${(p) => `color-mix(in srgb, ${p.theme.colors.tertiary} 60%, transparent)`};
+  }
 
   ${(p) => p.theme.media.hover} {
     &:hover {
+      translate: 0 -2px;
       border-color: ${(p) =>
         `color-mix(in oklab, ${p.theme.colors.tertiary} 40%, ${p.theme.colors.surfaceBorder})`};
-      box-shadow: var(--shadow-card);
-      transform: translateY(-1px);
+      box-shadow: var(--shadow-lift, var(--shadow-card));
     }
   }
 
   &:focus-visible {
     outline: 2px solid ${(p) => p.theme.colors.accent};
     outline-offset: 2px;
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    ${(p) => p.theme.media.hover} {
+      &:hover {
+        translate: 0;
+      }
+    }
   }
 `;
 
@@ -126,12 +156,18 @@ export const GoArrow = styled.span`
   }
 `;
 
+/* Stamped catalogue label — hairline box like an ink stamp on the card. */
 export const Category = styled.span`
+  display: inline-block;
+  padding: 2px 7px 1px;
   font-size: 0.625rem;
   font-weight: 700;
   text-transform: uppercase;
   letter-spacing: 0.16em;
-  color: ${(p) => p.theme.colors.tertiary};
+  color: ${(p) => p.theme.colors.tertiaryText};
+  border: 1px solid
+    ${(p) => `color-mix(in srgb, ${p.theme.colors.tertiary} 45%, transparent)`};
+  border-radius: 2px;
   margin-top: var(--space-1);
 `;
 

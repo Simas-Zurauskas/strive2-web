@@ -1,6 +1,6 @@
 'use client';
 
-import { useMotion } from '@/theme/motionPresets';
+import { useMotion, VIEWPORT_ONCE } from '@/theme/motionPresets';
 import * as S from './FeatureBento.styles';
 import { FeatureTile } from './FeatureTile';
 import { BENTO_TILES } from '../../constants';
@@ -12,7 +12,8 @@ export const FeatureBento = () => {
       <S.Inner>
         <S.SectionHeader
           initial={fadeUp.initial}
-          animate={fadeUp.animate}
+          whileInView={fadeUp.animate}
+        viewport={VIEWPORT_ONCE}
           transition={fadeUp.transition}
         >
           <S.Eyebrow>Under the hood</S.Eyebrow>

@@ -179,8 +179,11 @@ export const Chat = ({
     if (canSend) onSubmit();
   };
 
-  const showEmptyState =
-    messages.length === 0 && suggestedPrompts && suggestedPrompts.length > 0;
+  // First turn of the conversation. Gated on messages ALONE — the
+  // suggested-prompt list is optional decoration, but the AI disclosure
+  // below is an Art. 50(1) obligation and must not disappear with it.
+  const isFirstTurn = messages.length === 0;
+  const showSuggestedPrompts = isFirstTurn && !!suggestedPrompts && suggestedPrompts.length > 0;
 
   return (
     <S.Wrapper $scrollSettled={scrollSettled}>
@@ -188,21 +191,29 @@ export const Chat = ({
         <StickToBottom style={{ height: '100%' }} resize="auto" initial="instant">
           <StickToBottom.Content>
             <S.Messages role="log" aria-live="polite" aria-relevant="additions">
-              {showEmptyState && (
+              {isFirstTurn && (
                 <S.EmptyState>
-                  <S.EmptyEyebrow>Try asking</S.EmptyEyebrow>
-                  <S.SuggestedPrompts>
-                    {suggestedPrompts!.map((prompt) => (
-                      <S.SuggestedPrompt
-                        key={prompt}
-                        type="button"
-                        onClick={() => onSuggestedPromptClick?.(prompt)}
-                        disabled={disabled || !onSuggestedPromptClick}
-                      >
-                        {prompt}
-                      </S.SuggestedPrompt>
-                    ))}
-                  </S.SuggestedPrompts>
+                  <S.AiDisclosure>
+                    You&rsquo;re chatting with an AI system, not a person. It can be wrong — check
+                    anything you rely on.
+                  </S.AiDisclosure>
+                  {showSuggestedPrompts && (
+                    <>
+                      <S.EmptyEyebrow>Try asking</S.EmptyEyebrow>
+                      <S.SuggestedPrompts>
+                        {suggestedPrompts!.map((prompt) => (
+                          <S.SuggestedPrompt
+                            key={prompt}
+                            type="button"
+                            onClick={() => onSuggestedPromptClick?.(prompt)}
+                            disabled={disabled || !onSuggestedPromptClick}
+                          >
+                            {prompt}
+                          </S.SuggestedPrompt>
+                        ))}
+                      </S.SuggestedPrompts>
+                    </>
+                  )}
                 </S.EmptyState>
               )}
               {messages.map((message, idx) => {

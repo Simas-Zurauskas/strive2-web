@@ -48,6 +48,16 @@ export type DepthOverrideOvercommitPayload = components['schemas']['DepthOverrid
 export type DepthOverrideUndercommitPayload = components['schemas']['DepthOverrideUndercommitPayload'];
 export type DepthOverridePayload = components['schemas']['DepthOverridePayload'];
 
+// ── Course-from-documents types ────────────────────────
+
+export type CourseSource = components['schemas']['CourseSource'];
+export type SourceFidelity = components['schemas']['SourceFidelity'];
+export type SourceDocumentKind = components['schemas']['SourceDocumentKind'];
+export type SourceDocumentStatus = components['schemas']['SourceDocumentStatus'];
+export type SourceAnalysisMode = components['schemas']['SourceAnalysisMode'];
+export type SourceDocument = components['schemas']['SourceDocument'];
+export type SourceAnalysis = components['schemas']['SourceAnalysis'];
+
 // ── Job / lesson content types ─────────────────────────
 
 export type JobStatus = components['schemas']['JobStatus'];
@@ -178,5 +188,6 @@ export type LessonProgressRecallCardEvent = components['schemas']['LessonProgres
 export type LessonProgressRecallCardsSavedEvent = components['schemas']['LessonProgressRecallCardsSavedEvent'];
 export type LessonProgressNarrationStartedEvent = components['schemas']['LessonProgressNarrationStartedEvent'];
 export type LessonProgressNarrationReadyEvent = components['schemas']['LessonProgressNarrationReadyEvent'];
+export type LessonProgressDocumentStatusEvent = components['schemas']['LessonProgressDocumentStatusEvent'];
 export type GeneratedRecallCard = components['schemas']['GeneratedRecallCard'];
 export type CreditsUpdatedEvent = components['schemas']['CreditsUpdatedEvent'];
