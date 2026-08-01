@@ -1,4 +1,5 @@
 import styled from 'styled-components';
+import { pressable, touchHitArea } from '@/theme';
 
 export const MermaidContainer = styled.div`
   border-radius: 12px;
@@ -7,13 +8,30 @@ export const MermaidContainer = styled.div`
   box-shadow: var(--shadow-card-soft);
 `;
 
-export const MermaidViewport = styled.div<{ $dragging?: boolean }>`
+export const MermaidViewport = styled.div<{ $dragging?: boolean; $zoomed?: boolean }>`
   height: 500px;
   overflow: hidden;
   background: ${(p) => p.theme.colors.background};
   cursor: ${(p) => (p.$dragging ? 'grabbing' : 'grab')};
-  touch-action: none;
   user-select: none;
+
+  /* touch-action is STATE-DRIVEN, not a constant.
+     It used to be a flat 'none', which meant a 500px-tall diagram sitting
+     inline in a lesson swallowed any scroll gesture that happened to start on
+     it — the page simply froze under the finger. Measured on the shipping
+     build: touchAction "none" on a 324x500 element.
+
+     At base zoom the diagram fits, so nothing needs panning and the browser
+     keeps vertical scrolling ('pan-y'). Once the user has zoomed in, one-finger
+     drag becomes panning and the browser must yield ('none').
+
+     This has to be state-driven rather than toggled from a pointerdown
+     handler: the UA resolves the effective touch-action during hit-testing at
+     touch-sequence start, BEFORE pointerdown reaches JS, so a handler-side
+     toggle only ever affects the *next* gesture. Pinch is unaffected by
+     'pan-y' (it is a two-pointer gesture), which is what lets the user get
+     from base zoom to zoomed-in in the first place. */
+  touch-action: ${(p) => (p.$zoomed ? 'none' : 'pan-y')};
 `;
 
 export const MermaidCanvas = styled.div`
@@ -55,6 +73,10 @@ export const MermaidToolbarButton = styled.button`
     opacity: 0.3;
     cursor: default;
   }
+
+  ${pressable}
+
+  ${touchHitArea}
 `;
 
 export const MermaidZoomLabel = styled.span`

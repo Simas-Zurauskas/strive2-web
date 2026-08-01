@@ -36,6 +36,10 @@ export const Dialog = styled.div`
   gap: 1.75rem;
   box-shadow: var(--shadow-modal);
   animation: ${slideUp} 0.2s ease-out;
+
+  /* Home-indicator avoidance. env() is 0 on devices without a cutout, so
+     desktop and non-notched rendering is unchanged. */
+  padding-bottom: max(1.75rem, var(--safe-area-bottom));
 `;
 
 export const Body = styled.div`

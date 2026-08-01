@@ -48,6 +48,8 @@ export const CodePre = styled.pre`
   margin: 0;
   padding: 1.25rem;
   overflow-x: auto;
+  overscroll-behavior-x: contain;  /* stop a horizontal swipe at the
+     scroller's edge from chaining to the browser's back-gesture */
   font-size: 0.8125em;
   line-height: 1.6;
   background: ${(p) => p.theme.colors.background};

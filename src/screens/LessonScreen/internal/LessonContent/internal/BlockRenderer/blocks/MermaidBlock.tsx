@@ -195,6 +195,10 @@ export const MermaidBlock = ({ content }: { content: string }) => {
         onPointerUp={handlePointerUp}
         onPointerCancel={handlePointerUp}
         $dragging={isDragging.current}
+        /* Only claim the touch stream once the diagram is actually zoomed in;
+           at fit-scale the page must stay scrollable through it. Compared with
+           a small epsilon because baseZoom is a fitted float. */
+        $zoomed={zoom > baseZoom.current * 1.01}
       >
         <S.MermaidCanvas
           style={{

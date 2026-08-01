@@ -1,5 +1,6 @@
 import Link from 'next/link';
 import styled, { css } from 'styled-components';
+import { pressable, touchMinHeight } from '@/theme';
 
 const toneStyles = {
   neutral: css`
@@ -43,6 +44,10 @@ export const PillLink = styled(Link)<{ $tone: CreditPillTone }>`
   }
 
   ${(p) => toneStyles[p.$tone]}
+
+  ${pressable}
+
+  ${touchMinHeight}
 `;
 
 export const Label = styled.span`

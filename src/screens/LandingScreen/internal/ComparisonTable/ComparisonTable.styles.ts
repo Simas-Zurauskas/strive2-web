@@ -52,6 +52,8 @@ export const Heading = styled.h2`
 export const TableWrap = styled.div`
   width: 100%;
   overflow-x: auto;
+  overscroll-behavior-x: contain;  /* stop a horizontal swipe at the
+     scroller's edge from chaining to the browser's back-gesture */
 
   ${(p) => p.theme.media.tablet} {
     display: none;

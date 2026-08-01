@@ -18,7 +18,7 @@ import { useTheme } from 'next-themes';
 import { useEffect, useLayoutEffect, useRef, useState } from 'react';
 import { CreditPill } from '@/components/CreditPill';
 import { NEXT_PUBLIC_APPZI_BUTTON_ID } from '@/conf/env';
-import { useAuth } from '@/hooks';
+import { useAuth, useScrollLock } from '@/hooks';
 import { PANEL_CLOSE_TRANSITION, PANEL_OPEN_TRANSITION } from '@/theme/motionPresets';
 import * as S from './Navbar.styles';
 
@@ -153,6 +153,10 @@ export const Navbar = () => {
   // link from the drawer doesn't leave the panel hanging open over the
   // newly-loaded screen.
   const [drawerOpen, setDrawerOpen] = useState(false);
+  // The drawer is a full-height fixed overlay; without this the lesson/page
+  // behind it scrolls under the finger. Measured before the fix: opened at
+  // y=300, a trusted PageDown moved the page to y=919 behind the open drawer.
+  useScrollLock(drawerOpen);
   useEffect(() => setDrawerOpen(false), [pathname]); // eslint-disable-line react-hooks/set-state-in-effect -- close on route change is the intent
 
   // Driver-style animation control: drag-to-close needs an explicit

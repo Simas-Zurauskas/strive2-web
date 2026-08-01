@@ -1,4 +1,5 @@
 import styled from 'styled-components';
+import { touchMinHeight } from '@/theme';
 
 export const Container = styled.div`
   margin-top: 1.5rem;
@@ -23,14 +24,18 @@ export const Toggle = styled.button`
   cursor: pointer;
   transition: color 0.15s;
 
-  &:hover {
-    color: ${(p) => p.theme.colors.foreground};
+  ${(p) => p.theme.media.hover} {
+    &:hover {
+      color: ${(p) => p.theme.colors.foreground};
+    }
   }
 
   & svg {
     width: 14px;
     height: 14px;
   }
+
+  ${touchMinHeight}
 `;
 
 export const SaveStatus = styled.span`

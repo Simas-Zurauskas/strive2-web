@@ -9,6 +9,7 @@ import styled from 'styled-components';
 // hub content edge-aligns with the nav links above it.
 export const HubLayout = styled.div`
   min-height: calc(100vh - 56px);
+  min-height: calc(100dvh - 56px);
   background: ${(p) => p.theme.colors.background};
   color: ${(p) => p.theme.colors.foreground};
   padding: 4rem 2rem 6rem;
@@ -249,6 +250,7 @@ export const EmptyState = styled.div`
 
 export const ArticleLayout = styled.article`
   min-height: calc(100vh - 56px);
+  min-height: calc(100dvh - 56px);
   background: ${(p) => p.theme.colors.background};
   color: ${(p) => p.theme.colors.foreground};
   padding: 4rem 2rem 6rem;
@@ -276,8 +278,10 @@ export const BreadcrumbLink = styled(Link)`
   text-decoration: none;
   transition: color 0.15s;
 
-  &:hover {
-    color: ${(p) => p.theme.colors.foreground};
+  ${(p) => p.theme.media.hover} {
+    &:hover {
+      color: ${(p) => p.theme.colors.foreground};
+    }
   }
 `;
 
@@ -407,8 +411,10 @@ export const ArticleBody = styled.div`
     text-decoration-thickness: 1px;
     transition: text-decoration-color 0.15s;
 
-    &:hover {
-      text-decoration-color: ${(p) => p.theme.colors.accent};
+    ${(p) => p.theme.media.hover} {
+      &:hover {
+        text-decoration-color: ${(p) => p.theme.colors.accent};
+      }
     }
   }
 
@@ -438,6 +444,8 @@ export const ArticleBody = styled.div`
     border-radius: var(--radius-md);
     padding: 1.125rem 1.25rem;
     overflow-x: auto;
+    overscroll-behavior-x: contain;  /* stop a horizontal swipe at the
+       scroller's edge from chaining to the browser's back-gesture */
     font-size: 0.875rem;
     line-height: 1.6;
 
@@ -572,8 +580,10 @@ export const ReadNextArrow = styled.span`
   color: ${(p) => p.theme.colors.accent};
   transition: gap 0.15s ease;
 
-  ${ReadNextLink}:hover & {
-    gap: 0.5rem;
+  ${(p) => p.theme.media.hover} {
+    ${ReadNextLink}:hover & {
+      gap: 0.5rem;
+    }
   }
 `;
 
@@ -634,7 +644,9 @@ export const FinalCtaButton = styled(Link)`
   text-decoration: none;
   transition: filter 0.15s ease;
 
-  &:hover {
-    filter: brightness(1.05);
+  ${(p) => p.theme.media.hover} {
+    &:hover {
+      filter: brightness(1.05);
+    }
   }
 `;

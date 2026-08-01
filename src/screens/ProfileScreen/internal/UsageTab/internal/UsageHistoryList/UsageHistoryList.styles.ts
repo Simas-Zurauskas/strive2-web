@@ -116,8 +116,10 @@ export const HeaderCell = styled.button<{ $sortable?: boolean; $active?: boolean
   cursor: ${(p) => (p.$sortable ? 'pointer' : 'default')};
   justify-content: ${(p) => (p.$align === 'right' ? 'flex-end' : 'flex-start')};
 
-  &:hover {
-    color: ${(p) => (p.$sortable ? p.theme.colors.foreground : p.theme.colors.muted)};
+  ${(p) => p.theme.media.hover} {
+    &:hover {
+      color: ${(p) => (p.$sortable ? p.theme.colors.foreground : p.theme.colors.muted)};
+    }
   }
 `;
 

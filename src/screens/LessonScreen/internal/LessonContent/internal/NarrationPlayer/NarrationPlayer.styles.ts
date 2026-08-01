@@ -1,5 +1,6 @@
 import { motion } from 'framer-motion';
 import styled, { keyframes } from 'styled-components';
+import { touchMinHeight } from '@/theme';
 
 const dotPulse = keyframes`
   0%, 80%, 100% { transform: scale(0.6); opacity: 0.4; }
@@ -80,6 +81,8 @@ export const PrimaryButton = styled.button`
     opacity: 0.6;
     cursor: not-allowed;
   }
+
+  ${touchMinHeight}
 `;
 
 export const GeneratingDots = styled.div`

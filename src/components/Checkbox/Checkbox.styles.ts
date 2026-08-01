@@ -9,8 +9,10 @@ export const Label = styled.label`
   transition: color 0.15s;
   color: ${(p) => p.theme.colors.muted};
 
-  &:hover {
-    color: ${(p) => p.theme.colors.foreground};
+  ${(p) => p.theme.media.hover} {
+    &:hover {
+      color: ${(p) => p.theme.colors.foreground};
+    }
   }
 `;
 
@@ -73,8 +75,10 @@ export const Text = styled.span`
     text-underline-offset: 2px;
     font-weight: 600;
 
-    &:hover {
-      text-decoration-thickness: 2px;
+    ${(p) => p.theme.media.hover} {
+      &:hover {
+        text-decoration-thickness: 2px;
+      }
     }
   }
 `;

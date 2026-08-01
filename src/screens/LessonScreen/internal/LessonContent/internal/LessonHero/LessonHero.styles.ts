@@ -1,4 +1,5 @@
 import styled, { keyframes } from 'styled-components';
+import { touchMinHeight } from '@/theme';
 
 const fadeIn = keyframes`
   from { opacity: 0; }
@@ -149,6 +150,8 @@ export const BookmarkButtonInline = styled.button<{ $active: boolean }>`
   &:active {
     transform: scale(0.97);
   }
+
+  ${touchMinHeight}
 `;
 
 export const EyebrowRow = styled.div`

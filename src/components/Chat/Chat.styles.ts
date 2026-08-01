@@ -1,6 +1,6 @@
 import { motion } from 'framer-motion';
 import styled, { keyframes } from 'styled-components';
-import { thinScrollbar, onAccent } from '@/theme';
+import { thinScrollbar, onAccent, touchMinSize } from '@/theme';
 
 const fadeIn = keyframes`
   from { opacity: 0; transform: translateY(4px); }
@@ -286,6 +286,8 @@ export const SendButton = styled.button`
     opacity: 0.35;
     cursor: not-allowed;
   }
+
+  ${touchMinSize}
 `;
 
 export const LoaderIcon = styled.span`

@@ -1,4 +1,5 @@
 import styled, { keyframes } from 'styled-components';
+import { pressable } from '@/theme';
 
 const spin = keyframes`
   to { transform: rotate(360deg); }
@@ -68,6 +69,8 @@ export const FavoriteButton = styled.button<{ $active?: boolean }>`
       background: ${(p) => `${p.theme.colors.warning}10`};
     }
   }
+
+  ${pressable}
 `;
 
 export const Meta = styled.div`

@@ -267,6 +267,124 @@ export const thinScrollbar = `
   }
 `;
 
+// ── Press-feedback mixins ─────────────────────────────
+//
+// Once `:hover` is correctly gated behind `media.hover`, a touch user gets NO
+// visual acknowledgement between tapping a control and the app responding.
+// These give that acknowledgement back. Suppressing hover without adding press
+// feedback makes touch feel *worse*, so the two always ship together.
+//
+// Two variants, deliberately:
+//
+//   pressable        scale + dim. For buttons, icon buttons, chips, cards —
+//                    anything with its own bounded box.
+//                    DO NOT apply to an element that has `position: fixed`
+//                    descendants: a non-`none` transform makes the element a
+//                    containing block for them and they would be re-anchored
+//                    to it. That rules it out for the CourseShell panels.
+//
+//   pressableSurface background wash only, no transform. For full-width rows
+//                    inside scroll containers (sidebar lesson rows, menu
+//                    items). A scale on a row can flash mid-scroll on Android
+//                    where `:active` resolves before the gesture is
+//                    disambiguated; a background change reads as intentional
+//                    even if it does briefly appear.
+//
+// Both are no-ops under `prefers-reduced-motion` for the transform component;
+// the colour/opacity feedback is kept, since removing *all* feedback would
+// defeat the purpose for the users who most need clear affordances.
+//
+// NEITHER MIXIN DECLARES `transition`, and that is load-bearing. These are
+// appended at the END of a component's template, so a `transition` here is a
+// whole-property override that silently deletes whatever the component already
+// declared. The first draft did exactly that and was caught in verification:
+// CreditPill.PillLink's computed transitionProperty collapsed from its own
+// colour/background list to `transform, opacity`, and ModuleHeader's
+// `background 0.15s` became `background-color 0.09s`.
+// The press state therefore snaps rather than eases — which is also what
+// native touch controls do, so it reads as responsive rather than unfinished.
+
+export const pressable = `
+  &:active:not(:disabled) {
+    transform: scale(0.97);
+    opacity: 0.9;
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    &:active:not(:disabled) {
+      transform: none;
+    }
+  }
+`;
+
+export const pressableSurface = `
+  &:active:not(:disabled) {
+    background-color: color-mix(in srgb, var(--foreground) 7%, transparent);
+  }
+`;
+
+// ── Tap-target mixins ─────────────────────────────────
+//
+// Apple HIG asks for 44×44pt; WCAG 2.2 AA (SC 2.5.8) asks 24×24 CSS px. Much
+// of the icon chrome here is 18–32px, which fails both.
+//
+// `touchHitArea` grows the HIT area without touching the VISUAL box, using a
+// centred transparent ::after overlay. Desktop rendering is untouched: the
+// whole thing sits inside the touch media query.
+//
+// Preconditions — check each site before applying:
+//   1. `::after` must be free. Navbar's NavLink already uses it for the
+//      underline, so that one gets `touchMinSize` instead.
+//   2. The host must not be `overflow: hidden`, or the overlay is clipped and
+//      silently does nothing.
+//   3. The host must not be `position: absolute/fixed` already — the mixin
+//      sets `position: relative` and would re-anchor it. CourseShell's
+//      IconButton is `position: fixed`, so it uses `touchMinSize`.
+// Verified per-site with elementFromPoint, not assumed.
+//
+// `touchMinSize` is the fallback: it grows the box itself, on touch only. Use
+// where the element is a ghost/borderless control (growing it is invisible) or
+// full-width (only the height changes).
+
+export const touchHitArea = `
+  @media (hover: none) and (pointer: coarse) {
+    position: relative;
+
+    &::after {
+      content: '';
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      width: max(100%, 44px);
+      height: max(100%, 44px);
+      transform: translate(-50%, -50%);
+      /* The overlay is transparent but must WIN hit-testing against
+         non-positioned siblings it overhangs. Without this, LessonHero's
+         BookmarkButtonInline overlay lost its top edge to the <h1> painted
+         above it (measured: elementFromPoint 22px above centre returned
+         LessonHero.Title). z-index resolves in the button's own parent
+         stacking context, so it does not escape the component. */
+      z-index: 1;
+    }
+  }
+`;
+
+export const touchMinSize = `
+  @media (hover: none) and (pointer: coarse) {
+    min-block-size: 44px;
+    min-inline-size: 44px;
+  }
+`;
+
+/** Height-only variant for full-width rows, where forcing a 44px min-inline-size
+ *  is meaningless and `min-block-size` is the whole fix. Also the right choice
+ *  for text links, where 44px of width would be wrong. */
+export const touchMinHeight = `
+  @media (hover: none) and (pointer: coarse) {
+    min-block-size: 44px;
+  }
+`;
+
 export const colors: ColorsSet = {
   background: 'var(--background)',
   foreground: 'var(--foreground)',

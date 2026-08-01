@@ -2,6 +2,12 @@ import nextCoreWebVitals from 'eslint-config-next/core-web-vitals';
 import nextTypescript from 'eslint-config-next/typescript';
 
 const eslintConfig = [
+  // Build-time audit tooling, not application code: plain Node ESM + a
+  // browser-injected probe that is deliberately a bare expression (it is
+  // pasted as a function argument, never imported). Linting it under the
+  // Next/TS app config reports false positives and would push the repo's
+  // problem count above its baseline.
+  { ignores: ['scripts/**'] },
   ...nextCoreWebVitals,
   ...nextTypescript,
   {

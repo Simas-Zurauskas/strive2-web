@@ -1,6 +1,7 @@
 'use client';
 
 import { useEffect, useRef, RefObject } from 'react';
+import { useScrollLock } from './useScrollLock';
 
 const FOCUSABLE = [
   'a[href]',
@@ -47,12 +48,17 @@ export const useDialog = <T extends HTMLElement = HTMLDivElement>(
   const dialogRef = useRef<T | null>(null);
   const previouslyFocused = useRef<HTMLElement | null>(null);
 
+  // Scroll lock is delegated to useScrollLock. The previous implementation
+  // here (`document.body.style.overflow = 'hidden'`) was measured to be a
+  // no-op in this app — `html { overflow-x: clip }` in GlobalStyles suppresses
+  // the body→viewport overflow propagation it relied on, so every modal let
+  // the page scroll behind it. See useScrollLock for the experiment.
+  useScrollLock(open);
+
   useEffect(() => {
     if (!open) return;
 
     previouslyFocused.current = document.activeElement as HTMLElement | null;
-    const prevOverflow = document.body.style.overflow;
-    document.body.style.overflow = 'hidden';
 
     // Defer focus by one frame so the dialog's children have mounted (an
     // inactive slot rendered display:none yields no focusable nodes; a
@@ -99,11 +105,6 @@ export const useDialog = <T extends HTMLElement = HTMLDivElement>(
     return () => {
       window.cancelAnimationFrame(raf);
       document.removeEventListener('keydown', onKey);
-      // Restore the PREVIOUS overflow value, not a hardcoded ''. An outer
-      // modal that locked scroll before us would otherwise see its lock
-      // silently cleared when this dialog closes (the M10 regression in
-      // AlertDialog).
-      document.body.style.overflow = prevOverflow;
       previouslyFocused.current?.focus?.();
     };
   }, [open, onClose, disableFocusTrap]);

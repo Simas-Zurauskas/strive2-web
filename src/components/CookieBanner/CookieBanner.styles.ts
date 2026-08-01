@@ -1,4 +1,5 @@
 import styled from 'styled-components';
+import { touchMinHeight } from '@/theme';
 
 export const Container = styled.div`
   position: fixed;
@@ -75,6 +76,7 @@ const Btn = styled.button`
   cursor: pointer;
   transition: background 0.15s ease, border-color 0.15s ease, opacity 0.15s ease;
   white-space: nowrap;
+  ${touchMinHeight}
 `;
 
 export const Reject = styled(Btn)`

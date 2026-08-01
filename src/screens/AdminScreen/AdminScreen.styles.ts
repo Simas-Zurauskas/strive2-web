@@ -2,6 +2,7 @@ import styled from 'styled-components';
 
 export const Layout = styled.div`
   min-height: 100vh;
+  min-height: 100dvh;
   background: ${(p) => p.theme.colors.background};
   color: ${(p) => p.theme.colors.foreground};
   padding: 2rem;
@@ -57,7 +58,9 @@ export const ExitLink = styled.a`
   color: ${(p) => p.theme.colors.muted};
   text-decoration: none;
 
-  &:hover {
-    color: ${(p) => p.theme.colors.foreground};
+  ${(p) => p.theme.media.hover} {
+    &:hover {
+      color: ${(p) => p.theme.colors.foreground};
+    }
   }
 `;

@@ -89,8 +89,10 @@ export const Chevron = styled.span<{ $open: boolean }>`
   transition: transform 0.15s ease, color 0.15s;
   transform: rotate(${(p) => (p.$open ? '180deg' : '0deg')});
 
-  ${Trigger}:hover & {
-    color: ${(p) => p.theme.colors.foreground};
+  ${(p) => p.theme.media.hover} {
+    ${Trigger}:hover & {
+      color: ${(p) => p.theme.colors.foreground};
+    }
   }
 `;
 

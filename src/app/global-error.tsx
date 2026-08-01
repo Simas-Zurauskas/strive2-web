@@ -22,7 +22,7 @@ export default function GlobalError({ error, reset }: { error: Error & { digest?
       <body
         style={{
           fontFamily: 'system-ui, sans-serif',
-          minHeight: '100vh',
+          minHeight: '100dvh',
           margin: 0,
           display: 'flex',
           alignItems: 'center',

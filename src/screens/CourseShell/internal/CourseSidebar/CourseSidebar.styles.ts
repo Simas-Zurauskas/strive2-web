@@ -1,5 +1,5 @@
 import styled from 'styled-components';
-import { thinScrollbar } from '@/theme';
+import { thinScrollbar, pressableSurface, touchMinSize, touchMinHeight } from '@/theme';
 import type { QuizMasteryTier } from '@/api/types';
 import type { QuizIconVariant } from '@/types';
 
@@ -64,6 +64,8 @@ export const CollapseButton = styled.button`
     outline: 2px solid ${(p) => p.theme.colors.accent};
     outline-offset: 2px;
   }
+
+  ${touchMinSize}
 `;
 
 export const CourseName = styled.span`
@@ -102,10 +104,12 @@ export const CourseNameLink = styled.button`
     text-decoration-thickness 0.15s,
     color 0.15s;
 
-  &:hover {
-    text-decoration-color: ${(p) => p.theme.colors.accent};
-    text-decoration-thickness: 2px;
-    color: ${(p) => p.theme.colors.accent};
+  ${(p) => p.theme.media.hover} {
+    &:hover {
+      text-decoration-color: ${(p) => p.theme.colors.accent};
+      text-decoration-thickness: 2px;
+      color: ${(p) => p.theme.colors.accent};
+    }
   }
 
   &:focus-visible {
@@ -216,6 +220,8 @@ export const ModuleHeader = styled.button<{ $expanded: boolean }>`
       background: ${(p) => p.theme.colors.background};
     }
   }
+
+  ${pressableSurface}
 `;
 
 export const ChevronIcon = styled.span<{ $expanded: boolean }>`
@@ -313,6 +319,10 @@ export const LessonItem = styled.button<{ $active: boolean }>`
       background: ${(p) => p.theme.colors.background};
     }
   }
+
+  ${pressableSurface}
+
+  ${touchMinHeight}
 `;
 
 export const LessonName = styled.span`
@@ -352,6 +362,10 @@ export const QuizItem = styled.button<{ $locked?: boolean }>`
   ${(p) =>
     !p.$locked &&
     `${p.theme.media.hover} { &:hover { background: ${p.theme.colors.background}; } }`}
+
+  ${pressableSurface}
+
+  ${touchMinHeight}
 `;
 
 const quizIconColor = ({

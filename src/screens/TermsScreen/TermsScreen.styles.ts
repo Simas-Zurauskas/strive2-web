@@ -2,6 +2,7 @@ import styled from 'styled-components';
 
 export const Layout = styled.div`
   min-height: calc(100vh - 56px);
+  min-height: calc(100dvh - 56px);
   background: ${(p) => p.theme.colors.background};
   color: ${(p) => p.theme.colors.foreground};
   padding: 2rem;
@@ -89,6 +90,8 @@ export const MarkdownBody = styled.div`
     width: 100%;
     max-width: 100%;
     overflow-x: auto;
+    overscroll-behavior-x: contain;  /* stop a horizontal swipe at the
+       scroller's edge from chaining to the browser's back-gesture */
     -webkit-overflow-scrolling: touch;
     border-collapse: collapse;
     margin: 0 0 1.5rem 0;

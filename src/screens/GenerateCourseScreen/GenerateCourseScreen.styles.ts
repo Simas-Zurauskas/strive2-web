@@ -3,6 +3,7 @@ import { TextAction } from '@/components';
 
 export const Layout = styled.div`
   min-height: calc(100vh - 56px);
+  min-height: calc(100dvh - 56px);
   background: ${(p) => p.theme.colors.background};
   color: ${(p) => p.theme.colors.foreground};
   display: flex;
@@ -46,8 +47,10 @@ export const Content = styled.div``;
 export const DiscardLink = styled(TextAction)`
   margin-left: auto;
 
-  &:hover:not(:disabled) {
-    text-decoration: underline;
+  ${(p) => p.theme.media.hover} {
+    &:hover:not(:disabled) {
+      text-decoration: underline;
+    }
   }
 
   &:disabled {
