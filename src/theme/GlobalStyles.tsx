@@ -201,6 +201,12 @@ export const GlobalStyles = createGlobalStyle`
     text-size-adjust: 100%;
     background-color: var(--background);
     color-scheme: light;
+    /* Kill the UA tap-highlight rectangle globally. This property inherits,
+       so setting it on the root covers every element — previously it was set
+       only on 'a' and 'button', which left the blue flash on [role="button"],
+       <label>, <summary>, [tabindex] and click-handling <div>s. Measured on
+       the shipping build: the root computed to rgba(51, 181, 229, 0.4). */
+    -webkit-tap-highlight-color: transparent;
   }
 
   html,
@@ -243,13 +249,36 @@ export const GlobalStyles = createGlobalStyle`
   a {
     color: inherit;
     text-decoration: none;
-    -webkit-tap-highlight-color: transparent;
   }
 
   button {
     font-family: inherit;
     cursor: pointer;
-    -webkit-tap-highlight-color: transparent;
+  }
+
+  /* Interactive controls opt out of double-tap-to-zoom arbitration, which
+     otherwise makes every tap wait to see whether a second one is coming.
+
+     Deliberately NOT applied to '*': that would disable pinch-to-zoom of the
+     page, which is an accessibility regression (WCAG 1.4.4). Scoped to things
+     a user taps rather than reads. */
+  button,
+  a,
+  [role='button'],
+  summary,
+  label,
+  input[type='checkbox'],
+  input[type='radio'] {
+    touch-action: manipulation;
+  }
+
+  /* Suppress the iOS long-press callout on buttons only.
+     NOT on links — long-press to preview/share/copy-link is expected there.
+     NEVER on prose: long-press text selection in lessons must keep working,
+     which is why this is an allow-list of two selectors and not a reset. */
+  button,
+  [role='button'] {
+    -webkit-touch-callout: none;
   }
 
   /* iOS Safari auto-zooms when focusing any form control whose computed
@@ -264,6 +293,27 @@ export const GlobalStyles = createGlobalStyle`
     textarea,
     select {
       font-size: max(16px, 1em) !important;
+    }
+  }
+
+  /* Reduced-motion safety net. 51 components already honour this query
+     individually; this catches whatever they miss. 0.01ms rather than 0 so
+     'transitionend' / 'animationend' listeners still fire — a hard 0 makes
+     some browsers skip the event entirely and can strand a component that
+     waits on it.
+
+     Only CSS animations and transitions are affected. framer-motion drives
+     its own values from JS, so AnimatePresence exit animations still run to
+     completion and cannot be stranded mid-flight by this rule; components
+     that want motion suppressed there use its useReducedMotion hook. */
+  @media (prefers-reduced-motion: reduce) {
+    *,
+    *::before,
+    *::after {
+      animation-duration: 0.01ms !important;
+      animation-iteration-count: 1 !important;
+      transition-duration: 0.01ms !important;
+      scroll-behavior: auto !important;
     }
   }
 

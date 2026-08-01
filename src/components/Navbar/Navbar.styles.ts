@@ -1,7 +1,7 @@
 import { motion } from 'framer-motion';
 import Link from 'next/link';
 import styled from 'styled-components';
-import { thinScrollbar } from '@/theme';
+import { thinScrollbar, touchHitArea } from '@/theme';
 
 // The Nav is a flex-column wrapper. The first row (NavRow) holds the
 // always-on app navigation; a second slot (NavExtensionSlot) is empty by
@@ -183,11 +183,13 @@ export const HamburgerButton = styled.button`
       height: 18px;
     }
 
-    &:hover {
-      color: ${(p) => p.theme.colors.foreground};
-      /* Stay on surfaceBorder — --border collapses to --surface in
-         dark mode so the ring would vanish on hover. */
-      border-color: ${(p) => p.theme.colors.surfaceBorder};
+    ${(p) => p.theme.media.hover} {
+      &:hover {
+        color: ${(p) => p.theme.colors.foreground};
+        /* Stay on surfaceBorder — --border collapses to --surface in
+           dark mode so the ring would vanish on hover. */
+        border-color: ${(p) => p.theme.colors.surfaceBorder};
+      }
     }
 
     &:active {
@@ -200,6 +202,8 @@ export const HamburgerButton = styled.button`
       outline-offset: 2px;
     }
   }
+
+  ${touchHitArea}
 `;
 
 export const NavLink = styled(Link)<{ $active?: boolean }>`
@@ -211,8 +215,10 @@ export const NavLink = styled(Link)<{ $active?: boolean }>`
   transition: color 0.15s;
   padding: 0.375rem 0;
 
-  &:hover {
-    color: ${(p) => p.theme.colors.foreground};
+  ${(p) => p.theme.media.hover} {
+    &:hover {
+      color: ${(p) => p.theme.colors.foreground};
+    }
   }
 
   &::after {
@@ -282,10 +288,12 @@ export const ThemeToggle = styled.button`
     height: 16px;
   }
 
-  &:hover {
-    color: ${(p) => p.theme.colors.foreground};
-    /* Stay on surfaceBorder — see DrawerCloseButton for rationale. */
-    border-color: ${(p) => p.theme.colors.surfaceBorder};
+  ${(p) => p.theme.media.hover} {
+    &:hover {
+      color: ${(p) => p.theme.colors.foreground};
+      /* Stay on surfaceBorder — see DrawerCloseButton for rationale. */
+      border-color: ${(p) => p.theme.colors.surfaceBorder};
+    }
   }
 
   &:active {
@@ -297,6 +305,8 @@ export const ThemeToggle = styled.button`
     outline: 2px solid ${(p) => p.theme.colors.accent};
     outline-offset: 2px;
   }
+
+  ${touchHitArea}
 `;
 
 export const FeedbackButton = styled.button`
@@ -402,8 +412,10 @@ export const ThemeOption = styled.button<{ $active: boolean }>`
     background 0.15s,
     color 0.15s;
 
-  &:hover {
-    color: ${(p) => (p.$active ? p.theme.colors.surface : p.theme.colors.foreground)};
+  ${(p) => p.theme.media.hover} {
+    &:hover {
+      color: ${(p) => (p.$active ? p.theme.colors.surface : p.theme.colors.foreground)};
+    }
   }
 
   svg {
@@ -452,6 +464,14 @@ export const Drawer = styled(motion.aside)`
   flex-direction: column;
   overflow-y: auto;
   touch-action: pan-y;
+  /* Reaching the drawer's scroll end must not chain to the page behind it —
+     on iOS/Android that chain is what triggers pull-to-refresh and lets the
+     background move under the finger. Measured before this: overscroll-behavior
+     computed to "auto". */
+  overscroll-behavior: contain;
+  /* The last drawer item otherwise sits under the iOS home indicator.
+     Measured before this: padding-bottom computed to "0px". */
+  padding-bottom: max(0.5rem, var(--safe-area-bottom));
   ${thinScrollbar}
 `;
 
@@ -487,12 +507,14 @@ export const DrawerCloseButton = styled.button`
     height: 16px;
   }
 
-  &:hover {
-    color: ${(p) => p.theme.colors.foreground};
-    /* Keep the surfaceBorder ring on hover — using --border collapses
-       to --surface in dark mode and the ring vanishes. The icon color
-       warming to foreground is enough hover feedback. */
-    border-color: ${(p) => p.theme.colors.surfaceBorder};
+  ${(p) => p.theme.media.hover} {
+    &:hover {
+      color: ${(p) => p.theme.colors.foreground};
+      /* Keep the surfaceBorder ring on hover — using --border collapses
+         to --surface in dark mode and the ring vanishes. The icon color
+         warming to foreground is enough hover feedback. */
+      border-color: ${(p) => p.theme.colors.surfaceBorder};
+    }
   }
 
   &:active {
@@ -504,6 +526,8 @@ export const DrawerCloseButton = styled.button`
     outline: 2px solid ${(p) => p.theme.colors.accent};
     outline-offset: 2px;
   }
+
+  ${touchHitArea}
 `;
 
 export const DrawerSection = styled.section`

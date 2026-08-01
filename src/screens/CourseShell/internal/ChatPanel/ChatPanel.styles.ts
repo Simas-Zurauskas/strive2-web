@@ -1,4 +1,5 @@
 import styled from 'styled-components';
+import { touchMinSize } from '@/theme';
 
 // ── Sticky shell ──────────────────────────────────────
 // Mirrors the lessons sidebar (border-side, surface bg, navbar-offset
@@ -65,6 +66,8 @@ export const CollapseButton = styled.button`
     outline: 2px solid ${(p) => p.theme.colors.accent};
     outline-offset: 2px;
   }
+
+  ${touchMinSize}
 `;
 
 export const HeaderText = styled.div`

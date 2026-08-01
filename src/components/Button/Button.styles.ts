@@ -1,5 +1,5 @@
 import styled, { css } from 'styled-components';
-import { onAccent, onColorWashes } from '@/theme';
+import { onAccent, onColorWashes, touchMinHeight } from '@/theme';
 
 const primaryStyles = css`
   background: ${(p) => p.theme.colors.accent};
@@ -98,6 +98,8 @@ export const StyledButton = styled.button<{ $variant: 'primary' | 'secondary' | 
     outline: 2px solid ${(p) => p.theme.colors.accent};
     outline-offset: 2px;
   }
+
+  ${touchMinHeight}
 `;
 
 export const Content = styled.span<{ $loading: boolean }>`

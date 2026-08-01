@@ -179,8 +179,10 @@ export const FootLine = styled.p`
     color: ${(p) => p.theme.colors.accent};
     text-decoration: none;
 
-    &:hover {
-      text-decoration: underline;
+    ${(p) => p.theme.media.hover} {
+      &:hover {
+        text-decoration: underline;
+      }
     }
   }
 `;
@@ -196,8 +198,10 @@ export const InlineLinkButton = styled.button`
   cursor: pointer;
   text-decoration: none;
 
-  &:hover {
-    text-decoration: underline;
+  ${(p) => p.theme.media.hover} {
+    &:hover {
+      text-decoration: underline;
+    }
   }
 
   &:focus-visible {

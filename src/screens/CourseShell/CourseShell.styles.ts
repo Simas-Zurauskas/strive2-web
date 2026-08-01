@@ -1,5 +1,6 @@
 import { motion } from 'framer-motion';
 import styled, { css } from 'styled-components';
+import { touchMinSize } from '@/theme';
 
 // ── Full-page centered label (loading / not found) ────
 
@@ -64,6 +65,10 @@ export const SidebarPanelFixed = styled(motion.div)`
     width: 100%;
     z-index: 40;
   }
+
+  /* Home-indicator avoidance. env() is 0 on devices without a cutout, so
+     desktop and non-notched rendering is unchanged. */
+  padding-bottom: max(0px, var(--safe-area-bottom));
 `;
 
 // ── Chat slot ──────────────────────────────────────────
@@ -116,6 +121,10 @@ export const ChatPanelFixed = styled(motion.div)`
     width: 100%;
     z-index: 40;
   }
+
+  /* Home-indicator avoidance. env() is 0 on devices without a cutout, so
+     desktop and non-notched rendering is unchanged. */
+  padding-bottom: max(0px, var(--safe-area-bottom));
 `;
 
 // ── Backdrop (mobile overlays) ─────────────────────────
@@ -230,9 +239,12 @@ const iconButtonBase = css`
     height: 16px;
   }
 
-  &:hover {
-    color: ${(p: { theme: { colors: Record<string, string> } }) => p.theme.colors.foreground};
-    border-color: ${(p: { theme: { colors: Record<string, string> } }) => p.theme.colors.border};
+  ${(p) => p.theme.media.hover} {
+    &:hover {
+      color: ${(p: { theme: { colors: Record<string, string> } }) => p.theme.colors.foreground};
+      border-color: ${(p: { theme: { colors: Record<string, string> } }) =>
+        p.theme.colors.border};
+    }
   }
 
   &:active {
@@ -248,6 +260,8 @@ const iconButtonBase = css`
 
 export const IconButton = styled.button`
   ${iconButtonBase}
+
+  ${touchMinSize}
 `;
 
 // ── Desktop chat edge tab (collapsed-state affordance) ────

@@ -1,4 +1,5 @@
 import styled from 'styled-components';
+import { pressable, touchHitArea } from '@/theme';
 
 export const Container = styled.div`
   display: flex;
@@ -24,7 +25,13 @@ export const ScaleButton = styled.button<{ $active?: boolean }>`
     border-color 0.15s,
     background 0.15s;
 
-  &:hover {
-    color: ${(p) => p.theme.colors.foreground};
+  ${(p) => p.theme.media.hover} {
+    &:hover {
+      color: ${(p) => p.theme.colors.foreground};
+    }
   }
+
+  ${pressable}
+
+  ${touchHitArea}
 `;

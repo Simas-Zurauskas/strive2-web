@@ -1,5 +1,5 @@
 import styled from 'styled-components';
-import { colorsLib, courseCardInk, pickCourseGradient } from '@/theme';
+import { colorsLib, courseCardInk, pickCourseGradient, pressable } from '@/theme';
 
 /**
  * Re-export for the component layer — keeps the existing
@@ -89,6 +89,8 @@ export const Container = styled.button<{ $gradient: string }>`
     outline: 2px solid ${courseCardInk.focusRing};
     outline-offset: 2px;
   }
+
+  ${pressable}
 `;
 
 // ── Top row: domain mark + watermark initial ──────────
@@ -137,8 +139,10 @@ export const Initial = styled.span`
   margin-right: -0.25rem;
   transition: color 220ms ease;
 
-  ${Container}:hover & {
-    color: ${courseCardInk.textWatermarkHover};
+  ${(p) => p.theme.media.hover} {
+    ${Container}:hover & {
+      color: ${courseCardInk.textWatermarkHover};
+    }
   }
 `;
 

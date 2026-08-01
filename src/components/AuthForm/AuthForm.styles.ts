@@ -34,8 +34,10 @@ export const FormFooter = styled.p`
     text-decoration: none;
     font-weight: 500;
 
-    &:hover {
-      text-decoration: underline;
+    ${(p) => p.theme.media.hover} {
+      &:hover {
+        text-decoration: underline;
+      }
     }
   }
 `;

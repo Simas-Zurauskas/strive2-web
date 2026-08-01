@@ -5,6 +5,7 @@ import styled, { css } from 'styled-components';
 
 export const Layout = styled.div`
   min-height: calc(100vh - 56px);
+  min-height: calc(100dvh - 56px);
   background: ${(p) => p.theme.colors.background};
   color: ${(p) => p.theme.colors.foreground};
   padding: 4rem 2rem 6rem;
@@ -166,9 +167,11 @@ export const TopicCardArrow = styled.span`
     color 0.15s ease,
     gap 0.15s ease;
 
-  ${TopicCardLink}:hover & {
-    color: ${(p) => p.theme.colors.accent};
-    gap: 0.5rem;
+  ${(p) => p.theme.media.hover} {
+    ${TopicCardLink}:hover & {
+      color: ${(p) => p.theme.colors.accent};
+      gap: 0.5rem;
+    }
   }
 `;
 
@@ -251,8 +254,10 @@ export const BreadcrumbLink = styled(Link)`
   text-decoration: none;
   transition: color 0.15s;
 
-  &:hover {
-    color: ${(p) => p.theme.colors.foreground};
+  ${(p) => p.theme.media.hover} {
+    &:hover {
+      color: ${(p) => p.theme.colors.foreground};
+    }
   }
 `;
 
@@ -364,8 +369,10 @@ export const ArticleBody = styled.div`
     text-decoration-thickness: 1px;
     transition: text-decoration-color 0.15s;
 
-    &:hover {
-      text-decoration-color: ${(p) => p.theme.colors.accent};
+    ${(p) => p.theme.media.hover} {
+      &:hover {
+        text-decoration-color: ${(p) => p.theme.colors.accent};
+      }
     }
   }
 
@@ -395,6 +402,8 @@ export const ArticleBody = styled.div`
     border-radius: var(--radius-md);
     padding: 1rem 1.125rem;
     overflow-x: auto;
+    overscroll-behavior-x: contain;  /* stop a horizontal swipe at the
+       scroller's edge from chaining to the browser's back-gesture */
     font-size: 0.875rem;
     line-height: 1.6;
 

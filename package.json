@@ -9,7 +9,8 @@
     "start": "next start",
     "lint": "eslint .",
     "lint:fix": "eslint . --fix",
-    "codegen": "openapi-typescript http://localhost:4000/swagger.json -o ./src/api/_generated.ts"
+    "codegen": "openapi-typescript http://localhost:4000/swagger.json -o ./src/api/_generated.ts",
+    "check:mobile": "node scripts/mobile-audit.mjs"
   },
   "dependencies": {
     "@ai-sdk/react": "^3.0.140",

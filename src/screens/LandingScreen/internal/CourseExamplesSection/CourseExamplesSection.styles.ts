@@ -149,10 +149,12 @@ export const GoArrow = styled.span`
   opacity: 0.5;
   transition: color 0.15s, opacity 0.15s, transform 0.15s;
 
-  ${Card}:hover & {
-    color: ${(p) => p.theme.colors.tertiary};
-    opacity: 1;
-    transform: translate(2px, -2px);
+  ${(p) => p.theme.media.hover} {
+    ${Card}:hover & {
+      color: ${(p) => p.theme.colors.tertiary};
+      opacity: 1;
+      transform: translate(2px, -2px);
+    }
   }
 `;
 

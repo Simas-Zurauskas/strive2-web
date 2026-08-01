@@ -36,6 +36,10 @@ export const Dialog = styled.div`
   overflow: hidden;
   box-shadow: var(--shadow-modal);
   animation: ${slideUp} 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+
+  /* Home-indicator avoidance. env() is 0 on devices without a cutout, so
+     desktop and non-notched rendering is unchanged. */
+  padding-bottom: var(--safe-area-bottom);
 `;
 
 export const CloseBtn = styled.button`

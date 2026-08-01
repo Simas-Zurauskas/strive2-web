@@ -2,6 +2,7 @@
 
 import { motion } from 'framer-motion';
 import styled from 'styled-components';
+import { touchHitArea } from '@/theme';
 
 export const Bar = styled(motion.div)`
   width: 100%;
@@ -84,4 +85,6 @@ export const Dismiss = styled.button`
       background: ${(p) => p.theme.colors.background};
     }
   }
+
+  ${touchHitArea}
 `;

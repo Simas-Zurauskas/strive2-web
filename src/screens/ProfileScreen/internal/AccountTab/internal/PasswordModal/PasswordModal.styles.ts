@@ -36,6 +36,10 @@ export const Dialog = styled.div`
   gap: 1.25rem;
   box-shadow: var(--shadow-modal);
   animation: ${slideUp} 0.2s ease-out;
+
+  /* Home-indicator avoidance. env() is 0 on devices without a cutout, so
+     desktop and non-notched rendering is unchanged. */
+  padding-bottom: max(1.75rem, var(--safe-area-bottom));
 `;
 
 export const Title = styled.h3`
@@ -128,7 +132,9 @@ export const ResendButton = styled.button`
     text-decoration: none;
   }
 
-  &:hover:not(:disabled) {
-    color: ${(p) => p.theme.colors.foreground};
+  ${(p) => p.theme.media.hover} {
+    &:hover:not(:disabled) {
+      color: ${(p) => p.theme.colors.foreground};
+    }
   }
 `;

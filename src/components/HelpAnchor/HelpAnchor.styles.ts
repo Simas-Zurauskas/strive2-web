@@ -1,4 +1,5 @@
 import styled, { keyframes, css } from 'styled-components';
+import { touchHitArea } from '@/theme';
 
 // Three motion layers, all gated on the "unviewed" state:
 //   1. ring   — an accent (forest-green) disc that scales out and fades on
@@ -167,4 +168,17 @@ export const Button = styled.button<{ $active: boolean; $size: 'sm' | 'md' }>`
         }
       }
     `}
+
+  /* Press feedback is opacity-only here, deliberately. When $active this
+     button runs the pulseDot keyframe animation, and a running CSS animation
+     outranks a normal declaration for the properties it animates — so a
+     transform:scale() press (what the shared "pressable" mixin uses) would be
+     silently dead exactly when the anchor is most prominent. pulseDot only
+     animates transform, so opacity is free.
+     NB: no backticks in this comment — it lives inside a template literal. */
+  &:active:not(:disabled) {
+    opacity: 0.7;
+  }
+
+  ${touchHitArea}
 `;

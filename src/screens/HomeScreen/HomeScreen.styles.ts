@@ -2,6 +2,7 @@ import styled from 'styled-components';
 
 export const Layout = styled.div`
   min-height: calc(100vh - 56px);
+  min-height: calc(100dvh - 56px);
   background: ${(p) => p.theme.colors.background};
   color: ${(p) => p.theme.colors.foreground};
   padding: 3.5rem 2rem 6rem;
@@ -118,8 +119,10 @@ export const SectionLink = styled.button`
   gap: 0.25rem;
   transition: color 0.15s;
 
-  &:hover {
-    color: ${(p) => p.theme.colors.foreground};
+  ${(p) => p.theme.media.hover} {
+    &:hover {
+      color: ${(p) => p.theme.colors.foreground};
+    }
   }
 `;
 
