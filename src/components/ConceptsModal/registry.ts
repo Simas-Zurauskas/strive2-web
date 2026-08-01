@@ -1,6 +1,7 @@
 import { CourseDepthAnimation } from './animations/CourseDepthAnimation';
 import { CreditsAnimation } from './animations/CreditsAnimation';
 import { DesignChatAnimation } from './animations/DesignChatAnimation';
+import { DocumentsToCourseAnimation } from './animations/DocumentsToCourseAnimation';
 import { GoalTypesAnimation } from './animations/GoalTypesAnimation';
 import { HowStriveWorksAnimation } from './animations/HowStriveWorksAnimation';
 import { LessonCompletionAnimation } from './animations/LessonCompletionAnimation';
@@ -40,6 +41,7 @@ export const CONCEPT_IDS = [
   'design-chat',
   'lesson-completion',
   'lesson-extras',
+  'course-from-documents',
 ] as const;
 
 export type ConceptId = (typeof CONCEPT_IDS)[number];
@@ -186,7 +188,7 @@ export const CONCEPTS: Record<ConceptId, ConceptEntry> = {
     title: 'How a course is laid out',
     body: [
       'A course is a stack of modules. Each module is a small set of lessons on a tight subtopic, capped by a module quiz.',
-      "You don't have to do them in order, but the quiz unlocks once all lessons in its module are completed.",
+      "You don't have to do them in order — the module quiz unlocks once you've completed two lessons in that module, and covers the lessons you've generated so far.",
       'The structure is fixed once you accept the course. Refine it before accepting — chat with the outline in the wizard to add, remove, or reshape modules.',
     ],
     animation: ModulesLessonsAnimation,
@@ -226,5 +228,18 @@ export const CONCEPTS: Record<ConceptId, ConceptEntry> = {
       "Further reading is a short list of AI-curated external links at the bottom — articles, docs, or videos that deepen the topic. The lesson body is self-contained, so skip it if you don't need outside material. Either can be added later if you change your mind.",
     ],
     animation: LessonExtrasAnimation,
+  },
+
+  'course-from-documents': {
+    id: 'course-from-documents',
+    eyebrow: 'How it works',
+    title: 'Start from your own materials',
+    body: [
+      'Bring what you already have: PDFs, Word/PowerPoint and OpenDocument files, spreadsheets, EPUBs, images, Markdown, HTML, CSV, audio recordings — or paste links to public articles. Up to 10 files (50 MB each) and 10 links per course.',
+      'We read everything first, for free, and show you what it can teach: the topics we found, any per-file issues, an estimated course size in lessons, and a suggested goal you can edit before anything is generated.',
+      'You also choose how closely lessons follow your materials — **Strict** stays inside them, **Guided** (recommended) adds connective explanations where they help, **Enrich** builds on them with wider context and examples.',
+      'Lessons are then generated grounded in your documents. Where your materials run thin, we openly supplement — and each lesson is badged so you always know what came from your sources and what we added.',
+    ],
+    animation: DocumentsToCourseAnimation,
   },
 };

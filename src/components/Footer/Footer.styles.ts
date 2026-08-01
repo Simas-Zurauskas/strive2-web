@@ -129,7 +129,7 @@ export const ColumnTitle = styled.h2`
   font-weight: 600;
   text-transform: uppercase;
   letter-spacing: 0.16em;
-  color: ${(p) => p.theme.colors.tertiary};
+  color: ${(p) => p.theme.colors.tertiaryText};
   margin: 0 0 0.25rem;
 `;
 

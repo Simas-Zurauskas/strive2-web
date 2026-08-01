@@ -3,7 +3,7 @@
 import { usePathname, useRouter } from 'next/navigation';
 import { useEffect, useRef } from 'react';
 import { AppziLoader } from '@/app/_registry/comps';
-import { Navbar, Footer, TextLoader } from '@/components';
+import { Navbar, Footer, LegalUpdateNotice, TextLoader } from '@/components';
 import { ROUTES } from '@/constants/routes';
 import { useAuth } from '@/hooks';
 
@@ -71,6 +71,12 @@ export default function SignedInLayout({ children }: { children: React.ReactNode
           flexDirection: 'column',
         }}
       >
+        {/* Terms/Privacy change notice. Sits at the top of the signed-in
+            shell so every authenticated route carries it once — this is
+            how the "material changes are notified by email or in-product"
+            promise in Terms § 15 / Privacy § 11 is discharged. Dismissal
+            is persisted per notice version. */}
+        <LegalUpdateNotice />
         {children}
       </main>
       <Footer />

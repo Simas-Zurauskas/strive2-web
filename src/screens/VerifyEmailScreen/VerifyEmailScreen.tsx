@@ -6,6 +6,7 @@ import { useSession } from 'next-auth/react';
 import { useEffect, useRef, useState } from 'react';
 import { verifyEmail } from '@/api/routes/auth';
 import { AuthMoment } from '@/components';
+import { analytics } from '@/lib/analytics';
 import { safeRedirect } from '@/lib/safeRedirect';
 
 const REDIRECT_STORAGE_KEY = 'pendingPostAuthRedirect';
@@ -65,6 +66,11 @@ export const VerifyEmailScreen = () => {
     verifyEmail({ token })
       .then(() => {
         setStatus('success');
+        // Closes the credentials-path blind spot between signup_completed
+        // (server-side) and wizard_started: until this event existed, an
+        // abandoned inbox round-trip was indistinguishable from a user who
+        // verified and then bounced. `calledRef` above guarantees one fire.
+        analytics.track('verification_completed');
       })
       .catch((err) => {
         const errorCode = err?.errorCode as string | undefined;
@@ -95,7 +101,10 @@ export const VerifyEmailScreen = () => {
   const handleContinue = () => {
     const stashed = popPendingRedirect();
     if (isAuthenticated) {
-      router.push(stashed ?? '/');
+      // A just-verified account is by definition brand-new (verification only
+      // happens at signup) — send it straight into course creation rather
+      // than the empty dashboard. A stashed entry redirect still wins.
+      router.push(stashed ?? '/courses/new?trigger=post_signup');
     } else {
       // Forward the redirect into the login screen so it survives one more hop.
       const target = stashed

@@ -19,6 +19,11 @@ const READ_NEXT_MAP: Record<string, string> = {
   'why-we-dont-use-vector-embeddings': 'lesson-streaming-block-by-block',
   'lesson-streaming-block-by-block': 'why-we-dont-use-vector-embeddings',
   'what-1820-people-want-to-learn': 'why-most-courses-dont-stick',
+  'ai-course-generators-compared': 'turn-your-own-material-into-a-course',
+  'study-for-an-exam-with-ai': 'how-to-keep-what-you-learn',
+  'turn-your-own-material-into-a-course': 'your-material-is-not-training-data',
+  'grounding-ai-lessons-in-your-own-sources': 'why-we-dont-use-vector-embeddings',
+  'your-material-is-not-training-data': 'grounding-ai-lessons-in-your-own-sources',
 };
 
 export const getReadNext = (post: BlogPost): BlogPost | undefined => {

@@ -7,10 +7,10 @@ export const Wrap = styled.section`
   width: 100%;
   display: flex;
   justify-content: center;
-  padding: var(--space-20) var(--space-8);
+  padding: var(--space-16) var(--space-8);
 
   ${(p) => p.theme.media.tabletLarge} {
-    padding: var(--space-12) var(--space-5);
+    padding: var(--space-10) var(--space-5);
   }
 `;
 
@@ -34,7 +34,7 @@ export const Eyebrow = styled.span`
   font-weight: 600;
   text-transform: uppercase;
   letter-spacing: 0.16em;
-  color: ${(p) => p.theme.colors.tertiary};
+  color: ${(p) => p.theme.colors.tertiaryText};
 `;
 
 export const Heading = styled.h2`
@@ -60,80 +60,119 @@ export const Subhead = styled.p`
   color: ${(p) => p.theme.colors.muted};
 `;
 
-export const Grid = styled.div`
-  display: grid;
-  grid-template-columns: repeat(5, 1fr);
-  gap: var(--space-3);
+/* Table-of-contents treatment: hairline-separated rows, no cards. */
+export const Toc = styled.div`
+  display: flex;
+  flex-direction: column;
+  max-width: 880px;
+  width: 100%;
+  margin: 0 auto;
+  border-top: 1px solid ${(p) => p.theme.colors.border};
+`;
 
-  ${(p) => p.theme.media.desktop} {
-    grid-template-columns: repeat(5, 1fr);
-    gap: var(--space-2);
-  }
+export const Row = styled(motion.div)`
+  display: grid;
+  grid-template-columns: 72px 1fr auto;
+  align-items: baseline;
+  gap: var(--space-6);
+  padding: var(--space-5) var(--space-2);
+  border-bottom: 1px solid ${(p) => p.theme.colors.border};
 
   ${(p) => p.theme.media.tabletLarge} {
-    grid-template-columns: repeat(2, 1fr);
-    gap: var(--space-3);
-  }
-
-  ${(p) => p.theme.media.mobile} {
-    grid-template-columns: 1fr;
+    grid-template-columns: 48px 1fr;
+    row-gap: var(--space-1);
   }
 `;
 
-export const Card = styled(motion.div)`
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  text-align: center;
-  gap: var(--space-2);
-  padding: var(--space-5) var(--space-4);
-  background: ${(p) => p.theme.colors.surface};
-  border: 1px solid ${(p) => p.theme.colors.surfaceBorder};
-  border-radius: var(--radius-lg);
-  transition: border-color 0.15s, box-shadow 0.15s, transform 0.15s;
+export const Numeral = styled.span`
+  font-family: var(--font-heading-serif), Georgia, serif;
+  font-size: clamp(1.75rem, 3vw, 2.25rem);
+  font-weight: 500;
+  line-height: 1;
+  color: ${(p) => p.theme.colors.tertiary};
+  font-variant-numeric: tabular-nums;
 
-  ${(p) => p.theme.media.hover} {
-    &:hover {
-      border-color: ${(p) =>
-        `color-mix(in oklab, ${p.theme.colors.tertiary} 35%, ${p.theme.colors.surfaceBorder})`};
-      box-shadow: var(--shadow-card);
-      transform: translateY(-1px);
-    }
+  ${(p) => p.theme.media.tabletLarge} {
+    grid-row: span 2;
+    align-self: start;
+  }
+`;
+
+export const RowMain = styled.div`
+  /* Fixed label column: the small-cap type labels vary in width
+     (MASTER vs MONETIZE), and inline flow left every serif title starting
+     at a different x. A 104px column fits the widest label at this size
+     and gives all titles one shared left edge. */
+  display: grid;
+  grid-template-columns: 104px 1fr;
+  align-items: baseline;
+  gap: var(--space-4);
+  min-width: 0;
+
+  ${(p) => p.theme.media.mobile} {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
   }
 `;
 
 export const Label = styled.span`
-  font-size: 0.625rem;
+  font-size: 0.6875rem;
   font-weight: 700;
   text-transform: uppercase;
   letter-spacing: 0.16em;
-  color: ${(p) => p.theme.colors.tertiary};
+  color: ${(p) => p.theme.colors.tertiaryText};
+  flex-shrink: 0;
 `;
 
-export const Verb = styled.h3`
+export const RowTitle = styled.h3`
+  position: relative;
   font-family: var(--font-heading-serif), Georgia, serif;
   font-style: italic;
   font-weight: 500;
-  font-size: 1.125rem;
+  font-size: clamp(1.25rem, 2.2vw, 1.5rem);
   letter-spacing: -0.01em;
   line-height: 1.25;
   color: ${(p) => p.theme.colors.foreground};
   margin: 0;
+  width: fit-content;
+
+  /* Gold underline draws in on row hover — the "route" gesture at
+     typographic scale. Hover-gated so touch taps don't stick. */
+  &::after {
+    content: '';
+    position: absolute;
+    left: 0;
+    right: 0;
+    bottom: -3px;
+    height: 1px;
+    background: ${(p) => p.theme.colors.tertiary};
+    transform: scaleX(0);
+    transform-origin: left;
+    transition: transform 0.35s cubic-bezier(0.16, 1, 0.3, 1);
+  }
+
+  ${(p) => p.theme.media.hover} {
+    ${Row}:hover &::after {
+      transform: scaleX(1);
+    }
+  }
 `;
 
+/* The example goal as italic marginalia, right-aligned like a page note. */
 export const Example = styled.p`
-  font-size: 0.8125rem;
+  font-family: var(--font-heading-serif), Georgia, serif;
+  font-style: italic;
+  font-size: 0.9375rem;
   line-height: 1.5;
   color: ${(p) => p.theme.colors.muted};
   margin: 0;
+  text-align: right;
+  max-width: 300px;
 
-  &::before {
-    content: '"';
-    display: block;
-    font-family: var(--font-heading-serif), Georgia, serif;
-    font-size: 1.25rem;
-    line-height: 1;
-    color: ${(p) => p.theme.colors.tertiary};
-    margin-bottom: 2px;
+  ${(p) => p.theme.media.tabletLarge} {
+    grid-column: 2;
+    text-align: left;
+    max-width: none;
   }
 `;

@@ -3,7 +3,8 @@
 import { motion } from 'framer-motion';
 import { ArrowRight } from 'lucide-react';
 import Link from 'next/link';
-import { useMotion } from '@/theme/motionPresets';
+import { analytics } from '@/lib/analytics';
+import { useMotion, VIEWPORT_ONCE } from '@/theme/motionPresets';
 import * as S from './FinalCtaSection.styles';
 import { RecallCardLoop } from './RecallCardLoop';
 import { FINAL_CTA } from '../../constants';
@@ -17,9 +18,12 @@ export const FinalCtaSection = ({ onOpenSignUp }: FinalCtaSectionProps) => {
 
   // Eyebrow → headline → subhead → CTA, mirrors the hero stagger so the
   // page bookends visually as well as conceptually.
+  // whileInView (not mount-animate) so the SSR HTML for this below-fold
+  // section doesn't gate the page's first paint — see VIEWPORT_ONCE.
   const stagger = (i: number) => ({
     initial: fadeUp.initial,
-    animate: fadeUp.animate,
+    whileInView: fadeUp.animate,
+    viewport: VIEWPORT_ONCE,
     transition: {
       ...(fadeUp.transition ?? {}),
       delay: prefersReduced ? 0 : i * 0.06,
@@ -54,6 +58,7 @@ export const FinalCtaSection = ({ onOpenSignUp }: FinalCtaSectionProps) => {
               as={Link}
               href="/pricing"
               data-analytics-id="landing.final-cta.pricing"
+              onClick={() => analytics.track('landing_cta_clicked', { cta: 'final_cta_pricing' })}
             >
               {FINAL_CTA.ctaSecondary} →
             </S.SecondaryCta>
@@ -62,7 +67,8 @@ export const FinalCtaSection = ({ onOpenSignUp }: FinalCtaSectionProps) => {
 
         <S.VisualCol
           initial={{ opacity: 0, y: prefersReduced ? 0 : 12 }}
-          animate={{ opacity: 1, y: 0 }}
+          whileInView={{ opacity: 1, y: 0 }}
+          viewport={VIEWPORT_ONCE}
           transition={{ duration: 0.5, delay: 0.15, ease: [0.16, 1, 0.3, 1] }}
         >
           <RecallCardLoop />

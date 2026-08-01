@@ -1,11 +1,22 @@
 import { useRouter } from 'next/navigation';
-import { useCallback, useEffect, useRef } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
+import { listSourceDocuments } from '@/api/routes/course/documents';
+import { ROUTES } from '@/constants/routes';
 import { useJobManager } from '@/hooks/useJobManager';
 import { analytics } from '@/lib/analytics';
+import { clearPendingGoal } from '@/lib/pendingGoal';
 import { QKeys } from '@/types';
 import type { useDepthOverrideDialog } from './useDepthOverrideDialog';
 import type { useWizardMutations } from './useWizardMutations';
-import type { Course, CourseDepth, ClientApiError, DepthPreviewsResponse, GoalType } from '@/api/types';
+import type {
+  Course,
+  CourseDepth,
+  ClientApiError,
+  DepthPreviewsResponse,
+  GoalType,
+  SourceDocument,
+  SourceFidelity,
+} from '@/api/types';
 import type { DepthOverridePayload } from '@/components/DepthOverrideDialog';
 
 type Step = 1 | 2 | 3 | 4 | 5;
@@ -51,6 +62,28 @@ const parseDepthOverrideError = (err: unknown): DepthOverridePayload | null => {
   return apiError as unknown as DepthOverridePayload;
 };
 
+/**
+ * Does the corpus still owe paid extraction work before structure can be
+ * grounded in it? True when any document has scanned pages beyond the
+ * vision-escalated set, or audio beyond the transcribed window — the
+ * client-side mirror of the server's prepare-corpus predicate. Calling
+ * prepare-corpus when nothing is outstanding is a safe fast no-op, so a
+ * false positive here costs one quick job, never a wrong course.
+ */
+const needsCorpusPreparation = (docs: SourceDocument[]): boolean =>
+  docs.some(
+    (d) =>
+      (d.scannedPageCount ?? 0) > (d.escalatedPages?.length ?? 0) ||
+      (d.audioDurationSec != null && (d.transcribedSec ?? 0) < d.audioDurationSec),
+  );
+
+/** Failure info surfaced by a tracked ingest job, rendered inline by SourcesStep. */
+export interface SourcesJobFailure {
+  errorCode?: string;
+  errorMeta?: Record<string, unknown>;
+  error?: string | null;
+}
+
 export const useWizardHandlers = ({
   courseId,
   setCourseId,
@@ -77,6 +110,8 @@ export const useWizardHandlers = ({
     structureMutation,
     depthPreviewsMutation,
     deleteMutation,
+    ingestDocumentsMutation,
+    prepareCorpusMutation,
     queryClient,
   } = mutations;
 
@@ -84,6 +119,19 @@ export const useWizardHandlers = ({
   const depthPreviews = (course?.depthPreviews as DepthPreviewsResponse) ?? null;
   const structureData = course?.structure?.modules ?? null;
   const isJobRunning = courseId ? isJobRunningForCourse(courseId) : false;
+  const isDocumentsCourse = course?.source === 'documents';
+
+  // ── Documents-flow state ──────────────────────────────
+  // `ingestFailure` — the last ingest job's failure info, rendered as an
+  // inline error card by SourcesStep (paired with the analyze loader so
+  // a failed job never leaves the step blank). `isPreparingSources` —
+  // a prepare_corpus job is running before structure ("Preparing your
+  // sources…" loader copy). `sourcesFlowFailed` — the pre-structure
+  // chain (documents fetch / prepare job / structure submit) failed and
+  // step 5 must show a retry card instead of nothing.
+  const [ingestFailure, setIngestFailure] = useState<SourcesJobFailure | null>(null);
+  const [isPreparingSources, setIsPreparingSources] = useState(false);
+  const [sourcesFlowFailed, setSourcesFlowFailed] = useState(false);
 
   const handleDirtyChange = useCallback((isDirty: boolean) => {
     isStepDirtyRef.current = isDirty;
@@ -123,6 +171,11 @@ export const useWizardHandlers = ({
       }
 
       const startClarify = (targetCourseId: string) => {
+        // The goal is persisted server-side at this point (create/update
+        // mutation succeeded) — the landing-page stash has served its
+        // purpose. Clearing here (not on submit attempt) means a failed
+        // submission still re-prefills the next wizard visit.
+        clearPendingGoal();
         clarifyMutation.mutate(targetCourseId, {
           onSuccess: (clarifyResult) => {
             trackJob({
@@ -161,6 +214,10 @@ export const useWizardHandlers = ({
   const handleGoalSubmit = useCallback(
     (goalValue: string) => {
       if (goalValue === course?.goal && clarifyData) {
+        // Goal is already persisted and clarified — the stash is redundant.
+        // (New submissions clear the stash in startClarify, after the
+        // create/update mutation succeeds.)
+        clearPendingGoal();
         setStep(2);
         return;
       }
@@ -402,7 +459,7 @@ export const useWizardHandlers = ({
 
   // ── Depth & Structure ─────────────────────────────────
 
-  const triggerStructureGeneration = useCallback(() => {
+  const fireStructureGeneration = useCallback(() => {
     if (!courseId) return;
 
     structureMutation.mutate(courseId, {
@@ -414,8 +471,74 @@ export const useWizardHandlers = ({
         });
         setStep(5);
       },
+      onError: () => {
+        // Documents flow may already sit on step 5 (after prepare_corpus)
+        // when this submit fails — flag it so the step renders a retry
+        // card instead of a blank body. Goal courses keep the existing
+        // behavior (global toast, user still on step 4).
+        if (isDocumentsCourse) setSourcesFlowFailed(true);
+      },
     });
-  }, [courseId, structureMutation, trackJob, setStep]);
+  }, [courseId, structureMutation, trackJob, setStep, isDocumentsCourse]);
+
+  /**
+   * Pre-structure hook. Goal courses fire generate_structure directly.
+   * Documents courses first check whether the corpus owes debited
+   * extraction (unescalated scanned pages / untranscribed audio); if so,
+   * a prepare_corpus job runs first — surfaced as the "Preparing your
+   * sources…" state on step 5 — and structure fires from its onComplete.
+   * A prepare-submit 402 rides the mutation's global policy (Out-of-
+   * Credits modal) while the user stays on step 4 to retry.
+   */
+  const triggerStructureGeneration = useCallback(() => {
+    if (!courseId) return;
+    setSourcesFlowFailed(false);
+
+    if (!isDocumentsCourse) {
+      fireStructureGeneration();
+      return;
+    }
+
+    listSourceDocuments(courseId)
+      .then((docs) => {
+        if (!needsCorpusPreparation(docs)) {
+          fireStructureGeneration();
+          return;
+        }
+
+        analytics.track('wizard_prepare_corpus_started', {
+          document_count: docs.length,
+        });
+        prepareCorpusMutation.mutate(courseId, {
+          onSuccess: (data) => {
+            setIsPreparingSources(true);
+            setStep(5);
+            trackJob({
+              jobId: data.jobId,
+              courseId,
+              type: 'prepare_corpus',
+              onComplete: () => {
+                analytics.track('wizard_prepare_corpus_completed', {});
+                setIsPreparingSources(false);
+                queryClient.invalidateQueries({ queryKey: [QKeys.SOURCE_DOCUMENTS, courseId] });
+                fireStructureGeneration();
+              },
+              onFailed: () => {
+                setIsPreparingSources(false);
+                setSourcesFlowFailed(true);
+                queryClient.invalidateQueries({ queryKey: [QKeys.SOURCE_DOCUMENTS, courseId] });
+              },
+            });
+          },
+        });
+      })
+      .catch(() => {
+        // Couldn't even list the documents — show the retry card rather
+        // than silently skipping the (required) preparation pass.
+        setSourcesFlowFailed(true);
+        setStep(5);
+      });
+  }, [courseId, isDocumentsCourse, fireStructureGeneration, prepareCorpusMutation, trackJob, setStep, queryClient]);
 
   // Self-recursive callback (the dialog's "confirm override" reuses the
   // same flow with `acknowledged: true`). We thread the recursion through
@@ -514,6 +637,121 @@ export const useWizardHandlers = ({
     queryClient.invalidateQueries({ queryKey: [QKeys.COURSE, courseId] });
   }, [courseId, queryClient]);
 
+  // ── Documents flow (SourcesStep, step 1 in documents mode) ──
+
+  /**
+   * Lazily create the course shell on first upload interaction. The
+   * documents flow needs a course row before any file can land (S3 keys
+   * and Job rows are course-scoped), but we don't want an empty course
+   * for users who only look at the screen.
+   */
+  const ensureDocumentsCourse = useCallback(async (): Promise<string> => {
+    if (courseId) return courseId;
+    const data = await createCourseMutation.mutateAsync({ source: 'documents' });
+    setCourseId(data.courseId);
+    return data.courseId;
+  }, [courseId, createCourseMutation, setCourseId]);
+
+  /** Kick off the free ingest-and-assess job and track it. */
+  const handleIngestSources = useCallback(() => {
+    if (!courseId) return;
+    setIngestFailure(null);
+    analytics.track('wizard_documents_ingest_started', {});
+    ingestDocumentsMutation.mutate(courseId, {
+      onSuccess: (data) => {
+        trackJob({
+          jobId: data.jobId,
+          courseId,
+          type: 'ingest_documents',
+          onComplete: () => {
+            analytics.track('wizard_documents_ingest_completed', {});
+            queryClient.invalidateQueries({ queryKey: [QKeys.COURSE, courseId] });
+            queryClient.invalidateQueries({ queryKey: [QKeys.SOURCE_DOCUMENTS, courseId] });
+          },
+          onFailed: (info) => {
+            analytics.track('wizard_documents_ingest_failed', {
+              error_code: info.errorCode ?? null,
+            });
+            setIngestFailure(info);
+            queryClient.invalidateQueries({ queryKey: [QKeys.COURSE, courseId] });
+            queryClient.invalidateQueries({ queryKey: [QKeys.SOURCE_DOCUMENTS, courseId] });
+          },
+        });
+      },
+    });
+  }, [courseId, ingestDocumentsMutation, trackJob, queryClient]);
+
+  /**
+   * Analysis-panel confirm: persist the (edited) suggested goal + the
+   * fidelity dial, then enter the classic pipeline — clarify job, then
+   * step 2 (Purpose) — exactly where a goal course would be after its
+   * goal submit. Re-confirming with nothing changed just advances;
+   * changing goal/fidelity with downstream data asks first (same
+   * overwrite contract as GoalStep).
+   */
+  const handleSourcesConfirm = useCallback(
+    (goalValue: string, fidelity: SourceFidelity) => {
+      if (!courseId) return;
+
+      const unchanged =
+        goalValue === course?.goal && (course?.sourceFidelity ?? 'guided') === fidelity;
+      if (unchanged && clarifyData) {
+        setStep(2);
+        return;
+      }
+
+      const proceed = () => {
+        setGoal(goalValue);
+        analytics.track('wizard_documents_goal_confirmed', { fidelity });
+
+        updateCourseMutation.mutate(
+          { id: courseId, data: { goal: goalValue, sourceFidelity: fidelity } },
+          {
+            onSuccess: () => {
+              clarifyMutation.mutate(courseId, {
+                onSuccess: (clarifyResult) => {
+                  trackJob({
+                    jobId: clarifyResult.jobId,
+                    courseId,
+                    type: 'clarify',
+                    onComplete: () => {
+                      setGeneratedForGoal(goalValue);
+                    },
+                  });
+                  setStep(2);
+                },
+              });
+            },
+          },
+        );
+      };
+
+      const hasDownstream = !!(clarifyData || depthPreviews || structureData);
+      if (hasDownstream) {
+        confirmOverwrite({
+          message: 'Changing the goal or fidelity will regenerate your questions and clear all later steps.',
+          action: proceed,
+        });
+        return;
+      }
+      proceed();
+    },
+    [
+      courseId,
+      course,
+      clarifyData,
+      depthPreviews,
+      structureData,
+      confirmOverwrite,
+      updateCourseMutation,
+      clarifyMutation,
+      trackJob,
+      setGoal,
+      setGeneratedForGoal,
+      setStep,
+    ],
+  );
+
   // ── Accept & Delete ───────────────────────────────────
 
   const handleAccept = useCallback(() => {
@@ -542,9 +780,14 @@ export const useWizardHandlers = ({
             ...(course?.depth && { depth_tier: course.depth }),
             ...(course?.goalType && { goal_type: course.goalType }),
           });
-          // Course-ready toast intentionally omitted — the redirect to the
-          // course page IS the confirmation. A toast on top would be noise.
-          router.push(`/course/${course?.slug ?? courseId}`);
+          // Land the user directly on lesson 0/0's "Create lesson" view —
+          // one tap from generation instead of two screens away (38% of
+          // accepted courses never got a lesson opened from the overview
+          // stop). No auto-generation: the explicit Generate button and its
+          // per-lesson toggles stay the user's call. The overview remains
+          // one tap away via the course breadcrumb. `from=accept` feeds the
+          // lesson_generate_view_shown trigger property.
+          router.push(`${ROUTES.lesson(course?.slug, courseId, 0, 0)}?from=accept`);
         },
       },
     );
@@ -594,6 +837,7 @@ export const useWizardHandlers = ({
     depthPreviews,
     structureData,
     isJobRunning,
+    isDocumentsCourse,
     handleDirtyChange,
     handleGoalSubmit,
     handlePurposeConfirm,
@@ -602,12 +846,22 @@ export const useWizardHandlers = ({
     handleStructureModified,
     handleAccept,
     handleStepClick,
+    // Documents flow
+    ensureDocumentsCourse,
+    handleIngestSources,
+    handleSourcesConfirm,
+    ingestFailure,
+    isPreparingSources,
+    sourcesFlowFailed,
+    retrySourcesFlow: triggerStructureGeneration,
     deleteMutation,
     depthPreviewsMutation,
     createCourseMutation,
     clarifyMutation,
     updateCourseMutation,
     structureMutation,
+    ingestDocumentsMutation,
+    prepareCorpusMutation,
     trackJob,
   };
 };

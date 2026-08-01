@@ -281,9 +281,9 @@ export const PricingScreen: React.FC = () => {
   return (
     <S.Layout>
       <S.Header>
-        <S.Title>One app. Pick your allowance.</S.Title>
+        <S.Title>Every plan unlocks everything.</S.Title>
         <S.Subtitle>
-          Every plan unlocks the entire platform — the only thing that changes is how much monthly allowance you get. Allowance is used up as you generate courses, lessons, and quizzes, and refunded in full on any failure. <HelpAnchor concept="allowance" size="sm" />
+          Pick how much you generate each month — courses, lessons, quizzes. Anything you&rsquo;ve already generated is yours forever, and failed generations are refunded in full. <HelpAnchor concept="allowance" size="sm" />
         </S.Subtitle>
 
         <S.CadenceToggle role="tablist" aria-label="Billing cadence">

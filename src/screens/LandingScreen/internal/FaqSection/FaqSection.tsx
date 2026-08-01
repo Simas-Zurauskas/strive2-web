@@ -1,7 +1,7 @@
 'use client';
 
 import { Accordion, AccordionItem } from '@/components';
-import { useMotion } from '@/theme/motionPresets';
+import { useMotion, VIEWPORT_ONCE } from '@/theme/motionPresets';
 import * as S from './FaqSection.styles';
 import { FAQ } from '../../constants';
 
@@ -11,7 +11,8 @@ export const FaqSection = () => {
     <S.Wrap>
       <S.Inner
         initial={fadeUp.initial}
-        animate={fadeUp.animate}
+        whileInView={fadeUp.animate}
+        viewport={VIEWPORT_ONCE}
         transition={{ ...fadeUp.transition, duration: 0.4 }}
       >
         <S.SectionHeader>

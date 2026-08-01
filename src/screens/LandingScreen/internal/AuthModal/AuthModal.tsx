@@ -4,9 +4,14 @@ import { X } from 'lucide-react';
 import Link from 'next/link';
 import { useEffect, useRef } from 'react';
 import { createPortal } from 'react-dom';
+import { peekPendingGoal } from '@/lib/pendingGoal';
 import * as S from './AuthModal.styles';
 import { SignInForm } from './SignInForm';
 import { SignUpForm } from './SignUpForm';
+
+// Keep the goal-context line to one visual line — the stored goal itself is
+// untouched (up to 500 chars); this is display truncation only.
+const GOAL_PREVIEW_MAX = 80;
 
 export type AuthMode = 'signin' | 'signup';
 
@@ -91,6 +96,11 @@ export const AuthModal = ({ open, mode, redirect, onClose, onModeChange }: AuthM
   }, [open, onClose]);
 
   if (!open) return null;
+
+  // Read at render, not in state: the modal re-renders on every open, and
+  // the stash may have been written by whichever CTA just opened it. Plain
+  // text rendering — React escapes it; no markup path exists for the value.
+  const pendingGoal = peekPendingGoal();
   if (typeof document === 'undefined') return null;
 
   const titleId = 'auth-modal-title';
@@ -136,6 +146,18 @@ export const AuthModal = ({ open, mode, redirect, onClose, onModeChange }: AuthM
             <X size={18} aria-hidden="true" />
           </S.CloseButton>
         </S.Header>
+
+        {pendingGoal && (
+          <S.GoalContext>
+            We’ll start your course on{' '}
+            <em>
+              “{pendingGoal.length > GOAL_PREVIEW_MAX
+                ? `${pendingGoal.slice(0, GOAL_PREVIEW_MAX).trimEnd()}…`
+                : pendingGoal}”
+            </em>{' '}
+            right after you sign in.
+          </S.GoalContext>
+        )}
 
         <S.TabList role="tablist" aria-label="Authentication mode" onKeyDown={onTabListKeyDown}>
           <S.Tab
@@ -197,6 +219,21 @@ export const AuthModal = ({ open, mode, redirect, onClose, onModeChange }: AuthM
             Privacy Policy
           </Link>
           .
+          {/* At-collection notice, sign-up only. Deliberately a statement,
+              NOT a checkbox: a pre-ticked box is not consent, and an
+              unticked one collects a decision we are not relying on. The
+              basis is soft opt-in, so what the law wants at this moment is
+              that the person is *told*, plainly, before they hand over the
+              address — and that opting out is easy, which the unsubscribe
+              link and the profile toggle both are. Shown on the sign-up
+              tab only, because that is the collection point; on sign-in
+              there is nothing being collected. */}
+          {mode === 'signup' && (
+            <>
+              {' '}
+              We&rsquo;ll occasionally email you product updates. You can opt out any time.
+            </>
+          )}
         </S.FinePrint>
       </S.Dialog>
     </S.Backdrop>,

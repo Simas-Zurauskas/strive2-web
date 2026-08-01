@@ -3,8 +3,8 @@
 import { useAnimation } from 'framer-motion';
 import { Sparkles } from 'lucide-react';
 import { useCallback, useEffect, useMemo, useState } from 'react';
-import { CourseModule } from '@/api/types';
-import { Card, Button, Badge, Eyebrow, HelpAnchor } from '@/components';
+import { CourseLesson, CourseModule } from '@/api/types';
+import { Card, Button, Badge, Eyebrow, HelpAnchor, SourceProvenanceBadge } from '@/components';
 import { useJobManager } from '@/hooks/useJobManager';
 import { plural } from '@/lib/strings';
 import { PANEL_CLOSE_TRANSITION, PANEL_OPEN_TRANSITION } from '@/theme/motionPresets';
@@ -12,8 +12,20 @@ import { ChatPanel } from './ChatPanel';
 import { DepthContextChip } from './DepthContextChip';
 import * as S from './StructureStep.styles';
 
+/**
+ * `sourceRefs` (validated document-chunk ids) is written by the server on
+ * documents courses but deliberately not declared in the OpenAPI
+ * CourseLesson schema (structure is a Mixed passthrough) — read it
+ * through a narrow structural cast, same pattern as the depthPreviews
+ * casts in the shell.
+ */
+const lessonSourceRefs = (lesson: CourseLesson): string[] =>
+  (lesson as CourseLesson & { sourceRefs?: string[] }).sourceRefs ?? [];
+
 interface StructureStepProps {
   courseId: string;
+  /** Enables per-lesson provenance badges (documents courses only). */
+  isDocumentsCourse?: boolean;
   modules: CourseModule[];
   /** Depth the learner picked at Step 3. Optional for legacy/in-flight cases. */
   selectedDepth?: string | null;
@@ -30,6 +42,7 @@ interface StructureStepProps {
 
 export const StructureStep = ({
   courseId,
+  isDocumentsCourse = false,
   modules,
   selectedDepth,
   recommendedDepth,
@@ -122,7 +135,12 @@ export const StructureStep = ({
                     {mod.lessons.map((lesson, j) => (
                       <S.LessonItem key={`${j}-${lesson.name}`}>
                         <S.LessonContent>
-                          <S.LessonName>{lesson.name}</S.LessonName>
+                          <S.LessonNameRow>
+                            <S.LessonName>{lesson.name}</S.LessonName>
+                            {isDocumentsCourse && (
+                              <SourceProvenanceBadge aiSupplemented={lessonSourceRefs(lesson).length === 0} />
+                            )}
+                          </S.LessonNameRow>
                           <S.LessonDescription>{lesson.description}</S.LessonDescription>
                         </S.LessonContent>
                       </S.LessonItem>

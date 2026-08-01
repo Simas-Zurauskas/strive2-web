@@ -1,6 +1,6 @@
 'use client';
 
-import { useMotion } from '@/theme/motionPresets';
+import { useMotion, VIEWPORT_ONCE } from '@/theme/motionPresets';
 import * as S from './ProblemSection.styles';
 import { PROBLEM } from '../../constants';
 
@@ -10,9 +10,11 @@ export const ProblemSection = () => {
     <S.Wrap>
       <S.Inner
         initial={fadeUp.initial}
-        animate={fadeUp.animate}
+        whileInView={fadeUp.animate}
+        viewport={VIEWPORT_ONCE}
         transition={{ ...fadeUp.transition, duration: 0.5 }}
       >
+        <S.QuoteMark aria-hidden="true">“</S.QuoteMark>
         <S.Heading>
           Most of what you learn is <em>gone</em> in three weeks.
         </S.Heading>

@@ -1,3 +1,4 @@
+import Link from 'next/link';
 import styled from 'styled-components';
 
 export const Container = styled.div`
@@ -84,6 +85,36 @@ export const InputGroup = styled.div`
   gap: 0.5rem;
 `;
 
+export const ExampleChipRow = styled.div`
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-2);
+  margin-top: var(--space-2);
+`;
+
+export const ExampleChip = styled.button`
+  padding: var(--space-1) var(--space-3);
+  font-size: 0.8125rem;
+  color: ${(p) => p.theme.colors.muted};
+  background: ${(p) => p.theme.colors.surface};
+  border: 1px solid ${(p) => p.theme.colors.surfaceBorder};
+  border-radius: var(--radius-full, 999px);
+  cursor: pointer;
+  transition: border-color 0.15s, color 0.15s;
+
+  ${(p) => p.theme.media.hover} {
+    &:hover {
+      border-color: ${(p) => p.theme.colors.accent};
+      color: ${(p) => p.theme.colors.foreground};
+    }
+  }
+
+  &:focus-visible {
+    outline: 2px solid ${(p) => p.theme.colors.accent};
+    outline-offset: 2px;
+  }
+`;
+
 export const ErrorText = styled.p`
   font-size: 0.8125rem;
   color: ${(p) => p.theme.colors.error};
@@ -116,6 +147,128 @@ export const SubmitRowEnd = styled.div`
   ${(p) => p.theme.media.mobile} {
     justify-content: space-between;
   }
+`;
+
+// ── Documents-mode entry (the second way to create a course) ──
+
+export const DocumentsEntryBlock = styled.div`
+  display: flex;
+  flex-direction: column;
+  gap: 1.25rem;
+  margin-top: -1.25rem;
+`;
+
+export const OrDivider = styled.div`
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  font-family: var(--font-heading-serif), Georgia, serif;
+  font-style: italic;
+  font-size: 0.9375rem;
+  color: ${(p) => p.theme.colors.muted};
+
+  &::before,
+  &::after {
+    content: '';
+    flex: 1;
+    height: 1px;
+    background: ${(p) => p.theme.colors.surfaceBorder};
+  }
+`;
+
+export const DocumentsEntryRow = styled.div`
+  display: flex;
+  align-items: center;
+  gap: 0.875rem;
+`;
+
+export const EntryIcon = styled.span`
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 40px;
+  height: 40px;
+  border-radius: 10px;
+  background: ${(p) => p.theme.colors.tertiaryMuted};
+  color: ${(p) => p.theme.colors.tertiary};
+
+  svg {
+    width: 20px;
+    height: 20px;
+  }
+`;
+
+export const EntryChevron = styled.span`
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  color: ${(p) => p.theme.colors.muted};
+  transition:
+    color 0.15s ease,
+    transform 0.2s ease;
+
+  svg {
+    width: 18px;
+    height: 18px;
+  }
+`;
+
+export const DocumentsEntryCard = styled(Link)`
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  padding: 1.125rem 1.25rem;
+  border-radius: 8px;
+  background: ${(p) => p.theme.colors.surface};
+  border: 1px solid ${(p) => p.theme.colors.surfaceBorder};
+  box-shadow: var(--shadow-card);
+  text-decoration: none;
+  transition:
+    border-color 0.15s ease,
+    box-shadow 0.2s ease;
+
+  ${(p) => p.theme.media.hover} {
+    &:hover {
+      border-color: ${(p) => p.theme.colors.tertiary};
+      box-shadow: var(--shadow-lift);
+
+      ${EntryChevron} {
+        color: ${(p) => p.theme.colors.tertiary};
+        transform: translateX(2px);
+      }
+    }
+  }
+
+  &:focus-visible {
+    outline: 2px solid ${(p) => p.theme.colors.accent};
+    outline-offset: 2px;
+  }
+`;
+
+export const EntryText = styled.span`
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+`;
+
+export const EntryTitle = styled.span`
+  font-family: var(--font-heading-serif), Georgia, serif;
+  font-style: italic;
+  font-size: 1.125rem;
+  font-weight: 500;
+  color: ${(p) => p.theme.colors.foreground};
+  letter-spacing: -0.01em;
+`;
+
+export const EntryDescription = styled.span`
+  font-size: 0.875rem;
+  color: ${(p) => p.theme.colors.muted};
+  line-height: 1.5;
 `;
 
 export const CharCount = styled.span<{ $atLimit: boolean }>`

@@ -32,6 +32,7 @@ export {
   useGradeRecallAnswer,
 } from './useRecall';
 export { useConceptViewed, markConceptViewed } from './useConceptViewed';
+export { useReadQuartiles } from './useReadQuartiles';
 export { useDialog } from './useDialog';
 export { useCourseNextAction } from './useCourseNextAction';
 export type { CourseNextAction, CourseNextActionKind } from './useCourseNextAction';

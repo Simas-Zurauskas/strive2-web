@@ -28,6 +28,13 @@ export type ColorsSet = {
   accentHover: string;
   tertiary: string;
   tertiaryHover: string;
+  /**
+   * AA-compliant gold for SMALL text (eyebrows, tiny labels ≤ ~14px).
+   * The brand gold `tertiary` sits at ~3.9:1 on cream/white — fine for
+   * borders, accents, and display-size type, but it fails WCAG 4.5:1 at
+   * label sizes. Use this variant whenever gold text is small.
+   */
+  tertiaryText: string;
   accentMuted: string;
   tertiaryMuted: string;
   success: string;
@@ -48,6 +55,8 @@ export const themeColors: Record<'light' | 'dark', ColorsSet> = {
     accentHover: colorsLib.primaryHover,
     tertiary: colorsLib.secondary,
     tertiaryHover: '#7d6434',
+    // ~5.5:1 on cream, ~5.8:1 on white.
+    tertiaryText: '#7d6434',
     accentMuted: '#2c554520',
     tertiaryMuted: '#96793e15',
     success: colorsLib.green,
@@ -66,6 +75,8 @@ export const themeColors: Record<'light' | 'dark', ColorsSet> = {
     accentHover: '#5da383',
     tertiary: '#c4a265',
     tertiaryHover: '#b39355',
+    // Dark gold already clears 4.5:1 on the dark surfaces — same value.
+    tertiaryText: '#c4a265',
     accentMuted: '#4a8a7220',
     tertiaryMuted: '#c4a26515',
     // success/warning lifted in dark to reach ~6:1 on gray800 when used as
@@ -267,6 +278,7 @@ export const colors: ColorsSet = {
   accentHover: 'var(--accent-hover)',
   tertiary: 'var(--tertiary)',
   tertiaryHover: 'var(--tertiary-hover)',
+  tertiaryText: 'var(--tertiary-text)',
   accentMuted: 'var(--accent-muted)',
   tertiaryMuted: 'var(--tertiary-muted)',
   success: 'var(--success)',

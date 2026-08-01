@@ -116,6 +116,26 @@ export const EmptyState = styled.div`
   animation: ${fadeIn} 0.4s ease-out;
 `;
 
+/**
+ * AI Act Art. 50(1)/(5) disclosure — the learner must be told, clearly and
+ * distinguishably, at the first interaction that the thing answering them
+ * is a machine. Rendered on the first turn of EVERY chat surface (lesson
+ * mentor, course mentor, structure refinement, help centre) because they
+ * all mount this component, and retired once the conversation starts: it
+ * is a first-interaction duty, not a standing banner.
+ *
+ * Sits above the suggested prompts as a plain sentence rather than a
+ * badge — a legal disclosure that reads like decoration is neither clear
+ * nor distinguishable. No hover rules here, so no `media.hover` gate.
+ */
+export const AiDisclosure = styled.p`
+  font-size: 0.75rem;
+  line-height: 1.55;
+  color: ${(p) => p.theme.colors.muted};
+  max-width: 30ch;
+  margin: 0;
+`;
+
 /** Small uppercase tracked eyebrow above the prompt list. */
 export const EmptyEyebrow = styled.span`
   font-size: 0.6875rem;

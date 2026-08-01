@@ -68,6 +68,25 @@ export const RecommendationBar = styled.div`
   flex-wrap: wrap;
 `;
 
+// Documents-course scope note (multi_course corpora) — quiet, honest
+// framing under the recommendation bar.
+export const DepthFootnote = styled.p`
+  font-size: 0.875rem;
+  color: ${(p) => p.theme.colors.muted};
+  line-height: 1.6;
+  margin-top: var(--space-3);
+`;
+
+export const ScopeNote = styled.p`
+  font-size: 0.875rem;
+  color: ${(p) => p.theme.colors.muted};
+  line-height: 1.6;
+  padding: 0.75rem 1rem;
+  border-left: 2px solid ${(p) => p.theme.colors.tertiary};
+  background: ${(p) => p.theme.colorsLib.secondary + '08'};
+  border-radius: 0 8px 8px 0;
+`;
+
 // ── Depth cards ─────────────────────────────────────────
 
 export const CardsContainer = styled.div`
@@ -207,6 +226,20 @@ export const BulletItem = styled.li`
 
   ${(p) => p.theme.media.tablet} {
     font-size: 0.875rem;
+  }
+`;
+
+// Documents-course per-tier note (band-clamped corpora only) — quiet
+// footnote explaining why similar lesson counts still differ in
+// depth-of-treatment across tiers.
+export const CardTierNote = styled.p`
+  font-size: 0.8125rem;
+  color: ${(p) => p.theme.colors.tertiary};
+  line-height: 1.5;
+  margin: 0;
+
+  ${(p) => p.theme.media.tablet} {
+    font-size: 0.75rem;
   }
 `;
 

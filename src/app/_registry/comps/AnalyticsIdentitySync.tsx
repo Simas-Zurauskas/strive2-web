@@ -6,6 +6,7 @@ import { recordAttribution } from '@/api/routes/auth';
 import { useAuth } from '@/hooks';
 import { analytics } from '@/lib/analytics';
 import { getAttribution } from '@/lib/attribution';
+import { gtagEvent } from '@/lib/gtag';
 
 /**
  * Bridges Mixpanel identity to NextAuth + getMe state:
@@ -66,6 +67,12 @@ export const AnalyticsIdentitySync = () => {
   useEffect(() => {
     if (!user || !isNewSignup || signupHandledRef.current) return;
     signupHandledRef.current = true;
+
+    // Google-side signup signal. Deliberately NOT a Mixpanel event — the API
+    // already emits `signup_completed` for every signup path (signUp.ts /
+    // googleAuth.ts), and a client duplicate would double-count the funnel.
+    // This is the one moment that covers both auth methods uniformly.
+    gtagEvent('sign_up');
 
     // Fire-and-forget in both directions. A visitor with no campaign
     // parameters has nothing to send, and a failed write must never surface to

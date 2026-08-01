@@ -1,8 +1,9 @@
 'use client';
 
 import { AnimatePresence, motion, useReducedMotion } from 'framer-motion';
-import { useState } from 'react';
-import { Button, Checkbox, HelpAnchor, TextLoader } from '@/components';
+import { useSearchParams } from 'next/navigation';
+import { useEffect, useRef, useState } from 'react';
+import { Button, Checkbox, HelpAnchor, SourceProvenanceBadge, TextLoader } from '@/components';
 import {
   useJobManager,
   useLessonContent,
@@ -11,6 +12,7 @@ import {
   useRegenerateLinks,
 } from '@/hooks';
 import { useBillingSummary } from '@/hooks/useBilling';
+import { analytics } from '@/lib/analytics';
 import {
   BlockRenderer,
   FontScaler,
@@ -31,6 +33,13 @@ import type { CourseProgressResponse } from '@/api/routes/course';
 interface Lesson {
   name: string;
   description: string;
+  /**
+   * Documents courses only: validated source-chunk ids proving the
+   * lesson is grounded in the uploaded corpus. Arrives through the
+   * structure passthrough (not declared in the OpenAPI CourseLesson
+   * schema), hence part of this structural interface.
+   */
+  sourceRefs?: string[];
 }
 
 interface Module {
@@ -45,6 +54,8 @@ interface LessonContentProps {
   moduleIndex: number;
   lessonIndex: number;
   lesson: Lesson;
+  /** Enables the per-lesson provenance badge (documents courses only). */
+  isDocumentsCourse?: boolean;
   modules: Module[];
   hasPrev: boolean;
   hasNext: boolean;
@@ -64,6 +75,7 @@ export const LessonContent = ({
   moduleIndex,
   lessonIndex,
   lesson,
+  isDocumentsCourse = false,
   modules,
   hasPrev,
   hasNext,
@@ -144,6 +156,28 @@ export const LessonContent = ({
   const regenerateHero = useRegenerateHero();
   const regenerateLinks = useRegenerateLinks();
   const isThisLessonGenerating = stream.isThisLessonGenerating || isThisLessonGeneratingWs;
+
+  // The "Create lesson" view is where 38% of accepted courses stalled with
+  // zero telemetry — nothing distinguished "never saw the button" from
+  // "saw it and left". One event per lesson view, with the arrival trigger
+  // (post_accept = wizard handoff; direct = navigation) so the P4 redirect
+  // is measurable. Fired only for the actionable branch, not the locked
+  // placeholder.
+  const searchParams = useSearchParams();
+  const arrivedFromAccept = searchParams.get('from') === 'accept';
+  const generateViewTrackedRef = useRef(false);
+  const showGenerateView =
+    !hasContent && !isThisLessonGenerating && !isLoadingContent && isPrevLessonGenerated;
+  useEffect(() => {
+    if (!showGenerateView || generateViewTrackedRef.current) return;
+    generateViewTrackedRef.current = true;
+    analytics.track('lesson_generate_view_shown', {
+      course_id: courseObjectId,
+      module_index: moduleIndex,
+      lesson_index: lessonIndex,
+      trigger: arrivedFromAccept ? 'post_accept' : 'direct',
+    });
+  }, [showGenerateView, courseObjectId, moduleIndex, lessonIndex, arrivedFromAccept]);
   const heroImage = stream.streamImage || lessonContent?.heroImageUrl || null;
   const showHeroSkeleton =
     ((stream.isStreaming || stream.isStarting) && stream.includeImage) ||
@@ -218,6 +252,11 @@ export const LessonContent = ({
           regenerateHero.regenerate({ courseId, moduleIndex, lessonIndex })
         }
       />
+
+      <S.ProvenanceRow>
+        <S.AiGeneratedNote>AI-generated — verify anything you rely on.</S.AiGeneratedNote>
+        {isDocumentsCourse && <SourceProvenanceBadge aiSupplemented={!lesson.sourceRefs?.length} />}
+      </S.ProvenanceRow>
 
       {hasContent && !isThisLessonGenerating && (
         <NarrationPlayer

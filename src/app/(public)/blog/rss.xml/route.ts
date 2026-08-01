@@ -36,7 +36,7 @@ export function GET(): Response {
       <pubDate>${toRfc822(post.published)}</pubDate>
       <description>${escapeXml(post.summary)}</description>
       <category>${escapeXml(post.categoryLabel)}</category>
-      <author>noreply@strive.school (${escapeXml(post.author)})</author>
+      <author>noreply@strive-learning.com (${escapeXml(post.author)})</author>
     </item>`;
     })
     .join('\n');

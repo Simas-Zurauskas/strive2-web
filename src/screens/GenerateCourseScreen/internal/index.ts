@@ -3,5 +3,6 @@ export { PurposeStep } from './PurposeStep';
 export { ClarifyStep } from './ClarifyStep';
 export { DepthStep } from './DepthStep';
 export { StructureStep } from './StructureStep';
+export { SourcesStep } from './SourcesStep';
 export { useWizardMutations } from './useWizardMutations';
 export { useWizardHandlers } from './useWizardHandlers';

@@ -16,6 +16,7 @@ export const GlobalStyles = createGlobalStyle`
     --accent-hover: ${themeColors.light.accentHover};
     --tertiary: ${themeColors.light.tertiary};
     --tertiary-hover: ${themeColors.light.tertiaryHover};
+    --tertiary-text: ${themeColors.light.tertiaryText};
     --accent-muted: ${themeColors.light.accentMuted};
     --tertiary-muted: ${themeColors.light.tertiaryMuted};
     --success: ${themeColors.light.success};
@@ -147,6 +148,7 @@ export const GlobalStyles = createGlobalStyle`
     --accent-hover: ${themeColors.dark.accentHover};
     --tertiary: ${themeColors.dark.tertiary};
     --tertiary-hover: ${themeColors.dark.tertiaryHover};
+    --tertiary-text: ${themeColors.dark.tertiaryText};
     --accent-muted: ${themeColors.dark.accentMuted};
     --tertiary-muted: ${themeColors.dark.tertiaryMuted};
     --success: ${themeColors.dark.success};
@@ -284,7 +286,11 @@ export const GlobalStyles = createGlobalStyle`
     left: 0.75rem;
     top: 0.75rem;
     z-index: 1000;
-    transform: translateY(-150%);
+    /* -200%, not -150%: at -150% the link's bottom edge rested only ~7px
+       above the viewport and its lift shadow leaked in as a white sliver
+       at the top-left corner (011-landing B5). Still in the tab order;
+       :focus below brings it fully on-screen exactly as before. */
+    transform: translateY(-200%);
     padding: 0.5rem 0.875rem;
     background: var(--accent);
     color: var(--on-accent);

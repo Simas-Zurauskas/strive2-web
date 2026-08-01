@@ -16,7 +16,7 @@ import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { createPortal } from 'react-dom';
 import { toast } from 'sonner';
 import { deleteCourse, updateCourse } from '@/api/routes/course';
-import { AlertDialog, TextLoader } from '@/components';
+import { AlertDialog, TextLoader, UpgradeBanner } from '@/components';
 import { ROUTES } from '@/constants/routes';
 import { TOASTS } from '@/constants/toasts';
 import { useCourse, useCourseNextAction, useCourseProgress, useGeneratedLessons } from '@/hooks';
@@ -594,8 +594,14 @@ export const CourseShell = ({ children }: CourseShellProps) => {
           />
         </S.SidebarPanelFixed>
 
-        {/* Center content */}
-        <S.ContentSlot>{children}</S.ContentSlot>
+        {/* Center content. UpgradeBanner sits above whichever course surface
+            is active (overview, lesson, quiz) — the pre-wall pitch belongs
+            where the spending happens, not on the dashboard. Renders null
+            for everyone except free-plan users below one lesson of balance. */}
+        <S.ContentSlot>
+          <UpgradeBanner />
+          {children}
+        </S.ContentSlot>
 
         {/* Right chat panel.
             ChatSlot is an empty grid placeholder — it animates width to

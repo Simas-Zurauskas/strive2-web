@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from 'react';
 import Skeleton from 'react-loading-skeleton';
-import { CourseDepth, DepthPreviewsResponse } from '@/api/types';
+import { CourseDepth, DepthPreview, DepthPreviewsResponse } from '@/api/types';
 import { Button, Badge, Eyebrow, HelpAnchor } from '@/components';
 import * as S from './DepthStep.styles';
 
@@ -40,7 +40,7 @@ const depthKeys: CourseDepth[] = ['overview', 'comprehensive', 'deep_dive'];
  * line entirely on legacy courses where the backend hasn't backfilled
  * the field. Defensive: tuples that aren't `[finite, finite]` short-circuit.
  */
-const formatRange = (range: [number, number] | undefined | null, unit: string): string | null => {
+const formatRange = (range: number[] | undefined | null, unit: string): string | null => {
   if (!Array.isArray(range) || range.length !== 2) return null;
   const [min, max] = range;
   if (!Number.isFinite(min) || !Number.isFinite(max)) return null;
@@ -55,10 +55,7 @@ const formatRange = (range: [number, number] | undefined | null, unit: string): 
  * backend's `(depth, isSoft)` lesson-count hint table — same source the
  * gate dialog uses, so cards and dialog stay numerically consistent.
  */
-const formatCardScope = (preview: {
-  lessonCountRange?: [number, number];
-  estimatedHoursRange?: [number, number];
-} | undefined): string | null => {
+const formatCardScope = (preview: DepthPreview | undefined): string | null => {
   if (!preview) return null;
   const lessons = formatRange(preview.lessonCountRange, 'lesson');
   const hours = formatRange(preview.estimatedHoursRange, 'hour');
@@ -89,6 +86,14 @@ export const DepthStep = ({
 
   const recommendationReason = depthPreviews?.recommendationReason ?? '';
 
+  // Documents courses, multi_course corpora only: the server attaches a
+  // learner-facing note that the documents exceed one course. The field
+  // is deliberately absent from the OpenAPI DepthPreviewsResponse schema
+  // (Mixed passthrough) — structural cast, same pattern as the shell's
+  // depthPreviews casts.
+  const sourceScopeNote =
+    (depthPreviews as (DepthPreviewsResponse & { sourceScopeNote?: string }) | null)?.sourceScopeNote ?? null;
+
   return (
     <S.Container>
       <S.Header>
@@ -106,6 +111,7 @@ export const DepthStep = ({
             </S.RecommendationBar>
           )
         )}
+        {!previewsLoading && sourceScopeNote && <S.ScopeNote>{sourceScopeNote}</S.ScopeNote>}
       </S.Header>
 
       <S.CardsContainer>
@@ -133,14 +139,7 @@ export const DepthStep = ({
           : depthKeys.map((key) => {
               const preview = depthPreviews?.[key];
               const isRecommended = key === recommended;
-              const scope = formatCardScope(
-                preview as
-                  | {
-                      lessonCountRange?: [number, number];
-                      estimatedHoursRange?: [number, number];
-                    }
-                  | undefined,
-              );
+              const scope = formatCardScope(preview);
               return (
                 <S.DepthCard key={key} $selected={depth === key} onClick={() => setDepth(key)}>
                   <S.CardHeader>
@@ -156,10 +155,20 @@ export const DepthStep = ({
                       ))}
                     </S.BulletList>
                   )}
+                  {preview?.sourceTierNote && <S.CardTierNote>{preview.sourceTierNote}</S.CardTierNote>}
                 </S.DepthCard>
               );
             })}
       </S.CardsContainer>
+
+      {/* De-risks the smaller choice. Production data: deep_dive outlines
+          (55–61 lessons) reached a second lesson in 14% of courses;
+          all three overview courses did. People pick mountains they never
+          climb — say plainly that starting smaller closes no doors. */}
+      <S.DepthFootnote>
+        Lessons are created one at a time as you open them — a smaller course now doesn&rsquo;t
+        limit you, and you can always go deeper with your next course.
+      </S.DepthFootnote>
 
       <S.Actions>
         <Button variant="secondary" type="button" onClick={onBack} disabled={loading}>

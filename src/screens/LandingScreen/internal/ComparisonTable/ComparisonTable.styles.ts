@@ -7,13 +7,10 @@ export const Wrap = styled.section`
   width: 100%;
   display: flex;
   justify-content: center;
-  padding: var(--space-20) var(--space-8);
-  background: ${(p) => p.theme.colors.surface};
-  border-top: 1px solid ${(p) => p.theme.colors.surfaceBorder};
-  border-bottom: 1px solid ${(p) => p.theme.colors.surfaceBorder};
+  padding: var(--space-16) var(--space-8);
 
   ${(p) => p.theme.media.tabletLarge} {
-    padding: var(--space-12) var(--space-5);
+    padding: var(--space-10) var(--space-5);
   }
 `;
 
@@ -37,7 +34,7 @@ export const Eyebrow = styled.span`
   font-weight: 600;
   text-transform: uppercase;
   letter-spacing: 0.16em;
-  color: ${(p) => p.theme.colors.tertiary};
+  color: ${(p) => p.theme.colors.tertiaryText};
 `;
 
 export const Heading = styled.h2`
@@ -88,19 +85,33 @@ export const Table = styled.table`
     border-bottom: 1px solid ${(p) => p.theme.colors.surfaceBorder};
   }
 
-  /* Strive column: bold accent text on the header is the only differentiator
-     here — the solid filled YesPill (vs. outline pills in other columns)
-     does the rest of the visual work without bg tint or sash decorations. */
+  /* Field-guide plate: the Strive column sits on a raised cream panel —
+     header in serif with a gold rule under it, cells tinted — so the
+     specimen being described is unmistakable at a glance. */
   thead th.strive {
+    font-family: var(--font-heading-serif), Georgia, serif;
+    font-style: italic;
+    font-size: 1.0625rem;
     color: ${(p) => p.theme.colors.accent};
     font-weight: 700;
+    background: ${(p) =>
+      `color-mix(in oklab, ${p.theme.colors.tertiary} 9%, ${p.theme.colors.surface})`};
+    border-bottom: 2px solid ${(p) => p.theme.colors.tertiary};
+  }
+
+  tbody td.strive {
+    background: ${(p) =>
+      `color-mix(in oklab, ${p.theme.colors.tertiary} 6%, ${p.theme.colors.surface})`};
   }
 
   tbody tr:last-child td {
     border-bottom: none;
   }
 
+  /* Row labels in the serif register — field-guide entries, not UI rows. */
   tbody td:first-child {
+    font-family: var(--font-heading-serif), Georgia, serif;
+    font-size: 0.9375rem;
     font-weight: 500;
     color: ${(p) => p.theme.colors.foreground};
     width: 36%;

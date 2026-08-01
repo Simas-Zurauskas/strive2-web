@@ -1,7 +1,11 @@
 import { Analytics } from '@vercel/analytics/next';
 import { Inter, Newsreader } from 'next/font/google';
 import Script from 'next/script';
-import { NEXT_PUBLIC_GA_MEASUREMENT_ID, NEXT_PUBLIC_GOOGLE_ADS_ID } from '@/conf/env';
+import {
+  NEXT_PUBLIC_GA_MEASUREMENT_ID,
+  NEXT_PUBLIC_GOOGLE_ADS_ID,
+  NEXT_PUBLIC_META_PIXEL_ID,
+} from '@/conf/env';
 import { SITE_URL } from '@/conf/env.server';
 import { DEFAULT_OG_IMAGES, DEFAULT_TWITTER_IMAGES } from '@/lib/seo/sharedMetadata';
 import Registry from './_registry';
@@ -79,6 +83,18 @@ export const metadata: Metadata = {
       'max-image-preview': 'large',
     },
   },
+
+  // Meta (Facebook) domain verification for strive-learning.com. Deliberately
+  // NOT gated behind NEXT_PUBLIC_DEV_MODE like the pixel: this is an inert
+  // meta tag with no network call or tracking behaviour, and Meta re-checks it
+  // periodically — a gate that silently dropped it would un-verify the domain
+  // and, with it, Aggregated Event Measurement. Public by design; it is only
+  // meaningful to a crawler that already fetched the page.
+  verification: {
+    other: {
+      'facebook-domain-verification': 'b68ibavecuu466t3za6zpwz1sjonjt',
+    },
+  },
 };
 
 // `viewportFit: 'cover'` opts iOS Safari into using the full screen including
@@ -108,6 +124,13 @@ const themeBootstrap = `(function(){try{var s=sessionStorage.getItem('theme');if
 // 'granted' so gtag.js logs from the very first hit without waiting on the
 // banner. `CookieConsentBootstrap` reverts these to 'denied' only if the
 // user explicitly chooses "essential only".
+//
+// The loader below is parameterised with the Ads ID, which is deliberate and
+// load-bearing: `gtag/js?id=G-PZ050XVB80` 404s, because a GA4 measurement ID
+// is a *destination* of a tag rather than a loadable tag in its own right.
+// Both IDs are registered as destinations via the two `config` calls, but an
+// event only reaches both if it names them — see the `send_to` note in
+// `lib/gtag.ts`.
 const gtagBootstrap = `
 window.dataLayer = window.dataLayer || [];
 function gtag(){dataLayer.push(arguments);}
@@ -124,6 +147,33 @@ gtag('config', '${NEXT_PUBLIC_GOOGLE_ADS_ID}', { send_page_view: false });
 gtag('config', '${NEXT_PUBLIC_GA_MEASUREMENT_ID}', { send_page_view: false });
 `.trim();
 
+// Meta Pixel base snippet. Two deliberate deviations from the copy-paste
+// version Meta hands out:
+//
+//   1. `fbq('consent', 'revoke')` before `init`. Meta's default is granted;
+//      revoking first means the pixel queues rather than sends until
+//      `CookieConsentBootstrap` grants it. Unlike gtag's Consent Mode there
+//      is no cookieless middle ground here — it is send or don't.
+//   2. No `fbq('track', 'PageView')`. The base snippet fires one on load,
+//      but `GAPageviewListener` already owns SPA route changes and fires the
+//      initial one too; leaving Meta's in would double-count the landing page.
+const metaPixelBootstrap = `
+!function(f,b,e,v,n,t,s)
+{if(f.fbq)return;n=f.fbq=function(){n.callMethod?
+n.callMethod.apply(n,arguments):n.queue.push(arguments)};
+if(!f._fbq)f._fbq=n;n.push=n;n.loaded=!0;n.version='2.0';
+n.queue=[];t=b.createElement(e);t.async=!0;
+t.src=v;s=b.getElementsByTagName(e)[0];
+s.parentNode.insertBefore(t,s)}(window,document,'script',
+'https://connect.facebook.net/en_US/fbevents.js');
+fbq('consent', 'revoke');
+fbq('init', '${NEXT_PUBLIC_META_PIXEL_ID}');
+`.trim();
+
+// Prod-only, and only once an ID is configured. Same gate as the gtag block
+// so a local or preview build can never write into the live dataset.
+const metaPixelEnabled = !process.env.NEXT_PUBLIC_DEV_MODE && NEXT_PUBLIC_META_PIXEL_ID !== '';
+
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
     <html lang="en" suppressHydrationWarning>
@@ -139,8 +189,27 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
             />
           </>
         )}
+        {metaPixelEnabled && (
+          <script dangerouslySetInnerHTML={{ __html: metaPixelBootstrap }} />
+        )}
       </head>
       <body className={`${inter.variable} ${newsreader.variable}`} suppressHydrationWarning>
+        {metaPixelEnabled && (
+          <noscript>
+            {/* Must stay a raw <img>: next/image would optimize and proxy the
+                URL, and this is a 1×1 tracking beacon that has to reach
+                facebook.com verbatim. Only fires for JS-disabled visitors,
+                so there is no LCP cost to trade off. */}
+            {/* eslint-disable-next-line @next/next/no-img-element */}
+            <img
+              height="1"
+              width="1"
+              style={{ display: 'none' }}
+              alt=""
+              src={`https://www.facebook.com/tr?id=${NEXT_PUBLIC_META_PIXEL_ID}&ev=PageView&noscript=1`}
+            />
+          </noscript>
+        )}
         <Analytics />
         <a href="#main-content" className="skip-to-content">
           Skip to main content

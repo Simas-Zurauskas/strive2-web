@@ -11,13 +11,21 @@ export const HERO = {
   headline: 'Your personalised path to mastery.',
   headlineSub: 'A real course on anything you want to learn.',
   // Outcome-first: leads with what the learner *gets*, not the work they have
-  // to do. The old subhead opened on "Tell Strive your goal… answer a
-  // questionnaire", which read as effort before reward.
+  // to do. Shortened when the hero gained the goal input — the input itself
+  // now does the "describe what you want to learn" work, so the subhead only
+  // has to promise the outcome.
+  // Trimmed again 2026-08-01 (011-landing A6, approved Q4): the
+  // modules/lessons/quizzes list is restated by the roadmap strip one
+  // scroll below, and dropping it brings the goal form above the fold on
+  // a 390×844 phone — the form is the signup door, so it wins.
   subhead:
-    'Describe what you want to learn and where you’re starting from. Minutes later you have a complete course — modules, lessons, quizzes, and daily recall — shaped around exactly where you are and adapting as you progress.',
-  ctaPrimary: 'Build my first course — free',
+    'Tell Strive the goal. It designs the whole course around you — and adapts as you progress.',
+  ctaPrimary: 'Build my course — free',
   ctaMicrocopy: 'Free tier included. No credit card.',
   ctaSecondary: 'See how it works',
+  // Shown under the goal input when someone submits an empty field —
+  // a nudge, not an error wall.
+  goalEmptyHint: 'Write a sentence about what you want to learn — then we’ll take it from there.',
   // Order = the four named personas in landing.md §1.2: Monetiser, Exam
   // crammer, Language learner, Self-directed professional. Don't reduce
   // below 4 without re-checking persona coverage in USER_BASE.md.
@@ -29,6 +37,35 @@ export const HERO = {
     'Ship a React Native app for my side project',
   ],
 } as const;
+
+// ── Hero course-route artifact. One route per goal in HERO.goalRotations
+// (parallel index): four waypoint module names plus the summit — the
+// outcome the learner is climbing toward. Labels stay ≤ 26 chars so the
+// SVG never wraps. Summits describe what the course covers, never a
+// guaranteed outcome (claims policy).
+export interface RouteSpec {
+  waypoints: [string, string, string, string];
+  summit: string;
+}
+
+export const HERO_ROUTES: readonly RouteSpec[] = [
+  {
+    waypoints: ['Audience & hooks', 'Creative that converts', 'Targeting & budget', 'Scaling what works'],
+    summit: 'Your first campaign',
+  },
+  {
+    waypoints: ['Kinematics refresher', 'Force & motion drills', 'Work, energy, power', 'Full mock papers'],
+    summit: 'Exam-day ready',
+  },
+  {
+    waypoints: ['Survival phrases', 'Small-talk patterns', 'Ordering & paying', 'Real conversations'],
+    summit: 'Café chat in Spanish',
+  },
+  {
+    waypoints: ['RN fundamentals', 'Navigation & state', 'APIs & storage', 'Polish & release prep'],
+    summit: 'App on your phone',
+  },
+] as const;
 
 // ── Demo lesson content that streams onto the hero/step-2 mocks. One
 // entry per goal in HERO.goalRotations (parallel index). Keep blocks
@@ -188,7 +225,7 @@ export type GoalTypeKey = GoalType;
 
 export const GOAL_TYPES_SECTION = {
   eyebrow: 'Built for any reason',
-  heading: 'We build courses for five reasons. Pick yours.',
+  heading: 'We build courses for four reasons. Pick yours.',
   subhead: "We tune the course to what you'll do with it.",
 } as const;
 
@@ -216,17 +253,16 @@ export const GOAL_TYPES: {
     verb: 'Prep for an exam',
     example: 'Pass the JEE Mains physics paper',
   },
+  // Fluency deliberately not marketed here (Simas, 2026-07-30): the
+  // language-learning segment is the brief's explicit do-not-promote —
+  // text-first product, no speaking/listening — and the least-used goal
+  // type in production. The `fluency` goalType still exists in the
+  // product; this list is landing copy only.
   {
     key: 'build',
     label: 'Build',
     verb: 'Ship something concrete',
     example: 'Ship a React Native side project',
-  },
-  {
-    key: 'fluency',
-    label: 'Fluency',
-    verb: 'Get conversational',
-    example: 'Order coffee in Spanish by July',
   },
 ];
 
@@ -305,8 +341,11 @@ export type CourseExampleIcon =
 export const COURSE_EXAMPLES_SECTION = {
   eyebrow: 'A course for anything',
   heading: 'See yourself in one of these.',
+  // "Pick one as your starting goal" — the cards stash their topic as the
+  // wizard's prefilled goal. (Previous copy promised a "preview" the click
+  // never delivered; the promise now matches the mechanics.)
   subhead:
-    'A sample of what learners have generated. Pick one to preview the idea — or start from your own goal.',
+    'A sample of what learners have generated. Pick one as your starting goal — or write your own.',
 } as const;
 
 export const COURSE_EXAMPLES: {
@@ -331,8 +370,10 @@ export const COURSE_EXAMPLES: {
   { category: 'Languages', title: 'Business English', blurb: 'Email, meetings, and presentations with confidence.', icon: 'MessagesSquare' },
   { category: 'Skills', title: 'Public Speaking', blurb: 'Structure a talk and command the room.', icon: 'Mic' },
   { category: 'Skills', title: 'Negotiation', blurb: 'Anchoring, framing, and closing without flinching.', icon: 'Handshake' },
-  { category: 'Science', title: 'Statistics', blurb: 'From distributions to hypothesis testing, intuitively.', icon: 'Sigma' },
-  { category: 'Science', title: 'Cognitive Psychology', blurb: 'Memory, attention, and how decisions really get made.', icon: 'Brain' },
+  // Science pair (Statistics, Cognitive Psychology) removed 2026-07-30 per
+  // Simas: 18 cards left a 2-card orphan row at 4 columns; 16 fills 4×4
+  // exactly, and academic subjects are the weakest segment in the demand
+  // data. "Don't see your topic?" below still covers them.
 ];
 
 // Heading is rendered inline in JSX so italic emphasis on `<em>gone</em>`
@@ -355,7 +396,7 @@ export const HOW_IT_WORKS = [
     n: 2,
     title: 'AI builds your course — live',
     body:
-      'Watch modules and lesson titles appear, then accept (or refine via chat). Open a lesson and the content streams onto the page block by block — intro, sections, code, diagrams, inline quizzes — as Claude writes it.',
+      'Watch modules and lesson titles appear, then accept (or refine via chat). Open a lesson and the content streams onto the page block by block — intro, sections, code, diagrams, inline quizzes — as it’s written.',
   },
   {
     n: 3,
@@ -364,6 +405,31 @@ export const HOW_IT_WORKS = [
       'Each module ends with a quiz that tests synthesis across lessons, not trivia. Each lesson seeds 3–5 spaced-recall cards that surface daily — 1, 3, 7, 14, 30-day intervals — so what you learned in week 1 is still there in week 6.',
   },
 ] as const;
+
+// ── Build-from-your-own-material section.
+//
+// This section is the landing point for the documents-feature announcement
+// email (`/?source=documents-email`), so someone arriving mid-page has to
+// recognise the idea before reading anything.
+//
+// COPY BUDGET IS THE POINT. An earlier version carried ~120 words here —
+// a subhead, three stage titles, three stage captions, a format list, the
+// per-course caps and a privacy line — and read as generic filler. All of
+// that is covered in the FAQ below, the help centre and the blog, so the
+// section keeps three lines and lets the composition in
+// `internal/SourcesSection/` do the arguing. Resist re-adding prose: if a
+// fact needs a sentence, it belongs in the FAQ, not here.
+//
+// CLAIMS DISCIPLINE (STRIVE_FOR_MARKETING.md §11): no generation-speed
+// claim, no outcome or efficacy claim, no "any file"/"unlimited", no
+// credits. "Modules, lessons and quizzes" is on the sanctioned list.
+export const SOURCES_SECTION = {
+  eyebrow: 'Bring your own material',
+  // `*word*` marks the section's one and only use of the house
+  // italic-serif emphasis (the FeatureBento tile-title convention).
+  heading: 'Your material, turned into a *course*.',
+  lede: 'Modules, lessons and quizzes, built from what you already have.',
+} as const;
 
 export type BentoVisual = 'wizard-tree' | 'streaming-blocks' | 'code' | 'math' | 'narration' | 'recall';
 
@@ -497,6 +563,10 @@ export const PRICING_TEASER = {
       // teaser renders the skeleton, not these strings.
       cta: 'Start free',
     },
+    starter: {
+      tagline: 'A full short course or two, every month.',
+      cta: 'Get Starter',
+    },
     pro: {
       tagline: 'Most chosen by daily learners. Generate as you go.',
       cta: 'Get Pro',
@@ -509,7 +579,7 @@ export const FAQ = [
   {
     question: 'Is this just a ChatGPT wrapper?',
     answer:
-      'No. Strive uses Anthropic Claude as its language model under the hood, but the value isn’t the model — it’s the structure around it: a clarification questionnaire, a curriculum-shaping pipeline, typed lesson blocks, module quizzes that test synthesis, and a Leitner-style recall queue. ChatGPT can write you one lesson; Strive builds and remembers the whole course.',
+      'No — and the difference shows up after the first answer. In a chat window you have to know what to ask next, and nothing you read comes back. Strive works out what you actually need, orders it into modules and lessons, quizzes you across them, and brings each idea back on a spaced schedule. A chat window answers a question. Strive builds the course — and it’s still there in week six.',
   },
   {
     question: 'What if I run out of allowance?',
@@ -532,6 +602,17 @@ export const FAQ = [
     question: 'Can I learn anything?',
     answer:
       'Most general-knowledge domains work well — marketing and sales, software and web/mobile development, content and creator skills, exam prep, languages (text-first), business and analytics, no-code and AI automations, design, and STEM. We don’t recommend Strive for medical, legal, or clinical advice; the platform isn’t a specialist tool.',
+  },
+  {
+    // ⚠️ This array also builds the FAQPage JSON-LD on `app/(auth)/page.tsx`,
+    // so this answer ships into structured data and may be surfaced out of
+    // context. Every sentence is written to stand alone and is checkable
+    // against shipped code (upload allowlist, fidelity picker, provenance
+    // badge). No speed, accuracy or outcome claim; no "any file"/"any
+    // website"; no provider is named.
+    question: 'Can I build a course from my own documents?',
+    answer:
+      'Yes. As well as describing a goal, you can upload material you already have — PDFs, Word documents, slides, spreadsheets, ePub files, plain text, images and audio recordings — and add links to public pages you want covered. Before anything is generated you see which files were read, how much usable material each one holds, and where the gaps are, and you choose how closely the course should follow your sources. Every lesson is marked either “From your documents” or “AI-supplemented”. Your material is private to your account, is never shown to other learners, and is not used to train AI models.',
   },
   {
     question: 'What’s the difference between the module quiz and the recall queue?',

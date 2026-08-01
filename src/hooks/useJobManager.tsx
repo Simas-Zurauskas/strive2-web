@@ -16,6 +16,13 @@ interface TrackJobParams {
   courseId: string;
   type: string;
   onComplete?: () => void;
+  /**
+   * Fired when the tracked job ends `failed`. Lets the initiating screen
+   * render an inline error/retry state instead of leaving a blank step
+   * (the wizard's documents flow relies on this for ingest_documents /
+   * prepare_corpus). The global failure toast still fires.
+   */
+  onFailed?: (info: { errorCode?: string; errorMeta?: Record<string, unknown>; error?: string | null }) => void;
 }
 
 export interface GeneratingLesson {
@@ -61,6 +68,26 @@ const buildCompletionToast = ({
   event: JobStatusEvent;
   findCourseSlug: (courseId: string) => string | null;
 }): CompletionToastSpec | null => {
+  // Documents-course jobs land content in the creation wizard, which is
+  // addressed by courseId (not slug) — handle them before the slug lookup
+  // so a still-`creating` course without a resolvable slug still toasts.
+  // When the wizard itself initiated the job it registered an onComplete
+  // callback, so these branches only fire for away-from-wizard tabs.
+  if (event.type === 'ingest_documents') {
+    return {
+      message: TOASTS.SOURCE_ANALYSIS_READY,
+      targetPath: `/courses/new?courseId=${event.courseId}`,
+      actionLabel: 'Review sources',
+    };
+  }
+  if (event.type === 'prepare_corpus') {
+    return {
+      message: TOASTS.SOURCES_PREPARED,
+      targetPath: `/courses/new?courseId=${event.courseId}`,
+      actionLabel: 'Open wizard',
+    };
+  }
+
   const slug = findCourseSlug(event.courseId);
   if (!slug) return null;
 
@@ -140,7 +167,9 @@ export const JobManagerProvider = ({ children }: { children: React.ReactNode }) 
     pathnameRef.current = pathname;
   }, [pathname]);
   const { socket } = useSocket();
-  const callbacksRef = useRef<Map<string, { callback: () => void; courseId: string }>>(new Map());
+  const callbacksRef = useRef<
+    Map<string, { callback?: () => void; onFailed?: TrackJobParams['onFailed']; courseId: string }>
+  >(new Map());
   // Local set for instant reactivity (before query cache updates with activeJobId)
   const [activeCourseIds, setActiveCourseIds] = useState<Set<string>>(new Set());
   // Which specific lesson is currently generating (set via WS or optimistically)
@@ -176,8 +205,12 @@ export const JobManagerProvider = ({ children }: { children: React.ReactNode }) 
   // trackJob: used by wizard flows (clarify, generate_structure) that need onComplete callbacks.
   // Also provides instant local tracking before the query cache updates.
   const trackJob = useCallback((job: TrackJobParams) => {
-    if (job.onComplete) {
-      callbacksRef.current.set(job.jobId, { callback: job.onComplete, courseId: job.courseId });
+    if (job.onComplete || job.onFailed) {
+      callbacksRef.current.set(job.jobId, {
+        callback: job.onComplete,
+        onFailed: job.onFailed,
+        courseId: job.courseId,
+      });
     }
     setActiveCourseIds((prev) => new Set(prev).add(job.courseId));
   }, []);
@@ -230,7 +263,7 @@ export const JobManagerProvider = ({ children }: { children: React.ReactNode }) 
 
       // Suppress generic success toast when a tracked callback exists (the caller handles its own UX)
       if (event.status === 'completed') {
-        if (entry) {
+        if (entry?.callback) {
           entry.callback();
         } else {
           // Centralized router: every WS-driven generation that lands
@@ -260,22 +293,33 @@ export const JobManagerProvider = ({ children }: { children: React.ReactNode }) 
         // Race-loss path: requireCredits passed at request time but the
         // in-runner re-check at submitJob lost — surface the same modal
         // the synchronous 402 path uses instead of a generic toast.
-        // The errorCode/errorMeta fields land on the FE type only after
-        // `yarn codegen`; until then we read them through a structural
-        // cast so the runtime check still works.
-        const failed = event as JobStatusEvent & {
-          errorCode?: string;
-          errorMeta?: { need?: number; have?: number } | Record<string, unknown>;
-        };
-        if (failed.errorCode === 'INSUFFICIENT_CREDITS') {
-          const meta = failed.errorMeta as { need?: number; have?: number } | undefined;
+        // errorCode/errorMeta are typed on JobStatusEvent since codegen
+        // picked up the schema fields.
+        if (event.errorCode === 'INSUFFICIENT_CREDITS') {
+          const meta = event.errorMeta as { need?: number; have?: number } | undefined;
           fireInsufficientCredits({
             need: typeof meta?.need === 'number' ? meta.need : 0,
             have: typeof meta?.have === 'number' ? meta.have : 0,
           });
+        } else if (event.errorCode === 'CONTENT_REJECTED') {
+          // Moderation rejected (some of) the uploaded sources. The raw
+          // server message / code is not human copy — surface a friendly
+          // summary; the wizard's inline card (via onFailed) shows the
+          // per-category detail from errorMeta.
+          toast.error(TOASTS.SOURCES_CONTENT_REJECTED);
+        } else if (event.errorCode === 'STRUCTURE_SIZE_VIOLATION') {
+          // Structure generation could not honour the corpus size band
+          // even after the corrective retry (enforceSourceLessonBand).
+          // Nothing was debited server-side; human copy, no raw code.
+          toast.error(TOASTS.STRUCTURE_SIZE_MISMATCH);
         } else {
           toast.error(toastMessage({ dynamic: event.error, fallback: TOASTS.GENERATION_FAILED_RETRY }));
         }
+        entry?.onFailed?.({
+          errorCode: event.errorCode,
+          errorMeta: event.errorMeta,
+          error: event.error,
+        });
       }
       if (entry) callbacksRef.current.delete(event.jobId);
 
@@ -341,6 +385,12 @@ export const JobManagerProvider = ({ children }: { children: React.ReactNode }) 
         if (event.type === 'generate_module_quiz') {
           queryClient.invalidateQueries({ queryKey: [QKeys.MODULE_QUIZ_CONTENT] });
         }
+        if (event.type === 'ingest_documents' || event.type === 'prepare_corpus') {
+          // Per-document statuses / escalation bookkeeping changed; the
+          // course itself (sourceAssessment) is already covered by the
+          // unconditional COURSE/COURSES invalidation above.
+          queryClient.invalidateQueries({ queryKey: [QKeys.SOURCE_DOCUMENTS] });
+        }
       }
     };
 
@@ -369,7 +419,8 @@ export const JobManagerProvider = ({ children }: { children: React.ReactNode }) 
         try {
           const job = await getJobStatus(jobId);
           if (job.status === 'completed' || job.status === 'failed') {
-            if (job.status === 'completed') entry.callback();
+            if (job.status === 'completed') entry.callback?.();
+            else entry.onFailed?.({ error: job.error });
             cleanupJob(jobId);
           }
         } catch {
