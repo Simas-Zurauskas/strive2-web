@@ -220,8 +220,10 @@ export const CtaLink = styled.a`
   color: ${(p) => p.theme.colors.accent};
   margin-top: var(--space-2);
 
-  &:hover {
-    text-decoration: underline;
+  ${(p) => p.theme.media.hover} {
+    &:hover {
+      text-decoration: underline;
+    }
   }
 
   &:focus-visible {

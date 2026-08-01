@@ -1,0 +1,28 @@
+{
+  "R1": [
+    {
+      "file": "src/theme/theme.ts",
+      "match": "::-webkit-scrollbar-thumb:hover",
+      "reason": "Scrollbar thumb hover inside the shared `thinScrollbar` mixin. Custom scrollbars do not exist on touch devices, so the rule can never fire there and wrapping it would add a media-query nesting level to all 16 consumption sites for no behavioural change. The runtime probe honours the same allowlist."
+    }
+  ],
+  "R2": [],
+  "R3": [],
+  "R4": [
+    {
+      "file": "src/screens/CourseShell/CourseShell.styles.ts",
+      "match": "export const Backdrop",
+      "reason": "Full-viewport transparent scrim. It holds no content and is not tappable chrome, so a home-indicator inset would do nothing — padding on a backdrop cannot move anything."
+    },
+    {
+      "file": "src/screens/CourseShell/CourseShell.styles.ts",
+      "match": "export const ChatEdgeTab",
+      "reason": "Vertically centred edge tab (top: 50% + translateY(-50%)), anchored to the viewport's right edge, not its bottom. R4 keys on any inset property; here `top` is a centring anchor, so the bottom inset is irrelevant. Left/right insets are also not needed: the tab deliberately sits flush to the edge as an affordance."
+    },
+    {
+      "file": "src/screens/CourseShell/CourseShell.styles.ts",
+      "match": "export const SidebarEdgeTab",
+      "reason": "Mirror of ChatEdgeTab on the left edge — same rationale."
+    }
+  ]
+}

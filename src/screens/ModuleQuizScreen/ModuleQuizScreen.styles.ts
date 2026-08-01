@@ -18,6 +18,7 @@ const tierColor = ({
 
 export const Container = styled.div`
   min-height: calc(100vh - 56px);
+  min-height: calc(100dvh - 56px);
   display: flex;
   flex-direction: column;
   align-items: center;
@@ -62,8 +63,10 @@ export const BackLink = styled.button`
   cursor: pointer;
   transition: color 0.15s;
 
-  &:hover {
-    color: ${(p) => p.theme.colors.foreground};
+  ${(p) => p.theme.media.hover} {
+    &:hover {
+      color: ${(p) => p.theme.colors.foreground};
+    }
   }
 `;
 

@@ -278,8 +278,10 @@ export const ResendButton = styled.button`
     text-decoration: none;
   }
 
-  &:hover:not(:disabled) {
-    color: ${(p) => p.theme.colors.foreground};
+  ${(p) => p.theme.media.hover} {
+    &:hover:not(:disabled) {
+      color: ${(p) => p.theme.colors.foreground};
+    }
   }
 `;
 

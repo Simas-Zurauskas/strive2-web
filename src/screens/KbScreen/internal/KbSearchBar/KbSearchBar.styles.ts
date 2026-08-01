@@ -65,8 +65,10 @@ export const ClearBtn = styled.button`
   flex-shrink: 0;
   transition: color 0.15s;
 
-  &:hover {
-    color: ${(p) => p.theme.colors.foreground};
+  ${(p) => p.theme.media.hover} {
+    &:hover {
+      color: ${(p) => p.theme.colors.foreground};
+    }
   }
 `;
 

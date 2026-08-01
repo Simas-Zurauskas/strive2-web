@@ -1,5 +1,5 @@
 import styled from 'styled-components';
-import { onAccent } from '@/theme';
+import { onAccent, pressable, touchHitArea } from '@/theme';
 
 export const Wrapper = styled.div`
   display: flex;
@@ -38,6 +38,10 @@ export const StepButton = styled.button`
     outline: 2px solid ${(p) => p.theme.colors.accent};
     outline-offset: 4px;
   }
+
+  ${pressable}
+
+  ${touchHitArea}
 `;
 
 export const Circle = styled.span<{ $state: 'completed' | 'active' | 'navigable' | 'future'; $clickable: boolean }>`

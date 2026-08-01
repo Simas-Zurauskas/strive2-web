@@ -1,4 +1,5 @@
 import styled, { css } from 'styled-components';
+import { pressable } from '@/theme';
 
 export const Wrap = styled.div<{ $stacked: boolean; $compact?: boolean }>`
   display: flex;
@@ -145,6 +146,8 @@ export const QuickPick = styled.button<{ $selected: boolean }>`
       color: ${p.theme.colors.accent};
       border-color: ${p.theme.colors.accent};
     `}
+
+  ${pressable}
 `;
 
 /** Dollar amount line — the primary read on each chip. */
@@ -218,8 +221,10 @@ export const CustomAmountToggle = styled.button`
   text-underline-offset: 3px;
   transition: color 120ms ease;
 
-  &:hover {
-    color: ${(p) => p.theme.colors.foreground};
+  ${(p) => p.theme.media.hover} {
+    &:hover {
+      color: ${(p) => p.theme.colors.foreground};
+    }
   }
 
   &:focus-visible {

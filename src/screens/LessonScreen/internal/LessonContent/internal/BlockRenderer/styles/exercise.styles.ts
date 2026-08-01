@@ -77,6 +77,8 @@ export const ExerciseContent = styled.div`
 
   pre {
     overflow-x: auto;
+    overscroll-behavior-x: contain;  /* stop a horizontal swipe at the
+       scroller's edge from chaining to the browser's back-gesture */
     padding: 0.75rem;
     border-radius: 8px;
     background: ${(p) => p.theme.colors.background};

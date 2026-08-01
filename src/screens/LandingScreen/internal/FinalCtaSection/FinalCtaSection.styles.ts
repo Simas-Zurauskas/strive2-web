@@ -157,8 +157,10 @@ export const SecondaryCta = styled.a`
   transition: color 0.15s;
   text-decoration: none;
 
-  &:hover {
-    color: ${(p) => p.theme.colors.accent};
+  ${(p) => p.theme.media.hover} {
+    &:hover {
+      color: ${(p) => p.theme.colors.accent};
+    }
   }
 
   &:focus-visible {

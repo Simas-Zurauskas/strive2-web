@@ -1,4 +1,5 @@
 import styled from 'styled-components';
+import { touchMinHeight } from '@/theme';
 
 export const Container = styled.footer`
   margin-top: auto;
@@ -151,10 +152,14 @@ export const FooterLink = styled.a`
     text-decoration-color 0.15s;
   width: fit-content;
 
-  &:hover {
-    color: ${(p) => p.theme.colors.foreground};
-    text-decoration-color: ${(p) => p.theme.colors.muted};
+  ${(p) => p.theme.media.hover} {
+    &:hover {
+      color: ${(p) => p.theme.colors.foreground};
+      text-decoration-color: ${(p) => p.theme.colors.muted};
+    }
   }
+
+  ${touchMinHeight}
 `;
 
 /**
@@ -181,9 +186,11 @@ export const FooterLinkButton = styled.button`
   cursor: pointer;
   text-align: left;
 
-  &:hover {
-    color: ${(p) => p.theme.colors.foreground};
-    text-decoration-color: ${(p) => p.theme.colors.muted};
+  ${(p) => p.theme.media.hover} {
+    &:hover {
+      color: ${(p) => p.theme.colors.foreground};
+      text-decoration-color: ${(p) => p.theme.colors.muted};
+    }
   }
 
   &:focus-visible {
@@ -191,6 +198,8 @@ export const FooterLinkButton = styled.button`
     outline-offset: 2px;
     border-radius: 2px;
   }
+
+  ${touchMinHeight}
 `;
 
 // ── Bottom row: faint divider + copyright ──────────────

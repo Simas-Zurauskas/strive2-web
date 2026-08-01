@@ -1,4 +1,5 @@
 import styled from 'styled-components';
+import { pressableSurface } from '@/theme';
 
 export const Root = styled.div`
   display: flex;
@@ -30,8 +31,10 @@ export const Trigger = styled.button`
   cursor: pointer;
   transition: color 0.15s;
 
-  &:hover {
-    color: ${(p) => p.theme.colors.tertiary};
+  ${(p) => p.theme.media.hover} {
+    &:hover {
+      color: ${(p) => p.theme.colors.tertiary};
+    }
   }
 
   &:focus-visible {
@@ -39,6 +42,8 @@ export const Trigger = styled.button`
     outline-offset: 2px;
     border-radius: var(--radius-sm);
   }
+
+  ${pressableSurface}
 `;
 
 export const TriggerLabel = styled.span`

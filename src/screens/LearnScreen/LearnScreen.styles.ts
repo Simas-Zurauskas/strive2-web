@@ -6,6 +6,7 @@ import styled, { css } from 'styled-components';
 
 export const Layout = styled.div`
   min-height: calc(100vh - 56px);
+  min-height: calc(100dvh - 56px);
   background: ${(p) => p.theme.colors.background};
   color: ${(p) => p.theme.colors.foreground};
   padding: 4rem 2rem 6rem;
@@ -29,6 +30,7 @@ export const Layout = styled.div`
 
 export const HubLayout = styled.div`
   min-height: calc(100vh - 56px);
+  min-height: calc(100dvh - 56px);
   background: ${(p) => p.theme.colors.background};
   color: ${(p) => p.theme.colors.foreground};
   padding: 4rem 2rem 6rem;
@@ -209,9 +211,11 @@ export const TopicCardArrow = styled.span`
     color 0.15s ease,
     gap 0.15s ease;
 
-  ${TopicCardLink}:hover & {
-    color: ${(p) => p.theme.colors.accent};
-    gap: 0.5rem;
+  ${(p) => p.theme.media.hover} {
+    ${TopicCardLink}:hover & {
+      color: ${(p) => p.theme.colors.accent};
+      gap: 0.5rem;
+    }
   }
 `;
 
@@ -232,8 +236,10 @@ export const BreadcrumbLink = styled(Link)`
   text-decoration: none;
   transition: color 0.15s;
 
-  &:hover {
-    color: ${(p) => p.theme.colors.foreground};
+  ${(p) => p.theme.media.hover} {
+    &:hover {
+      color: ${(p) => p.theme.colors.foreground};
+    }
   }
 `;
 
@@ -278,8 +284,10 @@ export const PrimaryCta = styled(Link)`
   text-decoration: none;
   transition: filter 0.15s ease;
 
-  &:hover {
-    filter: brightness(1.05);
+  ${(p) => p.theme.media.hover} {
+    &:hover {
+      filter: brightness(1.05);
+    }
   }
 `;
 

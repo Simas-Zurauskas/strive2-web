@@ -5,11 +5,13 @@
  * pattern is reserved for primitives that ship logic, props, or refs.
  */
 import styled from 'styled-components';
+import { touchMinHeight } from '@/theme';
 
 // ── Page layout ────────────────────────────────────
 
 export const PageLayout = styled.div`
   min-height: calc(100vh - 56px);
+  min-height: calc(100dvh - 56px);
   background: ${(p) => p.theme.colors.background};
   color: ${(p) => p.theme.colors.foreground};
   padding: 2rem;
@@ -45,8 +47,10 @@ export const FilterTab = styled.button<{ $active?: boolean }>`
 
   ${(p) => p.$active && `box-shadow: 0 0 0 1px ${p.theme.colors.surfaceBorder};`}
 
-  &:hover {
-    color: ${(p) => p.theme.colors.foreground};
+  ${(p) => p.theme.media.hover} {
+    &:hover {
+      color: ${(p) => p.theme.colors.foreground};
+    }
   }
 
   &:focus-visible {
@@ -77,8 +81,10 @@ export const TopTab = styled.button<{ $active?: boolean }>`
   margin-bottom: -1px;
   transition: color 0.15s;
 
-  &:hover {
-    color: ${(p) => p.theme.colors.foreground};
+  ${(p) => p.theme.media.hover} {
+    &:hover {
+      color: ${(p) => p.theme.colors.foreground};
+    }
   }
 
   &:focus-visible {
@@ -118,9 +124,12 @@ export const TextAction = styled.button<{ $variant?: 'default' | 'danger' }>`
   cursor: pointer;
   transition: color 0.15s;
 
-  &:hover {
-    color: ${(p) => (p.$variant === 'danger' ? p.theme.colors.error : p.theme.colors.foreground)};
-    text-decoration: underline;
+  ${(p) => p.theme.media.hover} {
+    &:hover {
+      color: ${(p) =>
+        p.$variant === 'danger' ? p.theme.colors.error : p.theme.colors.foreground};
+      text-decoration: underline;
+    }
   }
 
   &:focus-visible {
@@ -129,4 +138,6 @@ export const TextAction = styled.button<{ $variant?: 'default' | 'danger' }>`
     outline-offset: 2px;
     border-radius: var(--radius-sm);
   }
+
+  ${touchMinHeight}
 `;

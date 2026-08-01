@@ -2,6 +2,7 @@ import styled from 'styled-components';
 
 export const Layout = styled.div`
   min-height: calc(100vh - 56px);
+  min-height: calc(100dvh - 56px);
   background: ${(p) => p.theme.colors.background};
   color: ${(p) => p.theme.colors.foreground};
   padding: 2rem;
@@ -50,8 +51,10 @@ export const TopTab = styled.button<{ $active?: boolean }>`
   margin-bottom: -1px;
   transition: color 0.15s;
 
-  &:hover {
-    color: ${(p) => p.theme.colors.foreground};
+  ${(p) => p.theme.media.hover} {
+    &:hover {
+      color: ${(p) => p.theme.colors.foreground};
+    }
   }
 `;
 
@@ -89,6 +92,8 @@ export const CodeBlock = styled.pre`
   font-size: 0.75rem;
   line-height: 1.6;
   overflow-x: auto;
+  overscroll-behavior-x: contain;  /* stop a horizontal swipe at the
+     scroller's edge from chaining to the browser's back-gesture */
   white-space: pre;
   margin: 0;
 `;

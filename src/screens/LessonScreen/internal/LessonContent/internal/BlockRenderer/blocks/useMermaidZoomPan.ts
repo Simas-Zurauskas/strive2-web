@@ -65,27 +65,75 @@ export const useMermaidZoomPan = () => {
     setPan(basePan.current);
   }, []);
 
-  // Drag to pan
+  // ── Pointer tracking (pan + pinch) ──────────────────────────────────
+  // Active pointers are tracked by id so a second finger can be recognised.
+  // Without this there was no pinch path at all: zoom was reachable only via
+  // ctrl+wheel and the 28x28 toolbar buttons, which on a phone meant a
+  // diagram effectively could not be zoomed.
+  const pointers = useRef(new Map<number, { x: number; y: number }>());
+  const pinchStartDist = useRef(0);
+  const pinchStartZoom = useRef(1);
+
+  const distance = () => {
+    const pts = [...pointers.current.values()];
+    if (pts.length < 2) return 0;
+    return Math.hypot(pts[0].x - pts[1].x, pts[0].y - pts[1].y);
+  };
+
   const handlePointerDown = useCallback(
     (e: React.PointerEvent) => {
       userInteracted.current = true;
+      pointers.current.set(e.pointerId, { x: e.clientX, y: e.clientY });
+
+      if (pointers.current.size === 2) {
+        // Second finger down — switch from pan to pinch.
+        isDragging.current = false;
+        pinchStartDist.current = distance();
+        pinchStartZoom.current = zoomRef.current;
+        return;
+      }
+
       isDragging.current = true;
       dragStart.current = { x: e.clientX, y: e.clientY };
-      panStart.current = { ...pan };
-      (e.target as HTMLElement).setPointerCapture(e.pointerId);
+      panStart.current = { ...panRef.current };
+      // Capture on the VIEWPORT, not e.target. e.target is whatever SVG node
+      // happened to be under the finger, and mermaid re-renders that subtree —
+      // a captured node being replaced mid-gesture silently drops the stream.
+      viewportRef.current?.setPointerCapture(e.pointerId);
     },
-    [pan],
+    [],
   );
 
-  const handlePointerMove = useCallback((e: React.PointerEvent) => {
-    if (!isDragging.current) return;
-    const dx = e.clientX - dragStart.current.x;
-    const dy = e.clientY - dragStart.current.y;
-    setPan({ x: panStart.current.x + dx, y: panStart.current.y + dy });
-  }, []);
+  const handlePointerMove = useCallback(
+    (e: React.PointerEvent) => {
+      if (!pointers.current.has(e.pointerId)) return;
+      pointers.current.set(e.pointerId, { x: e.clientX, y: e.clientY });
 
-  const handlePointerUp = useCallback(() => {
-    isDragging.current = false;
+      if (pointers.current.size >= 2) {
+        const d = distance();
+        if (pinchStartDist.current > 0 && d > 0) {
+          const next = Math.min(
+            Math.max(pinchStartZoom.current * (d / pinchStartDist.current), MIN_ZOOM),
+            MAX_ZOOM,
+          );
+          zoomToCenter(next);
+        }
+        return;
+      }
+
+      if (!isDragging.current) return;
+      const dx = e.clientX - dragStart.current.x;
+      const dy = e.clientY - dragStart.current.y;
+      setPan({ x: panStart.current.x + dx, y: panStart.current.y + dy });
+    },
+    [zoomToCenter],
+  );
+
+  const handlePointerUp = useCallback((e?: React.PointerEvent) => {
+    if (e) pointers.current.delete(e.pointerId);
+    else pointers.current.clear();
+    if (pointers.current.size < 2) pinchStartDist.current = 0;
+    if (pointers.current.size === 0) isDragging.current = false;
   }, []);
 
   // Wheel to zoom (toward center)

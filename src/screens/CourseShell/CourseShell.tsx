@@ -19,7 +19,7 @@ import { deleteCourse, updateCourse } from '@/api/routes/course';
 import { AlertDialog, TextLoader, UpgradeBanner } from '@/components';
 import { ROUTES } from '@/constants/routes';
 import { TOASTS } from '@/constants/toasts';
-import { useCourse, useCourseNextAction, useCourseProgress, useGeneratedLessons } from '@/hooks';
+import { useCourse, useCourseNextAction, useCourseProgress, useGeneratedLessons, useScrollLock } from '@/hooks';
 import { analytics } from '@/lib/analytics';
 import { breakpoints } from '@/theme';
 import { QKeys } from '@/types';
@@ -421,6 +421,13 @@ export const CourseShell = ({ children }: CourseShellProps) => {
     },
     [course?.slug, courseSlug, router, isDesktop, expandedModules, setExpandedModules],
   );
+
+  // Mobile/tablet: the sidebar and chat render as full-width fixed overlays
+  // with a backdrop. Without a lock the lesson scrolls behind them — measured
+  // before the fix with a trusted PageDown: y=200 -> 919 with the sidebar
+  // open, and body overflow was never even set. Desktop is unaffected: there
+  // the panels are in-grid, not overlays.
+  useScrollLock(!isDesktop && (sidebarOpen || chatOpen));
 
   const closeOverlays = useCallback(() => {
     if (!isDesktop) {

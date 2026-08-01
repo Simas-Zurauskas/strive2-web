@@ -1,4 +1,5 @@
 import styled from 'styled-components';
+import { touchMinHeight } from '@/theme';
 
 export const LinksContainer = styled.div`
   border-radius: 12px;
@@ -105,6 +106,8 @@ export const LinksGenerateButton = styled.button`
     opacity: 0.5;
     cursor: not-allowed;
   }
+
+  ${touchMinHeight}
 `;
 
 export const LinksSkeletonRow = styled.div`

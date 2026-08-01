@@ -10,8 +10,10 @@ export const StyledLink = styled.a`
     color 0.15s,
     text-decoration-color 0.15s;
 
-  &:hover {
-    color: ${(p) => p.theme.colors.accentHover};
-    text-decoration-color: ${(p) => p.theme.colors.accentHover};
+  ${(p) => p.theme.media.hover} {
+    &:hover {
+      color: ${(p) => p.theme.colors.accentHover};
+      text-decoration-color: ${(p) => p.theme.colors.accentHover};
+    }
   }
 `;

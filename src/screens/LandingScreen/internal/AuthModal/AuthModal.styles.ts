@@ -146,8 +146,10 @@ export const Tab = styled.button<{ $active: boolean }>`
     transition: background 0.15s;
   }
 
-  &:hover {
-    color: ${(p) => p.theme.colors.foreground};
+  ${(p) => p.theme.media.hover} {
+    &:hover {
+      color: ${(p) => p.theme.colors.foreground};
+    }
   }
 
   &:focus-visible {
@@ -212,8 +214,10 @@ export const FinePrint = styled.p`
     color: ${(p) => p.theme.colors.accent};
     text-decoration: none;
 
-    &:hover {
-      text-decoration: underline;
+    ${(p) => p.theme.media.hover} {
+      &:hover {
+        text-decoration: underline;
+      }
     }
   }
 `;

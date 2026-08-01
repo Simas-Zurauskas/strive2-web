@@ -76,6 +76,10 @@ export const ChatColumn = styled(motion.div)`
        CSS top-transition layers cleanly without conflicting. */
     transition: top 0.3s ease;
   }
+
+  /* Home-indicator avoidance. env() is 0 on devices without a cutout, so
+     desktop and non-notched rendering is unchanged. */
+  padding-bottom: max(0px, var(--safe-area-bottom));
 `;
 
 // Scrim shown behind the drawer at tablet only. Anchors below the

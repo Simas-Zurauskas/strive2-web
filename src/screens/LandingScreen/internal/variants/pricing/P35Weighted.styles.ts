@@ -136,7 +136,15 @@ export const Frame = styled.div`
       transition: none;
     }
 
-    &:hover::before,
+    /* Split deliberately: the hover half is gated behind the hover-capability
+       query so a tap doesn't strand the offset, but the focus half must stay
+       ungated or keyboard users lose the affordance on touch devices. */
+    ${(p) => p.theme.media.hover} {
+      &:hover::before {
+        transform: translate3d(6px, 6px, 0);
+      }
+    }
+
     &:has(:focus-visible)::before {
       transform: translate3d(6px, 6px, 0);
     }
@@ -194,7 +202,16 @@ export const Card = styled.div`
   @media (prefers-reduced-motion: reduce) {
     transition: none;
 
-    ${Frame}:hover &,
+    /* Split for the same reason as the ::before rule above — the hover half
+       is gated, the focus half is not. Benign either way here (this block
+       only runs under prefers-reduced-motion and its effect is to REMOVE
+       motion), but kept consistent so the rule reads the same everywhere. */
+    ${(p) => p.theme.media.hover} {
+      ${Frame}:hover & {
+        transform: none;
+      }
+    }
+
     ${Frame}:has(:focus-visible) & {
       transform: none;
     }

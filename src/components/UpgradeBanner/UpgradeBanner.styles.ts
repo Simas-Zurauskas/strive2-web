@@ -1,6 +1,7 @@
 'use client';
 
 import styled from 'styled-components';
+import { touchHitArea } from '@/theme';
 
 export const Bar = styled.div`
   display: flex;
@@ -84,4 +85,6 @@ export const DismissButton = styled.button`
     outline: 2px solid ${(p) => p.theme.colors.accent};
     outline-offset: 2px;
   }
+
+  ${touchHitArea}
 `;

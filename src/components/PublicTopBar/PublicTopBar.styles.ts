@@ -65,8 +65,10 @@ export const NavLink = styled(Link)`
   border-radius: var(--radius-md);
   transition: color 0.15s, background 0.15s;
 
-  &:hover {
-    color: ${(p) => p.theme.colors.foreground};
+  ${(p) => p.theme.media.hover} {
+    &:hover {
+      color: ${(p) => p.theme.colors.foreground};
+    }
   }
 
   &:focus-visible {
