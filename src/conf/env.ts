@@ -48,6 +48,17 @@ if (!_gaId) {
 export const NEXT_PUBLIC_GA_MEASUREMENT_ID = _gaId;
 
 /**
+ * GTM web container ID, e.g. `GTM-XXXXXXX` — container "strive-learning.com"
+ * in the Strive Tag Manager account. Optional: unset means the container
+ * snippet never loads and nothing else changes, so it can be provisioned
+ * per-environment without a code change. Loaded only when
+ * `NEXT_PUBLIC_DEV_MODE` is unset. The container is managed externally (ads
+ * agency has Publish access); it loads *alongside* the direct gtag.js tag
+ * above, which stays the owner of the AW-/G- config calls.
+ */
+export const NEXT_PUBLIC_GTM_ID = process.env.NEXT_PUBLIC_GTM_ID ?? '';
+
+/**
  * Meta (Facebook) Pixel ID — a 15–16 digit number from Events Manager →
  * Data sources. Optional: unset means the pixel never loads and nothing else
  * changes, so it can be provisioned per-environment without a code change.

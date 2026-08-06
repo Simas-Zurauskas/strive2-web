@@ -4,6 +4,7 @@ import Script from 'next/script';
 import {
   NEXT_PUBLIC_GA_MEASUREMENT_ID,
   NEXT_PUBLIC_GOOGLE_ADS_ID,
+  NEXT_PUBLIC_GTM_ID,
   NEXT_PUBLIC_META_PIXEL_ID,
 } from '@/conf/env';
 import { SITE_URL } from '@/conf/env.server';
@@ -170,6 +171,23 @@ fbq('consent', 'revoke');
 fbq('init', '${NEXT_PUBLIC_META_PIXEL_ID}');
 `.trim();
 
+// Standard GTM container loader. Must be emitted *after* `gtagBootstrap`:
+// gtm.js snapshots the consent state already pushed onto dataLayer, so the
+// `gtag('consent', 'default', …)` call has to land first or every GTM-fired
+// tag would start under Consent Mode's built-in denied default. The container
+// loads alongside the direct gtag.js tag above, which stays the owner of the
+// AW-/G- `config` calls — a tag inside GTM re-configuring those IDs would
+// double-fire events.
+const gtmBootstrap = `
+(function(w,d,s,l,i){w[l]=w[l]||[];w[l].push({'gtm.start':
+new Date().getTime(),event:'gtm.js'});var f=d.getElementsByTagName(s)[0],
+j=d.createElement(s),dl=l!='dataLayer'?'&l='+l:'';j.async=true;j.src=
+'https://www.googletagmanager.com/gtm.js?id='+i+dl;f.parentNode.insertBefore(j,f);
+})(window,document,'script','dataLayer','${NEXT_PUBLIC_GTM_ID}');
+`.trim();
+
+const gtmEnabled = !process.env.NEXT_PUBLIC_DEV_MODE && NEXT_PUBLIC_GTM_ID !== '';
+
 // Prod-only, and only once an ID is configured. Same gate as the gtag block
 // so a local or preview build can never write into the live dataset.
 const metaPixelEnabled = !process.env.NEXT_PUBLIC_DEV_MODE && NEXT_PUBLIC_META_PIXEL_ID !== '';
@@ -189,11 +207,25 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
             />
           </>
         )}
+        {gtmEnabled && <script dangerouslySetInnerHTML={{ __html: gtmBootstrap }} />}
         {metaPixelEnabled && (
           <script dangerouslySetInnerHTML={{ __html: metaPixelBootstrap }} />
         )}
       </head>
       <body className={`${inter.variable} ${newsreader.variable}`} suppressHydrationWarning>
+        {gtmEnabled && (
+          <noscript>
+            {/* GTM's install contract: raw iframe immediately after the
+                opening <body> tag. Only fires for JS-disabled visitors. */}
+            <iframe
+              title="Google Tag Manager"
+              src={`https://www.googletagmanager.com/ns.html?id=${NEXT_PUBLIC_GTM_ID}`}
+              height="0"
+              width="0"
+              style={{ display: 'none', visibility: 'hidden' }}
+            />
+          </noscript>
+        )}
         {metaPixelEnabled && (
           <noscript>
             {/* Must stay a raw <img>: next/image would optimize and proxy the
