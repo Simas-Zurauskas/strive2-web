@@ -54,3 +54,16 @@ export const gtagEvent = (name: string, params: Record<string, unknown> = {}): v
   if (!gtagAvailable()) return;
   window.gtag!('event', name, { send_to: ALL_TARGETS, ...params });
 };
+
+/**
+ * Pushes a plain `{event, ...}` object onto the dataLayer for the GTM
+ * container to route. Deliberately NOT `gtag()`: gtag events are sent
+ * straight to the AW-/G- destinations configured in layout.tsx, while
+ * container-routed conversions are owned by the marketing side inside GTM —
+ * a plain object push keeps the two channels from double-reporting the same
+ * hit. No-op wherever the analytics bootstrap didn't run (dev, SSR).
+ */
+export const dataLayerPush = (payload: { event: string } & Record<string, unknown>): void => {
+  if (typeof window === 'undefined' || !Array.isArray(window.dataLayer)) return;
+  window.dataLayer.push(payload);
+};

@@ -10,6 +10,7 @@ import {
   useUsageHistory,
   useUsageSummary,
 } from '@/hooks/useUsage';
+import { dataLayerPush } from '@/lib/gtag';
 import { QKeys } from '@/types';
 import * as S from './BillingTab.styles';
 import { UsageHistoryList } from '../UsageTab/internal/UsageHistoryList/UsageHistoryList';
@@ -69,6 +70,24 @@ export const BillingTab: React.FC = () => {
     // setState-in-effect lint rule is a false positive here.
     // eslint-disable-next-line react-hooks/set-state-in-effect
     setPurchaseKind(checkoutKind);
+
+    // Conversion push for the GTM container. The API threads plan/value
+    // params through the Stripe success_url (stripeService.buildSuccessUrl);
+    // marketing owns routing to Ads/GA4 inside GTM. Must run before the
+    // router.replace below strips the params. `value` is list price —
+    // promo codes and VAT are not reflected. transaction_id is the Stripe
+    // Checkout session id, for conversion dedup.
+    const value = Number(searchParams.get('value'));
+    dataLayerPush({
+      event: checkoutKind === 'subscription' ? 'subscribe' : 'topup',
+      ...(checkoutKind === 'subscription' && {
+        subscription_tier: searchParams.get('plan') ?? 'unknown',
+        subscription_cadence: searchParams.get('cadence') ?? 'unknown',
+      }),
+      value: Number.isFinite(value) ? value : 0,
+      currency: searchParams.get('currency') ?? 'USD',
+      transaction_id: searchParams.get('session_id') ?? '',
+    });
 
     // Strip the checkout flag while preserving the billing tab selection.
     router.replace('/profile?tab=billing', { scroll: false });
