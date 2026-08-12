@@ -4,6 +4,9 @@ import { Markdown } from '@/components';
 import * as S from './BlogScreen.styles';
 import type { BlogPost } from '@/lib/blog';
 
+// Canonical author profile — corroborates the site's founder identity (see lib/seo/jsonLd.ts)
+const AUTHOR_URL = 'https://www.simaszurauskas.com';
+
 interface BlogPostScreenProps {
   post: BlogPost;
   related: BlogPost[];
@@ -34,7 +37,9 @@ export const BlogPostScreen = ({ post, related, readNext }: BlogPostScreenProps)
       <S.ArticleSummary>{post.summary}</S.ArticleSummary>
 
       <S.Byline>
-        <S.BylineAuthor>{post.author}</S.BylineAuthor>
+        <S.BylineAuthor as="a" href={AUTHOR_URL} rel="author noopener" target="_blank">
+          {post.author}
+        </S.BylineAuthor>
         <S.BylineDot />
         <span>{formatDate(post.published)}</span>
         <S.BylineDot />

@@ -346,6 +346,19 @@ export const Byline = styled.div`
 export const BylineAuthor = styled.span`
   color: ${(p) => p.theme.colors.foreground};
   font-weight: 500;
+
+  /* Rendered as an anchor (rel="author") on post pages */
+  &[href] {
+    text-decoration: none;
+    border-bottom: 1px solid transparent;
+    transition: border-color 0.15s ease;
+
+    ${(p) => p.theme.media.hover} {
+      &:hover {
+        border-bottom-color: currentColor;
+      }
+    }
+  }
 `;
 
 export const BylineDot = styled.span`

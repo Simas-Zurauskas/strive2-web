@@ -35,6 +35,11 @@ export const buildOrganizationJsonLd = ({ siteUrl }: OrgInput) => ({
   url: siteUrl,
   logo: `${siteUrl}/icon1.png`,
   sameAs: [...SAME_AS],
+  founder: {
+    '@type': 'Person',
+    name: 'Simas Žurauskas',
+    url: 'https://www.simaszurauskas.com',
+  },
 });
 
 export const buildWebSiteJsonLd = ({ siteUrl }: OrgInput) => ({
@@ -226,6 +231,7 @@ export const buildBlogPostJsonLd = ({ siteUrl, post }: BlogPostJsonLdInput) => (
   author: {
     '@type': 'Person',
     name: post.author,
+    ...(post.author === 'Simas Zurauskas' ? { url: 'https://www.simaszurauskas.com' } : {}),
   },
   publisher: {
     '@type': 'Organization',

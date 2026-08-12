@@ -18,6 +18,7 @@ const LEARN_LINKS: { label: string; href: string }[] = [
 ];
 
 const LEGAL_LINKS: { label: string; href: string }[] = [
+  { label: 'About', href: '/about' },
   { label: 'Terms of service', href: '/terms' },
   { label: 'Privacy policy', href: '/privacy' },
 ];
