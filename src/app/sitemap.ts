@@ -18,6 +18,7 @@ const STATIC_PATHS: {
   { path: '/learn', priority: 0.95, changeFreq: 'weekly' },
   { path: '/blog', priority: 0.9, changeFreq: 'weekly' },
   { path: '/blog/rss.xml', priority: 0.5, changeFreq: 'weekly' },
+  { path: '/about', priority: 0.6, changeFreq: 'yearly' },
   { path: '/privacy', priority: 0.4, changeFreq: 'yearly' },
   { path: '/terms', priority: 0.4, changeFreq: 'yearly' },
 ];
