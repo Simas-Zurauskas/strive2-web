@@ -519,3 +519,71 @@ export const getRecentActivity = () => {
     method: 'GET',
   }).then((res) => res.data.data);
 };
+
+// ── Exports / downloads ─────────────────────────────────
+
+type NarrationDownloadResponse =
+  paths['/api/course/{courseId}/lesson/{moduleIndex}/{lessonIndex}/narration/download']['get']['responses']['200']['content']['application/json'];
+
+/**
+ * A short-lived presigned URL that saves the narration MP3 rather than
+ * streaming it, plus the filename the server chose and whether the audio
+ * still matches the current lesson text.
+ */
+export const getNarrationDownload = ({
+  courseId,
+  moduleIndex,
+  lessonIndex,
+}: {
+  courseId: string;
+  moduleIndex: number;
+  lessonIndex: number;
+}) => {
+  return client<NarrationDownloadResponse>({
+    url: `/course/${courseId}/lesson/${moduleIndex}/${lessonIndex}/narration/download`,
+    method: 'GET',
+  }).then((res) => res.data.data);
+};
+
+/** The narration transcript as plain text. */
+export const getNarrationTranscript = ({
+  courseId,
+  moduleIndex,
+  lessonIndex,
+}: {
+  courseId: string;
+  moduleIndex: number;
+  lessonIndex: number;
+}) => {
+  return client<Blob>({
+    url: `/course/${courseId}/lesson/${moduleIndex}/${lessonIndex}/narration/transcript`,
+    method: 'GET',
+    responseType: 'blob',
+  }).then((res) => res.data);
+};
+
+/** One lesson as a PDF. */
+export const getLessonPdf = ({
+  courseId,
+  moduleIndex,
+  lessonIndex,
+}: {
+  courseId: string;
+  moduleIndex: number;
+  lessonIndex: number;
+}) => {
+  return client<Blob>({
+    url: `/course/${courseId}/lesson/${moduleIndex}/${lessonIndex}/pdf`,
+    method: 'GET',
+    responseType: 'blob',
+  }).then((res) => res.data);
+};
+
+/** A whole course as a PDF, with a linked table of contents. */
+export const getCoursePdf = ({ courseId }: { courseId: string }) => {
+  return client<Blob>({
+    url: `/course/${courseId}/pdf`,
+    method: 'GET',
+    responseType: 'blob',
+  }).then((res) => res.data);
+};

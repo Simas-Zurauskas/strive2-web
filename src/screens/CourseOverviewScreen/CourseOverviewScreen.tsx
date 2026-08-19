@@ -3,7 +3,7 @@
 import { AlertCircle, CheckCircle, ChevronRight, Lock, Sparkles, Trophy } from 'lucide-react';
 import { useRouter } from 'next/navigation';
 import { useMemo } from 'react';
-import { Badge, HelpAnchor, LessonIndicator, TextAction, computeLessonIndicatorState } from '@/components';
+import { Badge, DownloadPdfButton, HelpAnchor, LessonIndicator, TextAction, computeLessonIndicatorState } from '@/components';
 import { plural } from '@/lib/strings';
 import { useCourseContext } from '@/screens/CourseShell';
 import * as S from './CourseOverviewScreen.styles';
@@ -148,6 +148,11 @@ export const CourseOverviewScreen = () => {
           <Badge variant="default">
             {modules.length} {plural({ count: modules.length, singular: 'module' })} &middot; {totalLessons} {plural({ count: totalLessons, singular: 'lesson' })}
           </Badge>
+          {/* Offered whenever the course exists; the export itself lists any
+              lesson that has not been generated rather than failing. */}
+          <DownloadPdfButton
+            target={{ kind: 'course', courseId: course.slug ?? course._id, courseName: course.name }}
+          />
         </S.MetaRow>
       </S.Header>
 

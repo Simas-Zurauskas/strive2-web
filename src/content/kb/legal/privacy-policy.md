@@ -5,7 +5,7 @@ topic: legal
 summary: How Strive collects, uses, shares, and protects personal data — documents and links you give us, sub-processors, retention, your GDPR rights, notice and takedown, and your responsibilities.
 tags: [privacy, gdpr, data-protection, legal]
 order: 10
-updated: '2026-07-30'
+updated: '2026-08-19'
 related: [terms-of-service, your-privacy-on-strive]
 ---
 
@@ -252,11 +252,16 @@ port your personal data; to withdraw any consent you have given; and to lodge a
 complaint with a supervisory authority.
 
 Two of these you can exercise yourself, straight away, from **Profile → Account**: editing
-your details, and deleting your account. **There is no self-service export button** — we
-have not built one. To exercise your right of access or your right to data portability
-(Articles 15 and 20), email **admin@strive-learning.com** and we will put the data together
-and send it to you. For any of the other rights, write to the same address. We will respond
-within 30 days.
+your details, and deleting your account. **There is no self-service export button for your
+personal data** — we have not built one. To exercise your right of access or your right to
+data portability (Articles 15 and 20), email **admin@strive-learning.com** and we will put
+the data together and send it to you. For any of the other rights, write to the same
+address. We will respond within 30 days.
+
+Separately from those rights, the course content generated for you can be downloaded from
+the product itself: a lesson or a whole course as a PDF, and a narrated lesson's audio and
+transcript. That is a product feature rather than an Article 15 or 20 response, and it does
+not cover the rest of the personal data described in this policy.
 
 **Product-update email.** You can stop it at any time: use the unsubscribe link in any such
 email — one click, no login — or turn it off in **Profile → Account**. We act on it at once

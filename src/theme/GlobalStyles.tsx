@@ -207,6 +207,24 @@ export const GlobalStyles = createGlobalStyle`
        <label>, <summary>, [tabindex] and click-handling <div>s. Measured on
        the shipping build: the root computed to rgba(51, 181, 229, 0.4). */
     -webkit-tap-highlight-color: transparent;
+    /* Reserve the scrollbar gutter permanently.
+
+       useScrollLock freezes the page by setting position:fixed on the body,
+       which takes the page out of flow and so removes its scrollbar. Measured
+       on this build at 1920px: the scrollbar is 17px, and locking widened the
+       body from 1903.33 to 1920.00 — every open of a modal or drawer nudged
+       the whole page ~17px to the right, the fixed navbar along with it.
+
+       Reserving the gutter here rather than compensating inside the lock is
+       what makes it work for FIXED elements too: position:fixed resolves
+       against the initial containing block, so padding added to <body> would
+       have left the navbar still jumping. Re-measured with this line in
+       place: body delta 0.00, navbar delta 0.00.
+
+       (No backticks in this comment — createGlobalStyle is a tagged template,
+       so a backtick here terminates it and the build fails with a syntax
+       error pointing at the comment.) */
+    scrollbar-gutter: stable;
   }
 
   html,

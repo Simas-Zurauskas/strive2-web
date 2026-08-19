@@ -5,7 +5,7 @@ topic: plans-and-account
 summary: What happens to a file or a link you give Strive — where it is stored, which companies process it, how long it is kept, what deletion actually deletes, and what you are promising us when you upload something.
 tags: [privacy, documents, data, retention, account]
 order: 15
-updated: '2026-07-30'
+updated: '2026-08-19'
 related: [your-privacy-on-strive, build-a-course-from-your-documents, privacy-policy]
 ---
 
@@ -83,7 +83,9 @@ Please don't give us pirated books or courses, material behind a paywall or a lo
 
 ## Getting a copy of your data
 
-There is no download button. We haven't built one, and we would rather say so than imply otherwise. To exercise your right of access or your right to data portability, email **admin@strive-learning.com** and we will assemble your data and send it to you. The same address covers the rest of your rights under the GDPR. We respond within 30 days.
+This section is about your *data* — the account, the files you uploaded, the records we hold. Your generated *course content* is a separate matter and you can take that yourself: lessons and whole courses download as PDFs, and narrated lessons offer their audio and transcript. [How a lesson is built](/help/building-and-studying/lesson-blocks-and-content) covers it.
+
+For the data itself there is no download button. We haven't built one, and we would rather say so than imply otherwise. To exercise your right of access or your right to data portability, email **admin@strive-learning.com** and we will assemble your data and send it to you. The same address covers the rest of your rights under the GDPR. We respond within 30 days.
 
 ## Reporting infringing material
 

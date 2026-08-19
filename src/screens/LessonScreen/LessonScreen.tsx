@@ -186,6 +186,7 @@ export const LessonScreen = () => {
       courseId={courseSlug}
       courseObjectId={courseObjectId}
       moduleName={currentModule.name}
+      courseName={course?.name ?? ''}
       moduleIndex={moduleIndex}
       lessonIndex={lessonIndex}
       lesson={currentLesson}

@@ -3,7 +3,7 @@
 import { AnimatePresence, motion, useReducedMotion } from 'framer-motion';
 import { useSearchParams } from 'next/navigation';
 import { useEffect, useRef, useState } from 'react';
-import { Button, Checkbox, HelpAnchor, SourceProvenanceBadge, TextLoader } from '@/components';
+import { Button, Checkbox, DownloadPdfButton, HelpAnchor, SourceProvenanceBadge, TextLoader } from '@/components';
 import {
   useJobManager,
   useLessonContent,
@@ -51,6 +51,8 @@ interface LessonContentProps {
   courseId: string;
   courseObjectId: string | undefined;
   moduleName: string;
+  /** Names the downloaded PDF so it matches the course, not the lesson alone. */
+  courseName: string;
   moduleIndex: number;
   lessonIndex: number;
   lesson: Lesson;
@@ -72,6 +74,7 @@ interface LessonContentProps {
 export const LessonContent = ({
   courseId,
   courseObjectId,
+  courseName,
   moduleIndex,
   lessonIndex,
   lesson,
@@ -256,6 +259,18 @@ export const LessonContent = ({
       <S.ProvenanceRow>
         <S.AiGeneratedNote>AI-generated — verify anything you rely on.</S.AiGeneratedNote>
         {isDocumentsCourse && <SourceProvenanceBadge aiSupplemented={!lesson.sourceRefs?.length} />}
+        {hasContent && !isThisLessonGenerating && (
+          <DownloadPdfButton
+            target={{
+              kind: 'lesson',
+              courseId,
+              moduleIndex,
+              lessonIndex,
+              lessonName: lesson.name,
+              courseName,
+            }}
+          />
+        )}
       </S.ProvenanceRow>
 
       {hasContent && !isThisLessonGenerating && (
@@ -263,6 +278,7 @@ export const LessonContent = ({
           courseId={courseId}
           moduleIndex={moduleIndex}
           lessonIndex={lessonIndex}
+          lessonName={lesson.name}
           audioUrl={lessonContent?.audioUrl ?? null}
           audioVoice={lessonContent?.audioVoice ?? null}
           hasContent={hasContent}

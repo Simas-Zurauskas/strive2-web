@@ -2,15 +2,22 @@
 
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { AnimatePresence } from 'framer-motion';
-import { Headphones, Pause, Play, Volume2 } from 'lucide-react';
+import { Download, FileText, Headphones, Pause, Play, Volume2 } from 'lucide-react';
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { toast } from 'sonner';
-import { deleteLessonNarration, generateLessonNarration, getNarrationVoices } from '@/api/routes/course';
+import {
+  deleteLessonNarration,
+  generateLessonNarration,
+  getNarrationDownload,
+  getNarrationTranscript,
+  getNarrationVoices,
+} from '@/api/routes/course';
 import { DropdownMenu, HelpAnchor } from '@/components';
 import { TOASTS, toastMessage } from '@/constants/toasts';
 import { useAuth, useJobManager } from '@/hooks';
 import { useSocket } from '@/hooks/useSocket';
 import { analytics } from '@/lib/analytics';
+import { exportFilename, saveBlob, saveFromUrl } from '@/lib/saveBlob';
 import { QKeys } from '@/types';
 import * as S from './NarrationPlayer.styles';
 import type { JobStatusEvent } from '@/api/types';
@@ -31,6 +38,8 @@ interface NarrationPlayerProps {
   courseId: string;
   moduleIndex: number;
   lessonIndex: number;
+  /** Used to name the downloaded transcript file. */
+  lessonName: string;
   audioUrl: string | null;
   audioVoice: string | null;
   hasContent: boolean;
@@ -40,6 +49,7 @@ export const NarrationPlayer = ({
   courseId,
   moduleIndex,
   lessonIndex,
+  lessonName,
   audioUrl,
   audioVoice,
   hasContent,
@@ -232,6 +242,48 @@ export const NarrationPlayer = ({
   const handleClear = () => clearMutation.mutate();
   const handleGenerate = () => generateMutation.mutate();
 
+  // ── Downloads ───────────────────────────────────────
+  //
+  // The MP3 never passes through our API: the server returns a short-lived
+  // presigned URL whose signed Content-Disposition makes S3 serve it as an
+  // attachment, so the bytes go straight from S3 to disk.
+  const downloadAudioMutation = useMutation({
+    mutationFn: () => getNarrationDownload({ courseId, moduleIndex, lessonIndex }),
+    onSuccess: ({ url, filename, transcriptMatchesAudio }) => {
+      saveFromUrl({ url, filename });
+      // The lesson can be regenerated after its audio was made, leaving the
+      // recording describing a version of the text that no longer exists.
+      // Saying so once, here, is better than a learner noticing later.
+      if (!transcriptMatchesAudio) {
+        toast('This lesson changed after the audio was made — the recording may differ.');
+      }
+      analytics.track('narration_downloaded', {
+        course_id: courseId,
+        lesson_id: `${courseId}-${moduleIndex}-${lessonIndex}`,
+      });
+    },
+    onError: () => toast.error('Could not prepare the download. Please try again.'),
+  });
+
+  const downloadTranscriptMutation = useMutation({
+    mutationFn: () => getNarrationTranscript({ courseId, moduleIndex, lessonIndex }),
+    onSuccess: (blob) => {
+      saveBlob({
+        blob,
+        filename: exportFilename({
+          parts: [lessonName, 'transcript'],
+          extension: 'txt',
+          fallback: 'strive-transcript',
+        }),
+      });
+      analytics.track('narration_transcript_downloaded', {
+        course_id: courseId,
+        lesson_id: `${courseId}-${moduleIndex}-${lessonIndex}`,
+      });
+    },
+    onError: () => toast.error('Could not download the transcript. Please try again.'),
+  });
+
   // Voice currently in use, for the player eyebrow.
   const currentVoiceLabel = useMemo(() => {
     if (!audioVoice) return null;
@@ -369,6 +421,16 @@ export const NarrationPlayer = ({
           </S.RateButton>
           <DropdownMenu
             items={[
+              {
+                label: downloadAudioMutation.isPending ? 'Preparing…' : 'Download audio',
+                icon: <Download size={14} />,
+                onClick: () => downloadAudioMutation.mutate(),
+              },
+              {
+                label: downloadTranscriptMutation.isPending ? 'Preparing…' : 'Download transcript',
+                icon: <FileText size={14} />,
+                onClick: () => downloadTranscriptMutation.mutate(),
+              },
               {
                 label: 'Remove from this lesson',
                 variant: 'danger',
