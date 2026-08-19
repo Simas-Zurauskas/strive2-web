@@ -149,7 +149,10 @@ export const CourseOverviewScreen = () => {
             {modules.length} {plural({ count: modules.length, singular: 'module' })} &middot; {totalLessons} {plural({ count: totalLessons, singular: 'lesson' })}
           </Badge>
           {/* Offered whenever the course exists; the export itself lists any
-              lesson that has not been generated rather than failing. */}
+              lesson that has not been generated rather than failing.
+              Pushed to the far right so the badges read as one group and the
+              action is clearly separate from them. */}
+          <S.MetaSpacer />
           <DownloadPdfButton
             target={{ kind: 'course', courseId: course.slug ?? course._id, courseName: course.name }}
           />

@@ -56,6 +56,16 @@ export const MetaRow = styled.div`
   flex-wrap: wrap;
 `;
 
+// Eats the space between the badge group and the download action so the
+// action sits on the right. A flex spacer rather than `margin-left: auto` on
+// the button, because the row wraps: once it wraps, the spacer collapses onto
+// its own line and the button falls under the badges instead of being
+// stranded on a line of its own.
+export const MetaSpacer = styled.span`
+  flex: 1 1 0;
+  min-width: 0;
+`;
+
 // ── Progress section ─────────────────────────────────
 // Legacy "card" treatment kept for back-compat (not currently used after the
 // UpNextHero rewrite — the slim ProgressMini below is rendered instead).
