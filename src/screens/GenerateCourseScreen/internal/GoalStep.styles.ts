@@ -85,36 +85,6 @@ export const InputGroup = styled.div`
   gap: 0.5rem;
 `;
 
-export const ExampleChipRow = styled.div`
-  display: flex;
-  flex-wrap: wrap;
-  gap: var(--space-2);
-  margin-top: var(--space-2);
-`;
-
-export const ExampleChip = styled.button`
-  padding: var(--space-1) var(--space-3);
-  font-size: 0.8125rem;
-  color: ${(p) => p.theme.colors.muted};
-  background: ${(p) => p.theme.colors.surface};
-  border: 1px solid ${(p) => p.theme.colors.surfaceBorder};
-  border-radius: var(--radius-full, 999px);
-  cursor: pointer;
-  transition: border-color 0.15s, color 0.15s;
-
-  ${(p) => p.theme.media.hover} {
-    &:hover {
-      border-color: ${(p) => p.theme.colors.accent};
-      color: ${(p) => p.theme.colors.foreground};
-    }
-  }
-
-  &:focus-visible {
-    outline: 2px solid ${(p) => p.theme.colors.accent};
-    outline-offset: 2px;
-  }
-`;
-
 export const ErrorText = styled.p`
   font-size: 0.8125rem;
   color: ${(p) => p.theme.colors.error};

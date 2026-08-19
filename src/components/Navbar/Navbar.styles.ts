@@ -1,6 +1,6 @@
 import { motion } from 'framer-motion';
 import Link from 'next/link';
-import styled from 'styled-components';
+import styled, { keyframes } from 'styled-components';
 import { thinScrollbar, touchHitArea } from '@/theme';
 
 // The Nav is a flex-column wrapper. The first row (NavRow) holds the
@@ -630,3 +630,86 @@ export const DrawerThemeLabel = styled.span`
   color: ${(p) => p.theme.colors.muted};
 `;
 
+// ── Announcements bell ────────────────────────────────
+// Deliberately OUTSIDE DesktopOnlyCluster in Navbar.tsx. That cluster is
+// `display: none` under theme.media.desktop — which is `@media (max-width:
+// 1024px)`, i.e. every tablet and phone — so a bell placed beside Feedback and
+// Help would take its unread indicator off-screen for exactly the users most
+// likely to miss an announcement. The requirement asks the control to
+// "pulsate or somehow indicate there are news"; it can only do that if it is
+// rendered.
+
+export const AnnouncementsButton = styled.button`
+  position: relative;
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  border: 1px solid ${(p) => p.theme.colors.surfaceBorder};
+  background: transparent;
+  color: ${(p) => p.theme.colors.muted};
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  flex-shrink: 0;
+  transition:
+    color 180ms cubic-bezier(0.22, 0.61, 0.36, 1),
+    transform 120ms cubic-bezier(0.22, 0.61, 0.36, 1);
+
+  svg {
+    width: 16px;
+    height: 16px;
+  }
+
+  ${(p) => p.theme.media.hover} {
+    &:hover {
+      color: ${(p) => p.theme.colors.foreground};
+    }
+  }
+
+  &:active {
+    transform: scale(0.95);
+    transition-duration: 80ms;
+  }
+
+  &:focus-visible {
+    outline: 2px solid ${(p) => p.theme.colors.accent};
+    outline-offset: 2px;
+  }
+`;
+
+const pulse = keyframes`
+  0%   { transform: scale(1);   opacity: 1; }
+  70%  { transform: scale(2.6); opacity: 0; }
+  100% { transform: scale(2.6); opacity: 0; }
+`;
+
+// The dot itself is always solid; only the ::after ring animates. That way
+// `prefers-reduced-motion` can drop the animation entirely and still leave a
+// clearly visible unread indicator rather than nothing.
+export const UnreadDot = styled.span`
+  position: absolute;
+  top: 1px;
+  right: 1px;
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: ${(p) => p.theme.colors.tertiary};
+  border: 1.5px solid ${(p) => p.theme.colors.background};
+  pointer-events: none;
+
+  &::after {
+    content: '';
+    position: absolute;
+    inset: 0;
+    border-radius: 50%;
+    background: ${(p) => p.theme.colors.tertiary};
+    animation: ${pulse} 2.4s cubic-bezier(0.22, 0.61, 0.36, 1) infinite;
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    &::after {
+      animation: none;
+    }
+  }
+`;

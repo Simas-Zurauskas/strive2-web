@@ -2738,6 +2738,212 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/course/{courseId}/pdf": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Download a whole course as a PDF
+         * @description Renders every generated lesson into one branded PDF with a clickable table of contents. Lessons that have not finished generating are listed but not included. Quiz blocks and exercise starter code are excluded throughout.
+         */
+        get: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path: {
+                    courseId: string;
+                };
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description The course as a PDF. */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/pdf": string;
+                    };
+                };
+                /** @description Course not found. */
+                404: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content?: never;
+                };
+                /** @description Too many course exports — this one is rate limited. */
+                429: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content?: never;
+                };
+            };
+        };
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/course/{courseId}/lesson/{moduleIndex}/{lessonIndex}/pdf": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Download a single lesson as a PDF
+         * @description Renders the lesson's generated content to a branded PDF. Quiz blocks and any exercise starter code are excluded; diagrams, maths and the hero image are included. Returns 404 when the lesson has not finished generating.
+         */
+        get: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path: {
+                    courseId: string;
+                    moduleIndex: number;
+                    lessonIndex: number;
+                };
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description The lesson as a PDF. */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/pdf": string;
+                    };
+                };
+                /** @description Course not found, or the lesson has not been generated. */
+                404: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content?: never;
+                };
+            };
+        };
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/course/{courseId}/lesson/{moduleIndex}/{lessonIndex}/narration/download": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Get a download link for a lesson's narration audio
+         * @description Returns a short-lived presigned URL that saves the MP3 rather than streaming it. `transcriptMatchesAudio` is false when the lesson has been regenerated since the audio was made, so the client can warn.
+         */
+        get: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path: {
+                    courseId: string;
+                    moduleIndex: number;
+                    lessonIndex: number;
+                };
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": {
+                            data: components["schemas"]["NarrationDownload"];
+                        };
+                    };
+                };
+                /** @description Course, lesson or narration not found. */
+                404: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content?: never;
+                };
+            };
+        };
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/course/{courseId}/lesson/{moduleIndex}/{lessonIndex}/narration/transcript": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Download the narration transcript for a lesson
+         * @description Plain text — exactly the script that was sent to the speech engine. If the lesson has been regenerated since the audio was made, the file opens with a one-line note saying so.
+         */
+        get: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path: {
+                    courseId: string;
+                    moduleIndex: number;
+                    lessonIndex: number;
+                };
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description The transcript. */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "text/plain": string;
+                    };
+                };
+                /** @description Course, lesson or narration not found. */
+                404: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content?: never;
+                };
+            };
+        };
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/course/{courseId}/depth-previews": {
         parameters: {
             query?: never;
@@ -4624,6 +4830,13 @@ export interface paths {
 export type webhooks = Record<string, never>;
 export interface components {
     schemas: {
+        NarrationDownload: {
+            /** @description Short-lived presigned URL that saves the MP3 rather than streaming it. */
+            url: string;
+            filename: string;
+            /** @description False when the lesson was regenerated after the audio was made, so the recording no longer matches the lesson text. */
+            transcriptMatchesAudio: boolean;
+        };
         /** @enum {string} */
         ErrorCode: "CUSTOM_ERROR" | "NOT_FOUND" | "EMAIL_NOT_VERIFIED" | "EMAIL_ALREADY_VERIFIED" | "EMAIL_VERIFICATION_EXPIRED" | "EMAIL_VERIFICATION_INVALID" | "VERIFICATION_RESEND_TOO_SOON" | "PASSWORD_RESET_INVALID" | "PASSWORD_RESET_EXPIRED" | "PASSWORD_ALREADY_SET" | "PASSWORD_NOT_SET" | "INSUFFICIENT_CREDITS" | "SUBSCRIPTION_ALREADY_EXISTS" | "TOO_MANY_ACTIVE_JOBS" | "CODE_REQUEST_TOO_SOON" | "CODE_REQUEST_RATE_EXCEEDED" | "SECURITY_CODE_INVALID" | "SECURITY_CODE_EXPIRED" | "SECURITY_CODE_TOO_MANY_ATTEMPTS" | "SESSION_INVALID" | "CONTENT_REJECTED" | "UNSUPPORTED_FILE_TYPE" | "DOCUMENT_LIMIT_EXCEEDED" | "DOCUMENT_EXTRACTION_FAILED" | "STRUCTURE_SIZE_VIOLATION";
         /** @enum {string} */

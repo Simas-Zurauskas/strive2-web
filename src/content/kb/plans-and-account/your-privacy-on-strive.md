@@ -5,7 +5,7 @@ topic: plans-and-account
 summary: What Strive stores, what we do with it, and the things we explicitly don't do — like training models on your study data or the documents you upload.
 tags: [privacy, data, account]
 order: 10
-updated: '2026-07-30'
+updated: '2026-08-19'
 related: [understanding-your-allowance, privacy-policy, terms-of-service]
 ---
 
@@ -60,4 +60,6 @@ If content on Strive is illegal or infringes your rights, or you publish a site 
 
 If you have a privacy-specific question, email **admin@strive-learning.com**. For general questions, the help center search and the AI guide can usually answer without needing a human in the loop. The full legal text — including sub-processors, retention periods, your GDPR rights and our data-handling commitments — lives in the [Privacy Policy](/privacy).
 
-**Want a copy of your data?** There's no download button — we haven't built one. Email the address above and we'll assemble your data and send it to you. Same address for anything else on the GDPR list; we answer within 30 days.
+**Want a copy of your course content?** That you can take yourself. Any generated lesson downloads as a PDF from the lesson header, a whole course downloads as one PDF from the course overview, and a narrated lesson offers its audio and transcript from the player menu. See [How a lesson is built](/help/building-and-studying/lesson-blocks-and-content).
+
+**Want a copy of your *data*?** That's a different thing, and there's no download button for it — we haven't built one. Email the address above and we'll assemble your data and send it to you. Same address for anything else on the GDPR list; we answer within 30 days.

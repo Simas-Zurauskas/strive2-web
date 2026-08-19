@@ -2,6 +2,7 @@
 
 import { useAnimation } from 'framer-motion';
 import {
+  Bell,
   HelpCircle,
   Home,
   LayoutGrid,
@@ -16,9 +17,11 @@ import Link from 'next/link';
 import { usePathname, useRouter } from 'next/navigation';
 import { useTheme } from 'next-themes';
 import { useEffect, useLayoutEffect, useRef, useState } from 'react';
+import { AnnouncementsPanel } from '@/components/AnnouncementsPanel';
 import { CreditPill } from '@/components/CreditPill';
 import { NEXT_PUBLIC_APPZI_BUTTON_ID } from '@/conf/env';
 import { useAuth, useScrollLock } from '@/hooks';
+import { useAnnouncements } from '@/lib/announcements/useAnnouncements';
 import { PANEL_CLOSE_TRANSITION, PANEL_OPEN_TRANSITION } from '@/theme/motionPresets';
 import * as S from './Navbar.styles';
 
@@ -159,6 +162,17 @@ export const Navbar = () => {
   useScrollLock(drawerOpen);
   useEffect(() => setDrawerOpen(false), [pathname]); // eslint-disable-line react-hooks/set-state-in-effect -- close on route change is the intent
 
+  // Announcements. All the state logic lives in a tested pure reducer
+  // (lib/announcements/reducer.ts); this component only renders what the hook
+  // reports. In particular `hasUnseen` is read, never recomputed — recomputing
+  // it from storage would put the dot out the moment the panel opened, which
+  // is the one behaviour the feature exists to avoid.
+  const announcements = useAnnouncements();
+  const closeAnnouncements = announcements.close;
+  // Same close-on-route-change as the app drawer above: an announcement body
+  // can link into the app, and the panel must not survive the navigation.
+  useEffect(() => closeAnnouncements(), [pathname, closeAnnouncements]);
+
   // Driver-style animation control: drag-to-close needs an explicit
   // snap-back (otherwise framer can leave the drawer wherever the
   // pointer released). We drive open/closed transitions through a
@@ -274,6 +288,19 @@ export const Navbar = () => {
           <QuestionIcon />
         </S.ThemeToggle>
         </S.DesktopOnlyCluster>
+        <S.AnnouncementsButton
+          type="button"
+          onClick={announcements.open}
+          title="What's new"
+          aria-label={
+            announcements.hasUnseen ? "What's new — unread announcements" : "What's new"
+          }
+          aria-haspopup="dialog"
+          aria-expanded={announcements.isOpen}
+        >
+          <Bell />
+          {announcements.hasUnseen && <S.UnreadDot />}
+        </S.AnnouncementsButton>
         <S.ThemeToggle
           type="button"
           onClick={() => router.push('/profile')}
@@ -289,6 +316,13 @@ export const Navbar = () => {
           (no possible drift from the nav row above). */}
       <S.NavExtensionSlot id="navbar-extension-slot" />
     </S.Nav>
+
+      <AnnouncementsPanel
+        isOpen={announcements.isOpen}
+        onClose={announcements.close}
+        list={announcements.list}
+        entryStates={announcements.entryStates}
+      />
 
       {/* App nav drawer (tablet/below). Rendered as a sibling of <S.Nav>
           rather than inside it because <S.Nav> applies backdrop-filter,

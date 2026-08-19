@@ -73,3 +73,5 @@ export { UpgradeBanner } from './UpgradeBanner';
 export { PurchaseSuccessModal } from './PurchaseSuccessModal';
 export type { PurchaseKind } from './PurchaseSuccessModal';
 export { TopupControl } from './TopupControl';
+export { DownloadPdfButton } from './DownloadPdfButton';
+export { AnnouncementsPanel } from './AnnouncementsPanel';

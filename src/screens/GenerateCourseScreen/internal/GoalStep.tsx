@@ -15,14 +15,6 @@ const GOAL_MAX_LENGTH = 500;
 // predictor we have. A nudge, never a gate: short goals still submit.
 const GOAL_COACH_THRESHOLD = 60;
 
-// Tappable starting points for a blank field — written in the shape we
-// want goals to take (what + starting point + intent), so picking one
-// teaches the pattern even if the user rewrites it.
-const GOAL_EXAMPLES = [
-  'Run Meta ads for my small online store — I know the basics of Instagram but have never paid for ads',
-  'Learn Python for data analysis from scratch — I work in Excel all day and want to automate it',
-] as const;
-
 interface GoalStepProps {
   initialGoal: string;
   hasExistingData: boolean;
@@ -56,7 +48,7 @@ export const GoalStep = ({ initialGoal, hasExistingData, loading, error, showDoc
         onSubmit={(values) => onSubmit(values.goal)}
         enableReinitialize
       >
-        {({ handleSubmit, handleChange, handleBlur, values, errors, touched, setFieldValue }) => {
+        {({ handleSubmit, handleChange, handleBlur, values, errors, touched }) => {
           const goalUnchanged = hasExistingData && values.goal === lastGeneratedGoal.current;
           const trimmedLength = values.goal.trim().length;
           const showSpecificityNudge = trimmedLength > 0 && trimmedLength < GOAL_COACH_THRESHOLD;
@@ -82,19 +74,6 @@ export const GoalStep = ({ initialGoal, hasExistingData, loading, error, showDoc
                   />
                   {(validationError || error) && (
                     <S.ErrorText>{validationError ?? error}</S.ErrorText>
-                  )}
-                  {!values.goal && !hasExistingData && (
-                    <S.ExampleChipRow aria-label="Example goals">
-                      {GOAL_EXAMPLES.map((example) => (
-                        <S.ExampleChip
-                          key={example}
-                          type="button"
-                          onClick={() => setFieldValue('goal', example)}
-                        >
-                          {example.split(' — ')[0]}
-                        </S.ExampleChip>
-                      ))}
-                    </S.ExampleChipRow>
                   )}
                 </S.InputGroup>
 

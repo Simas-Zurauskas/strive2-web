@@ -191,3 +191,4 @@ export type LessonProgressNarrationReadyEvent = components['schemas']['LessonPro
 export type LessonProgressDocumentStatusEvent = components['schemas']['LessonProgressDocumentStatusEvent'];
 export type GeneratedRecallCard = components['schemas']['GeneratedRecallCard'];
 export type CreditsUpdatedEvent = components['schemas']['CreditsUpdatedEvent'];
+export type NarrationDownload = components['schemas']['NarrationDownload'];
