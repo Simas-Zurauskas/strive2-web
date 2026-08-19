@@ -35,8 +35,8 @@ export const ScaledContent = styled.div<{ $scale: number }>`
 // ── Provenance row ────────────────────────────────────
 // Sits tight under the hero; negative margin pulls it out of the
 // container's 2rem gap rhythm so it reads as part of the header.
-// Always rendered now, because it carries the AI-generated disclosure
-// below; the documents badge joins it only on documents courses.
+// Rendered only on documents courses now — it carries the source badge and
+// nothing else.
 
 export const ProvenanceRow = styled.div`
   display: flex;
@@ -46,27 +46,18 @@ export const ProvenanceRow = styled.div`
   margin-top: -1.25rem;
 `;
 
-/**
- * AI Act Art. 50(4)/(5) disclosure on the lesson itself: everything below
- * this line is model-written, and the reader is told so plainly at the
- * point the content appears, on every lesson.
- *
- * NOT a duplicate of `SourceProvenanceBadge` sitting beside it, which
- * answers a different question — what the lesson is GROUNDED in, and only
- * on documents courses. A lesson can be "From your documents" and still be
- * AI-written; this is the marker that is always true.
- *
- * Matches the badge's own micro-label tier (0.6875rem, italic, muted) so
- * the row reads as one set of honesty marks rather than a warning strip.
- * Static text — no hover rules to gate behind `media.hover`.
- */
-export const AiGeneratedNote = styled.p`
-  font-size: 0.6875rem;
-  font-style: italic;
-  letter-spacing: 0.04em;
-  line-height: 1.4;
-  color: ${(p) => p.theme.colors.muted};
-  margin: 0;
+// ── Reading tools row ─────────────────────────────────
+// Font size on the left, PDF download pushed to the right. `space-between`
+// rather than `margin-left: auto` on the button, so the row still reads
+// correctly if the download is absent (a lesson mid-generation) — the
+// scaler simply stays where it is instead of the row collapsing around it.
+
+export const ToolsRow = styled.div`
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.75rem;
 `;
 
 // ── Lesson description ────────────────────────────────

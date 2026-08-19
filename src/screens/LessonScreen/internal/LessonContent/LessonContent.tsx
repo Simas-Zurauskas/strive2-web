@@ -256,22 +256,11 @@ export const LessonContent = ({
         }
       />
 
-      <S.ProvenanceRow>
-        <S.AiGeneratedNote>AI-generated — verify anything you rely on.</S.AiGeneratedNote>
-        {isDocumentsCourse && <SourceProvenanceBadge aiSupplemented={!lesson.sourceRefs?.length} />}
-        {hasContent && !isThisLessonGenerating && (
-          <DownloadPdfButton
-            target={{
-              kind: 'lesson',
-              courseId,
-              moduleIndex,
-              lessonIndex,
-              lessonName: lesson.name,
-              courseName,
-            }}
-          />
-        )}
-      </S.ProvenanceRow>
+      {isDocumentsCourse && (
+        <S.ProvenanceRow>
+          <SourceProvenanceBadge aiSupplemented={!lesson.sourceRefs?.length} />
+        </S.ProvenanceRow>
+      )}
 
       {hasContent && !isThisLessonGenerating && (
         <NarrationPlayer
@@ -285,7 +274,23 @@ export const LessonContent = ({
         />
       )}
 
-      {blocks && <FontScaler scale={fontScale} onChange={handleFontScale} />}
+      {blocks && (
+        <S.ToolsRow>
+          <FontScaler scale={fontScale} onChange={handleFontScale} />
+          {hasContent && !isThisLessonGenerating && (
+            <DownloadPdfButton
+              target={{
+                kind: 'lesson',
+                courseId,
+                moduleIndex,
+                lessonIndex,
+                lessonName: lesson.name,
+                courseName,
+              }}
+            />
+          )}
+        </S.ToolsRow>
+      )}
 
       <S.ScaledContent $scale={fontScale}>
         {lesson.description && <S.LessonDescription>{lesson.description}</S.LessonDescription>}
