@@ -92,6 +92,7 @@ export const BlockRenderer = ({
             element = (
               <QuizBlock
                 blockId={block.id}
+                content={block.content}
                 metadata={block.metadata}
                 savedResponse={quizResponseMap.get(block.id)}
                 onAnswer={onQuizAnswer}

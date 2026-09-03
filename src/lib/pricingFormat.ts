@@ -4,6 +4,7 @@
  * mounted view on next refresh.
  */
 
+import { ONBOARDING_ALLOWANCE_CREDITS } from '@/lib/pricingSnapshot';
 import type { BillingCatalog, PlanKey } from '@/api/types';
 
 const plan = (catalog: BillingCatalog, key: PlanKey) =>
@@ -43,6 +44,23 @@ export const formatPlanLessonsPerMonth = (key: PlanKey, catalog: BillingCatalog)
   // Trailing asterisk → see BASE_LESSON_FOOTNOTE.
   if (range[0] === range[1]) return `≈ ${range[0]} lesson${range[0] === 1 ? '' : 's'}* / month`;
   return `≈ ${range[0]}–${range[1]} lessons* / month`;
+};
+
+/**
+ * What a brand-new account actually starts with — the one-time signup grant,
+ * not the recurring monthly figure.
+ *
+ * Without this the Free plan advertises "≈ 1 lesson / month" (200cr ÷ the
+ * measured 116cr per lesson), which understates the first run by 5×: a new
+ * signup receives 650cr and gets through a complete first module. Both
+ * numbers are true and they answer different questions, so the surfaces show
+ * the grant first and keep the monthly rate as the follow-on.
+ */
+export const formatOnboardingGrantLessons = (catalog: BillingCatalog): string => {
+  const range = lessonRange(ONBOARDING_ALLOWANCE_CREDITS, catalog);
+  if (range[1] === 0) return '';
+  if (range[0] === range[1]) return `about ${range[0]} lesson${range[0] === 1 ? '' : 's'}`;
+  return `about ${range[0]}–${range[1]} lessons`;
 };
 
 // "1×" reads as confused on a comparison row, so suppress for Free.

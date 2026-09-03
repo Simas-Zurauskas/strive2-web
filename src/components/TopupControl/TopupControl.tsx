@@ -1,7 +1,7 @@
 'use client';
 
 import { useMutation } from '@tanstack/react-query';
-import { useMemo, useState } from 'react';
+import { useMemo, useRef, useState } from 'react';
 import { startTopup } from '@/api/routes/billing';
 import { Button } from '@/components/Button';
 import { useBillingPlans } from '@/hooks/useBilling';
@@ -35,6 +35,23 @@ export const TopupControl = ({
 
   const [amountStr, setAmountStr] = useState<string>(String(defaultAmount));
   const [customOpen, setCustomOpen] = useState<boolean>(false);
+  // The amount in force before the custom input was opened, so Cancel can put
+  // it back. Without this, Cancel only closed the input and left the abandoned
+  // custom value in `amountStr`: every preset chip read as deselected (none
+  // matches, say, 57) while the CTA still said BUY $57 — the visible selection
+  // and the amount that would actually be charged disagreed, on a payment
+  // surface.
+  const amountBeforeCustom = useRef<string>(String(defaultAmount));
+
+  const openCustom = () => {
+    amountBeforeCustom.current = amountStr;
+    setCustomOpen(true);
+  };
+
+  const cancelCustom = () => {
+    setAmountStr(amountBeforeCustom.current);
+    setCustomOpen(false);
+  };
 
   const parsedAmount = useMemo(() => {
     const n = Number(amountStr);
@@ -171,7 +188,7 @@ export const TopupControl = ({
             {renderInput()}
             <S.CancelButton
               type="button"
-              onClick={() => setCustomOpen(false)}
+              onClick={cancelCustom}
               aria-expanded="true"
               aria-label="Cancel custom amount"
             >
@@ -181,7 +198,7 @@ export const TopupControl = ({
         ) : (
           <S.CustomAmountToggle
             type="button"
-            onClick={() => setCustomOpen(true)}
+            onClick={openCustom}
             aria-expanded="false"
           >
             Or enter a custom amount
@@ -231,7 +248,7 @@ export const TopupControl = ({
           {renderInput()}
           <S.CancelButton
             type="button"
-            onClick={() => setCustomOpen(false)}
+            onClick={cancelCustom}
             aria-expanded="true"
             aria-label="Cancel custom amount"
           >
@@ -241,7 +258,7 @@ export const TopupControl = ({
       ) : (
         <S.CustomAmountToggle
           type="button"
-          onClick={() => setCustomOpen(true)}
+          onClick={openCustom}
           aria-expanded="false"
         >
           Or enter a custom amount

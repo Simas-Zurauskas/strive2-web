@@ -8,6 +8,15 @@ export const Wrap = styled.div<{ $size?: 'sm' | 'md' | 'lg' }>`
   height: ${(p) => (p.$size === 'sm' ? '170px' : p.$size === 'md' ? '200px' : '220px')};
   margin: 0 auto;
   /* Cards are absolute-positioned inside; this just gives them a stage. */
+
+  /* 220px of decoration is the single largest item in the recall empty
+     state's vertical budget, which measured ~834px against a 714px
+     viewport. The card stack still reads at 170px. The ghost cards are
+     absolutely positioned with inset: 0 and lay out with
+     justify-content: space-between, so they reflow without clipping. */
+  ${(p) => p.theme.media.mobile} {
+    height: ${(p) => (p.$size === 'sm' ? '150px' : '170px')};
+  }
 `;
 
 /** Each ghost card sits in the same stack origin; transforms below offset

@@ -2,6 +2,7 @@
 
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { useRouter } from 'next/navigation';
+import { useSession } from 'next-auth/react';
 import { useEffect, useState } from 'react';
 import { toast } from 'sonner';
 import {
@@ -17,7 +18,11 @@ import { useBillingPlans, useBillingSummary } from '@/hooks/useBilling';
 import { formatAllowance } from '@/lib/allowance';
 import { analytics } from '@/lib/analytics';
 import { formatDate } from '@/lib/formatDate';
-import { formatPlanLessonsPerMonth, BASE_LESSON_FOOTNOTE } from '@/lib/pricingFormat';
+import {
+  formatPlanLessonsPerMonth,
+  formatOnboardingGrantLessons,
+  BASE_LESSON_FOOTNOTE,
+} from '@/lib/pricingFormat';
 import { QKeys } from '@/types';
 import * as S from './PricingScreen.styles';
 import type { BillingCadence, BillingPlan, ClientApiError, PlanKey } from '@/api/types';
@@ -91,11 +96,21 @@ export const PricingScreen: React.FC = () => {
   const router = useRouter();
   const queryClient = useQueryClient();
   const { user, isLoading: isAuthLoading } = useAuth();
+  const { status: sessionStatus } = useSession();
   const { data: summary } = useBillingSummary();
   const { data: catalog, isLoading: isCatalogLoading } = useBillingPlans();
   const [cadence, setCadence] = useState<BillingCadence>('monthly');
 
   const isAuthenticated = Boolean(user);
+  // Authoritative SIGNED-OUT signal, deliberately not `!isAuthenticated`.
+  // `isAuthenticated` is derived from the `getMe` query, so its negation is
+  // true in two states that are not "signed out": the window before `getMe`
+  // resolves, and — persistently — whenever `getMe` errors. Either would put
+  // the one-time-grant line in front of a signed-in or paying viewer, which
+  // is the bug this guard exists to prevent. `useSession().status` is a
+  // positive tri-state and only reads 'unauthenticated' when there is
+  // genuinely no session.
+  const isSignedOut = sessionStatus === 'unauthenticated';
   const currentPlan = summary?.plan;
 
   useEffect(() => {
@@ -393,7 +408,28 @@ export const PricingScreen: React.FC = () => {
                     {isFree ? 'Baseline usage / month' : 'Baseline usage'}
                   </S.AllowanceUnit>
                   <S.AllowanceGuidance>
-                    {formatPlanLessonsPerMonth(plan.key, catalog)} — {ALLOWANCE_TAGLINE[plan.key]}
+                    {/* The signup grant is a one-time thing that fires at
+                        account creation only (`resolveSignupAllowance`), so
+                        this line is gated on POSITIVELY being signed out —
+                        not merely on the card being Free, and not on
+                        `!isAuthenticated` (see `isSignedOut` above). A
+                        signed-in free user is already past the grant and is on
+                        the 200cr steady state; a paid user looking at Free as a
+                        downgrade would otherwise read it as "downgrading gets
+                        me 5 free lessons", which is not true — a plan change
+                        never re-runs the grant. Both see the honest recurring
+                        rate instead, as does anyone whose session is still
+                        resolving. */}
+                    {isFree && isSignedOut ? (
+                      <>
+                        Your first course: <strong>{formatOnboardingGrantLessons(catalog)}</strong> free,
+                        then {formatPlanLessonsPerMonth(plan.key, catalog)}
+                      </>
+                    ) : (
+                      <>
+                        {formatPlanLessonsPerMonth(plan.key, catalog)} — {ALLOWANCE_TAGLINE[plan.key]}
+                      </>
+                    )}
                   </S.AllowanceGuidance>
                 </S.AllowanceBlock>
 
@@ -428,7 +464,9 @@ export const PricingScreen: React.FC = () => {
               Your monthly allowance translates roughly to <strong>lessons generated</strong>.
               {catalog ? (
                 <>
-                  {' '}Free covers about <strong>{formatPlanLessonsPerMonth('free', catalog).replace(/^≈\s?/, '').replace(' / month', '')}</strong>
+                  {' '}A new Free account starts with <strong>{formatOnboardingGrantLessons(catalog)}</strong>
+                  {' '}— enough for a course structure and a complete first module — and then covers
+                  about <strong>{formatPlanLessonsPerMonth('free', catalog).replace(/^≈\s?/, '').replace(' / month', '')}</strong>
                   {' '}per month, plus the cheap one-off steps (clarify, structure, module quizzes).
                   Starter scales that <strong>{catalog.allowance.multipliers.starter}×</strong> — a full short
                   course or two each month. Pro is <strong>{catalog.allowance.multipliers.pro}×</strong> —

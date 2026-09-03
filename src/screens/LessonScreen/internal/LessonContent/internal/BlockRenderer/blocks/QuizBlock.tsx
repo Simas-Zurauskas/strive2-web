@@ -13,11 +13,18 @@ const OPTION_LETTERS = ['A', 'B', 'C', 'D'];
 
 export const QuizBlock = ({
   blockId,
+  content,
   metadata,
   savedResponse,
   onAnswer,
 }: {
   blockId: string;
+  /**
+   * Raw block text. Normally redundant with `metadata` — but when the
+   * generator emits a quiz as prose instead of structured metadata, this is
+   * the ONLY place the questions survive. See the fallback below.
+   */
+  content?: string;
   metadata: Record<string, unknown> | null;
   savedResponse?: QuizResponse;
   onAnswer?: (response: { blockId: string; selectedOption: number; correct: boolean }) => void;
@@ -27,10 +34,45 @@ export const QuizBlock = ({
   const prefersReducedMotion = useReducedMotion() ?? false;
 
   // Parse + validate metadata at the boundary. Malformed or empty shapes
-  // (LLM drift, legacy lessons) render no quiz instead of a half-broken
-  // one — the runtime guard catches issues the type-only cast missed.
+  // (LLM drift, legacy lessons) get the prose fallback below rather than the
+  // interactive widget — the runtime guard catches issues the type-only cast
+  // missed.
   const parsed = parseQuizMetadata(metadata);
-  if (!parsed) return null;
+
+  // Prose fallback. Between 2026-08-01 and 2026-09-02 the generator emitted a
+  // meaningful share of quizzes as MARKDOWN IN `content` with `metadata: null`
+  // (a schema hole plus a shape-blind retry floor — fixed generator-side).
+  // These are not fragments: the stored blocks are complete multi-question
+  // quizzes, ~1.8KB each, headings and options and all. Returning null threw
+  // every one of them away — 32 blocks across 16 lessons in production, 26 of
+  // them belonging to a single paying subscriber.
+  //
+  // So render the text. It is non-interactive and it usually prints its own
+  // answers further down, which reads as a worked example. That is strictly
+  // better than a blank space, and it is why these are NOT parsed back into
+  // metadata: doing so would surface a quiz with its answer already visible.
+  if (!parsed) {
+    const prose = content?.trim();
+    if (!prose) return null;
+    return (
+      <S.QuizContainer data-quiz-fallback="prose">
+        <S.QuizHeader>
+          <S.QuizHeaderIcon>
+            <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeLinecap="round" strokeLinejoin="round">
+              <circle cx="8" cy="8" r="6" />
+              <path d="M6 6.5a2 2 0 0 1 3.5 1.3c0 1.2-2 1.7-2 1.7" />
+              <circle cx="8" cy="12" r="0.5" fill="currentColor" stroke="none" />
+            </svg>
+          </S.QuizHeaderIcon>
+          <S.QuizHeaderLabel>Check your understanding</S.QuizHeaderLabel>
+        </S.QuizHeader>
+        <S.QuizBody>
+          <LessonMarkdown>{prose}</LessonMarkdown>
+        </S.QuizBody>
+      </S.QuizContainer>
+    );
+  }
+
   const { question, options, correctIndex, explanation = '' } = parsed;
 
   const getOptionState = (index: number): QuizOptionState => {

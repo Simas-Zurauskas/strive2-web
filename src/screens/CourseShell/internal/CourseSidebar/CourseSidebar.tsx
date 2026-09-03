@@ -12,7 +12,9 @@ import {
 } from 'lucide-react';
 import { useRouter } from 'next/navigation';
 import { useEffect, useMemo, useRef } from 'react';
+import { toast } from 'sonner';
 import { Badge, LessonIndicator, computeLessonIndicatorState } from '@/components';
+import { TOASTS } from '@/constants/toasts';
 import { plural } from '@/lib/strings';
 import * as S from './CourseSidebar.styles';
 import { useCourseContext } from '../../CourseContext';
@@ -67,6 +69,11 @@ export const CourseSidebar = ({
 }: CourseSidebarProps) => {
   const router = useRouter();
   const activeRef = useRef<HTMLButtonElement>(null);
+  const treeRef = useRef<HTMLDivElement>(null);
+  const sectionRefs = useRef(new Map<number, HTMLDivElement>());
+  // Set by the module header's click handler when a toggle OPENS a module;
+  // read and cleared by the reveal effect once the lesson rows have committed.
+  const pendingRevealRef = useRef<number | null>(null);
   const { isDesktop, setSidebarOpen } = useCourseContext();
 
   // Tablet/mobile: tapping the course title should both navigate AND
@@ -83,6 +90,54 @@ export const CourseSidebar = ({
   // mount). One frame of "all collapsed" is far less jarring than the
   // legacy "all expanded → collapse to one" flash.
   const expandedModules = expandedModulesProp ?? new Set<number>();
+
+  const handleToggleModule = (mi: number) => {
+    // Only an OPENING toggle needs a reveal — collapsing shrinks the tree and
+    // can only bring more of it into view.
+    pendingRevealRef.current = expandedModules.has(mi) ? null : mi;
+    onToggleModule(mi);
+  };
+
+  // Bring a just-expanded module into view inside the tree's OWN scroller.
+  // Without this, expanding the last module of a long course is invisible:
+  // measured at 375x667, tapping module 10 of 10 rendered 7 rows at y 659-998
+  // against a visible band of 117-667 — 0 of them on screen — while scrollTop
+  // stayed at 606 and only scrollHeight moved (1011 -> 1402). The user sees
+  // literally nothing happen.
+  //
+  // Deliberately `tree.scrollBy` rather than `section.scrollIntoView`:
+  // scrollIntoView walks every scrollable ancestor and would also move the
+  // page behind the drawer. Deliberately anchored on the SECTION rather than
+  // the lesson list, so a module taller than the tree puts its header at the
+  // top edge instead of scrolling the header away.
+  useEffect(() => {
+    const mi = pendingRevealRef.current;
+    if (mi === null) return;
+    pendingRevealRef.current = null;
+    const tree = treeRef.current;
+    const section = sectionRefs.current.get(mi);
+    if (!tree || !section) return;
+
+    const treeRect = tree.getBoundingClientRect();
+    const sectionRect = section.getBoundingClientRect();
+    // Taller than the window we have, or hanging off the top: pin the header
+    // to the top edge. Otherwise lift it just enough to show the whole module.
+    const delta =
+      sectionRect.height > treeRect.height || sectionRect.top < treeRect.top
+        ? sectionRect.top - treeRect.top
+        : Math.max(0, sectionRect.bottom - treeRect.bottom);
+    if (Math.abs(delta) < 1) return;
+
+    const prefersReducedMotion =
+      typeof window.matchMedia === 'function' &&
+      window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+    tree.scrollBy({ top: delta, behavior: prefersReducedMotion ? 'auto' : 'smooth' });
+    // Deliberately no dependency array: this must run on the commit that
+    // paints the newly expanded lesson rows, and `expandedModules` is rebuilt
+    // every render anyway (`expandedModulesProp ?? new Set()`), so a dep list
+    // would not reduce how often it runs. The ref guard above makes every
+    // other invocation a no-op.
+  });
 
   // Scroll active lesson into view on mount
   useEffect(() => {
@@ -145,9 +200,14 @@ export const CourseSidebar = ({
     return map;
   }, [progressData]);
 
-  const isModuleComplete = (mi: number) => {
+  // Quiz gate. Kept identical to CourseOverviewScreen's, which documents
+  // why: the all-lessons-complete gate meant production data showed no
+  // quiz was EVER generated, so the rule is two completed lessons (or the
+  // only lesson in a one-lesson module). Divergent gates here also made
+  // any "how do I unlock this" copy untrue on one surface or the other.
+  const isQuizUnlocked = (mi: number) => {
     const mp = getModuleProgress(mi);
-    return mp.completed === mp.total && mp.total > 0;
+    return mp.total > 0 && mp.completed >= Math.min(2, mp.total);
   };
 
   const depthLabel = courseDepth?.replace('_', ' ');
@@ -192,7 +252,7 @@ export const CourseSidebar = ({
         </S.CollapseButton>
       </S.Header>
 
-      <S.Tree>
+      <S.Tree ref={treeRef}>
         {modules.map((mod, mi) => {
           const expanded = expandedModules.has(mi);
           const lessons = mod.lessons ?? [];
@@ -204,7 +264,7 @@ export const CourseSidebar = ({
           // (unattempted-but-unlocked, or review-due) — `mastered`/`passed`
           // need no nudge, `locked` is implied by the closed module.
           const qpForHeader = quizProgressMap.get(mi);
-          const quizUnlocked = isModuleComplete(mi);
+          const quizUnlocked = isQuizUnlocked(mi);
           const headerQuizVariant: QuizIconVariant | null = !expanded && quizUnlocked
             ? (qpForHeader?.bestTier === 'needs_review' || qpForHeader?.reviewDue
                 ? 'needs_review'
@@ -215,10 +275,16 @@ export const CourseSidebar = ({
           const HeaderQuizIcon = headerQuizVariant ? quizIconFor[headerQuizVariant] : null;
 
           return (
-            <S.ModuleSection key={mi}>
+            <S.ModuleSection
+              key={mi}
+              ref={(node) => {
+                if (node) sectionRefs.current.set(mi, node);
+                else sectionRefs.current.delete(mi);
+              }}
+            >
               <S.ModuleHeader
                 $expanded={expanded}
-                onClick={() => onToggleModule(mi)}
+                onClick={() => handleToggleModule(mi)}
                 aria-expanded={expanded}
                 aria-controls={lessonListId}
               >
@@ -277,7 +343,7 @@ export const CourseSidebar = ({
                   })}
 
                   {(() => {
-                    const locked = !isModuleComplete(mi);
+                    const locked = !quizUnlocked;
                     const qp = quizProgressMap.get(mi);
                     const variant: QuizIconVariant = locked
                       ? 'locked'
@@ -286,17 +352,30 @@ export const CourseSidebar = ({
 
                     return (
                       <S.QuizItem
+                        type="button"
                         $locked={locked}
+                        /* See CourseOverviewScreen's QuizRow — same defect,
+                           same treatment. Painted disabled but disabled=false
+                           and aria-disabled=null, and a tap did nothing at
+                           all. Keep the row focusable and let it say why. */
+                        aria-disabled={locked}
                         onClick={() => {
-                          if (!locked) {
-                            router.push(`${courseBasePath}/quiz/${mi}${qp?.reviewDue ? '?review=true' : ''}`);
+                          if (locked) {
+                            toast(
+                              lessons.length === 1
+                                ? TOASTS.QUIZ_LOCKED_SINGLE_LESSON
+                                : TOASTS.QUIZ_LOCKED,
+                            );
+                            return;
                           }
+                          router.push(`${courseBasePath}/quiz/${mi}${qp?.reviewDue ? '?review=true' : ''}`);
                         }}
                       >
                         <S.QuizIconCircle $variant={variant}>
                           <QuizIcon size={12} strokeWidth={2} />
                         </S.QuizIconCircle>
                         <S.LessonName>Module Quiz</S.LessonName>
+                        {locked && <S.LockedBadge>Locked</S.LockedBadge>}
                         {qp?.reviewDue && <S.ReviewDueBadge>Review due</S.ReviewDueBadge>}
                         {qp?.bestTier && (
                           <S.QuizBadge $tier={qp.bestTier}>{qp.bestScore}%</S.QuizBadge>

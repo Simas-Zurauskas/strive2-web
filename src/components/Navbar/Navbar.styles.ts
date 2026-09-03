@@ -11,7 +11,8 @@ import { thinScrollbar, touchHitArea } from '@/theme';
 // navbar, no seam, no timing drift.
 //
 // On hide-on-scroll, the entire Nav translates UP by exactly the height
-// of the NavRow (56px), not the full element height. That tucks the
+// of the NavRow (56px plus the status-bar inset), not the full element
+// height. That tucks the
 // nav row off-screen while leaving the extension slot visible at the
 // top of the viewport — i.e. the lesson bar stays put, the app
 // navigation slides away.
@@ -32,7 +33,14 @@ export const Nav = styled.nav<{ $hidden?: boolean; $scrolled?: boolean }>`
     ${(p) =>
       p.$hidden ? 'transparent' : p.$scrolled ? p.theme.colors.surfaceBorder : 'transparent'};
   z-index: 50;
-  transform: translateY(${(p) => (p.$hidden ? '-56px' : '0px')});
+  /* Hide-on-scroll tucks the nav ROW away and leaves the extension slot
+     (CourseShell's lesson bar) at the top of the viewport — so the shift is
+     the row's full height, which now includes the status-bar inset. A flat
+     -56px would leave the row's content sitting inside the safe area
+     instead of hidden: with a 59px inset the logo and buttons would land at
+     y 3-59, i.e. under the status bar. useHideOnScroll measures the same
+     distance from the row element so --navbar-offset stays in agreement. */
+  transform: translateY(${(p) => (p.$hidden ? 'calc(-56px - var(--safe-area-top))' : '0px')});
   transition:
     transform 0.3s ease,
     background 0.2s,
@@ -63,17 +71,27 @@ export const Nav = styled.nav<{ $hidden?: boolean; $scrolled?: boolean }>`
 // small-tablet (≤640) to 0.75rem — so the wordmark, the lesson bar's
 // hamburger, and any page hero image all line up on the same x.
 export const NavRow = styled.div`
-  height: 56px;
+  /* 56px of chrome PLUS the status-bar inset. box-sizing: border-box is
+     global, so the inset has to be added to the height explicitly or the
+     padding would eat into the 56px row instead of extending it.
+     env(safe-area-inset-top) is 0 in portrait Safari and on desktop, so
+     this is byte-for-byte the old 56px there; it only grows in
+     standalone/PWA, where the row would otherwise render underneath the
+     status bar. --navbar-offset is measured from Nav.offsetHeight at
+     runtime (Navbar.tsx), so every consumer of it follows automatically. */
+  height: calc(56px + var(--safe-area-top));
   display: flex;
   align-items: center;
   justify-content: space-between;
   padding: 0 2rem;
   /* Notch / status-bar avoidance on iOS Safari with viewport-fit=cover.
      env() resolves to 0 on devices without a cutout so desktop gutters
-     are unchanged. The padding goes on the *row*, not the fixed <Nav>
-     wrapper, so the row content is pushed inward without growing the
-     row's vertical footprint (the 56px height contract drives
-     --navbar-offset). */
+     are unchanged. The insets go on the *row*, not the fixed <Nav>
+     wrapper, so the translucent fill still runs edge to edge and up behind
+     the status bar while the row's content is pushed clear of it. The
+     vertical inset is paid for by the calc() height above; the horizontal
+     ones are not (auto width absorbs them). */
+  padding-top: var(--safe-area-top);
   padding-left: max(2rem, var(--safe-area-left));
   padding-right: max(2rem, var(--safe-area-right));
 
@@ -395,6 +413,15 @@ export const ThemeSwitch = styled.div`
      lighter and reads in both themes. */
   border: 1px solid ${(p) => p.theme.colors.surfaceBorder};
   background: transparent;
+
+  /* Touch: the two 24px options shared a single boundary column (measured
+     247-271 / 271-295, zero gap), so a thumb aimed at Light landed on Dark.
+     Grow the pill and put a real 4px trough between the options. */
+  ${(p) => p.theme.media.touch} {
+    height: 44px;
+    padding: 4px;
+    gap: 4px;
+  }
 `;
 
 export const ThemeOption = styled.button<{ $active: boolean }>`
@@ -421,6 +448,20 @@ export const ThemeOption = styled.button<{ $active: boolean }>`
   svg {
     width: 14px;
     height: 14px;
+  }
+
+  /* 36x36 with the 4px trough above clears WCAG 2.2 SC 2.5.8 (24x24 plus
+     spacing) with margin, and keeps the pill at 86px wide rather than the
+     100px a strict 44x44 pair would need — the drawer row has 251px of
+     content box at a 320px viewport and the "Theme" label eats ~50px. */
+  ${(p) => p.theme.media.touch} {
+    width: 36px;
+    height: 36px;
+
+    svg {
+      width: 16px;
+      height: 16px;
+    }
   }
 `;
 

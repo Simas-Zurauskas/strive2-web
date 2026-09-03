@@ -5,7 +5,7 @@ topic: how-strive-teaches
 summary: Strive extracts atomic ideas from each lesson into small retrieval-practice cards and resurfaces them on a Leitner schedule. Here's why and how.
 tags: [spaced-review, retrieval-practice, leitner, mastery]
 order: 10
-updated: 2026-05-02
+updated: '2026-05-02'
 related: [why-retrieval-practice-works, how-mastery-is-measured]
 ---
 

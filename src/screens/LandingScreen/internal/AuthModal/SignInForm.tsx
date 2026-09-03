@@ -4,7 +4,7 @@ import { useMutation } from '@tanstack/react-query';
 import { Formik } from 'formik';
 import Link from 'next/link';
 import { signIn } from 'next-auth/react';
-import { useState } from 'react';
+import { useRef, useState } from 'react';
 import { toast } from 'sonner';
 import { resendVerification } from '@/api/routes/auth';
 import {
@@ -18,6 +18,7 @@ import {
   GoogleIcon,
   Input,
 } from '@/components';
+import { AuthSubmitRow, ScrollToFirstError } from '@/components/AuthForm';
 import { TOASTS } from '@/constants/toasts';
 import { safeRedirect } from '@/lib/safeRedirect';
 import { signInSchema, SignInValues } from '@/validation';
@@ -32,6 +33,9 @@ const initialValues: SignInValues = { email: '', password: '' };
 export const SignInForm = ({ redirect, onSwitchMode }: SignInFormProps) => {
   const [apiError, setApiError] = useState('');
   const [showResend, setShowResend] = useState(false);
+  // Handed to ScrollToFirstError so it can find the first error node after a
+  // failed submit. See that component for the measured reason.
+  const formRef = useRef<HTMLFormElement>(null);
   const [lastCredentials, setLastCredentials] = useState<SignInValues | null>(null);
 
   const resendMutation = useMutation({
@@ -111,7 +115,8 @@ export const SignInForm = ({ redirect, onSwitchMode }: SignInFormProps) => {
           return undefined;
         };
         return (
-        <AuthForm onSubmit={handleSubmit}>
+        <AuthForm ref={formRef} onSubmit={handleSubmit}>
+          <ScrollToFirstError formRef={formRef} submitCount={submitCount} />
           <GoogleBtn type="button" onClick={handleGoogle} data-analytics-id="landing.modal.google">
             <GoogleIcon />
             Continue with Google
@@ -154,15 +159,17 @@ export const SignInForm = ({ redirect, onSwitchMode }: SignInFormProps) => {
             </GoogleBtn>
           )}
 
-          <AuthSubmitBtn
-            type="submit"
-            $loading={isSubmitting}
-            disabled={isSubmitting}
-            aria-busy={isSubmitting}
-            data-analytics-id="landing.modal.submit.signin"
-          >
-            {isSubmitting ? 'Signing in...' : 'Sign in'}
-          </AuthSubmitBtn>
+          <AuthSubmitRow>
+            <AuthSubmitBtn
+              type="submit"
+              $loading={isSubmitting}
+              disabled={isSubmitting}
+              aria-busy={isSubmitting}
+              data-analytics-id="landing.modal.submit.signin"
+            >
+              {isSubmitting ? 'Signing in...' : 'Sign in'}
+            </AuthSubmitBtn>
+          </AuthSubmitRow>
 
           <AuthFormFooter>
             Don&apos;t have an account?{' '}

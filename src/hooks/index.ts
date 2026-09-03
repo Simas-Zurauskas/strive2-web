@@ -35,5 +35,8 @@ export { useConceptViewed, markConceptViewed } from './useConceptViewed';
 export { useReadQuartiles } from './useReadQuartiles';
 export { useDialog } from './useDialog';
 export { useScrollLock } from './useScrollLock';
+export { useScrollToTopOnStep } from './useScrollToTopOnStep';
+export { useVisualViewport, useKeyboardInset } from './useVisualViewport';
+export type { VisualViewportState } from './useVisualViewport';
 export { useCourseNextAction } from './useCourseNextAction';
 export type { CourseNextAction, CourseNextActionKind } from './useCourseNextAction';

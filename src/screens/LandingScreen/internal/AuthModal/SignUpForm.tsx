@@ -3,7 +3,7 @@
 import { Formik } from 'formik';
 import { useRouter } from 'next/navigation';
 import { signIn } from 'next-auth/react';
-import { useState } from 'react';
+import { useRef, useState } from 'react';
 import { toast } from 'sonner';
 import {
   AuthDivider,
@@ -18,6 +18,7 @@ import {
   Input,
   PasswordRequirements,
 } from '@/components';
+import { AuthSubmitRow, ScrollToFirstError } from '@/components/AuthForm';
 import { analytics } from '@/lib/analytics';
 import { safeRedirect } from '@/lib/safeRedirect';
 import { signUpSchema, SignUpValues } from '@/validation';
@@ -43,6 +44,9 @@ export const SignUpForm = ({ redirect, onSwitchMode }: SignUpFormProps) => {
   // the field clears + blurs — avoids the rules suddenly disappearing
   // mid-typing if focus shifts between renders.
   const [pwFocused, setPwFocused] = useState(false);
+  // Handed to ScrollToFirstError so it can find the first error node after a
+  // failed submit. See that component for the measured reason.
+  const formRef = useRef<HTMLFormElement>(null);
 
   const handleSignUp = async (values: SignUpValues) => {
     setApiError('');
@@ -113,7 +117,8 @@ export const SignUpForm = ({ redirect, onSwitchMode }: SignUpFormProps) => {
         const rulesOpen =
           pwFocused || (values.password.length > 0 && !!errors.password);
         return (
-        <AuthForm onSubmit={handleSubmit}>
+        <AuthForm ref={formRef} onSubmit={handleSubmit}>
+          <ScrollToFirstError formRef={formRef} submitCount={submitCount} />
           <GoogleBtn type="button" onClick={handleGoogle} data-analytics-id="landing.modal.google">
             <GoogleIcon />
             Continue with Google
@@ -181,15 +186,17 @@ export const SignUpForm = ({ redirect, onSwitchMode }: SignUpFormProps) => {
 
           {apiError && <AuthFormError role="alert">{apiError}</AuthFormError>}
 
-          <AuthSubmitBtn
-            type="submit"
-            $loading={isSubmitting}
-            disabled={isSubmitting}
-            aria-busy={isSubmitting}
-            data-analytics-id="landing.modal.submit.signup"
-          >
-            {isSubmitting ? 'Creating account...' : 'Sign up'}
-          </AuthSubmitBtn>
+          <AuthSubmitRow>
+            <AuthSubmitBtn
+              type="submit"
+              $loading={isSubmitting}
+              disabled={isSubmitting}
+              aria-busy={isSubmitting}
+              data-analytics-id="landing.modal.submit.signup"
+            >
+              {isSubmitting ? 'Creating account...' : 'Sign up'}
+            </AuthSubmitBtn>
+          </AuthSubmitRow>
 
           <AuthFormFooter>
             Already have an account?{' '}

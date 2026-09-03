@@ -1,6 +1,7 @@
 'use client';
 
 import styled from 'styled-components';
+import { touchMinHeightCentered } from '@/theme';
 import { MEASURE } from '../_system/section';
 
 export const Bar = styled.header<{ $scrolled: boolean }>`
@@ -8,7 +9,11 @@ export const Bar = styled.header<{ $scrolled: boolean }>`
   top: 0;
   z-index: 30;
   width: 100%;
-  height: var(--navbar-offset);
+  /* Status-bar avoidance in standalone/PWA: the app ships viewport-fit=cover
+     and manifest display: standalone, so a hard 56px bar renders under the
+     ~59px status bar there. env() is 0 in a browser tab, so this is inert
+     everywhere the sweep measured. */
+  height: calc(var(--navbar-offset) + var(--safe-area-top));
   display: flex;
   align-items: center;
   justify-content: center;
@@ -27,10 +32,13 @@ export const Bar = styled.header<{ $scrolled: boolean }>`
      bare measure. Before this, the wordmark sat at 192px while section content
      sat at 160px — a 32px misalignment between the page and its own chrome,
      visible the moment you looked for it. */
-  padding: 0 var(--space-8);
+  padding: var(--safe-area-top) var(--space-8) 0;
 
   ${(p) => p.theme.media.tabletLarge} {
-    padding: 0 var(--space-5);
+    /* The inset rides inside the shorthand in BOTH blocks: this one
+       re-declares the padding shorthand, so a padding-top longhand would
+       evaporate above 768px. */
+    padding: var(--safe-area-top) var(--space-5) 0;
   }
 `;
 
@@ -56,6 +64,12 @@ export const Wordmark = styled.a`
      Simas: "v spacing uneven"). Box-centering was already exact; this is
      ink-centering. */
   transform: translateY(2px);
+
+  /* Measured 48x32 on the sweep — the mixin blockifies and re-centres so the
+     grown box and the visible ink still coincide. The optical translateY
+     above survives it (the mixin sets display/align-items/min-block-size
+     only). */
+  ${touchMinHeightCentered}
 
   &:focus-visible {
     outline: 2px solid ${(p) => p.theme.colors.accent};
@@ -90,6 +104,9 @@ export const PricingLink = styled.a`
     outline: 2px solid ${(p) => p.theme.colors.accent};
     outline-offset: 2px;
   }
+
+  /* Measured 38.4px / 33px tall — under the 44px touch minimum. */
+  ${touchMinHeightCentered}
 `;
 
 export const SignInLink = styled.button`
@@ -114,4 +131,7 @@ export const SignInLink = styled.button`
     outline: 2px solid ${(p) => p.theme.colors.accent};
     outline-offset: 2px;
   }
+
+  /* Measured 38.4px / 33px tall — under the 44px touch minimum. */
+  ${touchMinHeightCentered}
 `;

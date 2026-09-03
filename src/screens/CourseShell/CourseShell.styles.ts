@@ -1,6 +1,6 @@
 import { motion } from 'framer-motion';
 import styled, { css } from 'styled-components';
-import { touchMinSize } from '@/theme';
+import { breakpoints, touchMinSize } from '@/theme';
 
 // ── Full-page centered label (loading / not found) ────
 
@@ -62,8 +62,31 @@ export const SidebarPanelFixed = styled(motion.div)`
        header behind the navbar (z:50) and left users with no escape. */
     top: var(--navbar-offset, 56px);
     bottom: 0;
-    width: 100%;
+    /* Leave a strip of backdrop exposed so "tap outside to dismiss"
+       actually has an outside. At width:100% the panel was pixel-identical
+       to its own backdrop ({l:0,t:117,w:375,h:550} for both) and a 5-point
+       scan across the screen returned sidebar content 5/5 times. Mirrors
+       the app drawer's min(320px, 86vw) in Navbar.styles.ts, which
+       exposes 55px at 375. Here: 56px exposed at 375, 48px at 320, and
+       432px in 852-wide landscape. */
+    width: min(85vw, 420px);
     z-index: 40;
+  }
+
+  /* Short viewports (landscape phones). The navbar + lesson bar cost
+     ~105px of --navbar-offset and the sidebar header another ~120px,
+     leaving the lesson tree a 152px window on a 393px-tall viewport —
+     61.4% fixed chrome, 10.5% of a 63-lesson tree visible. Starting at
+     the top of the viewport hands those ~105px straight back.
+     Safe because the panel is only min(85vw, 420px) wide, so it covers
+     the LEFT 420px of the navbar and the nav controls to its right stay
+     tappable; and the user keeps four exits — the exposed backdrop, Esc,
+     the panel's own collapse button, and swipe-to-close. z-index must
+     clear the navbar's 50 (Navbar.styles.ts:34) and stay under the app
+     drawer's 60/61. */
+  @media (max-width: ${breakpoints.desktop}px) and (max-height: 500px) {
+    top: 0;
+    z-index: 52;
   }
 
   /* Home-indicator avoidance. env() is 0 on devices without a cutout, so
@@ -118,7 +141,12 @@ export const ChatPanelFixed = styled(motion.div)`
        collapse/close button in the panel's header isn't hidden behind it. */
     top: var(--navbar-offset, 56px);
     bottom: 0;
-    width: 100%;
+    /* Mirror of SidebarPanelFixed: the chat panel sits over the same
+       backdrop and the same closeOverlays handler, so at width:100% its
+       "tap outside to dismiss" had no outside either — it just was not
+       the panel the sweep measured. Capping it also keeps the two
+       overlays the same width on tablet. */
+    width: min(85vw, 420px);
     z-index: 40;
   }
 

@@ -2,7 +2,7 @@
 
 import { Formik } from 'formik';
 import { ChevronRight, Files } from 'lucide-react';
-import { useRef } from 'react';
+import { useCallback, useEffect, useRef } from 'react';
 import { Button, Eyebrow, HelpAnchor } from '@/components';
 import { goalInputSchema, GoalInputValues } from '@/validation';
 import * as S from './GoalStep.styles';
@@ -29,6 +29,26 @@ const initialValues: GoalInputValues = { goal: '' };
 
 export const GoalStep = ({ initialGoal, hasExistingData, loading, error, showDocumentsEntry = false, onSubmit }: GoalStepProps) => {
   const lastGeneratedGoal = useRef(initialGoal);
+
+  // Auto-grow — see the comment on S.StyledTextarea. Held outside the Formik
+  // render prop (hooks cannot live inside it); the ref plus an onChange call is
+  // enough for typing, and the effect covers the prefilled mount and
+  // `enableReinitialize` swapping a goal in without a remount. Resize matters
+  // because the wrap point moves with the column width — and, on iOS, when the
+  // keyboard opens. `+ offsetHeight - clientHeight` re-adds the 1px
+  // border-bottom that scrollHeight omits under the global `border-box`.
+  const goalRef = useRef<HTMLTextAreaElement | null>(null);
+  const autoGrow = useCallback(() => {
+    const el = goalRef.current;
+    if (!el) return;
+    el.style.height = 'auto';
+    el.style.height = `${el.scrollHeight + el.offsetHeight - el.clientHeight}px`;
+  }, []);
+  useEffect(() => {
+    autoGrow();
+    window.addEventListener('resize', autoGrow);
+    return () => window.removeEventListener('resize', autoGrow);
+  }, [autoGrow, initialGoal]);
 
   return (
     <S.Container>
@@ -64,11 +84,20 @@ export const GoalStep = ({ initialGoal, hasExistingData, loading, error, showDoc
                 <S.InputGroup>
                   <S.StyledTextarea
                     name="goal"
+                    // Block body on purpose: React 19 treats a value returned
+                    // from a ref callback as a cleanup function, so an implicit
+                    // return would be a type error under `yarn build`.
+                    ref={(el) => {
+                      goalRef.current = el;
+                    }}
                     placeholder="e.g. Learn Python for data science, Understand machine learning fundamentals, Master watercolor painting..."
                     value={values.goal}
                     rows={2}
                     maxLength={GOAL_MAX_LENGTH}
-                    onChange={handleChange}
+                    onChange={(e) => {
+                      handleChange(e);
+                      autoGrow();
+                    }}
                     onBlur={handleBlur}
                     autoFocus
                   />

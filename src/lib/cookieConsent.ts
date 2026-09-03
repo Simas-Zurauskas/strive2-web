@@ -21,6 +21,11 @@ import { NEXT_PUBLIC_API_URL } from '@/conf/env';
 const CONSENT_KEY = 'strive:cookie-consent';
 const ANON_ID_KEY = 'strive:anonymous-id';
 const CHANGE_EVENT = 'strive:cookie-consent-changed';
+// The POLICY_VERSION the stored choice was made under. Kept in a second
+// key rather than folded into CONSENT_KEY's value so every already-stored
+// choice stays readable by the old parser (and by analytics.ts, which
+// only ever goes through getConsent()).
+const CONSENT_VERSION_KEY = 'strive:cookie-consent-version';
 
 // Bumped manually whenever the cookie-consent UX or the policy text it
 // references changes substantively. Persisted with each consent record so
@@ -57,7 +62,27 @@ export const getConsent = (): ConsentValue | null => {
   if (typeof window === 'undefined') return null;
   try {
     const raw = window.localStorage.getItem(CONSENT_KEY);
-    return raw === 'all' || raw === 'essential' ? raw : null;
+    if (raw !== 'all' && raw !== 'essential') return null;
+    const storedVersion = window.localStorage.getItem(CONSENT_VERSION_KEY);
+    if (storedVersion === null) {
+      // Migration: records written before the version key existed. Adopt
+      // them under the current policy rather than re-prompting the entire
+      // installed base on the deploy that ships this change; enforcement
+      // starts at the next POLICY_VERSION bump.
+      try {
+        window.localStorage.setItem(CONSENT_VERSION_KEY, POLICY_VERSION);
+      } catch {
+        /* private mode — the grandfather just doesn't stick */
+      }
+      return raw;
+    }
+    // Consent given under an older policy is no longer a valid basis for
+    // processing — the information the user agreed to has changed. Report
+    // it as "no choice yet" so the banner re-prompts on the next bump.
+    // Before this key existed, bumping POLICY_VERSION could not re-prompt
+    // anyone: it was written into the server audit row and nowhere else.
+    if (storedVersion !== POLICY_VERSION) return null;
+    return raw;
   } catch {
     return null;
   }
@@ -97,6 +122,7 @@ export const setConsent = (value: ConsentValue): void => {
   if (typeof window === 'undefined') return;
   try {
     window.localStorage.setItem(CONSENT_KEY, value);
+    window.localStorage.setItem(CONSENT_VERSION_KEY, POLICY_VERSION);
   } catch {
     /* private mode etc. — fall through; consent is in-memory for this tab */
   }
@@ -117,6 +143,7 @@ export const clearConsent = (): void => {
   if (typeof window === 'undefined') return;
   try {
     window.localStorage.removeItem(CONSENT_KEY);
+    window.localStorage.removeItem(CONSENT_VERSION_KEY);
   } catch {
     /* same — we only get best-effort under private mode */
   }
@@ -151,8 +178,11 @@ export const subscribeConsent = (cb: (value: ConsentValue | null) => void): (() 
   if (typeof window === 'undefined') return () => undefined;
   const onCustom = (e: Event) => cb((e as CustomEvent<ConsentValue>).detail);
   const onStorage = (e: StorageEvent) => {
-    if (e.key !== CONSENT_KEY) return;
-    cb(e.newValue === 'all' || e.newValue === 'essential' ? e.newValue : null);
+    // `key === null` is a localStorage.clear() from another tab.
+    if (e.key !== null && e.key !== CONSENT_KEY && e.key !== CONSENT_VERSION_KEY) return;
+    // Re-read rather than trusting newValue — the answer now depends on
+    // two keys, and only one of them fires per event.
+    cb(getConsent());
   };
   window.addEventListener(CHANGE_EVENT, onCustom);
   window.addEventListener('storage', onStorage);

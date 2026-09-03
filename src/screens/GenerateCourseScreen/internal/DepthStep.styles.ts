@@ -50,10 +50,36 @@ export const Actions = styled.div`
   position: sticky;
   bottom: 0;
   background: ${(p) => p.theme.colors.background};
-  padding: 0.5rem 1rem 1.25rem;
+  /* 1.25rem of breathing room, or the home-indicator inset when that is larger.
+     env() is 0 in portrait Safari so this is a no-op there; it pays off in
+     landscape and standalone/PWA, where the bar would otherwise sit on top of
+     the home indicator. Same pattern as StructureStep and CookieBanner. */
+  padding: 0.5rem 1rem max(1.25rem, var(--safe-area-bottom));
   margin: 0 -1rem;
   z-index: 2;
   box-shadow: 0 -8px 16px ${(p) => p.theme.colors.background};
+
+  /* At 320px this row needs 89 + 16 + 221 = 326px inside a 288px content box.
+     Button is 'white-space: nowrap' with a fixed 0.75rem/1.75rem padding, so
+     neither child can shrink and "Generate Structure" was clipped 26px past the
+     viewport with no horizontal scroll to recover it (html/body are
+     'overflow-x: clip'). Trimming the side padding gives 61 + 193 + 10 = 264px,
+     which fits with 24px of slack; 'flex-wrap: wrap' is the backstop so a longer
+     future label drops to its own full-width line instead of clipping again.
+     Do NOT add 'min-width: 0' here — the items must keep their content-based
+     minimum, or they shrink and clip their own nowrap label instead of wrapping.
+     No 'padding' shorthand in this block, deliberately: it would reset the
+     safe-area padding-bottom above. */
+  ${(p) => p.theme.media.mobile} {
+    flex-wrap: wrap;
+    gap: 0.625rem;
+
+    > button {
+      flex: 1 1 auto;
+      padding-left: 0.875rem;
+      padding-right: 0.875rem;
+    }
+  }
 `;
 
 // ── Recommendation bar ──────────────────────────────────

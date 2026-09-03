@@ -1,5 +1,6 @@
 import Link from 'next/link';
 import styled, { css } from 'styled-components';
+import { touchMinHeightCentered } from '@/theme';
 
 // ── Layout ────────────────────────────────────────────
 
@@ -217,6 +218,17 @@ export const ArticleCardLink = styled(Link)`
       color: ${(p) => p.theme.colors.accent};
     }
   }
+
+  /* The bleed has to equal the page gutter or the row stops short of the
+     screen edge. Layout above is padding 4rem 2rem on desktop and
+     2.5rem 1.25rem at tablet-and-below, so the flat -1rem bleed landed
+     exactly 4px inside the edge on phones. Match the tablet gutter here.
+     Inline axis only — the 1.25rem block padding and the :first-child
+     top hairline are untouched. */
+  ${(p) => p.theme.media.tablet} {
+    padding-inline: 1.25rem;
+    margin-inline: -1.25rem;
+  }
 `;
 
 export const ArticleCardTitle = styled.h3`
@@ -259,6 +271,12 @@ export const BreadcrumbLink = styled(Link)`
       color: ${(p) => p.theme.colors.foreground};
     }
   }
+
+  /* Measured 21px tall on touch. Breadcrumbs are standalone navigation, not
+     prose, so WCAG 2.2 SC 2.5.8's "link in a sentence" exception does not
+     cover them. The mixin blockifies to inline-flex so min-block-size can
+     bind and keeps the label optically level with the middle-dot dividers. */
+  ${touchMinHeightCentered}
 `;
 
 /** Editorial middle-dot separator instead of slash. */
@@ -437,6 +455,27 @@ export const ArticleBody = styled.div`
     border-collapse: collapse;
     margin: 1.25rem 0;
     font-size: 0.9375rem;
+  }
+
+  /* GFM tables, narrow viewports only. html and body are overflow-x: clip, which
+     (GlobalStyles.tsx) hard-clips WITHOUT creating a scroll container, so a
+     table wider than a 320px phone is permanently unreachable — the GDPR
+     "Legal basis" column measured 80.3px past the edge with NO scrollable
+     ancestor. react-markdown emits a bare <table> with nothing to hang a
+     scroller on, and overflow is ignored on a display:table box, so the
+     table itself has to become the scroller. Gated at media.tablet because
+     display:block shrink-to-fits the table: above 640px the column is wide
+     enough that keeping display:table preserves the full-width row rules. */
+  ${(p) => p.theme.media.tablet} {
+    table {
+      display: block;
+      max-width: 100%;
+      overflow-x: auto;
+      /* Stop a horizontal swipe at the scroller's edge from chaining to the
+         browser's back-gesture. */
+      overscroll-behavior-x: contain;
+      -webkit-overflow-scrolling: touch;
+    }
   }
 
   th,

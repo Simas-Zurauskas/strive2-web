@@ -7,6 +7,7 @@ import {
   type BlogCategory,
   type BlogPost,
 } from '@/lib/blog';
+import { formatContentDate } from '@/lib/formatDate';
 import * as S from './BlogScreen.styles';
 
 interface BlogHubScreenProps {
@@ -14,12 +15,6 @@ interface BlogHubScreenProps {
   featured?: BlogPost;
   activeCategory?: BlogCategory;
 }
-
-const formatDate = (iso: string): string => {
-  const d = new Date(iso);
-  if (Number.isNaN(d.getTime())) return iso;
-  return d.toLocaleDateString(undefined, { year: 'numeric', month: 'short', day: 'numeric' });
-};
 
 export const BlogHubScreen = ({ posts, featured, activeCategory }: BlogHubScreenProps) => {
   const visiblePosts = activeCategory
@@ -61,7 +56,7 @@ export const BlogHubScreen = ({ posts, featured, activeCategory }: BlogHubScreen
             <S.FeaturedTitle>{featured.title}</S.FeaturedTitle>
             <S.FeaturedSummary>{featured.summary}</S.FeaturedSummary>
             <S.FeaturedMeta>
-              {formatDate(featured.published)} · {featured.readTimeMinutes} min read
+              {formatContentDate(featured.published, 'short')} · {featured.readTimeMinutes} min read
             </S.FeaturedMeta>
           </S.FeaturedLink>
         </S.FeaturedSection>
@@ -80,7 +75,7 @@ export const BlogHubScreen = ({ posts, featured, activeCategory }: BlogHubScreen
               <S.PostCardTitle>{post.title}</S.PostCardTitle>
               <S.PostCardSummary>{post.summary}</S.PostCardSummary>
               <S.PostCardMeta>
-                <span>{formatDate(post.published)}</span>
+                <span>{formatContentDate(post.published, 'short')}</span>
                 <S.PostCardMetaDot>{post.readTimeMinutes} min read</S.PostCardMetaDot>
               </S.PostCardMeta>
             </S.PostCardLink>

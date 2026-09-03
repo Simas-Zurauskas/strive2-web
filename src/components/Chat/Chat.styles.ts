@@ -19,8 +19,12 @@ const spin = keyframes`
 export const Wrapper = styled.div<{ $scrollSettled: boolean }>`
   height: 100%;
   min-height: 0;
+  /* Grid items default to min-width:auto too — the same overflow trap as the
+     composer, one level up. */
+  min-width: 0;
   display: grid;
   grid-template-rows: 1fr auto;
+  grid-template-columns: minmax(0, 1fr);
 
   /* Hide visually until use-stick-to-bottom has run its initial
      scroll-to-bottom, which is scheduled inside requestAnimationFrame
@@ -42,15 +46,15 @@ export const ScrollArea = styled.div`
   min-height: 0;
 
   /* use-stick-to-bottom renders TWO nested divs: an outer wrapper and
-     an inner ref={scrollRef} that the library sets \`overflow: auto\` on
+     an inner ref={scrollRef} that the library sets \overflow: auto\ on
      at mount. The inner div is the actual scroller, so the scrollbar
-     styling, \`overscroll-behavior: contain\` and \`touch-action: pan-y\`
+     styling, \overscroll-behavior: contain\ and \touch-action: pan-y\
      must land there — not on the outer wrapper.
-     - \`contain\`: hitting the chat's top/bottom chains the wheel scroll
+     - \contain\: hitting the chat's top/bottom chains the wheel scroll
        to the lesson page underneath without this.
-     - \`pan-y\`: lets horizontal swipes propagate to the parent panel
+     - \pan-y\: lets horizontal swipes propagate to the parent panel
        (ChatPanelFixed) so the swipe-to-close drag works even when the
-       touch starts on a chat message. Default \`auto\` makes the browser
+       touch starts on a chat message. Default \auto\ makes the browser
        grab the gesture for native scrolling and the drag never sees it. */
   > div > div {
     ${thinScrollbar}
@@ -217,10 +221,17 @@ export const InputRow = styled.div`
   display: flex;
   gap: 0.5rem;
   align-items: flex-end;
+  min-width: 0;
 `;
 
 export const ChatInput = styled.textarea`
   flex: 1;
+  /* Without this the textarea's intrinsic width becomes the flex floor
+     (flex items default to min-width:auto), so InputRow cannot shrink below
+     it and overflows its panel: measured at 375pt inside the lesson mentor
+     panel, which caps at min(85vw,420px)=318.75px — the circular send control
+     was clipped in half and the right edge was unreachable by any gesture. */
+  min-width: 0;
   resize: none;
   border: 1px solid ${(p) => p.theme.colors.border};
   border-radius: 1rem;

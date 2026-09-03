@@ -5,7 +5,7 @@ topic: plans-and-account
 summary: What Strive stores, what we do with it, and the things we explicitly don't do — like training models on your study data or the documents you upload.
 tags: [privacy, data, account]
 order: 10
-updated: '2026-08-19'
+updated: '2026-09-03'
 related: [understanding-your-allowance, privacy-policy, terms-of-service]
 ---
 
@@ -17,7 +17,7 @@ We take privacy seriously. This page is the friendlier sibling of our [privacy p
 - **Course and learning data.** Your generated courses, lessons you've studied, your notes, your bookmarks, your recall-card review history, and your quiz attempts. This data is stored so that *you* can come back to it.
 - **Documents you upload and links you submit.** If you build a course from your own material, we keep the file itself, the text we pull out of it, that text split into passages, and numeric representations (embeddings) of those passages. Files and fetched page text live in Amazon S3 in the EU; the passages live in our EU database; the embeddings live in Pinecone (United States).
 - **Billing data.** Your subscription tier, allowance balance, ledger entries, and top-up history. Card details themselves are stored by Stripe, our payment processor — Strive never sees or stores your card.
-- **Usage telemetry.** Analytics events about which features are used and how often, so we can improve the product. Worth knowing how this actually works: **analytics run by default and stop only if you turn them off.** On your first visit — before you touch the cookie banner — Google Analytics, Google Ads conversion measurement, Mixpanel, Vercel Web Analytics and Sentry error monitoring are already running. Choosing **essential only** in the banner stops Mixpanel and the Appzi feedback widget outright and tells Google to run cookielessly; Vercel Web Analytics and Sentry keep running either way. Mixpanel receives your name and email address once you are signed in, and Sentry records a replay of the browsing session on roughly one in ten sessions where an error occurs. You can bring the banner back any time with **Cookie preferences** in the site footer. Section 6 of the [privacy policy](/privacy) is the full list.
+- **Usage telemetry.** Analytics events about which features are used and how often, so we can improve the product. Worth knowing how this actually works: **analytics run by default and stop only if you turn them off.** On your first visit — before you touch the cookie banner — Google Analytics, Google Ads conversion measurement, Mixpanel, Vercel Web Analytics and Sentry error monitoring are already running. Choosing **essential only** in the banner stops Mixpanel and the Appzi feedback widget outright and tells Google to run cookielessly; Vercel Web Analytics and Sentry keep running either way. Mixpanel receives your name and email address once you are signed in, and Sentry records a replay of the browsing session on roughly one in ten sessions where an error occurs. You can bring the banner back any time with **Cookie preferences** in the site footer. Your answer is remembered in that browser, next to the version of the privacy policy it was given under — so if we materially change the policy or the banner we ask again rather than assume the old answer still holds, and until you answer the default-on behaviour above applies again. Section 6 of the [privacy policy](/privacy) is the full list.
 
 ## What we don't do with your data
 

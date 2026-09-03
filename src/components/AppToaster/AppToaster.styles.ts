@@ -144,4 +144,40 @@ export const ToasterGlobalStyle = createGlobalStyle`
   [data-sonner-toast][data-styled='true'] [data-icon] .sonner-loader {
     --loader-color: ${(p) => p.theme.colors.accent};
   }
+
+  /* ── Stacking and hit-testing ───────────────── */
+  /*
+     Sonner ships a z-index around 999999 and a full-bleed bottom container on
+     phones. Nothing in this app goes above 101, so a toast sat over the modal
+     layer, the app drawer AND the cookie-consent layer — and because the
+     container is a real box with default pointer-events, it swallowed the
+     touches aimed at whatever it covered. Measured on three iOS simulators:
+     quiz-results primary action and both cookie-consent buttons were
+     unpressable while a toast was up, and a swipe started on the toast did not
+     scroll the page.
+
+     99 puts the toaster directly beneath modals and the consent banner (100),
+     which is the right precedence: a transient notification must never win
+     over a blocking legal control or a dialog's own footer.
+
+     pointer-events is the other half — the container must not exist for touch,
+     only the card itself. Without this, capping z-index alone would still
+     leave an invisible strip eating taps. */
+  [data-sonner-toaster] {
+    z-index: 99;
+    pointer-events: none;
+  }
+
+  [data-sonner-toast] {
+    pointer-events: auto;
+  }
+
+  ${(p) => p.theme.media.mobile} {
+    /* Inset rather than edge-to-edge, and clear of the home indicator. */
+    [data-sonner-toaster] {
+      --width: calc(100vw - 2rem);
+      --mobile-offset: 1rem;
+      padding-bottom: var(--safe-area-bottom);
+    }
+  }
 `;

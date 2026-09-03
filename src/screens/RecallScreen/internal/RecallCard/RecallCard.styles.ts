@@ -1,6 +1,6 @@
 import { motion } from 'framer-motion';
 import styled from 'styled-components';
-import { onAccent } from '@/theme';
+import { onAccent, stickyActionBar } from '@/theme';
 import type { GradeVerdict } from '@/api/types';
 
 // ── Layout shell ─────────────────────────────────────
@@ -25,6 +25,24 @@ export const Breadcrumb = styled.div`
   padding: 0 0.125rem;
   font-size: 0.75rem;
   line-height: 1.3;
+
+  /* Two lines beat an ellipsis stub. With the CourseTag cap lifted to 100%
+     below, wrapping puts the course name on line one and the lesson link
+     on line two rather than squeezing both onto one 288px row; without
+     wrap, lifting the cap alone would just move the truncation onto the
+     lesson link, since both children have flex-shrink 1 and min-width 0.
+     Stack is a column flex container with the default align-items: stretch, so
+     this row is already full width and the percentage cap has a definite
+     box to resolve against. Worst case is one extra ~16px line. */
+  ${(p) => p.theme.media.tablet} {
+    flex-wrap: wrap;
+    row-gap: 0.15rem;
+  }
+
+  ${(p) => p.theme.media.touch} {
+    flex-wrap: wrap;
+    row-gap: 0.15rem;
+  }
 `;
 
 export const CourseTag = styled.span`
@@ -40,12 +58,22 @@ export const CourseTag = styled.span`
   flex-shrink: 1;
   min-width: 0;
 
+  /* The old ladder ran the wrong way — 12rem desktop, 7rem tablet, 5rem
+     mobile — so the narrower the screen, the less of the identifying name
+     survived. "Manual Photography on the Sony ZV-E10" needs 285px and
+     rendered as "MANUAL P…" (72% hidden) at 320, 375 and 393 alike.
+     /recall interleaves cards across every course the learner owns, so on
+     a phone this line is the ONLY cue about where a card came from, and
+     the title attribute is no help on touch. */
   ${(p) => p.theme.media.tablet} {
-    max-width: 7rem;
+    max-width: 100%;
   }
 
-  ${(p) => p.theme.media.mobile} {
-    max-width: 5rem;
+  /* Landscape phones are 852px wide and match none of the width queries
+     above, yet they are the same thumb on the same 10px uppercase text.
+     Same lesson as the touch-target rules below: key it to the device. */
+  ${(p) => p.theme.media.touch} {
+    max-width: 100%;
   }
 `;
 
@@ -136,6 +164,14 @@ export const Card = styled(motion.article)`
     gap: 0.875rem;
     border-radius: var(--radius-lg);
   }
+
+  /* A landscape phone is 852px wide, so none of the tablet/mobile rules
+     above apply and the card keeps its full 2rem of padding top and bottom
+     on a 393px-tall viewport. -34px. */
+  ${(p) => p.theme.media.compact} {
+    padding: 1rem 1rem 0.875rem;
+    gap: 0.75rem;
+  }
 `;
 
 // ── Prompt ───────────────────────────────────────────
@@ -156,6 +192,13 @@ export const Prompt = styled.p`
   ${(p) => p.theme.media.mobile} {
     font-size: 1.1875rem;
     line-height: 1.4;
+  }
+
+  /* Same reason as Card above — at 852px wide the prompt is still 1.625rem
+     serif against 393px of height. Worth 2-3 lines. */
+  ${(p) => p.theme.media.compact} {
+    font-size: 1.0625rem;
+    line-height: 1.35;
   }
 `;
 
@@ -255,9 +298,13 @@ export const RevealButton = styled.button`
   min-height: 34px;
   height: 34px;
 
-  /* Bump to a real touch target on tablet/mobile widths — 34px is
-     too small for a thumb. */
-  ${(p) => p.theme.media.tablet} {
+  /* Keyed to the POINTER, not the viewport. media.tablet is
+     max-width: 640px; a phone in landscape is 852px wide and still
+     thumb-only, so the old width-keyed rule switched itself off on exactly
+     the device it exists for and REVEAL ANSWER rendered 34px tall. Mouse
+     desktops keep 34px, which is correct — a fine pointer does not need a
+     thumb target. */
+  ${(p) => p.theme.media.touch} {
     min-height: 44px;
     height: 44px;
   }
@@ -310,10 +357,18 @@ export const SkipButton = styled.button`
   min-height: 34px;
   height: 34px;
 
+  /* Split deliberately. The narrow right column is a layout call, so it
+     stays viewport-keyed and stays aligned with TypedSubmit above, which
+     uses the same media.tablet width — RIGHT_COL_WIDTH is a shared
+     constant precisely to keep the two action rows column-aligned. */
   ${(p) => p.theme.media.tablet} {
+    width: 4.5rem;
+  }
+
+  /* The target size is a pointer call — see RevealButton above. */
+  ${(p) => p.theme.media.touch} {
     min-height: 44px;
     height: 44px;
-    width: 4.5rem;
   }
   transition:
     color 0.15s,
@@ -380,7 +435,7 @@ export const TypedForm = styled.form`
   margin-top: 0.25rem;
 `;
 
-export const TypedInput = styled.input`
+export const TypedInput = styled.textarea`
   flex: 1;
   min-width: 0;
   padding: 0.75rem 0.875rem;
@@ -390,6 +445,18 @@ export const TypedInput = styled.input`
   color: ${(p) => p.theme.colors.foreground};
   font-family: inherit;
   font-size: 0.9375rem;
+  /* Compose-from-memory surface: a 41-char answer already overflowed the
+     single-line input (scrollWidth 345 vs clientWidth 219) and scrolled
+     horizontally, so the learner could not read back what they wrote. The
+     element renders with rows={1}, so one line of 15px text at 1.45 plus
+     24px of padding and 2px of border is 47.75px and the 48px min-height
+     still binds — byte-identical to the old input until the answer
+     actually wraps, at which point RecallCard.tsx auto-grows it to the
+     cap below. */
+  line-height: 1.45;
+  resize: none;
+  overflow-y: auto;
+  max-height: min(28dvh, 9rem);
   min-height: 48px;
   transition: border-color 0.15s, box-shadow 0.15s;
 
@@ -414,6 +481,11 @@ export const TypedInput = styled.input`
 export const TypedSubmit = styled.button`
   width: ${RIGHT_COL_WIDTH};
   flex-shrink: 0;
+  /* TypedForm is align-items: stretch, so once the textarea grows past
+     48px this button would stretch into a tall accent slab. Pin it to a
+     48px block at the bottom of the row instead — a no-op while the field
+     is one line, which is why the Skip row below stays aligned. */
+  align-self: flex-end;
   padding: 0;
   border-radius: var(--radius-md);
   border: 1px solid ${(p) => p.theme.colors.accent};
@@ -600,6 +672,45 @@ export const VerdictFeedback = styled.p`
   color: ${(p) => p.theme.colors.foreground};
   margin: 0;
   padding-left: 0.125rem;
+`;
+
+// ── Post-reveal action zone ──────────────────────────
+
+/**
+ * Wrapper for the rating label + RatingBar after a reveal.
+ *
+ * `display: contents` by default, so outside short viewports the label and
+ * the bar remain direct participants in the Card's own flex column and
+ * inherit its per-breakpoint gap — i.e. zero visual change anywhere the
+ * defect does not exist. A plain flex wrapper would have replaced the
+ * Card's 1.25/1/0.875rem gap with its own at every width.
+ *
+ * On a short viewport it becomes the card's sticky action bar. Measured at
+ * 375x667: after REVEAL the four rating buttons render at 652-704 against a
+ * 667px viewport — about 15px of 52 visible — and nothing scrolls them into
+ * view. At 320 they are entirely below the fold; at 852x393, 187px below.
+ *
+ * Safe to make sticky here even though the card carries a typed-answer
+ * input: the rating bar only ever renders when `revealed` is true, and the
+ * input is unmounted in that state, so this bar and the software keyboard
+ * are never on screen together. `stickyActionBar` still carries
+ * --keyboard-inset because it is a shared mixin and the next consumer may
+ * not be so lucky.
+ */
+export const ActionZone = styled.div`
+  display: contents;
+
+  ${(p) => p.theme.media.compact} {
+    display: flex;
+    flex-direction: column;
+    gap: 0.375rem;
+    ${stickyActionBar}
+    /* Repaint against the card surface rather than the page background —
+       this bar lives inside the card, not under it. */
+    background: ${(p) => p.theme.colors.surface};
+    box-shadow: 0 -8px 16px ${(p) => p.theme.colors.surface};
+    padding-block: 0.5rem;
+  }
 `;
 
 // ── Rating label above bar ───────────────────────────

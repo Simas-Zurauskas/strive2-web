@@ -5,7 +5,7 @@ topic: how-strive-teaches
 summary: A short tour of the cognitive science behind Strive's two assessment surfaces — why testing yourself is dramatically more effective than passive review.
 tags: [retrieval-practice, testing-effect, cognitive-science]
 order: 20
-updated: 2026-05-02
+updated: '2026-05-02'
 related: [how-spaced-review-works, how-mastery-is-measured]
 ---
 

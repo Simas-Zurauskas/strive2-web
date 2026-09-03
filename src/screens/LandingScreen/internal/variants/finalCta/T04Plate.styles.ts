@@ -2,6 +2,7 @@
 
 import { motion } from 'framer-motion';
 import styled from 'styled-components';
+import { touchMinHeightCentered } from '@/theme';
 import { colorsLib, themeColors } from '@/theme/theme';
 import { MEASURE, sectionRhythm } from '../../_system/section';
 import { eyebrowType, headingType, onPlate } from '../../_system/typography';
@@ -147,6 +148,11 @@ export const Secondary = styled.a`
     outline-offset: 2px;
     border-radius: var(--radius-sm);
   }
+
+  /* Standalone CTA, not a link inside running prose: measured at 19-22px
+     tall against the 44px minimum. Coarse-pointer only, so desktop is
+     untouched. */
+  ${touchMinHeightCentered}
 `;
 
 /* Ruled register at the foot of the plate — three clauses, gold lozenges

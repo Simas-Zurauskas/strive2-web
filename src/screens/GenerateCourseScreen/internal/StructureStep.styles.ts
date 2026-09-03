@@ -310,7 +310,12 @@ export const Actions = styled.div`
      calc-height. */
   margin-top: auto;
   background: ${(p) => p.theme.colors.background};
-  padding: 0.5rem 1rem 1.25rem;
+  /* Home-indicator avoidance, matching ChatColumn's own
+     'padding-bottom: max(0px, var(--safe-area-bottom))' so the Accept button
+     and the chat composer stay on the same line at end-of-scroll — the
+     alignment the comment above is about. Without it the two are misaligned by
+     exactly the inset on any device with a non-zero one. */
+  padding: 0.5rem 1rem max(1.25rem, var(--safe-area-bottom));
   margin-left: -1rem;
   margin-right: -1rem;
   z-index: 2;

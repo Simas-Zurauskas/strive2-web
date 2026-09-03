@@ -10,6 +10,37 @@
 
 import type { BillingCatalog } from '@/api/types';
 
+/**
+ * One-time signup grant — mirrors `pricingConfig.ts` KNOB 9
+ * (`ONBOARDING_ALLOWANCE_CREDITS`). A brand-new account is created with this
+ * allowance balance instead of the 200cr monthly figure; the first 30-day
+ * period reset collapses it back to 200.
+ *
+ * It is a constant rather than a `BillingCatalog` field on purpose: the number
+ * describes what a *not-yet-registered* visitor will receive, so there is no
+ * authenticated catalog to read it from.
+ *
+ * The rule for new render sites is about GRAMMAR, not a blanket auth gate —
+ * there are two today and they are correctly gated differently:
+ *
+ *   - Second person ("Your first course…", `PricingScreen.tsx` Free card) is a
+ *     claim about the reader, so it is gated on positively being signed out
+ *     (`isFree && isSignedOut`). To a signed-in viewer it would be false
+ *     twice over: a free user is already past the grant, and a paid user
+ *     reading it on the Free card would infer that downgrading re-triggers
+ *     it, which no code path does.
+ *   - Third person ("A new Free account starts with…", the pricing FAQ) is a
+ *     statement about new accounts in general. It is true for every reader
+ *     and is deliberately NOT auth-gated.
+ *
+ * So: gate the personalised phrasing, not the constant.
+ *
+ * The api-side `kbPricingReplacementsParity` test fails if this drifts from
+ * KNOB 9 — but note it only runs where both repos are checked out, so it is
+ * skipped in the api's CodeBuild deploy gate, which clones `api/` alone.
+ */
+export const ONBOARDING_ALLOWANCE_CREDITS = 650;
+
 export const PRICING_SNAPSHOT: BillingCatalog = {
   plans: [
     {
@@ -66,8 +97,11 @@ export const PRICING_SNAPSHOT: BillingCatalog = {
   referenceCosts: {
     // Base-lesson cost — content + mandatory supporting work only.
     // Single-point (lo === hi); asterisk in pricingFormat.ts flags the floor.
-    lessonCredits: [79, 79],
-    lessonCreditsTopup: [103, 103],
+    // 2026-09-02: 79/103 → 116/152, recalibrated against 86 real lesson jobs
+    // (median 116 credits). Mirrors pricingConfig.ts KNOB 6; the api-side
+    // kbPricingReplacementsParity test fails if these two drift apart.
+    lessonCredits: [116, 116],
+    lessonCreditsTopup: [152, 152],
     recallCardExtractionCredits: [2, 3],
     courseStructureCredits: [6, 24],
     moduleQuizCredits: [6, 8],

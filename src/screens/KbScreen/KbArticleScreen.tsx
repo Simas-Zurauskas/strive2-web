@@ -1,6 +1,7 @@
 'use client';
 
 import { Markdown } from '@/components';
+import { formatContentDate } from '@/lib/formatDate';
 import { KbBreadcrumb } from './internal/KbBreadcrumb';
 import { KbRelatedArticles } from './internal/KbRelatedArticles';
 import * as S from './KbScreen.styles';
@@ -11,15 +12,8 @@ interface KbArticleScreenProps {
   related: KbArticle[];
 }
 
-const formatDate = (iso?: string): string | null => {
-  if (!iso) return null;
-  const d = new Date(iso);
-  if (Number.isNaN(d.getTime())) return null;
-  return d.toLocaleDateString(undefined, { year: 'numeric', month: 'long', day: 'numeric' });
-};
-
 export const KbArticleScreen = ({ article, related }: KbArticleScreenProps) => {
-  const updated = formatDate(article.updated);
+  const updated = article.updated ? formatContentDate(article.updated) : null;
   return (
     <S.Layout>
       <KbBreadcrumb

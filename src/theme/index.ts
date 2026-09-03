@@ -11,6 +11,8 @@ export {
   touchHitArea,
   touchMinSize,
   touchMinHeight,
+  touchMinHeightCentered,
+  stickyActionBar,
   shadows,
   scrims,
   onAccent,

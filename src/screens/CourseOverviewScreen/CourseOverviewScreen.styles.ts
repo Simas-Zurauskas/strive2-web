@@ -435,7 +435,9 @@ export const QuizRow = styled.button<{ $locked: boolean }>`
   background: transparent;
   font-family: inherit;
   cursor: ${(p) => (p.$locked ? 'default' : 'pointer')};
-  opacity: ${(p) => (p.$locked ? 0.4 : 1)};
+  /* 0.4 read as "dead control". The row now answers a tap with the unlock
+     rule, and the Locked pill has to stay legible at this opacity. */
+  opacity: ${(p) => (p.$locked ? 0.55 : 1)};
   text-align: left;
   transition:
     background 0.15s,
@@ -539,6 +541,21 @@ export const TakeQuizBadge = styled.span`
   text-transform: uppercase;
   background: ${(p) => `${p.theme.colors.accent}18`};
   color: ${(p) => p.theme.colors.accent};
+  flex-shrink: 0;
+`;
+
+// Locked module quiz. Neutral, not coloured — it is a state label, not a
+// call to action — and it is what gives the row an accessible name that
+// says "locked" rather than announcing a plain enabled button.
+export const LockedBadge = styled.span`
+  padding: 0.125rem 0.4375rem;
+  border-radius: 9999px;
+  font-size: 0.625rem;
+  font-weight: 600;
+  letter-spacing: 0.02em;
+  text-transform: uppercase;
+  background: ${(p) => p.theme.colors.surfaceBorder};
+  color: ${(p) => p.theme.colors.muted};
   flex-shrink: 0;
 `;
 

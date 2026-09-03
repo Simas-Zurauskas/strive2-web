@@ -31,6 +31,19 @@ export const LeftCard = styled.div`
   background: ${(p) => p.theme.colors.surface};
   border: 1px solid ${(p) => p.theme.colors.surfaceBorder};
   max-width: 220px;
+
+  /* Portrait. Stacked, the two cards need 203px + 12px + 118px = 333px inside
+     the 215px the modal's 280px slot offers, so the column overflows by ~86px
+     and centring splits it 43px above and 43px below: this card rendered at
+     top -2 (clipped by the dialog edge, "Course preview" 79% gone) and the
+     RightCard painted 26px over the "How it works" eyebrow. Compacting both
+     cards was costed out and still lands ~50px over. The drill-down card
+     alone already carries the whole concept — module name, its lessons, its
+     module quiz, and the "n / 4" counter that says a course is a stack of
+     modules — and it still animates. */
+  @media (max-width: 580px) {
+    display: none;
+  }
 `;
 
 export const LeftEyebrow = styled.span`
@@ -133,6 +146,17 @@ export const RightCard = styled.div`
   border: 1px solid ${(p) => p.theme.colors.surfaceBorder};
   max-width: 220px;
   height: 180px;
+
+  /* Sole occupant in portrait. flex: 1 resolves to flex-basis: 0 on the
+     block axis inside the column Wrap, which silently overrode the 180px
+     height above and squeezed the card to 118px; flex: 0 0 auto restores
+     it. width: 100% is needed because the column's align-items: center
+     would otherwise size this shrink-to-fit. */
+  @media (max-width: 580px) {
+    flex: 0 0 auto;
+    width: 100%;
+    max-width: 280px;
+  }
 `;
 
 export const RightHeader = styled.div`

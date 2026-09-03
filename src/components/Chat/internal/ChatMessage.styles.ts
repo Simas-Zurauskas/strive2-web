@@ -74,6 +74,51 @@ export const MessageBubble = styled.div<{ $isUser: boolean }>`
     padding: 0.125rem 0.375rem;
     border-radius: 0.25rem;
   }
+
+  /* AI answers routinely contain GFM tables and the bubble had NO table
+     styling at all, so a 3-column table laid itself out at max-content:
+     284.3px wide with its right edge at 309 inside a bubble ending at 287,
+     i.e. 5px past the chat panel itself, breaking the bubble's own padding
+     and rendering "~2 lessons/month" as "~2 lessons/mont".
+
+     A horizontal scroller is deliberately NOT the fix here. Chat.styles.ts
+     (ScrollArea, > div > div) sets touch-action: pan-y so a horizontal
+     swipe starting on a message still reaches the panel's swipe-to-close
+     drag, and the effective touch-action is the intersection along the
+     ancestor chain — a nested overflow-x: auto box could not be dragged
+     by touch anyway. So make the table FIT instead: overflow-wrap:
+     anywhere — NOT word-break: break-word, only anywhere reduces a
+     box's min-content contribution — lets automatic table layout shrink
+     the columns down to the bubble width. */
+  table {
+    width: 100%;
+    max-width: 100%;
+    border-collapse: collapse;
+    margin: 0.5rem 0;
+    font-size: 0.8125rem;
+    line-height: 1.45;
+  }
+
+  th,
+  td {
+    padding: 0.375rem 0.5rem;
+    text-align: left;
+    vertical-align: top;
+    overflow-wrap: anywhere;
+    border-bottom: 1px solid ${(p) => p.theme.colors.surfaceBorder};
+  }
+
+  th {
+    font-size: 0.6875rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+    color: ${(p) => p.theme.colors.muted};
+  }
+
+  tbody tr:last-child td {
+    border-bottom: none;
+  }
 `;
 
 export const ToolRow = styled.div`

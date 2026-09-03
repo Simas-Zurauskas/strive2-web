@@ -1,6 +1,7 @@
 'use client';
 
 import { Markdown } from '@/components';
+import { formatContentDate } from '@/lib/formatDate';
 import * as S from './BlogScreen.styles';
 import type { BlogPost } from '@/lib/blog';
 
@@ -13,14 +14,9 @@ interface BlogPostScreenProps {
   readNext?: BlogPost;
 }
 
-const formatDate = (iso: string): string => {
-  const d = new Date(iso);
-  if (Number.isNaN(d.getTime())) return iso;
-  return d.toLocaleDateString(undefined, { year: 'numeric', month: 'long', day: 'numeric' });
-};
-
 export const BlogPostScreen = ({ post, related, readNext }: BlogPostScreenProps) => {
-  const updated = post.updated && post.updated !== post.published ? formatDate(post.updated) : null;
+  const updated =
+    post.updated && post.updated !== post.published ? formatContentDate(post.updated) : null;
 
   return (
     <S.ArticleLayout>
@@ -41,7 +37,7 @@ export const BlogPostScreen = ({ post, related, readNext }: BlogPostScreenProps)
           {post.author}
         </S.BylineAuthor>
         <S.BylineDot />
-        <span>{formatDate(post.published)}</span>
+        <span>{formatContentDate(post.published)}</span>
         <S.BylineDot />
         <span>{post.readTimeMinutes} min read</span>
         {updated && (

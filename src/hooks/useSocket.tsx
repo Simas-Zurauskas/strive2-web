@@ -40,12 +40,24 @@ export const SocketProvider = ({ children }: { children: React.ReactNode }) => {
 
     s.on('connect', () => {
       setDisconnected(false);
-      if (disconnectToastId.current !== null && everConnected.current) {
+      // `everConnected` is recorded BEFORE the dismissal check, not after.
+      // With the assignment below the guard, a drop that happened before the
+      // first successful connect raised an Infinity-duration toast that this
+      // very handler then refused to dismiss (everConnected was still false at
+      // that moment), and the non-null id suppressed any replacement — so the
+      // strip survived reloads and navigation until a further full
+      // disconnect->connect cycle that might never come. Measured on three
+      // iOS simulators as a permanent ~70pt bottom overlay that swallowed
+      // taps on quiz results, cookie consent and modal footers.
+      const wasFirstConnect = !everConnected.current;
+      everConnected.current = true;
+      if (disconnectToastId.current !== null) {
         toast.dismiss(disconnectToastId.current);
-        toast.success('Reconnected', { duration: 2_000 });
+        // Only announce a genuine RE-connection; the first connect of the
+        // session is not something the user needs told about.
+        if (!wasFirstConnect) toast.success('Reconnected', { duration: 2_000 });
         disconnectToastId.current = null;
       }
-      everConnected.current = true;
     });
 
     s.on('disconnect', (reason) => {
@@ -55,7 +67,12 @@ export const SocketProvider = ({ children }: { children: React.ReactNode }) => {
       setDisconnected(true);
       if (disconnectToastId.current === null) {
         disconnectToastId.current = toast.warning('Reconnecting…', {
-          duration: Infinity,
+          // Finite, and dismissible. An Infinity toast with a dismissal path
+          // that can fail to run is an un-closeable overlay; real-time updates
+          // resume on their own regardless of whether this is on screen, so
+          // nothing is lost by letting it go. A fresh drop re-raises it.
+          duration: 10_000,
+          closeButton: true,
           description: 'Real-time updates will resume automatically.',
         });
       }

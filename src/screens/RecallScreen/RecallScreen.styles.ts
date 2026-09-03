@@ -11,6 +11,14 @@ export const ContentWrap = styled.div`
   flex-direction: column;
   gap: 2rem;
   min-height: calc(100dvh - 56px);
+
+  /* The empty state's CTA measured ~834px down a 714px viewport. Half of
+     the recovery is here: 4vh of lead-in plus a 32px hero/card gap is
+     44px the copy does not need on a phone. */
+  ${(p) => p.theme.media.mobile} {
+    padding-top: 2vh;
+    gap: 1.25rem;
+  }
 `;
 
 export const PageHeader = styled.header`
@@ -82,6 +90,15 @@ export const ActiveWrap = styled.div`
     padding-bottom: 1.25rem;
     gap: 0.875rem;
   }
+
+  /* At 852x393 every control on the card — typed input, CHECK, REVEAL,
+     SKIP — measured inView:false at scroll-top. The session strip plus
+     this shell's own padding is most of why. -20px of padding, -4px gap. */
+  ${(p) => p.theme.media.compact} {
+    padding-top: 0.625rem;
+    padding-bottom: 0.75rem;
+    gap: 0.625rem;
+  }
 `;
 
 export const CardStage = styled.div`
@@ -112,13 +129,27 @@ export const EmptyState = styled.section`
   }
 
   ${(p) => p.theme.media.mobile} {
-    padding: 2rem 1.125rem;
+    padding: 1.5rem 1.125rem 2rem;
   }
 `;
 
 export const EmptyPreviewSlot = styled.div`
   width: 100%;
   margin-bottom: 1.25rem;
+
+  /* On phones, paint the decorative card stack AFTER the copy so the CTA is
+     not sitting 220px of illustration below the fold — measured, the empty
+     state stacked to ~834px against a 714px viewport and this is the only
+     item large enough to close it. The order property reshuffles paint order
+     flex siblings only: DOM order, tab order and the accessibility tree are
+     unchanged, and the preview is decoration anyway. Precedent: the *done*
+     state in this same component already renders EmptyRule first with no
+     preview above it, so the copy block is known to read without it. */
+  ${(p) => p.theme.media.mobile} {
+    order: 1; /* every sibling defaults to 0, so this moves to the end */
+    margin-bottom: 0;
+    margin-top: 1.5rem;
+  }
 `;
 
 export const EmptyRule = styled.span`

@@ -5,7 +5,7 @@ topic: how-strive-teaches
 summary: Strive measures understanding in two distinct ways — module-level mastery tiers and per-card retrieval performance. Here's what each one means.
 tags: [mastery, quizzes, spaced-review]
 order: 30
-updated: 2026-05-02
+updated: '2026-05-02'
 related: [how-spaced-review-works, why-retrieval-practice-works]
 ---
 

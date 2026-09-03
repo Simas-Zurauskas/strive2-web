@@ -17,6 +17,13 @@ export const Step = styled.div`
   display: flex;
   align-items: center;
   gap: 0.5rem;
+  /* Without this the active step's label is unshrinkable (min-width: auto on a
+     flex item), so the overflow is taken out of the LAST step's circle against
+     Wrapper's 'overflow: hidden'. Measured at 320px: 289px of content in a
+     280px wrapper clipped the step-5 circle by 9px. Inert above the overflow
+     threshold — Connector is 'flex: 1' and gives up all the slack first, so no
+     step shrinks until the content genuinely exceeds the wrapper. */
+  min-width: 0;
 `;
 
 // Wraps the Circle + Label of a navigable step so keyboard users get a
@@ -109,6 +116,17 @@ export const Label = styled.span<{ $state: 'completed' | 'active' | 'navigable' 
   ${(p) => p.theme.media.tabletLarge} {
     display: ${(p) => (p.$state === 'active' ? 'inline' : 'none')};
   }
+
+  /* On phones the active label is the only thing left that can absorb a
+     shortfall, so give it somewhere to go: 'inline-block' (an inline box cannot
+     take text-overflow) plus min-width: 0 lets it ellipsise rather than push
+     the step-5 circle out under Wrapper's 'overflow: hidden'. */
+  ${(p) => p.theme.media.mobile} {
+    display: ${(p) => (p.$state === 'active' ? 'inline-block' : 'none')};
+    min-width: 0;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
 `;
 
 export const Connector = styled.span<{ $completed: boolean }>`
@@ -124,8 +142,11 @@ export const Connector = styled.span<{ $completed: boolean }>`
     margin: 0 0.4375rem;
   }
 
+  /* Tightened from 0.25rem: four connectors x 6px buys back 24px, which covers
+     the 9px the stepper overshot its 280px wrapper at 320px with headroom, so
+     the label rarely has to truncate at all. */
   ${(p) => p.theme.media.mobile} {
-    margin: 0 0.25rem;
-    min-width: 0.25rem;
+    margin: 0 0.125rem;
+    min-width: 0.125rem;
   }
 `;

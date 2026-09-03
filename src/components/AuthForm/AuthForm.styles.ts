@@ -1,5 +1,5 @@
 import styled from 'styled-components';
-import { onAccent } from '@/theme';
+import { onAccent, stickyActionBar } from '@/theme';
 
 export const Form = styled.form`
   display: flex;
@@ -7,6 +7,37 @@ export const Form = styled.form`
   gap: 1rem;
   width: 100%;
   max-width: 360px;
+
+  /* Sign-up is seven fields/rows deep, so seven 1rem gaps are 112px of the
+     reason the submit lands past the fold — 79px past it inside the modal at
+     852x393, 84px with the keyboard up. -28px on sign-up, -16px on sign-in. */
+  ${(p) => p.theme.media.compact} {
+    gap: 0.75rem;
+  }
+`;
+
+/**
+ * Wrapper that pins the submit to the bottom of the scrollport on short
+ * viewports. Used by the modal's two forms, where the Dialog is itself the
+ * scroller: the compact padding/gap trims alone recover ~61px of a measured
+ * 79px (852x393) / 113px (320x568) deficit, so the primary control still
+ * needed pinning the way the rest of this sweep pins theirs.
+ *
+ * Gated behind media.compact deliberately — applied ungated the mixin turns
+ * a centred desktop button into a full-width bar with a rule above it.
+ */
+export const SubmitRow = styled.div`
+  display: flex;
+  flex-direction: column;
+
+  ${(p) => p.theme.media.compact} {
+    ${stickyActionBar}
+    /* Repainted against the dialog surface, not --background: this bar sits
+       on the modal's own surface colour, and the mixin's --background fade
+       would read as a seam against it. */
+    background: ${(p) => p.theme.colors.surface};
+    box-shadow: 0 -8px 16px ${(p) => p.theme.colors.surface};
+  }
 `;
 
 export const FormTitle = styled.h1`

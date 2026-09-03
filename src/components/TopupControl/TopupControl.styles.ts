@@ -1,5 +1,5 @@
 import styled, { css } from 'styled-components';
-import { pressable } from '@/theme';
+import { pressable, touchMinHeight } from '@/theme';
 
 export const Wrap = styled.div<{ $stacked: boolean; $compact?: boolean }>`
   display: flex;
@@ -23,8 +23,16 @@ export const Row = styled.div`
   flex-wrap: wrap;
 `;
 
-export const InputWrap = styled.div<{ $state: 'neutral' | 'error' }>`
+/* A <label>, not a <div>: the bordered field is what people aim at, and as
+   a div it had no click handler at all — the real <input> was 70x18px, 35%
+   of the 44x44 minimum, and a full pointer sequence on the border left
+   activeElement on a sibling BUTTON. Wrapping the input in a label makes the
+   whole 109px-wide chrome focus it. The input's aria-label still wins the
+   accessible name (aria-label outranks a native label), and the only other
+   child is the aria-hidden "$". */
+export const InputWrap = styled.label<{ $state: 'neutral' | 'error' }>`
   position: relative;
+  cursor: text;
   display: inline-flex;
   align-items: center;
   /* Matches the default <Button> height so the input, chips, and Buy CTA
@@ -48,6 +56,11 @@ export const InputWrap = styled.div<{ $state: 'neutral' | 'error' }>`
           ? `color-mix(in oklab, ${p.theme.colors.error} 16%, transparent)`
           : `color-mix(in oklab, ${p.theme.colors.accent} 16%, transparent)`};
   }
+
+  /* min-block-size beats the 42px height on coarse pointers, so the
+     field lands at 44px — which also re-aligns it with the shared <Button>,
+     already 44px there via the same helper, instead of sitting 2px short. */
+  ${touchMinHeight}
 `;
 
 export const DollarPrefix = styled.span`
@@ -60,6 +73,10 @@ export const DollarPrefix = styled.span`
 
 export const AmountInput = styled.input`
   width: 70px;
+  /* The parent's align-items: center collapsed this to its 18px line box.
+     Stretching gives it the field's full height as a caret/click zone; it
+     has no border, background or padding, so nothing new is visible. */
+  align-self: stretch;
   border: none;
   background: transparent;
   outline: none;

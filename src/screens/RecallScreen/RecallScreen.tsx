@@ -6,7 +6,7 @@ import { useRouter } from 'next/navigation';
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { PageLayout, Button, HelpAnchor } from '@/components';
 import { ROUTES } from '@/constants/routes';
-import { useRecallQueue, useRecallStats, useRateRecall, useSkipRecall } from '@/hooks';
+import { useRecallQueue, useRecallStats, useRateRecall, useScrollToTopOnStep, useSkipRecall } from '@/hooks';
 import { analytics } from '@/lib/analytics';
 import { RecallCard } from './internal/RecallCard/RecallCard';
 import { RecallGhostPreview } from './internal/RecallGhostPreview/RecallGhostPreview';
@@ -212,6 +212,24 @@ export const RecallScreen = () => {
     });
   };
 
+  // Step identity for this screen's in-place swaps: card -> next card, last
+  // card -> done, done -> rerun batch. All of them replace the whole screen
+  // inside one route, so nothing else returns the page to the top —
+  // measured at 375x667 the next card opened with its prompt at -143 and the
+  // completion screen kept scrollY 291. `null` while the queue is loading so
+  // the first card ARMS the hook instead of scrolling. The interim retry
+  // screen and the final screen deliberately share the key 'done' so
+  // pressing "Not now", which only rewords the same short screen, does not
+  // fire a reset. Must stay above the early returns below — it is a hook.
+  const stepKey = isLoading
+    ? null
+    : current
+      ? `card:${current.recallCardId}`
+      : sessionQueue.length === 0
+        ? 'empty'
+        : 'done';
+  useScrollToTopOnStep(stepKey);
+
   // ── Loading ───────────────────────────────────
 
   if (isLoading) return <RecallLoadingShell />;
@@ -308,7 +326,7 @@ export const RecallScreen = () => {
               <S.DatelineStrong>{stats?.dueThisWeek ?? 0}</S.DatelineStrong> due this week
             </S.EmptyDateline>
 
-            {hasRetries && (
+            {hasRetries ? (
               <S.InterimActionRow>
                 <Button variant="primary" onClick={handleStartRetryBatch}>
                   Rerun {retryCount} {retryCount === 1 ? 'card' : 'cards'}
@@ -318,6 +336,16 @@ export const RecallScreen = () => {
                   Not now
                 </S.InterimSecondaryButton>
               </S.InterimActionRow>
+            ) : (
+              /* Without this the "Come back tomorrow" beat has no interactive
+                 element in <main> at all except the 18px HelpAnchor — a dead
+                 end. The empty state one branch up already offers exactly
+                 this CTA. */
+              <S.EmptyAction>
+                <Button variant="primary" onClick={() => router.push(ROUTES.home())}>
+                  Back to courses
+                </Button>
+              </S.EmptyAction>
             )}
           </S.EmptyState>
         </S.ContentWrap>

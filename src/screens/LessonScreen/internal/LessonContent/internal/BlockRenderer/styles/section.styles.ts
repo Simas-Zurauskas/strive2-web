@@ -118,6 +118,33 @@ export const SectionContent = styled.div<{ $first?: boolean }>`
     overflow: hidden;
   }
 
+  /* Generated lesson tables arrive as bare GFM — there is no wrapper element to
+     hang a scroller on. 'overflow' is inert on a 'display: table' box (it only
+     ever served the border-radius clip here), and html/body are
+     'overflow-x: clip', so a wide generated table is amputated with no way to
+     scroll the missing columns back — 80px of overshoot was unreachable on the
+     equivalent legal-page tables at 320px.
+
+     Deliberately gated to <=640px rather than applied unconditionally:
+     'display: block' wraps the rows in an anonymous shrink-to-fit table box, so
+     the 'th' header band and the 'tr:nth-child(even)' zebra below would stop at
+     the table's content width instead of spanning the full prose column. That
+     is a visible desktop regression, and those fills are the design. Below the
+     tablet breakpoint the column is narrow enough that a table essentially
+     always fills it, so the fills land in the same place either way.
+     'overflow-y: hidden' rather than dropping the longhand: neither longhand is
+     'visible', so the pair is honoured and the 8px radius still clips. */
+  ${(p) => p.theme.media.tablet} {
+    table {
+      display: block;
+      max-width: 100%;
+      overflow-x: auto;
+      overflow-y: hidden;
+      overscroll-behavior-x: contain;
+      -webkit-overflow-scrolling: touch;
+    }
+  }
+
   th, td {
     padding: 0.5rem 0.75rem;
     border: 1px solid ${(p) => p.theme.colors.border};

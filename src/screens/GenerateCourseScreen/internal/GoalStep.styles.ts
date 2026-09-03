@@ -63,6 +63,16 @@ export const StyledTextarea = styled.textarea`
   font-weight: 400;
   outline: none;
   resize: none;
+  /* Auto-grow bounds — GoalStep.tsx writes the height, this only fences it.
+     The box is sized by rows={2} and nothing ever re-measured it, so a typed
+     goal ran under the border-bottom and, on narrow phones, the 110-character
+     PLACEHOLDER alone wrapped past two lines and was sliced flush on the
+     border (measured clientHeight 99 / scrollHeight 125, sweep S3-16). Blink
+     counts the placeholder in scrollHeight, so one measurement fixes the empty
+     state and the typed state. The cap keeps a 500-character goal from pushing
+     the wizard's Next button off-screen. */
+  overflow-y: auto;
+  max-height: min(40dvh, 20rem);
   line-height: 1.6;
   transition:
     border-color 0.2s,
@@ -76,6 +86,15 @@ export const StyledTextarea = styled.textarea`
     color: ${(p) => p.theme.colors.muted};
     opacity: 0.4;
     font-style: italic;
+  }
+
+  /* Step down with the Title above (4.5rem -> 2.25rem at this breakpoint). At
+     24px the placeholder needs five 38.4px lines in a 320px column — 240px,
+     past the 40dvh (227px at 320x568) auto-grow cap, so the empty field would
+     still clip. At 20px it is four 32px lines, 176px, comfortably inside the
+     cap; still well above the 16px iOS auto-zoom floor. */
+  ${(p) => p.theme.media.mobile} {
+    font-size: 1.25rem;
   }
 `;
 

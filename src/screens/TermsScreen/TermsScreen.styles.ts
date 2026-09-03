@@ -6,6 +6,22 @@ export const Layout = styled.div`
   background: ${(p) => p.theme.colors.background};
   color: ${(p) => p.theme.colors.foreground};
   padding: 2rem;
+  /* width + min-width are load-bearing, not cosmetic. app/(public)/layout.tsx
+     renders <main style={{display:'flex', flexDirection:'column'}}>, and
+     margin: 0 auto on a column-flex item disables cross-axis stretch — so
+     this box becomes shrink-to-fit with a min-content floor of 556px, driven
+     by the GFM table's nowrap headers, against a 485px body. html, body
+     are overflow-x: clip, so the 71px overflow was amputated with no
+     scrollport: every paragraph and the legal-basis table's third column were
+     permanently unreachable on a phone, on a legally required page linked
+     from the footer of every route.
+     The table { display: block; overflow-x: auto } rule further down is
+     correct and was never the problem — it simply never engaged, because the
+     flex parent refused to shrink the container it lives in.
+     PricingScreen.styles.ts documents the same trap and escapes it the
+     same way. */
+  width: 100%;
+  min-width: 0;
   max-width: 720px;
   margin: 0 auto;
 
