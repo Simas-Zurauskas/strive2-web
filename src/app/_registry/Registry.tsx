@@ -23,6 +23,7 @@ import {
   GlobalErrorListener,
   StyledRegistry,
   ThemeSessionSync,
+  ViewportInsetBootstrap,
 } from './comps';
 
 // Skip retries on 4xx — they're deterministic (wrong slug, missing
@@ -143,6 +144,12 @@ const Registry = ({ children }: { children: React.ReactNode }) => {
           update. Default state (set inline by app/layout.tsx) is denied;
           this flips to granted when the user accepts the banner. */}
       <CookieConsentBootstrap />
+      {/* Publishes --keyboard-inset and --visual-viewport-height from
+          window.visualViewport. Bottom-anchored action bars and the
+          full-height auth dialog read those vars; `dvh` cannot see the
+          software keyboard (measured on iOS 26.5: 100dvh stayed 714px
+          while only 353px was visible), so CSS alone cannot do this. */}
+      <ViewportInsetBootstrap />
       <QueryClientProvider client={queryClient}>
         <NextThemeProvider
           enableSystem

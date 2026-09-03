@@ -1,5 +1,5 @@
 import styled from 'styled-components';
-import { thinScrollbar, pressableSurface, touchMinSize, touchMinHeight } from '@/theme';
+import { breakpoints, thinScrollbar, pressableSurface, touchMinSize, touchMinHeight } from '@/theme';
 import type { QuizMasteryTier } from '@/api/types';
 import type { QuizIconVariant } from '@/types';
 
@@ -26,6 +26,14 @@ export const Header = styled.div`
   padding: 1.25rem 1.25rem;
   border-bottom: 1px solid ${(p) => p.theme.colors.surfaceBorder};
   flex-shrink: 0;
+
+  /* Short viewports: this header is fixed chrome sitting on top of a
+     scrolling tree, so every pixel here is a pixel the tree does not
+     get. Measured at 852x393: 61.4% of the viewport was chrome and the
+     tree got a 152px window of a 1453px scrollHeight. */
+  @media (max-width: ${breakpoints.desktop}px) and (max-height: 640px) {
+    padding: 0.75rem 1.25rem;
+  }
 `;
 
 export const HeaderContent = styled.div`
@@ -34,6 +42,10 @@ export const HeaderContent = styled.div`
   gap: 0.75rem;
   flex: 1;
   min-width: 0;
+
+  @media (max-width: ${breakpoints.desktop}px) and (max-height: 640px) {
+    gap: 0.5rem;
+  }
 `;
 
 export const CollapseButton = styled.button`
@@ -124,6 +136,13 @@ export const MetaRow = styled.div`
   align-items: center;
   gap: 0.5rem;
   flex-wrap: wrap;
+
+  /* "3 modules · 24 lessons" is orientation, not navigation. On a short
+     viewport it costs ~32px (its own row plus a gap) of the tree's
+     window; the same counts are on the course overview. */
+  @media (max-width: ${breakpoints.desktop}px) and (max-height: 640px) {
+    display: none;
+  }
 `;
 
 export const MetaText = styled.span`
@@ -188,7 +207,14 @@ export const Tree = styled.div`
      captures the touch for native vertical scrolling and never hands
      horizontal movement to framer-motion's drag. */
   touch-action: pan-y;
-  padding: 0.5rem 0;
+  /* Generous bottom runway, not the 8px the top gets. On the lesson page the
+     tree is shorter than on the overview, and the last module rendered flush
+     against the bottom edge with its second line already clipped: its tap
+     target was partly outside the scrollport, so the first tap on it did
+     nothing and only worked after the user had scrolled it clear. Padding
+     inside the scroller costs nothing visually (it is scrollable space) and
+     guarantees the final row can always be brought fully into view. */
+  padding: 0.5rem 0 2.5rem;
   ${thinScrollbar}
 `;
 
@@ -354,7 +380,9 @@ export const QuizItem = styled.button<{ $locked?: boolean }>`
   border: none;
   color: ${(p) => (p.$locked ? p.theme.colors.muted : p.theme.colors.foreground)};
   cursor: ${(p) => (p.$locked ? 'default' : 'pointer')};
-  opacity: ${(p) => (p.$locked ? 0.4 : 1)};
+  /* See CourseOverviewScreen's QuizRow — the row now answers a tap, and
+     the Locked pill has to be readable at this opacity. */
+  opacity: ${(p) => (p.$locked ? 0.55 : 1)};
   transition:
     background 0.15s,
     opacity 0.15s;
@@ -435,6 +463,21 @@ export const ReviewDueBadge = styled.span`
   text-transform: uppercase;
   background: ${(p) => `${p.theme.colors.warning}18`};
   color: ${(p) => p.theme.colors.warning};
+  flex-shrink: 0;
+`;
+
+// Mirror of CourseOverviewScreen's LockedBadge, sized for the narrower
+// drawer row. margin-left:auto matches its ReviewDueBadge sibling.
+export const LockedBadge = styled.span`
+  margin-left: auto;
+  padding: 0.125rem 0.4375rem;
+  border-radius: 9999px;
+  font-size: 0.625rem;
+  font-weight: 600;
+  letter-spacing: 0.02em;
+  text-transform: uppercase;
+  background: ${(p) => p.theme.colors.surfaceBorder};
+  color: ${(p) => p.theme.colors.muted};
   flex-shrink: 0;
 `;
 

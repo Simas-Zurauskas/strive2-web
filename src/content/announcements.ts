@@ -45,6 +45,20 @@ export const ANNOUNCEMENTS: readonly Announcement[] = [
     ].join('\n'),
   },
   {
+    key: '2026-09-small-screens',
+    date: '2026-09-03',
+    title: 'Better on a small screen',
+    body: [
+      'A pass over Strive on phones and narrow windows — mostly small things that were quietly in the way.',
+      '',
+      'The button you are reaching for now stays with you: **Continue** on a module quiz, **Check** on a recall card and **Sign in** on the sign-in form all pin to the bottom of a short screen instead of hiding below the fold. Sign-up errors scroll themselves into view rather than shoving the button out from under your thumb. Wide tables scroll sideways on their own instead of being cut off at the edge of the page. The cookie notice reserves its own space and steps aside while the keyboard is open, so it can no longer sit on top of the field you are typing into.',
+      '',
+      'Inside a course, opening a module in the side drawer now brings it into view — tapping the last module of a long course used to do nothing you could see. The drawer has also been brought in line with the course page on when a **module quiz** opens: after two finished lessons in that module, not after every one.',
+      '',
+      'Elsewhere: a stale or mistyped link now lands on a real page with a way back, and the reconnecting notice gives up gracefully instead of sitting on screen forever.',
+    ].join('\n'),
+  },
+  {
     key: '2026-07-your-materials',
     date: '2026-07-24',
     title: 'Build a course from your own material',

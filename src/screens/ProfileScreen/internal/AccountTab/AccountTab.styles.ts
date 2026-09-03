@@ -191,6 +191,7 @@ export const DangerButton = styled.button<{ $loading?: boolean }>`
   text-transform: uppercase;
   letter-spacing: 0.05em;
   white-space: nowrap;
+  max-width: 100%;
   cursor: ${(p) => (p.$loading || p.disabled ? 'not-allowed' : 'pointer')};
   opacity: ${(p) => (p.$loading || p.disabled ? 0.6 : 1)};
   transition: opacity 0.15s, background 0.15s, box-shadow 0.15s;
@@ -210,6 +211,22 @@ export const DangerButton = styled.button<{ $loading?: boolean }>`
   &:focus-visible {
     outline: 2px solid ${(p) => p.theme.colors.error};
     outline-offset: 2px;
+  }
+
+  /* At 320px "Yes, send confirmation code" needs 273px of min-content inside a
+     242px card column. 'white-space: nowrap' pins the flex item's automatic
+     minimum size to that 273px so it cannot shrink, and the button visibly
+     crossed the DangerZone's border by ~12px — ButtonRow already wraps, and
+     wrapping a row cannot help a child that is itself too wide. Below the
+     mobile breakpoint let the label wrap instead: min-content drops to the
+     longest word (~95px) and the default flex-shrink does the rest. Same
+     treatment covers this button's other long label, "Confirm and delete my
+     account". Costs one extra line of button height at 320px. */
+  ${(p) => p.theme.media.mobile} {
+    white-space: normal;
+    text-align: center;
+    letter-spacing: 0.04em;
+    padding: 0.625rem 1rem;
   }
 `;
 

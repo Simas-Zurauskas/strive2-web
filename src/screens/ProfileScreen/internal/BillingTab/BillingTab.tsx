@@ -71,23 +71,56 @@ export const BillingTab: React.FC = () => {
     // eslint-disable-next-line react-hooks/set-state-in-effect
     setPurchaseKind(checkoutKind);
 
-    // Conversion push for the GTM container. The API threads plan/value
+    // Conversion push for the GTM container — ONE-SHOT PER CHECKOUT SESSION,
+    // not per mount. The `checkoutHandledRef` above only survives as long as
+    // this component does, so a reload, a back-navigation, or a bookmarked
+    // success URL re-fires a full-value conversion for a payment that happened
+    // once. GA4 has recorded exactly one lifetime `purchase` event and it
+    // matches no Mixpanel checkout and no CreditLedger row — a fabricated
+    // revenue number is worse than no revenue number, because it gets believed.
+    //
+    // Keyed on the Stripe Checkout session id, which is unique per real
+    // payment, so dedup survives reloads and new tabs. localStorage can throw
+    // (private mode, blocked site data) — on failure we fall back to the
+    // per-mount ref, i.e. today's behaviour, rather than dropping a real
+    // conversion.
+    const sessionId = searchParams.get('session_id') ?? '';
+    const dedupKey = sessionId ? `strive.checkoutPushed:${sessionId}` : null;
+    let alreadyPushed = false;
+    if (dedupKey) {
+      try {
+        alreadyPushed = window.localStorage.getItem(dedupKey) === '1';
+      } catch {
+        alreadyPushed = false;
+      }
+    }
+
+    // The API threads plan/value
     // params through the Stripe success_url (stripeService.buildSuccessUrl);
     // marketing owns routing to Ads/GA4 inside GTM. Must run before the
     // router.replace below strips the params. `value` is list price —
     // promo codes and VAT are not reflected. transaction_id is the Stripe
     // Checkout session id, for conversion dedup.
     const value = Number(searchParams.get('value'));
-    dataLayerPush({
-      event: checkoutKind === 'subscription' ? 'subscribe' : 'topup',
-      ...(checkoutKind === 'subscription' && {
-        subscription_tier: searchParams.get('plan') ?? 'unknown',
-        subscription_cadence: searchParams.get('cadence') ?? 'unknown',
-      }),
-      value: Number.isFinite(value) ? value : 0,
-      currency: searchParams.get('currency') ?? 'USD',
-      transaction_id: searchParams.get('session_id') ?? '',
-    });
+    if (!alreadyPushed) {
+      if (dedupKey) {
+        try {
+          window.localStorage.setItem(dedupKey, '1');
+        } catch {
+          // Non-fatal: the push still happens, just without cross-mount dedup.
+        }
+      }
+      dataLayerPush({
+        event: checkoutKind === 'subscription' ? 'subscribe' : 'topup',
+        ...(checkoutKind === 'subscription' && {
+          subscription_tier: searchParams.get('plan') ?? 'unknown',
+          subscription_cadence: searchParams.get('cadence') ?? 'unknown',
+        }),
+        value: Number.isFinite(value) ? value : 0,
+        currency: searchParams.get('currency') ?? 'USD',
+        transaction_id: sessionId,
+      });
+    }
 
     // Strip the checkout flag while preserving the billing tab selection.
     router.replace('/profile?tab=billing', { scroll: false });

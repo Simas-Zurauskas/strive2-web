@@ -5,7 +5,7 @@ topic: getting-started
 summary: A walkthrough of the four-step wizard, what each step asks, and how your answers shape the course.
 tags: [getting-started, wizard, courses]
 order: 20
-updated: 2026-05-02
+updated: '2026-09-03'
 related: [the-course-creation-wizard, what-is-strive]
 ---
 
@@ -34,5 +34,7 @@ The agent only changes structure. Lesson content is generated later, on demand, 
 ## When to commit
 
 When the structure looks right, click Generate. A small fraction of your allowance is debited for the structure (structure generation is cheap — the bulk of cost happens later, when you open individual lessons), and the course will appear in your library. From there, you start studying — one lesson at a time.
+
+A new account is given a one-time welcome grant for exactly this: enough to cover the wizard plus roughly {{lessonsPerSignupGrant}}, which carries a first course through a complete opening module in the large majority of courses. It doesn't repeat — after that first {{freePeriodDays}} period a Free account settles to {{lessonsPerFree}} a month. [Understanding your allowance](/help/plans-and-account/understanding-your-allowance) covers what happens next.
 
 You don't have to know exactly what you want before you start. The wizard plus the agent chat are designed to help you find the right shape. If the first draft is wrong, iterate or scrap it and try again.

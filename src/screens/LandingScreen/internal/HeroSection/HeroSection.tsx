@@ -140,6 +140,30 @@ export const HeroSection = ({ onOpenSignUp }: HeroSectionProps) => {
     return () => clearInterval(blink);
   }, [typewriterPaused]);
 
+  // Auto-grow. rows={2} is 82px; a 144-char goal needs 152px, so 48px of
+  // what the visitor typed was sliced off by the box edge (mobile sweep
+  // S2-11) with `resize: none` leaving no way out.
+  //
+  // Only measured when there IS a value. Blink's textarea scrollHeight
+  // accounts for the PLACEHOLDER too, and this placeholder is a live
+  // typewriter — measuring it would re-size the box on every animation
+  // tick. Empty => `height: auto` => the rows={2}/min-height floor.
+  useEffect(() => {
+    const el = inputRef.current;
+    if (!el) return;
+    const grow = () => {
+      el.style.height = 'auto';
+      if (!goalValue) return;
+      // scrollHeight is the padding box; add the border so a border-box
+      // height doesn't land 2px short and re-introduce a scrollbar.
+      el.style.height = `${el.scrollHeight + el.offsetHeight - el.clientHeight}px`;
+    };
+    grow();
+    // Rewrap on rotation/keyboard-driven width changes.
+    window.addEventListener('resize', grow);
+    return () => window.removeEventListener('resize', grow);
+  }, [goalValue]);
+
   // No reduced-motion branch needed: under it neither effect ever runs, so
   // the seeded state stands and this reads out the whole first example on
   // its own. The caret is hidden whenever the machine is stopped — a bar

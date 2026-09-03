@@ -5,7 +5,7 @@ topic: plans-and-account
 summary: What happens when you hit zero allowance, your three options, and how to avoid surprises.
 tags: [billing, allowance, top-up, plans]
 order: 20
-updated: 2026-05-12
+updated: '2026-09-03'
 related: [understanding-your-allowance]
 ---
 
@@ -20,7 +20,7 @@ If you try to start a paid action with zero allowance, Strive doesn't let it run
 
 ## Your three options
 
-**Option A — Wait until your renewal.** If you're on a paid plan and the renewal is close, this is the cheapest path. Free users can do the same — Free allowance refreshes monthly.
+**Option A — Wait until your renewal.** If you're on a paid plan and the renewal is close, this is the cheapest path. Free users can do the same — Free allowance refreshes on a {{freePeriodDays}} cycle. If this is your first month, expect a smaller number than you began with: a new account opens on a one-time welcome grant, and the refresh moves you to the Free plan's ordinary monthly figure of {{lessonsPerFree}}. [Understanding your allowance](/help/plans-and-account/understanding-your-allowance) sets out both.
 
 **Option B — Top up.** A one-shot purchase, never expires. Top-ups draw a bit more from your allowance per lesson than a subscription would — calibrated this way to keep subscriptions the cheap lane and reserve top-ups for "I just need a bit more right now". They're the right answer when you're mid-course and don't want to upgrade tiers.
 

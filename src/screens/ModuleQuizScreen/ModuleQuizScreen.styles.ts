@@ -1,5 +1,6 @@
 import { ArrowLeft } from 'lucide-react';
 import styled, { keyframes } from 'styled-components';
+import { stickyActionBar } from '@/theme';
 import type { QuizMasteryTier } from '@/api/types';
 import type { QuizOptionState } from '@/types';
 
@@ -29,6 +30,13 @@ export const Container = styled.div`
   ${(p) => p.theme.media.tablet} {
     padding: 1.25rem 1.25rem 3rem;
   }
+
+  /* Short viewports: reclaim the top of the vertical budget. Measured, the
+     header stack costs 449px of a 375x667 viewport before answer A is
+     reached. -8px of top padding and -32px of bottom. */
+  ${(p) => p.theme.media.compact} {
+    padding: 0.75rem 1.25rem 1.5rem;
+  }
 `;
 
 export const Content = styled.div`
@@ -37,6 +45,13 @@ export const Content = styled.div`
   display: flex;
   flex-direction: column;
   gap: 2rem;
+
+  /* Three 2rem gaps (rail -> header -> progress -> card) are 96px of the
+     449px header budget on a 667px viewport. Halving them is the largest
+     single recovery available and costs nothing but air. -48px. */
+  ${(p) => p.theme.media.compact} {
+    gap: 1rem;
+  }
 `;
 
 /** Top rail — back affordance + dev reset. Locked min-height so the
@@ -112,6 +127,10 @@ export const HeaderSection = styled.header`
   display: flex;
   flex-direction: column;
   gap: 0.625rem;
+
+  ${(p) => p.theme.media.compact} {
+    gap: 0.25rem;
+  }
 `;
 
 export const EyebrowRow = styled.div`
@@ -136,6 +155,13 @@ export const Title = styled.h1`
 
   ${(p) => p.theme.media.mobile} {
     font-size: 1.375rem;
+  }
+
+  /* The module name is context, not the task. On a short viewport it is
+     costing a line the answers need. Appended after the mobile block so
+     it wins on source order at equal specificity. */
+  ${(p) => p.theme.media.compact} {
+    font-size: 1.125rem;
   }
 `;
 
@@ -283,6 +309,24 @@ export const PrimaryAction = styled.div`
   gap: 0.75rem;
   flex-wrap: wrap;
   margin-top: 0.25rem;
+
+  /* Shared by QuizLanding (Start / Generate) and QuizQuestion (Next
+     question / Submit answers). On a short viewport the advance control
+     lands below the answers the user just scrolled through, so it pins to
+     the bottom of the scrollport instead and settles back into flow at the
+     end of the page. Sticky is self-limiting: on the short landing screen
+     there is nothing below it, so it never engages. The bar is exactly as
+     wide as Content and Container's horizontal padding either side is
+     empty, so nothing shows through its gutters. */
+  ${(p) => p.theme.media.compact} {
+    ${stickyActionBar}
+    justify-content: stretch;
+    margin-top: 0;
+
+    & > button {
+      flex: 1;
+    }
+  }
 `;
 
 // ── Progress bar ──────────────────────────────────────
@@ -341,6 +385,13 @@ export const QuestionText = styled.p`
     padding: 1.25rem 1.25rem;
     font-size: 0.9375rem;
   }
+
+  /* -16px of stem padding on a short viewport; the type size is already
+     as small as this stem should get, so only the box tightens. */
+  ${(p) => p.theme.media.compact} {
+    padding: 0.75rem 1rem;
+    font-size: 0.9375rem;
+  }
 `;
 
 export const OptionsContainer = styled.div`
@@ -351,6 +402,27 @@ export const OptionsContainer = styled.div`
 
   ${(p) => p.theme.media.tablet} {
     padding: 1rem 1rem;
+  }
+
+  /* -12px of padding and -6px across the three option gaps. Deliberately
+     does NOT touch Option's own padding: at 0.875rem an option resolves to
+     ~50px tall, and 0.625rem would take it to ~42px, under the 44px touch
+     minimum the rest of this sweep is trying to reach. */
+  ${(p) => p.theme.media.compact} {
+    padding: 0.625rem 0.75rem;
+    gap: 0.375rem;
+  }
+
+  /* Landscape phone only. Even with the header compressed, four stacked
+     options cannot fit 393px of height: measured, A started at y 437 and D
+     at 648 on a 393px viewport. Two columns halves the stack to two rows.
+     Bounded on all three axes so no desktop, tablet or portrait phone can
+     match it: short AND wider than the tablet breakpoint AND not a real
+     window. */
+  @media (max-height: 520px) and (min-width: 641px) and (max-width: 900px) {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 0.5rem;
   }
 `;
 
@@ -592,6 +664,13 @@ export const ResultItemHeader = styled.div<{ $correct: boolean }>`
   line-height: 1.5;
   letter-spacing: -0.005em;
   color: ${(p) => p.theme.colors.foreground};
+
+  /* Same side trim plus a tighter column gap — the header measured 118px
+     of chrome against 278px of row. */
+  ${(p) => p.theme.media.mobile} {
+    padding: 1rem;
+    gap: 0.5rem;
+  }
 `;
 
 export const QuestionIndex = styled.span`
@@ -606,6 +685,11 @@ export const QuestionIndex = styled.span`
   /* Aligns to the question text baseline rather than crowding it. */
   padding-top: 1px;
   min-width: 1.75rem;
+
+  /* The Q-number column does not need 28px on a phone. */
+  ${(p) => p.theme.media.mobile} {
+    min-width: 1.5rem;
+  }
 `;
 
 export const QuestionTextHeader = styled.span`
@@ -632,6 +716,11 @@ export const ResultBody = styled.div`
   display: flex;
   flex-direction: column;
   gap: 0.625rem;
+
+  /* 22px -> 16px each side on a phone: 12px back to the answer text. */
+  ${(p) => p.theme.media.mobile} {
+    padding: 1rem 1rem 1.125rem;
+  }
 `;
 
 export const AnswerRow = styled.div<{ $variant?: 'picked' | 'correct' | 'neutral' }>`
@@ -641,6 +730,18 @@ export const AnswerRow = styled.div<{ $variant?: 'picked' | 'correct' | 'neutral
   font-size: 0.875rem;
   line-height: 1.45;
   color: ${(p) => p.theme.colors.foreground};
+
+  /* Phones: stack the pill above the answer. This is the whole of the
+     "140px of 234" measurement — AnswerLabel's 5.25rem min-width plus the
+     10px gap is 94px taken off every answer line, leaving ~20 characters.
+     Column direction returns the full ~236px content box to the text
+     (~33 chars) while align-items: flex-start keeps the two labels
+     left-aligned and the same width as each other, so the deliberate
+     column-lock effect survives, just rotated. */
+  ${(p) => p.theme.media.mobile} {
+    flex-direction: column;
+    gap: 0.375rem;
+  }
 `;
 
 /** Min-width so YOUR PICK and ANSWER pills lock to the same column;
@@ -694,5 +795,21 @@ export const ActionButtons = styled.div`
   justify-content: center;
   flex-wrap: wrap;
   margin-top: 0.5rem;
+
+  /* Retake quiz / Next module, on the results page. Measured, these sit at
+     docTop 7379 on an 8752px document — eleven viewport-heights past the
+     last explanation, with no CTA in the score hero. On a short viewport
+     they pin to the scrollport and settle back into flow at the end of the
+     list (Container's own padding-bottom sits below, so the resting state
+     is unchanged). Gated deliberately: applied at every width the mixin
+     turns the centred desktop button row into a full-width plate with a
+     hairline and an upward fade over the per-question breakdown. */
+  ${(p) => p.theme.media.compact} {
+    ${stickyActionBar}
+
+    & > button {
+      flex: 1;
+    }
+  }
 `;
 

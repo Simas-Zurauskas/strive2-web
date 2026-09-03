@@ -1,5 +1,5 @@
 import styled from 'styled-components';
-import { touchMinHeight } from '@/theme';
+import { touchMinHeight, touchMinSize } from '@/theme';
 
 export const Container = styled.footer`
   margin-top: auto;
@@ -159,7 +159,14 @@ export const FooterLink = styled.a`
     }
   }
 
-  ${touchMinHeight}
+  /* touchMinSize, not touchMinHeight: the Follow column's "X" is a single
+     glyph, and width: fit-content made it a 9.6px-wide target inside an
+     already-44px-tall row. Every other footer label is wider than 44px, so
+     the min-inline-size binds on that one link and nowhere else. The box
+     grows rightward out of a left-aligned single-column list, so it
+     overlaps no sibling, and the underline follows the text rather than
+     the box. */
+  ${touchMinSize}
 `;
 
 /**

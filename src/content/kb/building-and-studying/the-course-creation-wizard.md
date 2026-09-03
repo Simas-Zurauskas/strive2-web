@@ -5,7 +5,7 @@ topic: building-and-studying
 summary: A deeper look at each step of the course-creation wizard — what to type, what each answer does to the resulting course, and how to use the agent chat.
 tags: [wizard, courses, generation]
 order: 10
-updated: 2026-05-02
+updated: '2026-05-02'
 related: [creating-your-first-course]
 ---
 

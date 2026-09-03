@@ -2,6 +2,7 @@
 
 import { Check, ChevronDown } from 'lucide-react';
 import { useCallback, useEffect, useId, useRef, useState } from 'react';
+import { useScrollLock } from '@/hooks';
 import * as S from './VoiceSelect.styles';
 import type { NarrationVoice } from '@/api/types';
 
@@ -49,6 +50,14 @@ export const VoiceSelect = ({
   pendingId,
 }: VoiceSelectProps) => {
   const [open, setOpen] = useState(false);
+
+  // Lock the page while the picker is open. Without this the page scrolls
+  // freely behind the panel while the panel stays put, so a tap that begins
+  // on a voice row can land on whatever slides under the finger as the panel
+  // closes: one tap was measured setting the voice AND jumping the speaking
+  // rate 1x -> 1.25x. Classic ghost-click, and it only reproduces if you
+  // scroll first, which is why it survived earlier passes.
+  useScrollLock(open);
   const [activeIdx, setActiveIdx] = useState<number>(() => {
     const i = options.findIndex((o) => o.id === value);
     return i >= 0 ? i : 0;

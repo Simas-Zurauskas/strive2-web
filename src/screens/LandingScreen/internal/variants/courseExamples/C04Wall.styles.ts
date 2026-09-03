@@ -2,6 +2,7 @@
 
 import { motion } from 'framer-motion';
 import styled, { css, keyframes } from 'styled-components';
+import { touchMinHeightCentered } from '@/theme';
 import { MEASURE, headBlockRhythm, sectionRhythm } from '../../_system/section';
 import { eyebrowType, headingType } from '../../_system/typography';
 
@@ -349,4 +350,9 @@ export const Cta = styled.button`
     outline: 2px solid ${(p) => p.theme.colors.accent};
     outline-offset: 3px;
   }
+
+  /* Standalone CTA, not a link inside running prose: measured at 19-22px
+     tall against the 44px minimum. Coarse-pointer only, so desktop is
+     untouched. */
+  ${touchMinHeightCentered}
 `;

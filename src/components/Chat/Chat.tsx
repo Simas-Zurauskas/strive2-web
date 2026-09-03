@@ -13,7 +13,7 @@
 
 import { AnimatePresence } from 'framer-motion';
 import { ArrowDown, ArrowUp, Loader, Paperclip, Square, X } from 'lucide-react';
-import { useEffect, useRef, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import { StickToBottom, useStickToBottomContext } from 'use-stick-to-bottom';
 import * as S from './Chat.styles';
 import { ChatMessage, ToolStatus } from './internal';
@@ -165,6 +165,41 @@ export const Chat = ({
     el.style.height = `${Math.min(el.scrollHeight, 96)}px`;
   }, [inputValue]);
 
+  // ── First-turn scroll anchor ────────────────────────
+  //
+  // use-stick-to-bottom pins the scroller to the bottom on mount. On the
+  // first turn the only content is the empty state — the AI disclosure,
+  // the "Try asking" label and the suggested prompts — and in a narrow
+  // panel that stack is TALLER than the scroll area, so "the bottom" is
+  // the wrong end of it. Measured in the guide chat at 320x568: the
+  // scroller opened at scrollTop 200 of a 201px range, hiding the
+  // disclosure and the first prompt chip (a tap at that chip's centre
+  // landed on the panel header instead). At 375x667 the same stack fits
+  // and the scroller correctly opened at 0 — the defect is width-driven,
+  // so the narrowest phones are exactly where the Art. 50(1) disclosure
+  // silently disappears.
+  //
+  // Pinning the STICK TARGET to 0 for that one turn, rather than passing
+  // `initial={false}`, is what leaves the rest of the library intact:
+  // `isAtBottom` stays true (so the scroll-down chip does not appear on
+  // a panel with nothing below it), and as soon as a real message exists
+  // the target returns to the true bottom and streaming replies stick as
+  // before.
+  //
+  // The callback MUST be stable and read a ref. `useStickToBottom`
+  // captures its whole options object in a `useMemo(..., [])`, so the
+  // function it actually calls is the one from the FIRST render — an
+  // inline arrow would freeze `messages.length` at mount and the chat
+  // would never scroll to a new message again.
+  const isFirstTurnRef = useRef(messages.length === 0);
+  useEffect(() => {
+    isFirstTurnRef.current = messages.length === 0;
+  }, [messages.length]);
+  const stickTarget = useCallback(
+    (targetScrollTop: number) => (isFirstTurnRef.current ? 0 : targetScrollTop),
+    [],
+  );
+
   const isBusy = disabled || isStreaming || isThinking;
 
   const handleKeyDown = (e: React.KeyboardEvent<HTMLTextAreaElement>) => {
@@ -188,7 +223,12 @@ export const Chat = ({
   return (
     <S.Wrapper $scrollSettled={scrollSettled}>
       <S.ScrollArea>
-        <StickToBottom style={{ height: '100%' }} resize="auto" initial="instant">
+        <StickToBottom
+          style={{ height: '100%' }}
+          resize="auto"
+          initial="instant"
+          targetScrollTop={stickTarget}
+        >
           <StickToBottom.Content>
             <S.Messages role="log" aria-live="polite" aria-relevant="additions">
               {isFirstTurn && (

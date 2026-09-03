@@ -77,7 +77,13 @@ export const Results = styled.ul`
   top: calc(100% + 0.5rem);
   left: 0;
   right: 0;
-  z-index: 30;
+  /* Below the sticky header, not above it. PublicTopBar.styles.ts Bar is
+     position:sticky with z-index 30 and this panel was also 30, so on a tie
+     DOM order decided it and the dropdown painted over the wordmark, slicing
+     it mid-glyph while scrolling. The signed-in path already got this right
+     by accident — Navbar is z-index 50 — which is why it was only ever
+     visible signed out. Nothing in the app occupies 20-29. (S3-14) */
+  z-index: 20;
   list-style: none;
   margin: 0;
   padding: 0.5rem;
@@ -85,8 +91,14 @@ export const Results = styled.ul`
   border: 1px solid ${(p) => p.theme.colors.surfaceBorder};
   border-radius: var(--radius-lg);
   box-shadow: var(--shadow-lift);
+  /* 380px is the DESKTOP ceiling only; KbSearchBar.tsx overrides this with a
+     measured inline max-height whenever the space below the field is smaller.
+     Kept here as the SSR / no-JS default. */
   max-height: 380px;
   overflow-y: auto;
+  /* Reaching the end of the list must not start scrolling the page behind the
+     panel — the same containment the markdown scrollers use. */
+  overscroll-behavior: contain;
 `;
 
 export const ResultItem = styled.li<{ $active?: boolean }>`

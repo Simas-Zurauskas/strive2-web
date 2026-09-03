@@ -2,13 +2,20 @@
 
 import Link from 'next/link';
 import styled from 'styled-components';
+import { touchMinHeightCentered } from '@/theme';
 
 export const Bar = styled.header<{ $scrolled: boolean }>`
   position: sticky;
   top: 0;
   z-index: 30;
   width: 100%;
-  height: var(--navbar-offset);
+  /* Status-bar avoidance in standalone/PWA. This bar is sticky at top: 0,
+     so at document top it is the first painted row on the screen. env() is
+     0 in browser tabs, where Safari's own chrome already covers the status
+     bar, so this is inert there. Bar sets no other padding (the gutter
+     lives on Inner), so a plain padding-top is safe here. */
+  height: calc(var(--navbar-offset) + var(--safe-area-top));
+  padding-top: var(--safe-area-top);
   display: flex;
   align-items: center;
   justify-content: center;
@@ -49,6 +56,12 @@ export const Wordmark = styled(Link)`
     outline-offset: 2px;
     border-radius: var(--radius-sm);
   }
+
+  /* 48x32 before. Already a flex item of Inner, so it is blockified and
+     min-block-size takes effect; the mixin's centring is what keeps the
+     label vertically centred in the grown box instead of pinned to its
+     top edge. Heights only — 44px of width on a wordmark is not the goal. */
+  ${touchMinHeightCentered}
 `;
 
 export const NavLinks = styled.nav`
@@ -75,6 +88,11 @@ export const NavLink = styled(Link)`
     outline: 2px solid ${(p) => p.theme.colors.accent};
     outline-offset: 2px;
   }
+
+  /* Blog 54x38, Pricing 71x38, Sign in 69x33-38 — all short of 44px tall.
+     Both are flex items of NavLinks, so the mixin binds. Bar is a fixed
+     56px row, so a 44px control still leaves 6px of slack. */
+  ${touchMinHeightCentered}
 `;
 
 export const SignInLink = styled(Link)`
@@ -96,4 +114,9 @@ export const SignInLink = styled(Link)`
     outline: 2px solid ${(p) => p.theme.colors.accent};
     outline-offset: 2px;
   }
+
+  /* Blog 54x38, Pricing 71x38, Sign in 69x33-38 — all short of 44px tall.
+     Both are flex items of NavLinks, so the mixin binds. Bar is a fixed
+     56px row, so a 44px control still leaves 6px of slack. */
+  ${touchMinHeightCentered}
 `;

@@ -51,7 +51,7 @@ export const RecallCard = ({ card, isRetry, onRate, onSkip, isRating }: RecallCa
   const [typedValue, setTypedValue] = useState('');
   const [typedSubmitted, setTypedSubmitted] = useState(false);
   const [grade, setGrade] = useState<GradeResult | null>(null);
-  const inputRef = useRef<HTMLInputElement | null>(null);
+  const inputRef = useRef<HTMLTextAreaElement | null>(null);
   const { prefersReduced } = useMotion();
   const { mutate: gradeAnswer } = useGradeRecallAnswer();
 
@@ -78,6 +78,17 @@ export const RecallCard = ({ card, isRetry, onRate, onSkip, isRating }: RecallCa
     window.addEventListener('keydown', handler);
     return () => window.removeEventListener('keydown', handler);
   }, [revealed, typedSubmitted]);
+
+  // Auto-grow the typed answer. The placeholder is static, so unlike the
+  // landing hero this can measure unconditionally. `scrollHeight` is the
+  // content box, so the border-box delta is added back for the 1px border
+  // and the 24px of block padding.
+  useEffect(() => {
+    const el = inputRef.current;
+    if (!el) return;
+    el.style.height = 'auto';
+    el.style.height = `${el.scrollHeight + el.offsetHeight - el.clientHeight}px`;
+  }, [typedValue]);
 
   const handleTypedSubmit = (e: React.FormEvent) => {
     e.preventDefault();
@@ -161,9 +172,18 @@ export const RecallCard = ({ card, isRetry, onRate, onSkip, isRating }: RecallCa
             <S.TypedForm onSubmit={handleTypedSubmit}>
               <S.TypedInput
                 ref={inputRef}
-                type="text"
+                rows={1}
                 value={typedValue}
                 onChange={(e) => setTypedValue(e.target.value)}
+                onKeyDown={(e) => {
+                  // A textarea does not implicitly submit its form, and the
+                  // Check button's title promises Enter does exactly that.
+                  // Shift+Enter keeps the newline for a two-sentence answer.
+                  if (e.key === 'Enter' && !e.shiftKey) {
+                    e.preventDefault();
+                    e.currentTarget.form?.requestSubmit();
+                  }
+                }}
                 placeholder="Try it from memory…"
                 autoComplete="off"
                 autoCapitalize="off"
@@ -240,10 +260,12 @@ export const RecallCard = ({ card, isRetry, onRate, onSkip, isRating }: RecallCa
               </S.Verdict>
             )}
 
-            <S.RatingLabel>
-              How well did you recall? <HelpAnchor concept="recall-ratings" size="sm" />
-            </S.RatingLabel>
-            <RatingBar box={card.box} onRate={onRate} disabled={isRating} />
+            <S.ActionZone>
+              <S.RatingLabel>
+                How well did you recall? <HelpAnchor concept="recall-ratings" size="sm" />
+              </S.RatingLabel>
+              <RatingBar box={card.box} onRate={onRate} disabled={isRating} />
+            </S.ActionZone>
           </>
         )}
       </S.Card>

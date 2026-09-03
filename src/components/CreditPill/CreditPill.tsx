@@ -69,16 +69,17 @@ export const CreditPill = () => {
     <S.PillLink href={ROUTES.billing()} $tone={tone} aria-label={ariaLabel}>
       {state.kind === 'bar' && (
         <>
-          <S.Label>Allowance</S.Label>
+          <S.WordLabel>Allowance</S.WordLabel>
           <S.BarTrack>
             <S.BarFill $pct={state.pct} $tone={state.tone} />
           </S.BarTrack>
+          <S.PctLabel>{Math.round(state.pct)}%</S.PctLabel>
         </>
       )}
       {state.kind === 'bonus' && (
         <>
           <S.Amount>{state.usd}</S.Amount>
-          <S.Label>Allowance</S.Label>
+          <S.WordLabel>Allowance</S.WordLabel>
         </>
       )}
       {state.kind === 'empty' && <S.Label>Out of allowance</S.Label>}

@@ -3,7 +3,9 @@
 import { AlertCircle, CheckCircle, ChevronRight, Lock, Sparkles, Trophy } from 'lucide-react';
 import { useRouter } from 'next/navigation';
 import { useMemo } from 'react';
+import { toast } from 'sonner';
 import { Badge, DownloadPdfButton, HelpAnchor, LessonIndicator, TextAction, computeLessonIndicatorState } from '@/components';
+import { TOASTS } from '@/constants/toasts';
 import { plural } from '@/lib/strings';
 import { useCourseContext } from '@/screens/CourseShell';
 import * as S from './CourseOverviewScreen.styles';
@@ -317,16 +319,36 @@ export const CourseOverviewScreen = () => {
                     const QuizIcon = quizIconFor[variant];
                     return (
                       <S.QuizRow
+                        type="button"
                         $locked={!quizUnlocked}
-                        onClick={() =>
-                          quizUnlocked &&
-                          router.push(`${courseBasePath}/quiz/${mi}${qp?.reviewDue ? '?review=true' : ''}`)
-                        }
+                        /* aria-disabled, not `disabled`: a disabled button is
+                           silent AND unfocusable, which is most of the defect
+                           we are fixing. Measured before this: disabled=false,
+                           aria-disabled=null, pointerEvents:auto, and a tap
+                           produced no navigation, no modal, no toast and no
+                           live-region announcement — AT announced an ordinary
+                           enabled button. aria-disabled keeps the row
+                           reachable and lets the tap explain the rule. */
+                        aria-disabled={!quizUnlocked}
+                        onClick={() => {
+                          if (!quizUnlocked) {
+                            toast(
+                              mp.total === 1
+                                ? TOASTS.QUIZ_LOCKED_SINGLE_LESSON
+                                : TOASTS.QUIZ_LOCKED,
+                            );
+                            return;
+                          }
+                          router.push(
+                            `${courseBasePath}/quiz/${mi}${qp?.reviewDue ? '?review=true' : ''}`,
+                          );
+                        }}
                       >
                         <S.QuizIcon $variant={variant}>
                           <QuizIcon size={14} strokeWidth={2} />
                         </S.QuizIcon>
                         <S.QuizLabel>Module Quiz</S.QuizLabel>
+                        {!quizUnlocked && <S.LockedBadge>Locked</S.LockedBadge>}
                         {quizUnlocked && !qp && <S.TakeQuizBadge>Take quiz</S.TakeQuizBadge>}
                         {qp?.reviewDue && <S.ReviewDueBadge>Review due</S.ReviewDueBadge>}
                         {qp?.bestTier && <S.QuizBadge $tier={qp.bestTier}>{qp.bestScore}%</S.QuizBadge>}

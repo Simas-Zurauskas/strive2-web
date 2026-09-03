@@ -10,13 +10,27 @@ import { onAccent } from '@/theme';
 export const Root = styled.div`
   position: fixed;
   right: max(1.5rem, var(--safe-area-right));
-  bottom: max(1.5rem, var(--safe-area-bottom));
+  /* Lift clear of the cookie banner while it is up. The banner is z-index 100
+     and this Root is 60, so without the offset the FAB is not merely covered
+     but unclickable — the 005 sweep measured it fully underneath at both
+     375x667 and 320x568 (fabBlocked=true). The var is 0px once a choice has
+     been made, which is every session after the first. */
+  bottom: calc(max(1.5rem, var(--safe-area-bottom)) + var(--cookie-banner-height, 0px));
   z-index: 60;
   pointer-events: none;
 
+  /* Stand down while the help-centre search dropdown is open. The listbox
+     sits at z-index 20 so it can pass under the sticky header, which leaves
+     this FAB painting over its lower rows — measured stealing the tap on the
+     second result. Set by KbSearchBar while results are showing. */
+  html[data-kb-search-open='true'] & {
+    opacity: 0;
+    visibility: hidden;
+  }
+
   ${(p) => p.theme.media.tablet} {
     right: max(1rem, var(--safe-area-right));
-    bottom: max(1rem, var(--safe-area-bottom));
+    bottom: calc(max(1rem, var(--safe-area-bottom)) + var(--cookie-banner-height, 0px));
   }
 `;
 
@@ -79,7 +93,27 @@ export const FabLabel = styled.span`
 export const Widget = styled.div`
   pointer-events: auto;
   width: 380px;
-  height: min(640px, calc(100dvh - 3rem));
+  /* Height must also reserve the sticky top bar, not just the bottom margin.
+     Root is bottom-anchored, so height is the only lever on the panel's TOP
+     edge: with calc(100dvh - 3rem) against a 1.5rem bottom offset the top
+     landed at a constant 24px on every viewport shorter than 688px — i.e.
+     under the 57px bar. Measured at 852x393 on /help: widget 448,24
+     380x345, and elementFromPoint at every nav control returned the chat
+     header, so Blog / Pricing / Sign in (signed-out) and the allowance pill
+     / announcements / account button (signed-in) were all dead. The panel is
+     non-modal — no backdrop, no scroll lock — so the user gets no cue. Each
+     max() mirrors the bottom offset Root actually uses at that breakpoint,
+     so the arithmetic stays right when --safe-area-bottom is non-zero
+     (iPhone landscape home indicator). The extra 0.5rem is the visible gap
+     under the bar. The mobile branch's 5rem was already doing this by
+     hand. */
+  height: min(
+    640px,
+    calc(
+      100dvh - max(1.5rem, var(--safe-area-bottom)) - var(--navbar-offset, 56px) -
+        0.5rem
+    )
+  );
   display: flex;
   flex-direction: column;
   border-radius: 16px;
@@ -96,12 +130,21 @@ export const Widget = styled.div`
      ≤640 rule made the widget span almost the whole viewport with the
      left edge butted against the screen edge. */
   ${(p) => p.theme.media.tablet} {
-    height: min(620px, calc(100dvh - 2rem));
+    height: min(
+      620px,
+      calc(
+        100dvh - max(1rem, var(--safe-area-bottom)) - var(--navbar-offset, 56px) -
+          0.5rem
+      )
+    );
   }
 
   ${(p) => p.theme.media.mobile} {
     width: calc(100vw - 1.5rem);
-    height: calc(100dvh - 5rem);
+    height: calc(
+      100dvh - max(1rem, var(--safe-area-bottom)) - var(--navbar-offset, 56px) -
+        0.5rem
+    );
   }
 `;
 

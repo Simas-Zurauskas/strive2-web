@@ -161,6 +161,16 @@ export const DayDot = styled.span<{ $lit: boolean; $weekend: boolean; $active: b
 
 export const Bridge = styled.span<{ $lit: boolean; $dimmed: boolean }>`
   flex: 1;
+  /* Load-bearing. Calendar is shrink-to-fit (its parent Wrap is a column
+     flex with align-items: center), so DayChain's width IS its max-content
+     width. With no min-width the bridges contribute 0 and their -1px side
+     margins make max-content 7*26 - 12 = 170px, i.e. a 24px pitch for 26px
+     dots — every dot overlaps its neighbour and the active dot's scale(1.12)
+     pulse adds another 1.5px each side. A floor here puts the chain back at
+     206px and restores a visible gap; that still fits Calendar's 240px cap,
+     and wherever the container is wider the bridges keep stretching via
+     flex: 1. */
+  min-width: 6px;
   height: 2px;
   margin: 0 -1px;
   border-radius: 1px;

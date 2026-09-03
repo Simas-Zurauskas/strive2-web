@@ -33,6 +33,17 @@ export const Panel = styled(motion.aside)`
   right: 0;
   bottom: 0;
   width: min(440px, 92vw);
+  /* top: 0; bottom: 0 resolves against the LAYOUT viewport, which on iOS
+     Safari is taller than what the user can see — the chrome overlays it
+     rather than shrinking it. The panel therefore laid out taller than the
+     visible area, its Body's content fitted that taller box, overflow-y: auto
+     found scrollHeight === clientHeight and never became a scroller, and the
+     tail of the announcements sat permanently below the fold: on a 440x956
+     device four separate swipes produced identical pixels, text was cut
+     mid-sentence and older announcements were unreachable.
+     Capping to the visual viewport is what makes the Body overflow, and
+     therefore scroll. Falls back to 100dvh without window.visualViewport. */
+  max-height: var(--visual-viewport-height, 100dvh);
   z-index: 61;
   background: ${(p) => p.theme.colors.background};
   border-left: 1px solid ${(p) => p.theme.colors.surfaceBorder};

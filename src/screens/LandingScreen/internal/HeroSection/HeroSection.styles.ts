@@ -112,6 +112,20 @@ export const GoalForm = styled.form`
 export const GoalInput = styled.textarea`
   width: 100%;
   resize: none;
+  /* Auto-grow floor/ceiling. JS (HeroSection.tsx) writes an explicit height
+     on every value change; these two bound it. rows={2} + resize:none capped
+     the field at 82px against the 152px a 144-char goal needs, so 48px of
+     what the visitor typed was sliced off by the box edge (S2-11) with no
+     way out. min-height pins the rows={2} box so the first client paint
+     cannot shrink an empty field, and is written in em units so the global
+     >=16px touch guard cannot move it. max-height keeps a pasted 500-char
+     goal from eating a landscape phone.
+     (1.5em = the declared line-height; 2 x var(--space-4) = the vertical
+     padding; 2px = the 1px border top+bottom. Under the global
+     box-sizing: border-box that is exactly the 82px it renders today.) */
+  min-height: calc(2 * 1.5em + 2 * var(--space-4) + 2px);
+  max-height: min(30dvh, 12rem);
+  overflow-y: auto;
   padding: var(--space-4);
   font-family: inherit;
   font-size: 1rem;

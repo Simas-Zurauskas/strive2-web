@@ -74,7 +74,10 @@ const QuestionIcon = () => (
   </svg>
 );
 
-const useHideOnScroll = (navRef: React.RefObject<HTMLElement | null>) => {
+const useHideOnScroll = (
+  navRef: React.RefObject<HTMLElement | null>,
+  rowRef: React.RefObject<HTMLElement | null>,
+) => {
   const [hidden, setHidden] = useState(false);
   const [scrolled, setScrolled] = useState(false);
   const lastScrollY = useRef(typeof window !== 'undefined' ? window.scrollY : 0);
@@ -122,15 +125,22 @@ const useHideOnScroll = (navRef: React.RefObject<HTMLElement | null>) => {
   // --navbar-offset = current visible bottom edge of the Nav element.
   // The Nav is now a flex-column: a 56px nav row plus an optional
   // route-extension slot (e.g. CourseShell's ~49px lesson bar). On
-  // hide-on-scroll only the nav row tucks away (translate Y -56px), so
-  // the visible portion is `fullHeight - 56` when hidden, `fullHeight`
-  // when visible. ResizeObserver covers the case where the extension's
-  // content changes mid-session.
+  // hide-on-scroll only the nav row tucks away (translate Y by the row's
+  // own height), so the visible portion is `fullHeight - rowHeight` when
+  // hidden, `fullHeight` when visible. ResizeObserver covers the case where
+  // the extension's content changes mid-session.
   useIsomorphicLayoutEffect(() => {
     const root = document.documentElement;
     const apply = () => {
+      // Measure the hide distance instead of hard-coding 56: the nav row is
+      // 56px PLUS env(safe-area-inset-top) in standalone/PWA, and Nav's
+      // hidden transform shifts by exactly that, so a literal 56 would
+      // over-report --navbar-offset by the inset and push every sidebar and
+      // panel that tracks it down by the same amount (~59px on a notched
+      // device).
       const h = navRef.current?.offsetHeight ?? 56;
-      const visible = hidden ? Math.max(0, h - 56) : h;
+      const rowH = rowRef.current?.offsetHeight ?? 56;
+      const visible = hidden ? Math.max(0, h - rowH) : h;
       root.style.setProperty('--navbar-offset', `${visible}px`);
     };
     apply();
@@ -139,7 +149,7 @@ const useHideOnScroll = (navRef: React.RefObject<HTMLElement | null>) => {
     const ro = new ResizeObserver(apply);
     ro.observe(node);
     return () => ro.disconnect();
-  }, [hidden, navRef]);
+  }, [hidden, navRef, rowRef]);
 
   return { hidden, scrolled };
 };
@@ -150,7 +160,8 @@ export const Navbar = () => {
   const { user } = useAuth();
   const { resolvedTheme, setTheme } = useTheme();
   const navRef = useRef<HTMLElement>(null);
-  const { hidden, scrolled } = useHideOnScroll(navRef);
+  const rowRef = useRef<HTMLDivElement>(null);
+  const { hidden, scrolled } = useHideOnScroll(navRef, rowRef);
 
   // App drawer (tablet/below). Closed on every route change so a deep
   // link from the drawer doesn't leave the panel hanging open over the
@@ -207,7 +218,7 @@ export const Navbar = () => {
   return (
     <>
     <S.Nav ref={navRef} $hidden={hidden} $scrolled={scrolled}>
-      <S.NavRow>
+      <S.NavRow ref={rowRef}>
       <S.LeftCluster>
         <S.HamburgerButton
           type="button"
@@ -340,6 +351,13 @@ export const Navbar = () => {
       <S.Drawer
         id="app-nav-drawer"
         aria-hidden={!drawerOpen}
+        /* `aria-hidden` alone hid this drawer from assistive tech while leaving
+           all 10 of its controls in the tab order at x -312 — focusable but
+           unreachable and unannounced, which is the WCAG 4.1.2 failure the 005
+           sweep measured (a real Tab jumped focus straight into the off-screen
+           panel). `inert` is the half that actually removes them; the pair is
+           what makes it correct. React 19 passes the boolean through natively. */
+        inert={!drawerOpen}
         aria-label="App menu"
         initial="closed"
         animate={drawerControls}

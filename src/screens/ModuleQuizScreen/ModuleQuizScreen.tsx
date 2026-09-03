@@ -3,7 +3,7 @@
 import { useParams, useRouter, useSearchParams } from 'next/navigation';
 import { useEffect } from 'react';
 import { ROUTES } from '@/constants/routes';
-import { useCourse } from '@/hooks';
+import { useCourse, useScrollToTopOnStep } from '@/hooks';
 import { analytics } from '@/lib/analytics';
 import { useQuizState, QuizResults, QuizQuestion, QuizLanding, QuizLoadingShell } from './internal';
 
@@ -24,6 +24,24 @@ export const ModuleQuizScreen = () => {
 
   const mod = course?.structure?.modules?.[moduleIndex];
   const modules = course?.structure?.modules ?? [];
+
+  // Step identity for the in-place screen swaps this route performs:
+  // landing -> question N -> results -> (Retake) -> question 0. Every one of
+  // those arrows replaces the whole screen WITHOUT a route change, so the
+  // protected layout's pathname-keyed scroll reset never fires and the
+  // learner lands wherever the previous step's button happened to be —
+  // measured at 375x667, next-question held scrollY 530 (stem above the
+  // viewport, option A at -81) and Retake held 1256 on a 2108px document.
+  // `null` until the course resolves so the loading shell does not count as
+  // the first step. Must stay above the early returns below — it is a hook.
+  const stepKey = !course || !mod
+    ? null
+    : quiz.results
+      ? 'results'
+      : quiz.quizStarted && quiz.questions.length > 0
+        ? `question:${quiz.currentQuestion}`
+        : 'landing';
+  useScrollToTopOnStep(stepKey);
 
   useEffect(() => {
     if (course?.activeJobId) {

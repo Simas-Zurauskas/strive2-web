@@ -9,7 +9,31 @@ export const MermaidContainer = styled.div`
 `;
 
 export const MermaidViewport = styled.div<{ $dragging?: boolean; $zoomed?: boolean }>`
-  height: 500px;
+  /* Was a flat 'height: 500px'. On a 320x568 phone that made the widget 543px
+     of a 568px viewport (96%) around a 238x147 diagram — 353px of empty box.
+     Worse, in landscape (852x393) a 543px widget means the diagram and the
+     three zoom buttons that fix an illegible diagram can never be on screen at
+     the same time: with the diagram centred the toolbar sat 91-119px below the
+     fold. Size against the viewport instead, capped at the old value so nothing
+     changes on a normal desktop window (>=834px tall resolves to exactly 500px).
+     calcFit() in MermaidBlock is driven by a ResizeObserver on this element, so
+     auto-fit re-runs on every height change and nothing here needs the number. */
+  height: min(60dvh, 500px);
+
+  /* Narrow phones: the diagram must not eat the lesson it illustrates.
+     320x568 -> 284 + 41px toolbar = 325px, 57% of the viewport (was 96%). */
+  ${(p) => p.theme.media.mobile} {
+    height: min(50dvh, 380px);
+  }
+
+  /* Landscape phones: height, not width, is the scarce axis. Ordered after the
+     width query so it wins when both match. 852x393 -> 216 + 41 = 257px (65%),
+     which is the first height at which the diagram and the zoom controls are
+     co-visible — at 543px the widget was 138% of the viewport. */
+  @media (max-height: 500px) {
+    height: min(55dvh, 260px);
+  }
+
   overflow: hidden;
   background: ${(p) => p.theme.colors.background};
   cursor: ${(p) => (p.$dragging ? 'grabbing' : 'grab')};

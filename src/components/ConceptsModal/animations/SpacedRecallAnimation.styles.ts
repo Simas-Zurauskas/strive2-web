@@ -34,6 +34,23 @@ export const LeftPanel = styled.div`
   justify-content: center;
   min-width: 0;
   max-width: 260px;
+
+  /* Portrait. Two things break here at once and neither is fixable by a
+     min-width: (1) Wrap flips to flex-direction: column while keeping
+     align-items: center, so the cross axis is shrink-to-fit and this panel
+     — whose only child is a width: 100% stage — computes to width 0. The
+     ghost card then renders at 39px (its own padding), one word per line,
+     over the modal's copy. (2) Even laid out correctly, the stack needs
+     170px (card) + 12px + 160px (track) = 342px inside the 215px the
+     modal's 280px slot actually offers.
+
+     The interval track IS this concept ("why we bring things back"); the
+     card preview is the redundant half, and the RecallScreen empty state
+     already shows it at full size. Measured after: RightPanel 275x160,
+     fully inside the slot, zero overlapping text pairs. */
+  @media (max-width: 520px) {
+    display: none;
+  }
 `;
 
 export const RightPanel = styled.div`
@@ -48,6 +65,17 @@ export const RightPanel = styled.div`
   border-radius: 10px;
   background: ${(p) => p.theme.colors.surface};
   border: 1px solid ${(p) => p.theme.colors.surfaceBorder};
+
+  /* Sole occupant in portrait: stop it stretching to the column's full
+     height (flex: 1 resolves to flex-basis: 0 on the block axis there)
+     and let it take more of the recovered width. width: 100% above already
+     resolves correctly against the centred column. Without flex: 0 0 auto
+     the surface box stretches to 215px tall around 160px of content, which
+     reads as an empty card. */
+  @media (max-width: 520px) {
+    flex: 0 0 auto;
+    max-width: 320px;
+  }
 `;
 
 export const RightLabel = styled.span`

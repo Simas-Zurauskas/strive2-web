@@ -1,6 +1,7 @@
 'use client';
 
-import styled, { keyframes } from 'styled-components';
+import styled, { css, keyframes } from 'styled-components';
+import { touchHitArea } from '@/theme';
 
 const backdropFade = keyframes`
   from { opacity: 0; }
@@ -44,18 +45,38 @@ export const Backdrop = styled.div`
 `;
 
 export const Dialog = styled.div`
+  /* Per-AXIS gutter vars, not one scalar: the full-bleed mobile branch folds
+     the safe-area insets into the padding, and the sticky Header below has to
+     cancel the REAL gutter on each axis with a negative margin. */
+  --dialog-pad: var(--space-6);
+  --dialog-pad-top: var(--dialog-pad);
+  --dialog-pad-x: var(--dialog-pad);
+  --dialog-pad-bottom: var(--dialog-pad);
+
   position: relative;
   width: 100%;
   max-width: 440px;
-  max-height: 90vh;
+  /* dvh, not vh: on iOS vh is the LARGE viewport — measured 754px against
+     100dvh's 714px on iPhone 17 / iOS 26.5 — so 90vh overshot the visible
+     area by ~36px with Safari's toolbar shown, and on a 393px-tall landscape
+     viewport this cap is what decides whether the submit is reachable.
+     (check:mobile R2 only matches the literal 100vh, so 90vh was never
+     going to be caught by the gate.) The min() additionally caps the dialog
+     to the band the user can actually see, which is what shrinks when the
+     software keyboard opens — dvh does not. Pre-measurement the var is
+     100dvh, so this is plain 90dvh until ViewportInsetBootstrap reports. */
+  max-height: min(90dvh, var(--visual-viewport-height, 90dvh));
   background: ${(p) => p.theme.colors.surface};
   border: 1px solid ${(p) => p.theme.colors.surfaceBorder};
   border-radius: var(--radius-xl);
   box-shadow: var(--shadow-lift);
   overflow-y: auto;
+  /* The modal's scroll lock does not actually hold in this app, so stop an
+     over-scroll of the dialog from chaining to the landing page behind it. */
+  overscroll-behavior: contain;
   display: flex;
   flex-direction: column;
-  padding: var(--space-6);
+  padding: var(--dialog-pad-top) var(--dialog-pad-x) var(--dialog-pad-bottom);
   gap: var(--space-4);
   animation: ${dialogPop} 0.22s cubic-bezier(0.16, 1, 0.3, 1);
 
@@ -63,9 +84,40 @@ export const Dialog = styled.div`
     max-width: none;
     max-height: none;
     width: 100vw;
-    height: 100dvh;
+    /* NOT 100dvh. Measured on iPhone 17 / iOS 26.5: with the software
+       keyboard raised, 100dvh still resolves to 714px while only 353px is
+       visible, so a submit button at the bottom of a 100dvh dialog sits
+       361px below the visible area and the dialog's own scrollTop stays 0.
+       --visual-viewport-height is the real visible height, published from
+       window.visualViewport by ViewportInsetBootstrap; sizing the dialog to
+       it makes the internal scroller span exactly what the user can see.
+       The 100dvh fallback is what SSR and non-supporting browsers get —
+       i.e. today's behaviour, unchanged. */
+    height: var(--visual-viewport-height, 100dvh);
     border-radius: 0;
     border: none;
+    /* Full-bleed means this dialog owns the screen edges, so it owns the
+       insets too — nothing else pads for it (the Backdrop drops its 1rem at
+       this breakpoint). env() is 0 in portrait Safari, so this changes
+       nothing there; it earns its keep in landscape (59px left/right on a
+       notched phone) and in standalone/PWA. Symmetric on the x axis so the
+       content stays centred and the sticky header needs one value. */
+    --dialog-pad-top: calc(var(--dialog-pad) + var(--safe-area-top));
+    --dialog-pad-x: calc(
+      var(--dialog-pad) + max(var(--safe-area-left), var(--safe-area-right))
+    );
+    --dialog-pad-bottom: calc(var(--dialog-pad) + var(--safe-area-bottom));
+  }
+
+  /* Short viewports: 24px of padding on all four sides plus 16px gaps is
+     what puts "Sign in" 79px past the fold at 852x393 and overflows the
+     dialog by 113px at 320x568.
+     MUST stay below the media.mobile block: both match a 375x667 phone and
+     the two selectors have equal specificity, so source order is what lets
+     the smaller compact gutter win and feed the per-axis vars above. */
+  ${(p) => p.theme.media.compact} {
+    --dialog-pad: var(--space-4);
+    gap: var(--space-3);
   }
 
   @media (prefers-reduced-motion: reduce) {
@@ -73,11 +125,44 @@ export const Dialog = styled.div`
   }
 `;
 
+/* Applied at two breakpoints — the full-bleed mobile dialog and any short
+   viewport — so it is written once. */
+const stickyHeader = css`
+  position: sticky;
+  top: 0;
+  z-index: 2;
+  /* Cancel the dialog's REAL gutter — which includes the safe-area inset on
+     the full-bleed mobile branch — so the header's fill reaches the edges and
+     pins flush to the top of the scrollport, with no strip of scrolling
+     content visible above or beside it. The per-axis vars are published by
+     Dialog, so this stays correct when the compact block shrinks them. */
+  margin: calc(var(--dialog-pad-top) * -1) calc(var(--dialog-pad-x) * -1) 0;
+  padding: var(--space-3) var(--dialog-pad-x);
+  background: ${(p) => p.theme.colors.surface};
+  border-bottom: 1px solid ${(p) => p.theme.colors.surfaceBorder};
+`;
+
 export const Header = styled.div`
   display: flex;
   align-items: center;
   justify-content: space-between;
   margin-bottom: var(--space-2);
+
+  /* The close button is the ONLY dismiss affordance on the full-bleed mobile
+     dialog — six sampled backdrop edges all hit the Dialog, and a phone has
+     no Esc key — and it was position:static inside the dialog's own scroller,
+     i.e. gone after 81px of scroll, which the user is forced to do to reach
+     the submit. Pinning the header keeps the escape hatch present for the
+     whole of that scroll. */
+  ${(p) => p.theme.media.mobile} {
+    ${stickyHeader}
+  }
+
+  /* Landscape phones get the centred card, not the full-bleed sheet, but the
+     dialog is still a 353px-tall internal scroller there. */
+  ${(p) => p.theme.media.compact} {
+    ${stickyHeader}
+  }
 `;
 
 export const Wordmark = styled.span`
@@ -102,6 +187,13 @@ export const CloseButton = styled.button`
   cursor: pointer;
   transition: color 0.15s, background 0.15s;
 
+  /* 32x32 painted; grow the HIT area to 44 on coarse pointers without
+     touching the visual box. ::after is free here — the button is neither
+     overflow-hidden nor already positioned — so touchHitArea is the correct
+     mixin (touchMinSize would visibly grow a ghost button sitting on the
+     dialog's own top rule). */
+  ${touchHitArea}
+
   ${(p) => p.theme.media.hover} {
     &:hover {
       color: ${(p) => p.theme.colors.foreground};
@@ -121,6 +213,10 @@ export const TabList = styled.div`
   gap: var(--space-2);
   border-bottom: 1px solid ${(p) => p.theme.colors.surfaceBorder};
   margin-bottom: var(--space-4);
+
+  ${(p) => p.theme.media.compact} {
+    margin-bottom: var(--space-2);
+  }
 `;
 
 export const Tab = styled.button<{ $active: boolean }>`
@@ -156,6 +252,14 @@ export const Tab = styled.button<{ $active: boolean }>`
     outline: 2px solid ${(p) => p.theme.colors.accent};
     outline-offset: 2px;
     border-radius: var(--radius-sm);
+  }
+
+  /* Floor the height at 40px rather than letting the padding cut collapse
+     the tab: measured at 132x41 already, and this cluster must not make an
+     under-44px target smaller. */
+  ${(p) => p.theme.media.compact} {
+    padding: var(--space-2);
+    min-height: 40px;
   }
 `;
 

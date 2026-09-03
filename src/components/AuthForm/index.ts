@@ -8,6 +8,8 @@ export {
   Divider as AuthDivider,
   GoogleBtn as GoogleBtn,
   PasswordRulesSlot as AuthPasswordRulesSlot,
+  SubmitRow as AuthSubmitRow,
 } from './AuthForm.styles';
 export { GoogleIcon } from './GoogleIcon';
+export { ScrollToFirstError } from './ScrollToFirstError';
 export * as AuthMoment from './AuthMoment.styles';

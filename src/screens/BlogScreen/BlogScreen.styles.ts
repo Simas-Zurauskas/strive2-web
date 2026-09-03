@@ -1,5 +1,6 @@
 import Link from 'next/link';
 import styled from 'styled-components';
+import { touchMinHeightCentered } from '@/theme';
 
 // Hub layout — wider than reading column. The blog hub is a topic index, like
 // /learn — visitors scan, jump in. Posts themselves render in the narrower
@@ -283,6 +284,13 @@ export const BreadcrumbLink = styled(Link)`
       color: ${(p) => p.theme.colors.foreground};
     }
   }
+
+  /* Measured 36x21 ("Home") and 27x21 ("Blog") on touch — the post's only
+     in-page way back up the hierarchy. Standalone navigation, so the WCAG 2.2
+     SC 2.5.8 "link in a sentence" exception does not apply. Breadcrumb above
+     is already flex + align-items: center, so the taller links stay level with
+     the middle-dot dividers. */
+  ${touchMinHeightCentered}
 `;
 
 export const BreadcrumbDivider = styled.span`
@@ -492,6 +500,25 @@ export const ArticleBody = styled.div`
     border-collapse: collapse;
     margin: 1.5rem 0;
     font-size: 0.9375rem;
+  }
+
+  /* Same treatment as the KB article body. html and body are overflow-x: clip, which
+     hard-clips without creating a scroll container, so a wide table in a post
+     is unrecoverable on a phone — three posts ship GFM tables today, the
+     widest a 4-column rank/topic/votes/share table with a 48-character cell.
+     Gated at media.tablet: display:block shrink-to-fits the table, and
+     above 640px the 60ch prose column is wide enough that the desktop
+     full-width row rules should stay as they are. */
+  ${(p) => p.theme.media.tablet} {
+    table {
+      display: block;
+      max-width: 100%;
+      overflow-x: auto;
+      /* Stop a horizontal swipe at the scroller's edge from chaining to the
+         browser's back-gesture. */
+      overscroll-behavior-x: contain;
+      -webkit-overflow-scrolling: touch;
+    }
   }
 
   th,

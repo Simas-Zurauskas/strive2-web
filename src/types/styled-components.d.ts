@@ -7,7 +7,7 @@ declare module 'styled-components' {
     colorsLib: typeof colorsLib;
     scheme: ColorScheme;
     bp: Breakpoints;
-    media: Record<keyof Breakpoints | 'hover' | 'touch', string>;
+    media: Record<keyof Breakpoints | 'hover' | 'touch' | 'compact', string>;
   }
 }
 

@@ -5,6 +5,7 @@
  * text that Pinecone embedded.
  */
 
+import { ONBOARDING_ALLOWANCE_CREDITS } from '@/lib/pricingSnapshot';
 import type { BillingCatalog, PlanKey } from '@/api/types';
 
 const NUM_WORDS: Record<number, string> = {
@@ -100,6 +101,14 @@ export const buildKbPricingReplacementsFromCatalog = (
       lessonRangeFromCredits(monthlyAllowanceFor(key, catalog), catalog),
     );
   }
+
+  // Mirror of the api-side `lessonsPerSignupGrant`. The catalog has no field
+  // for the one-time grant — it is a claim about a not-yet-registered visitor —
+  // so this reads the mirrored constant, which the parity test pins to
+  // pricingConfig KNOB 9.
+  r['lessonsPerSignupGrant'] = fmtLessonRange(
+    lessonRangeFromCredits(ONBOARDING_ALLOWANCE_CREDITS, catalog),
+  );
 
   r['topupMinUsd'] = fmtUsd(catalog.topupRate.minUsd);
   r['topupMaxUsd'] = fmtUsd(catalog.topupRate.maxUsd);

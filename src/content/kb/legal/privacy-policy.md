@@ -5,7 +5,7 @@ topic: legal
 summary: How Strive collects, uses, shares, and protects personal data — documents and links you give us, sub-processors, retention, your GDPR rights, notice and takedown, and your responsibilities.
 tags: [privacy, gdpr, data-protection, legal]
 order: 10
-updated: '2026-08-19'
+updated: '2026-09-03'
 related: [terms-of-service, your-privacy-on-strive]
 ---
 
@@ -244,6 +244,16 @@ consent. We are not going to describe as consent something you were never asked 
 your stored choice and brings the banner back, so you can pick "essential only". You can
 also clear the `strive:cookie-consent` key in your browser's storage, which has the same
 effect. We keep a record of the choice you make — see § 5.1.
+
+**How long your choice lasts.** Your choice is stored in the browser you made it in,
+alongside the version of this policy that was in force when you made it (a companion
+`strive:cookie-consent-version` key). It is not attached to your account, so a choice made
+in one browser or on one device does not carry across to the others — each asks separately.
+When we make a material change to this policy or to the banner, we treat a choice made
+under the earlier version as expired and ask you again. Until you answer the second time,
+the opt-out model described in this section applies again: everything listed above runs
+until you choose "essential only" once more. Clearing your browser's site data has the same
+effect. The record of what you previously chose is kept as described in § 5.1.
 
 ## 7. Your rights
 

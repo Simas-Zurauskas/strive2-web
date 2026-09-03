@@ -244,6 +244,24 @@ export const media = {
   hover: `@media (hover: hover) and (pointer: fine)`,
   /** Touch-primary devices (no fine pointer). */
   touch: `@media (hover: none) and (pointer: coarse)`,
+  /**
+   * Short viewports on small devices — a phone in landscape (852x393), a
+   * small phone in portrait (320x568, 375x667), or a genuinely tiny window.
+   *
+   * Height-keyed because the defect it exists for is a vertical-budget one:
+   * the fixed navbar + back link + eyebrow + serif H1 + progress row costs
+   * 449px of a 667px viewport before the first quiz answer. Width-bounded so
+   * a wide-but-short desktop window (1440x700) keeps the roomy layout — the
+   * problem there is not a shortage of space, it is a phone.
+   *
+   * 820px, NOT 720: an iPhone 17 in portrait measures 714px of `100dvh` with
+   * Safari's toolbar shown and 754px of `100vh` with it collapsed (task 005
+   * device addendum, §A). A 720px threshold sits BETWEEN those two states, so
+   * the rule would flip on and off as the user scrolls and the toolbar
+   * animates. 820 clears both, stays below a real tablet in portrait (iPad is
+   * 1024+ tall), and is fenced off from desktop by the width bound anyway.
+   */
+  compact: `@media (max-height: 820px) and (max-width: 900px)`,
 } as const;
 
 // ── CSS variable references ─────────────────────────────
@@ -383,6 +401,75 @@ export const touchMinHeight = `
   @media (hover: none) and (pointer: coarse) {
     min-block-size: 44px;
   }
+`;
+
+/**
+ * `touchMinHeight` for STANDALONE links whose height is purely content-derived
+ * — breadcrumbs, top-bar nav links, footer links, "read more" CTAs. Two things
+ * `touchMinHeight` alone cannot do at those sites:
+ *   1. `min-block-size` does not apply to a non-replaced INLINE box, so on a
+ *      link that is not already a flex/grid item it is a silent no-op;
+ *   2. where it does apply, the label stays pinned to the top of the grown
+ *      box, so the visible text and the tap target stop coinciding.
+ * Blockifying to `inline-flex` + centring fixes both.
+ *
+ * NOT for links inside running prose. A 44px inline-flex box mid-paragraph
+ * blows out the line box and de-inlines the link; WCAG 2.2 SC 2.5.8 exempts
+ * links whose target is "in a sentence" for exactly that reason.
+ */
+export const touchMinHeightCentered = `
+  @media (hover: none) and (pointer: coarse) {
+    display: inline-flex;
+    align-items: center;
+    min-block-size: 44px;
+  }
+`;
+
+/**
+ * Bottom-anchored bar for a primary control that would otherwise sit below
+ * the fold. Interpolate into the control's OWN wrapper — it declares position,
+ * inset and paint only, so the wrapper keeps its own display / gap /
+ * justification, and a consumer on a tinted surface can override `background`
+ * and `box-shadow` after the interpolation.
+ *
+ * `sticky`, not `fixed`, deliberately:
+ *   - it rides the bottom of the scrollport only while content remains below
+ *     it, then settles into the document at the end of the scroll, so it never
+ *     permanently occludes the last card;
+ *   - it needs no width plumbing — it is exactly as wide as its flow position,
+ *     which is the content column, so nothing shows through its gutters;
+ *   - `position: fixed` + an edge anchor is what check:mobile R4 polices, and a
+ *     fixed slab would need the safe-area handling below to be exactly right on
+ *     every route rather than just correct here.
+ *
+ * The `bottom` offset is the load-bearing part. Sticky resolves against the
+ * LAYOUT viewport, and on iOS neither the layout viewport nor `dvh` shrinks
+ * when the software keyboard opens — measured on iPhone 17 / iOS 26.5, 100dvh
+ * stayed 714px while only 353px was visible. `--keyboard-inset` is that
+ * occlusion, published from window.visualViewport by ViewportInsetBootstrap;
+ * without it a bar at `bottom: 0` is under the keyboard. `--safe-area-bottom`
+ * clears the iOS home indicator in landscape and standalone mode (it measures
+ * 0 in portrait Safari, so it costs nothing there).
+ *
+ * No `transition` here, for the same reason the press mixins declare none:
+ * these are appended at the END of a component's template and a `transition`
+ * would silently delete whatever the component declared.
+ *
+ * CALLER'S RESPONSIBILITY: gate this behind `media.compact` (or `media.tablet`)
+ * at the call site. Applied unconditionally it converts a centred desktop
+ * button row into a full-width bar with a rule above it.
+ */
+export const stickyActionBar = `
+  position: sticky;
+  bottom: calc(var(--keyboard-inset, 0px) + var(--safe-area-bottom, 0px));
+  z-index: 20;
+  background: var(--background);
+  border-top: 1px solid var(--surface-border);
+  padding-block: 0.625rem;
+  /* Solid-colour upward fade rather than a shadow, matching
+     DepthStep.styles.ts's sticky Actions bar. Reads as "content continues
+     under here" without a grey haze in dark mode. */
+  box-shadow: 0 -8px 16px var(--background);
 `;
 
 export const colors: ColorsSet = {

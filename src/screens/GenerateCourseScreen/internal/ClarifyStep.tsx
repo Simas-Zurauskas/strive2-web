@@ -3,6 +3,7 @@
 import { useEffect, useMemo, useState } from 'react';
 import { ClarifyQuestion, GoalType } from '@/api/types';
 import { RadioGroup, CheckboxGroup, Textarea, Button, Card, Eyebrow } from '@/components';
+import { useScrollToTopOnStep } from '@/hooks';
 import * as S from './ClarifyStep.styles';
 
 type AnswerValue = string | string[];
@@ -53,6 +54,14 @@ export const ClarifyStep = ({
   const currentQuestion = questions[currentIndex];
   const isFirst = currentIndex === 0;
   const isLast = currentIndex === questions.length - 1;
+
+  // All four clarifying questions live inside ONE wizard step, so the parent's
+  // `scrollTo(0)` — which is keyed on `step` — never fires between them. Every
+  // NEXT therefore landed the learner ~500px down a fresh question, with
+  // "QUESTION n OF 4" and the question text above the fold and only a disabled
+  // NEXT in view: measured on all three iOS simulators, and it reads as a dead
+  // end. Keying on the question index is what the module quiz already does.
+  useScrollToTopOnStep(currentQuestion ? `clarify:${currentIndex}` : null);
 
   const allAnswered = useMemo(
     () => questions.every((q) => isAnswered(answers[q.id])),

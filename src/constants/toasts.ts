@@ -31,6 +31,10 @@ export const TOASTS = {
   QUIZ_START_ERROR: 'Failed to start quiz generation',
   MODULE_MASTERED: 'Module mastered.',
   QUIZ_SUBMIT_ERROR: 'Failed to submit quiz',
+  // Locked module-quiz rows. The gate is `completed >= Math.min(2, total)`
+  // (see CourseOverviewScreen), hence the one-lesson-module variant.
+  QUIZ_LOCKED: 'Complete two lessons in this module to unlock its quiz.',
+  QUIZ_LOCKED_SINGLE_LESSON: "Complete this module's lesson to unlock its quiz.",
 
   // ── Auth & verification ───────────────────────────────
   VERIFICATION_SENT: 'Verification email sent. Check your inbox.',

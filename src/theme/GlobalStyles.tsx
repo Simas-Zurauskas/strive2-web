@@ -134,6 +134,35 @@ export const GlobalStyles = createGlobalStyle`
     --safe-area-right: env(safe-area-inset-right, 0px);
     --safe-area-bottom: env(safe-area-inset-bottom, 0px);
     --safe-area-left: env(safe-area-inset-left, 0px);
+
+    /* Software-keyboard geometry, published by ViewportInsetBootstrap from
+       window.visualViewport. These are the values SSR, no-JS and browsers
+       without the API render with, so consumers may reference them
+       unconditionally.
+
+       --keyboard-inset is the px of the LAYOUT viewport the on-screen
+       keyboard covers. Use it on bottom-anchored chrome:
+         bottom: var(--keyboard-inset, 0px);
+
+       --visual-viewport-height is the px the user can actually see. Use it
+       for full-height shells INSTEAD of 100dvh: measured on iOS 26.5, dvh
+       does not shrink when the keyboard opens (it reported 714px while
+       only 353px was visible), so a 100dvh shell puts its bottom control
+       361px under the keyboard.
+         height: var(--visual-viewport-height, 100dvh);  */
+    --keyboard-inset: 0px;
+    --visual-viewport-height: 100dvh;
+
+    /* Height of the cookie-consent banner while it is on screen, published
+       by CookieBanner from the rendered card. 0 the rest of the time — which
+       is every session after the first choice — so consumers may reference
+       it unconditionally.
+
+       It exists because the banner is position:fixed at z-index 100 and
+       NOTHING reserved space for it: the 005 sweep attributed two S1s and
+       five S2s to that single omission, including a password field on
+       /reset-password whose mis-tap discarded typed input. */
+    --cookie-banner-height: 0px;
   }
 
   [data-theme="dark"],
@@ -235,6 +264,11 @@ export const GlobalStyles = createGlobalStyle`
   }
 
   body {
+    /* Reserve the banner's band so anything anchored to the end of the
+       document — the footer, a hero CTA on a short viewport, the wizard's
+       goal textarea — can be scrolled out from under it. Additive and
+       self-removing: the var is 0px whenever the banner is not shown. */
+    padding-bottom: var(--cookie-banner-height, 0px);
     color: var(--foreground);
     background: var(--background);
     font-family: var(--font-body-sans), system-ui, sans-serif;

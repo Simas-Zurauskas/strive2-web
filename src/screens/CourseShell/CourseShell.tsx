@@ -39,6 +39,21 @@ import type { CourseStatus } from '@/api/types';
 
 const DESKTOP_MQ = `(min-width: ${breakpoints.desktop + 1}px)`;
 
+// Focus-trap selector for the mobile overlay panels. Same list as
+// hooks/useDialog.ts — duplicated rather than imported because CourseShell
+// traps against panel refs it already owns (sidebarRef / chatRef) instead of
+// mounting a dialog, and useDialog would additionally take a second
+// useScrollLock and steal/restore focus on desktop where the panels are
+// persistent in-grid rails.
+const OVERLAY_FOCUSABLE = [
+  'a[href]',
+  'button:not([disabled])',
+  'input:not([disabled])',
+  'textarea:not([disabled])',
+  'select:not([disabled])',
+  '[tabindex]:not([tabindex="-1"])',
+].join(',');
+
 // Persist panel-open states across page reloads, course switches, and
 // lesson navigation. Plain "true"/"false" strings for forward-compat with
 // other primitive flags we may want to colocate here.
@@ -422,12 +437,17 @@ export const CourseShell = ({ children }: CourseShellProps) => {
     [course?.slug, courseSlug, router, isDesktop, expandedModules, setExpandedModules],
   );
 
-  // Mobile/tablet: the sidebar and chat render as full-width fixed overlays
-  // with a backdrop. Without a lock the lesson scrolls behind them — measured
+  // Mobile/tablet: the sidebar and chat render as fixed overlays over a
+  // backdrop. Without a lock the lesson scrolls behind them — measured
   // before the fix with a trusted PageDown: y=200 -> 919 with the sidebar
   // open, and body overflow was never even set. Desktop is unaffected: there
   // the panels are in-grid, not overlays.
-  useScrollLock(!isDesktop && (sidebarOpen || chatOpen));
+  //
+  // One name for the "a panel is modal right now" condition: it drives the
+  // scroll lock, the backdrop, the Escape/Tab trap, and the `inert` on the
+  // lesson content behind the scrim. It was previously spelled out twice.
+  const overlayOpen = !isDesktop && (sidebarOpen || chatOpen);
+  useScrollLock(overlayOpen);
 
   const closeOverlays = useCallback(() => {
     if (!isDesktop) {
@@ -435,6 +455,99 @@ export const CourseShell = ({ children }: CourseShellProps) => {
       setChatOpen(false);
     }
   }, [isDesktop]);
+
+  // ── Mobile overlay: Escape + focus trap ──────────────
+  // At tablet/below both panels are modal overlays over the lesson body, so
+  // they owe the user a keyboard exit and must not let Tab walk into the
+  // content behind the scrim. Measured before this: Escape left the panel's
+  // `left` unchanged, body still position:fixed and aria-expanded still
+  // true; and one Tab past the drawer's last row landed on a background
+  // button at top:-1219. The app drawer in Navbar.tsx already does the
+  // Escape half — this is that handler plus the trap.
+  //
+  // Desktop is excluded on purpose: there the panels are persistent in-grid
+  // rails, and trapping focus inside one would strand the keyboard user.
+  useEffect(() => {
+    if (!overlayOpen) return;
+
+    const onKeyDown = (e: KeyboardEvent) => {
+      // A dialog opened from inside the shell (delete / archive) owns the
+      // keyboard while it is up. useDialog listens on `document` and calls
+      // stopPropagation for Escape, which already shields this window
+      // listener; this check covers Tab, which it does not stop.
+      if (document.querySelector('[aria-modal="true"]')) return;
+
+      if (e.key === 'Escape') {
+        setSidebarOpen(false);
+        setChatOpen(false);
+        return;
+      }
+      if (e.key !== 'Tab') return;
+
+      const panel = sidebarOpen ? sidebarRef.current : chatRef.current;
+      if (!panel) return;
+      const focusable = Array.from(
+        panel.querySelectorAll<HTMLElement>(OVERLAY_FOCUSABLE),
+      ).filter((el) => el.offsetParent !== null);
+      if (focusable.length === 0) return;
+
+      const first = focusable[0];
+      const last = focusable[focusable.length - 1];
+      const active = document.activeElement as HTMLElement | null;
+
+      if (!active || !panel.contains(active)) {
+        // Focus is outside (commonly <body>, because `inert` on the content
+        // behind the scrim blurred whatever had it). Pull it in.
+        e.preventDefault();
+        (e.shiftKey ? last : first).focus();
+      } else if (e.shiftKey && active === first) {
+        e.preventDefault();
+        last.focus();
+      } else if (!e.shiftKey && active === last) {
+        e.preventDefault();
+        first.focus();
+      }
+    };
+
+    window.addEventListener('keydown', onKeyDown);
+    return () => window.removeEventListener('keydown', onKeyDown);
+  }, [overlayOpen, sidebarOpen]);
+
+  // ── Hand focus back when a panel closes ──────────────
+  // `inert` blurs whatever is focused inside a panel the instant it closes,
+  // so pressing the panel's own collapse button drops focus to <body> and
+  // restarts Tab at the top of the document. Give it to the control that
+  // reopens the panel — the lesson-bar toggle on mobile, the edge tab on
+  // desktop, where these are the SAME fixed panels merely translated to
+  // x:±2000 when closed. Guarded on a real open→closed transition so a page
+  // that merely mounts with the panel closed never steals focus (same
+  // prev-ref pattern as prevChatOpenRef above).
+  const sidebarToggleRef = useRef<HTMLButtonElement | null>(null);
+  const chatToggleRef = useRef<HTMLButtonElement | null>(null);
+  const sidebarEdgeRef = useRef<HTMLButtonElement | null>(null);
+  const chatEdgeRef = useRef<HTMLButtonElement | null>(null);
+  const prevPanelOpenRef = useRef({ sidebar: sidebarOpen, chat: chatOpen });
+  useEffect(() => {
+    const prev = prevPanelOpenRef.current;
+    prevPanelOpenRef.current = { sidebar: sidebarOpen, chat: chatOpen };
+    if (document.activeElement !== document.body) return;
+    const target =
+      prev.sidebar && !sidebarOpen
+        ? isDesktop
+          ? sidebarEdgeRef.current
+          : sidebarToggleRef.current
+        : prev.chat && !chatOpen
+          ? isDesktop
+            ? chatEdgeRef.current
+            : chatToggleRef.current
+          : null;
+    if (!target) return;
+    // AnimatePresence mounts the edge tab in the same commit; one frame is
+    // enough for its ref to attach. preventScroll is required because
+    // useScrollLock has body pinned at position:fixed during the transition.
+    const raf = requestAnimationFrame(() => target.focus({ preventScroll: true }));
+    return () => cancelAnimationFrame(raf);
+  }, [sidebarOpen, chatOpen, isDesktop]);
 
   // ── Mobile top bar title ─────────────────────────────
   // Always shows the course name. The lesson title is already the H1 on
@@ -504,11 +617,10 @@ export const CourseShell = ({ children }: CourseShellProps) => {
     );
   }
 
-  const showBackdrop = !isDesktop && (sidebarOpen || chatOpen);
-
   const lessonBar = !isDesktop && (
     <S.LessonBar>
       <S.IconButton
+        ref={sidebarToggleRef}
         onClick={() => {
           /* Toggle: pressing while open closes; pressing while closed
              opens this panel and dismisses the other (the two are
@@ -527,6 +639,7 @@ export const CourseShell = ({ children }: CourseShellProps) => {
       </S.IconButton>
       <S.LessonBarTitle>{topBarTitle}</S.LessonBarTitle>
       <S.IconButton
+        ref={chatToggleRef}
         onClick={() => {
           if (chatOpen) {
             setChatOpen(false);
@@ -548,7 +661,7 @@ export const CourseShell = ({ children }: CourseShellProps) => {
       {navExtensionEl && lessonBar && createPortal(lessonBar, navExtensionEl)}
       <S.Layout>
         {/* Backdrop for mobile overlays */}
-        {showBackdrop && <S.Backdrop onClick={closeOverlays} />}
+        {overlayOpen && <S.Backdrop onClick={closeOverlays} />}
 
         {/* Left sidebar — mirror of the right chat panel:
             SidebarSlot is empty grid placeholder animating width.
@@ -563,6 +676,16 @@ export const CourseShell = ({ children }: CourseShellProps) => {
           ref={sidebarRef}
           style={{ x: sidebarX }}
           aria-hidden={!sidebarOpen}
+          /* React 19 renders a boolean `inert`. Without it the closed panel
+             stays fully tabbable at x:-2000 while carrying aria-hidden —
+             the WCAG 4.1.2 pairing the sweep measured (a real Tab from the
+             last visible header control jumped to `A "Strive"` at left -300;
+             36 of 93 focusables on the course overview had a rendered box
+             entirely outside the viewport, every one tabIndex=0 /
+             ariaHiddenAncestor=true / inertAncestor=false). `inert` is what
+             makes the aria-hidden alongside it correct rather than a
+             violation, so keep both. */
+          inert={!sidebarOpen}
           /* Drag-to-close: enabled only at tablet/below. The panel's
              transform is a useMotionValue we own — drag updates it
              directly during the gesture (so it follows the finger),
@@ -605,7 +728,13 @@ export const CourseShell = ({ children }: CourseShellProps) => {
             is active (overview, lesson, quiz) — the pre-wall pitch belongs
             where the spending happens, not on the dashboard. Renders null
             for everyone except free-plan users below one lesson of balance. */}
-        <S.ContentSlot>
+        {/* `inert` while a panel is modal: the lesson body, its widgets and
+            the UpgradeBanner are behind the scrim and must leave the tab
+            order, not merely stop being clickable. This is the "background
+            while a full-screen drawer is open" half of the finding, and it
+            is what makes the Tab trap above cheap — with the content inert,
+            Tab has almost nowhere to escape to in the first place. */}
+        <S.ContentSlot inert={overlayOpen}>
           <UpgradeBanner />
           {children}
         </S.ContentSlot>
@@ -630,6 +759,9 @@ export const CourseShell = ({ children }: CourseShellProps) => {
           ref={chatRef}
           style={{ x: chatX }}
           aria-hidden={!chatOpen}
+          /* See SidebarPanelFixed — the closed chat panel is the +2199 half
+             of the same measurement (its closed motion value is +2000). */
+          inert={!chatOpen}
           /* Drag-to-close — mirror of the sidebar pattern on the
              right edge. See SidebarPanelFixed for rationale. */
           drag={!isDesktop && chatOpen ? 'x' : false}
@@ -660,6 +792,7 @@ export const CourseShell = ({ children }: CourseShellProps) => {
           {!sidebarOpen && (
             <S.SidebarEdgeTab
               key="sidebar-edge-tab"
+              ref={sidebarEdgeRef}
               style={{ y: '-50%' }}
               initial={{ x: -60, opacity: 0 }}
               animate={{
@@ -688,6 +821,7 @@ export const CourseShell = ({ children }: CourseShellProps) => {
           {!chatOpen && (
             <S.ChatEdgeTab
               key="chat-edge-tab"
+              ref={chatEdgeRef}
               style={{ y: '-50%' }}
               initial={{ x: 60, opacity: 0 }}
               animate={{

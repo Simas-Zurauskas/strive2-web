@@ -8,3 +8,4 @@ export { AnalyticsIdentitySync } from './AnalyticsIdentitySync';
 export { CookieConsentBootstrap } from './CookieConsentBootstrap';
 export { AppziLoader } from './AppziLoader';
 export { BfcacheReloadOnRestore } from './BfcacheReloadOnRestore';
+export { ViewportInsetBootstrap } from './ViewportInsetBootstrap';
